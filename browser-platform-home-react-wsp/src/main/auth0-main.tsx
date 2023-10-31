@@ -1,8 +1,8 @@
 import { Auth0Provider } from "@auth0/auth0-react";
 import { IOConnectHomeProvider } from "@interopio/home-ui-react";
-import App from "./App";
+import { App } from "../app";
 
-const Main = () => {
+export const Main = () => {
     return (
         <Auth0Provider
             domain={process.env.REACT_APP_AUTH_DOMAIN as string}
@@ -17,5 +17,3 @@ const Main = () => {
         </Auth0Provider>
     );
 };
-
-export default Main;

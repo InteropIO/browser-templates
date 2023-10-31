@@ -1,12 +1,12 @@
-import { FC } from 'react'
-import { LoginLoader, LoginAuth0 } from '@interopio/home-ui-react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { LoginLoader, LoginAuth0 } from '@interopio/home-ui-react';
+import { FC } from 'react'
 
 export interface LoginPageProps {
   className?: string;
 }
 
-const LoginPage: FC<LoginPageProps> = () => {
+export const LoginPage: FC<LoginPageProps> = () => {
 
   const { loginWithRedirect, isLoading, error } = useAuth0();
 
@@ -20,6 +20,4 @@ const LoginPage: FC<LoginPageProps> = () => {
       {error && <p style={{ color: "red", marginTop: "10px" }}>{error.message}</p>}
     </div>
   )
-}
-
-export default LoginPage
+};
