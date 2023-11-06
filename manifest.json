@@ -1,0 +1,9 @@
+{
+    "io-cb": {
+        "versions": [
+            "latest",
+            "3.0"
+        ],
+        "latestVersion": "3.1"
+    }
+}
