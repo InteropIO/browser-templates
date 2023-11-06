@@ -1,4 +1,2 @@
 node_modules
-/public/libs/**/*.js
-/public/libs/**/*.map.js
 /public/config.json
