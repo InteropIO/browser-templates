@@ -46,10 +46,6 @@ const clearNodeModules = (client) => () => {
     });
 };
 
-const copyPlatformConfig = async () => {
-    await copyFile(path.join(__dirname, "config.json"), path.join(__dirname, "workspace-platform", "src", "config.json"));
-};
-
 const buildProdApp = (client) => async () => {
     return new Promise((resolve, reject) => {
         console.log(`Building prod bundle of ${client}`);
@@ -80,8 +76,7 @@ const startBuildClient = (client) => async () => {
 
 exports.bootstrap = series(
     parallel(clientsSources.map((client) => clearNodeModules(client))),
-    parallel(clientsSources.map((client) => installAllDeps(client))),
-    copyPlatformConfig
+    parallel(clientsSources.map((client) => installAllDeps(client)))
 );
 
 exports.build = parallel(clientsSources.map((client) => buildProdApp(client)));
@@ -89,8 +84,4 @@ exports.build = parallel(clientsSources.map((client) => buildProdApp(client)));
 exports.start = parallel(
     ...clientsSources.map((client) => startApp(client)),
     ...builtClients.map((client) => startBuildClient(client))
-);
-
-exports.updateConfig = series(
-    copyPlatformConfig
 );
