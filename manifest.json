@@ -2,8 +2,9 @@
     "ioCb": {
         "versions": [
             "latest",
-            "3.0"
+            "3.0",
+            "3.1"
         ],
-        "latestVersion": "3.1"
+        "latestVersion": "3.2"
     }
 }
