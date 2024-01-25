@@ -1,9 +1,15 @@
 {
   "name": "workspaces-home",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "private": true,
   "dependencies": {
     "@auth0/auth0-react": "^2.1.0",
+    "@interopio/browser-platform": "~3.1.2",
+    "@interopio/browser-worker": "~3.1.0",
+    "@interopio/home-ui-react": "~1.1.1",
+    "@interopio/react-hooks": "~3.1.2",
+    "@interopio/workspaces-api": "~3.1.0",
+    "@interopio/workspaces-ui-react": "~3.1.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
