@@ -1,8 +1,14 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import logo from './connect-browser.svg';
 import './App.css';
+import { IOConnectContext } from '@interopio/react-hooks';
 
 function App() {
+
+  const io = useContext(IOConnectContext);
+
+  (window as any).io = io;
+
   return (
     <div className="App">
       <header className="App-header">
