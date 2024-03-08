@@ -73,10 +73,8 @@ const enterprise = (config) => {
         libraries: (_a = config === null || config === void 0 ? void 0 : config.libraries) !== null && _a !== void 0 ? _a : [],
         logger: (_c = (_b = config === null || config === void 0 ? void 0 : config.systemLogger) === null || _b === void 0 ? void 0 : _b.level) !== null && _c !== void 0 ? _c : "warn"
     };
-    if (window.glue42gd) {
-        return window.Glue(enterpriseConfig);
-    }
-    return window.Glue(enterpriseConfig);
+    const injectedFactory = window.IODesktop || window.Glue;
+    return injectedFactory(enterpriseConfig);
 };
 
 /**
@@ -1800,7 +1798,7 @@ class FDC3Service {
     isFdc3Definition(definition) {
         const decodeRes = allDefinitionsDecoder.run(definition);
         if (!decodeRes.ok) {
-            return { isFdc3: false };
+            return { isFdc3: false, reason: parseDecoderErrorToStringMessage(decodeRes.error) };
         }
         if (definition.appId && definition.details) {
             return { isFdc3: true, version: "2.0" };
@@ -1808,7 +1806,7 @@ class FDC3Service {
         if (definition.manifest) {
             return { isFdc3: true, version: "1.2" };
         }
-        return { isFdc3: false };
+        return { isFdc3: false, reason: "The passed definition is not FDC3" };
     }
     parseToBrowserBaseAppData(definition) {
         var _a;
@@ -1979,9 +1977,27 @@ const decoders$1 = {
     }
 };
 
+var INTENTS_ERRORS;
+(function (INTENTS_ERRORS) {
+    INTENTS_ERRORS["USER_CANCELLED"] = "User Closed Intents Resolver UI without choosing a handler";
+    INTENTS_ERRORS["CALLER_NOT_DEFINED"] = "Caller Id is not defined";
+    INTENTS_ERRORS["TIMEOUT_HIT"] = "Timeout hit";
+    INTENTS_ERRORS["INTENT_NOT_FOUND"] = "Cannot find Intent";
+    INTENTS_ERRORS["HANDLER_NOT_FOUND"] = "Cannot find Intent Handler";
+    INTENTS_ERRORS["TARGET_INSTANCE_UNAVAILABLE"] = "Cannot start Target Instance";
+    INTENTS_ERRORS["INTENT_DELIVERY_FAILED"] = "Target Instance did not add a listener";
+    INTENTS_ERRORS["RESOLVER_UNAVAILABLE"] = "Intents Resolver UI unavailable";
+    INTENTS_ERRORS["RESOLVER_TIMEOUT"] = "User did not choose a handler";
+    INTENTS_ERRORS["INVALID_RESOLVER_RESPONSE"] = "Intents Resolver UI returned invalid response";
+    INTENTS_ERRORS["INTENT_HANDLER_REJECTION"] = "Intent Handler function processing the raised intent threw an error or rejected the promise it returned";
+})(INTENTS_ERRORS || (INTENTS_ERRORS = {}));
+
 let IoC$1 = class IoC {
     constructor() {
         this._decoders = decoders$1;
+        this._errors = {
+            intents: INTENTS_ERRORS
+        };
     }
     get fdc3() {
         if (!this._fdc3) {
@@ -1992,20 +2008,24 @@ let IoC$1 = class IoC {
     get decoders() {
         return this._decoders;
     }
+    get errors() {
+        return this._errors;
+    }
 };
 
 const ioc = new IoC$1();
 ioc.fdc3;
 const decoders = ioc.decoders;
+ioc.errors;
 
 const nonEmptyStringDecoder = string$1().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder = number$1().where((num) => num >= 0, "Expected a non-negative number");
 const optionalNonEmptyStringDecoder = optional$1(nonEmptyStringDecoder);
-const libDomainDecoder = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("intents"), constant$1("notifications"), constant$1("channels"), constant$1("extension"), constant$1("themes"));
+const libDomainDecoder = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("intents"), constant$1("notifications"), constant$1("channels"), constant$1("extension"), constant$1("themes"), constant$1("prefs"));
 const windowOperationTypesDecoder = oneOf$1(constant$1("openWindow"), constant$1("windowHello"), constant$1("windowAdded"), constant$1("windowRemoved"), constant$1("getBounds"), constant$1("getFrameBounds"), constant$1("getUrl"), constant$1("moveResize"), constant$1("focus"), constant$1("close"), constant$1("getTitle"), constant$1("setTitle"), constant$1("focusChange"), constant$1("getChannel"));
 const appManagerOperationTypesDecoder = oneOf$1(constant$1("appHello"), constant$1("appDirectoryStateChange"), constant$1("instanceStarted"), constant$1("instanceStopped"), constant$1("applicationStart"), constant$1("instanceStop"), constant$1("clear"));
 const layoutsOperationTypesDecoder = oneOf$1(constant$1("layoutAdded"), constant$1("layoutChanged"), constant$1("layoutRemoved"), constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"), constant$1("getDefaultGlobal"), constant$1("setDefaultGlobal"), constant$1("clearDefaultGlobal"));
-const notificationsOperationTypesDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("notificationShow"), constant$1("notificationClick"), constant$1("getPermission"), constant$1("list"), constant$1("notificationRaised"), constant$1("notificationClosed"), constant$1("click"), constant$1("clear"), constant$1("clearAll"));
+const notificationsOperationTypesDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("notificationShow"), constant$1("notificationClick"), constant$1("getPermission"), constant$1("list"), constant$1("notificationRaised"), constant$1("notificationClosed"), constant$1("click"), constant$1("clear"), constant$1("clearAll"), constant$1("configure"), constant$1("getConfiguration"), constant$1("configurationChanged"), constant$1("setState"), constant$1("clearOld"), constant$1("activeCountChange"), constant$1("stateChange"));
 const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"), constant$1("platformShutdown"));
 const windowRelativeDirectionDecoder = oneOf$1(constant$1("top"), constant$1("left"), constant$1("right"), constant$1("bottom"));
 const windowBoundsDecoder = object$1({
@@ -2406,10 +2426,11 @@ const intentResultDecoder = object$1({
 const handlersFilterDecoder = object$1({
     title: optional$1(nonEmptyStringDecoder),
     openResolver: optional$1(boolean$1()),
-    timeout: optional$1(number$1()),
+    timeout: optional$1(nonNegativeNumberDecoder),
     intent: optional$1(nonEmptyStringDecoder),
     contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
     resultType: optional$1(nonEmptyStringDecoder),
+    applicationNames: optional$1(array$1(nonEmptyStringDecoder))
 });
 const filterHandlersResultDecoder = object$1({
     handlers: array$1(intentHandlerDecoder)
@@ -2427,6 +2448,17 @@ const AddIntentListenerRequestDecoder = object$1({
     resultType: optional$1(string$1())
 });
 const AddIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder, AddIntentListenerRequestDecoder);
+const intentInfoDecoder = object$1({
+    intent: nonEmptyStringDecoder,
+    contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
+    description: optional$1(nonEmptyStringDecoder),
+    displayName: optional$1(nonEmptyStringDecoder),
+    icon: optional$1(nonEmptyStringDecoder),
+    resultType: optional$1(nonEmptyStringDecoder)
+});
+const getIntentsResultDecoder = object$1({
+    intents: array$1(intentInfoDecoder)
+});
 const channelNameDecoder = (channelNames) => {
     return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
 };
@@ -2440,6 +2472,10 @@ const glue42NotificationActionDecoder = object$1({
     title: nonEmptyStringDecoder,
     icon: optional$1(string$1()),
     interop: optional$1(interopActionSettingsDecoder)
+});
+const notificationStateDecoder = oneOf$1(constant$1("Active"), constant$1("Acknowledged"), constant$1("Seen"), constant$1("Closed"), constant$1("Stale"), constant$1("Snoozed"), constant$1("Processing"));
+const activeNotificationsCountChangeDecoder = object$1({
+    count: number$1()
 });
 const notificationDefinitionDecoder = object$1({
     badge: optional$1(string$1()),
@@ -2476,7 +2512,12 @@ const glue42NotificationOptionsDecoder = object$1({
     vibrate: optional$1(array$1(number$1())),
     severity: optional$1(oneOf$1(constant$1("Low"), constant$1("None"), constant$1("Medium"), constant$1("High"), constant$1("Critical"))),
     showToast: optional$1(boolean$1()),
-    showInPanel: optional$1(boolean$1())
+    showInPanel: optional$1(boolean$1()),
+    state: optional$1(notificationStateDecoder)
+});
+const notificationSetStateRequestDecoder = object$1({
+    id: nonEmptyStringDecoder,
+    state: notificationStateDecoder
 });
 const channelContextDecoder = object$1({
     name: nonEmptyStringDecoder,
@@ -2502,6 +2543,28 @@ const notificationEventPayloadDecoder = object$1({
     definition: notificationDefinitionDecoder,
     action: optional$1(string$1()),
     id: optional$1(nonEmptyStringDecoder)
+});
+const notificationFilterDecoder = object$1({
+    allowed: optional$1(array$1(nonEmptyStringDecoder)),
+    blocked: optional$1(array$1(nonEmptyStringDecoder))
+});
+const notificationsConfigurationDecoder = object$1({
+    enable: optional$1(boolean$1()),
+    enableToasts: optional$1(boolean$1()),
+    sourceFilter: optional$1(notificationFilterDecoder),
+});
+const notificationsConfigurationProtocolDecoder = object$1({
+    configuration: notificationsConfigurationDecoder
+});
+const strictNotificationsConfigurationProtocolDecoder = object$1({
+    configuration: object$1({
+        enable: boolean$1(),
+        enableToasts: boolean$1(),
+        sourceFilter: object$1({
+            allowed: array$1(nonEmptyStringDecoder),
+            blocked: array$1(nonEmptyStringDecoder)
+        })
+    })
 });
 const platformSaveRequestConfigDecoder = object$1({
     layoutType: oneOf$1(constant$1("Global"), constant$1("Workspace")),
@@ -2563,7 +2626,8 @@ const notificationsDataDecoder = object$1({
     vibrate: optional$1(array$1(number$1())),
     severity: optional$1(oneOf$1(constant$1("Low"), constant$1("None"), constant$1("Medium"), constant$1("High"), constant$1("Critical"))),
     showToast: optional$1(boolean$1()),
-    showInPanel: optional$1(boolean$1())
+    showInPanel: optional$1(boolean$1()),
+    state: optional$1(notificationStateDecoder)
 });
 const simpleNotificationDataDecoder = object$1({
     notification: notificationsDataDecoder
@@ -2618,8 +2682,32 @@ const joinChannelDataDecoder = object$1({
 const windowChannelResultDecoder = object$1({
     channel: optional$1(nonEmptyStringDecoder),
 });
+const prefsOperationTypesDecoder = oneOf$1(constant$1("clear"), constant$1("clearAll"), constant$1("get"), constant$1("getAll"), constant$1("set"), constant$1("update"), constant$1("prefsChanged"), constant$1("prefsHello"));
+const appPreferencesDecoder = object$1({
+    app: nonEmptyStringDecoder,
+    data: object$1(),
+    lastUpdate: optional$1(nonEmptyStringDecoder),
+});
+const basePrefsConfigDecoder = object$1({
+    app: nonEmptyStringDecoder,
+});
+const getPrefsResultDecoder = object$1({
+    prefs: appPreferencesDecoder,
+});
+const getAllPrefsResultDecoder = object$1({
+    all: array$1(appPreferencesDecoder),
+});
+const changePrefsDataDecoder = object$1({
+    app: nonEmptyStringDecoder,
+    data: object$1(),
+});
+const prefsHelloSuccessDecoder = object$1({
+    platform: object$1({
+        app: nonEmptyStringDecoder,
+    }),
+});
 
-const operations$8 = {
+const operations$9 = {
     openWindow: { name: "openWindow", dataDecoder: openWindowConfigDecoder, resultDecoder: coreWindowDataDecoder },
     windowHello: { name: "windowHello", dataDecoder: windowHelloDecoder, resultDecoder: helloSuccessDecoder },
     windowAdded: { name: "windowAdded", dataDecoder: coreWindowDataDecoder },
@@ -2808,7 +2896,7 @@ class WebWindowModel {
     }
     getURL() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$8.getUrl, { windowId: this.id });
+            const result = yield this._bridge.send("windows", operations$9.getUrl, { windowId: this.id });
             return result.url;
         });
     }
@@ -2822,7 +2910,7 @@ class WebWindowModel {
         return __awaiter$1(this, void 0, void 0, function* () {
             const targetBounds = boundsDecoder.runWithException(dimension);
             const commandArgs = Object.assign({}, targetBounds, { windowId: this.id, relative: false });
-            yield this._bridge.send("windows", operations$8.moveResize, commandArgs);
+            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
             return this.me;
         });
     }
@@ -2838,7 +2926,7 @@ class WebWindowModel {
                 nonNegativeNumberDecoder.runWithException(height);
             }
             const commandArgs = Object.assign({}, { width, height }, { windowId: this.id, relative: true });
-            yield this._bridge.send("windows", operations$8.moveResize, commandArgs);
+            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
             return this.me;
         });
     }
@@ -2854,7 +2942,7 @@ class WebWindowModel {
                 number$1().runWithException(left);
             }
             const commandArgs = Object.assign({}, { top, left }, { windowId: this.id, relative: true });
-            yield this._bridge.send("windows", operations$8.moveResize, commandArgs);
+            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
             return this.me;
         });
     }
@@ -2864,33 +2952,33 @@ class WebWindowModel {
                 window.open(undefined, this.id);
             }
             else {
-                yield this._bridge.send("windows", operations$8.focus, { windowId: this.id });
+                yield this._bridge.send("windows", operations$9.focus, { windowId: this.id });
             }
             return this.me;
         });
     }
     close() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            yield this._bridge.send("windows", operations$8.close, { windowId: this.id });
+            yield this._bridge.send("windows", operations$9.close, { windowId: this.id });
             return this.me;
         });
     }
     getTitle() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$8.getTitle, { windowId: this.id });
+            const result = yield this._bridge.send("windows", operations$9.getTitle, { windowId: this.id });
             return result.title;
         });
     }
     setTitle(title) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const ttl = nonEmptyStringDecoder.runWithException(title);
-            yield this._bridge.send("windows", operations$8.setTitle, { windowId: this.id, title: ttl });
+            yield this._bridge.send("windows", operations$9.setTitle, { windowId: this.id, title: ttl });
             return this.me;
         });
     }
     getBounds() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$8.getBounds, { windowId: this.id });
+            const result = yield this._bridge.send("windows", operations$9.getBounds, { windowId: this.id });
             return result.bounds;
         });
     }
@@ -2925,7 +3013,7 @@ class WebWindowModel {
     }
     getChannel() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$8.getChannel, { windowId: this.id }, undefined, { includeOperationCheck: true });
+            const result = yield this._bridge.send("windows", operations$9.getChannel, { windowId: this.id }, undefined, { includeOperationCheck: true });
             return result.channel;
         });
     }
@@ -3023,7 +3111,7 @@ class WindowsController {
         return __awaiter$1(this, void 0, void 0, function* () {
             yield this.platformRegistration;
             const operationName = windowOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$8[operationName];
+            const operation = operations$9[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -3039,7 +3127,7 @@ class WindowsController {
             nonEmptyStringDecoder.runWithException(name);
             nonEmptyStringDecoder.runWithException(url);
             const settings = windowOpenSettingsDecoder.runWithException(options);
-            const windowSuccess = yield this.bridge.send("windows", operations$8.openWindow, { name, url, options: settings });
+            const windowSuccess = yield this.bridge.send("windows", operations$9.openWindow, { name, url, options: settings });
             return this.waitForWindowAdded(windowSuccess.windowId);
         });
     }
@@ -3064,16 +3152,16 @@ class WindowsController {
         };
     }
     addWindowOperationExecutors() {
-        operations$8.focusChange.execute = this.handleFocusChangeEvent.bind(this);
-        operations$8.windowAdded.execute = this.handleWindowAdded.bind(this);
-        operations$8.windowRemoved.execute = this.handleWindowRemoved.bind(this);
-        operations$8.getBounds.execute = this.handleGetBounds.bind(this);
-        operations$8.getFrameBounds.execute = this.handleGetBounds.bind(this);
-        operations$8.getTitle.execute = this.handleGetTitle.bind(this);
-        operations$8.getUrl.execute = this.handleGetUrl.bind(this);
-        operations$8.moveResize.execute = this.handleMoveResize.bind(this);
-        operations$8.setTitle.execute = this.handleSetTitle.bind(this);
-        operations$8.getChannel.execute = this.handleGetChannel.bind(this);
+        operations$9.focusChange.execute = this.handleFocusChangeEvent.bind(this);
+        operations$9.windowAdded.execute = this.handleWindowAdded.bind(this);
+        operations$9.windowRemoved.execute = this.handleWindowRemoved.bind(this);
+        operations$9.getBounds.execute = this.handleGetBounds.bind(this);
+        operations$9.getFrameBounds.execute = this.handleGetBounds.bind(this);
+        operations$9.getTitle.execute = this.handleGetTitle.bind(this);
+        operations$9.getUrl.execute = this.handleGetUrl.bind(this);
+        operations$9.moveResize.execute = this.handleMoveResize.bind(this);
+        operations$9.setTitle.execute = this.handleSetTitle.bind(this);
+        operations$9.getChannel.execute = this.handleGetChannel.bind(this);
     }
     my() {
         return Object.assign({}, this.me);
@@ -3104,7 +3192,7 @@ class WindowsController {
     }
     sayHello() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const helloSuccess = yield this.bridge.send("windows", operations$8.windowHello, { windowId: this.publicWindowId });
+            const helloSuccess = yield this.bridge.send("windows", operations$9.windowHello, { windowId: this.publicWindowId });
             return helloSuccess;
         });
     }
@@ -3270,7 +3358,7 @@ class WindowsController {
             if (this.me) {
                 this.me.isFocused = hasFocus;
             }
-            yield this.bridge.send("windows", operations$8.focusChange, eventData);
+            yield this.bridge.send("windows", operations$9.focusChange, eventData);
         });
     }
     defineEventListeners() {
@@ -3470,7 +3558,7 @@ class GlueBridge {
     }
 }
 
-const operations$7 = {
+const operations$8 = {
     appHello: { name: "appHello", dataDecoder: windowHelloDecoder, resultDecoder: appHelloSuccessDecoder },
     appDirectoryStateChange: { name: "appDirectoryStateChange", dataDecoder: appDirectoryStateChangeDecoder },
     instanceStarted: { name: "instanceStarted", dataDecoder: instanceDataDecoder },
@@ -3518,7 +3606,7 @@ class AppManagerController {
         return __awaiter$1(this, void 0, void 0, function* () {
             yield this.platformRegistration;
             const operationName = appManagerOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$7[operationName];
+            const operation = operations$8[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -3563,7 +3651,7 @@ class AppManagerController {
                 layoutComponentId: options === null || options === void 0 ? void 0 : options.layoutComponentId,
                 channelId: options === null || options === void 0 ? void 0 : options.channelId
             };
-            const openResult = yield this.bridge.send("appManager", operations$7.applicationStart, startOptions);
+            const openResult = yield this.bridge.send("appManager", operations$8.applicationStart, startOptions);
             const app = this.applications.find((a) => a.name === openResult.applicationName);
             return this.ioc.buildInstance(openResult, app);
         });
@@ -3596,9 +3684,9 @@ class AppManagerController {
         return api;
     }
     addOperationsExecutors() {
-        operations$7.appDirectoryStateChange.execute = this.handleAppDirectoryStateChange.bind(this);
-        operations$7.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
-        operations$7.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
+        operations$8.appDirectoryStateChange.execute = this.handleAppDirectoryStateChange.bind(this);
+        operations$8.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
+        operations$8.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
     }
     handleAppDirectoryStateChange(data) {
         return __awaiter$1(this, void 0, void 0, function* () {
@@ -3715,7 +3803,7 @@ class AppManagerController {
                 return soFar;
             }, { valid: [], invalid: [] });
             const responseTimeout = this.baseApplicationsTimeoutMS + this.appImportTimeoutMS * parseResult.valid.length;
-            yield this.bridge.send("appManager", operations$7.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
+            yield this.bridge.send("appManager", operations$8.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
             return {
                 imported: parseResult.valid.map((valid) => valid.name),
                 errors: parseResult.invalid
@@ -3725,17 +3813,17 @@ class AppManagerController {
     remove(name) {
         return __awaiter$1(this, void 0, void 0, function* () {
             nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("appManager", operations$7.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+            yield this.bridge.send("appManager", operations$8.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
         });
     }
     clear() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("appManager", operations$7.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+            yield this.bridge.send("appManager", operations$8.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
         });
     }
     export() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const response = yield this.bridge.send("appManager", operations$7.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+            const response = yield this.bridge.send("appManager", operations$8.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
             return response.definitions;
         });
     }
@@ -3754,7 +3842,7 @@ class AppManagerController {
     }
     registerWithPlatform() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this.bridge.send("appManager", operations$7.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+            const result = yield this.bridge.send("appManager", operations$8.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
             this.logger.trace("the platform responded to the hello message with a full list of apps");
             this.applications = yield Promise.all(result.apps.map((app) => this.ioc.buildApplication(app, app.instances)));
             this.instances = this.applications.reduce((instancesSoFar, app) => {
@@ -3807,7 +3895,7 @@ class InstanceModel {
     }
     stop() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("appManager", operations$7.instanceStop, { id: this.data.id });
+            yield this.bridge.send("appManager", operations$8.instanceStop, { id: this.data.id });
         });
     }
 }
@@ -3863,7 +3951,7 @@ class ApplicationModel {
     }
 }
 
-const operations$6 = {
+const operations$7 = {
     layoutAdded: { name: "layoutAdded", dataDecoder: glueLayoutDecoder },
     layoutChanged: { name: "layoutChanged", dataDecoder: glueLayoutDecoder },
     layoutRemoved: { name: "layoutRemoved", dataDecoder: glueLayoutDecoder },
@@ -3906,7 +3994,7 @@ class LayoutsController {
     handleBridgeMessage(args) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const operationName = layoutsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$6[operationName];
+            const operation = operations$7[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -3940,30 +4028,30 @@ class LayoutsController {
         return Object.freeze(api);
     }
     addOperationsExecutors() {
-        operations$6.layoutAdded.execute = this.handleOnAdded.bind(this);
-        operations$6.layoutChanged.execute = this.handleOnChanged.bind(this);
-        operations$6.layoutRemoved.execute = this.handleOnRemoved.bind(this);
-        operations$6.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
+        operations$7.layoutAdded.execute = this.handleOnAdded.bind(this);
+        operations$7.layoutChanged.execute = this.handleOnChanged.bind(this);
+        operations$7.layoutRemoved.execute = this.handleOnRemoved.bind(this);
+        operations$7.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
     }
     get(name, type) {
         return __awaiter$1(this, void 0, void 0, function* () {
             nonEmptyStringDecoder.runWithException(name);
             layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$6.get, { name, type });
+            const result = yield this.bridge.send("layouts", operations$7.get, { name, type });
             return result.layout;
         });
     }
     getAll(type) {
         return __awaiter$1(this, void 0, void 0, function* () {
             layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$6.getAll, { type });
+            const result = yield this.bridge.send("layouts", operations$7.getAll, { type });
             return result.summaries;
         });
     }
     export(type) {
         return __awaiter$1(this, void 0, void 0, function* () {
             layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$6.export, { type });
+            const result = yield this.bridge.send("layouts", operations$7.export, { type });
             return result.layouts;
         });
     }
@@ -3987,13 +4075,13 @@ class LayoutsController {
                 return soFar;
             }, { valid: [] });
             const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
-            yield this.bridge.send("layouts", operations$6.import, { layouts: layoutsToImport, mode });
+            yield this.bridge.send("layouts", operations$7.import, { layouts: layoutsToImport, mode });
         });
     }
     save(layout) {
         return __awaiter$1(this, void 0, void 0, function* () {
             newLayoutOptionsDecoder.runWithException(layout);
-            const saveResult = yield this.bridge.send("layouts", operations$6.save, { layout });
+            const saveResult = yield this.bridge.send("layouts", operations$7.save, { layout });
             return saveResult.layout;
         });
     }
@@ -4001,14 +4089,14 @@ class LayoutsController {
         return __awaiter$1(this, void 0, void 0, function* () {
             restoreOptionsDecoder.runWithException(options);
             const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
-            yield this.bridge.send("layouts", operations$6.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
+            yield this.bridge.send("layouts", operations$7.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
         });
     }
     remove(type, name) {
         return __awaiter$1(this, void 0, void 0, function* () {
             layoutTypeDecoder.runWithException(type);
             nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("layouts", operations$6.remove, { type, name });
+            yield this.bridge.send("layouts", operations$7.remove, { type, name });
         });
     }
     handleSaveRequest(config) {
@@ -4028,7 +4116,7 @@ class LayoutsController {
     }
     getGlobalPermissionState() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$6.getGlobalPermissionState, undefined);
+            const requestResult = yield this.bridge.send("layouts", operations$7.getGlobalPermissionState, undefined);
             return requestResult;
         });
     }
@@ -4047,43 +4135,43 @@ class LayoutsController {
             if (myWindow.name !== "Platform" && !amIWorkspaceFrame) {
                 throw new Error("Cannot request permission for multi-window placement from any app other than the Platform.");
             }
-            const requestResult = yield this.bridge.send("layouts", operations$6.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
+            const requestResult = yield this.bridge.send("layouts", operations$7.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
             return { permissionGranted: requestResult.isAvailable };
         });
     }
     checkGlobalActivated() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$6.checkGlobalActivated, undefined);
+            const requestResult = yield this.bridge.send("layouts", operations$7.checkGlobalActivated, undefined);
             return { activated: requestResult.isAvailable };
         });
     }
     getDefaultGlobal() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$6.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+            const requestResult = yield this.bridge.send("layouts", operations$7.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
             return requestResult.layout;
         });
     }
     setDefaultGlobal(name) {
         return __awaiter$1(this, void 0, void 0, function* () {
             nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("layouts", operations$6.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("layouts", operations$7.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
         });
     }
     clearDefaultGlobal() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("layouts", operations$6.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("layouts", operations$7.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
         });
     }
     onAdded(callback) {
         this.export("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
         this.export("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
-        return this.registry.add(operations$6.layoutAdded.name, callback);
+        return this.registry.add(operations$7.layoutAdded.name, callback);
     }
     onChanged(callback) {
-        return this.registry.add(operations$6.layoutChanged.name, callback);
+        return this.registry.add(operations$7.layoutChanged.name, callback);
     }
     onRemoved(callback) {
-        return this.registry.add(operations$6.layoutRemoved.name, callback);
+        return this.registry.add(operations$7.layoutRemoved.name, callback);
     }
     subscribeOnSaveRequested(callback) {
         if (typeof callback !== "function") {
@@ -4099,22 +4187,22 @@ class LayoutsController {
     }
     handleOnAdded(layout) {
         return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$6.layoutAdded.name, layout);
+            this.registry.execute(operations$7.layoutAdded.name, layout);
         });
     }
     handleOnChanged(layout) {
         return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$6.layoutChanged.name, layout);
+            this.registry.execute(operations$7.layoutChanged.name, layout);
         });
     }
     handleOnRemoved(layout) {
         return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$6.layoutRemoved.name, layout);
+            this.registry.execute(operations$7.layoutRemoved.name, layout);
         });
     }
 }
 
-const operations$5 = {
+const operations$6 = {
     raiseNotification: { name: "raiseNotification", dataDecoder: raiseNotificationDecoder, resultDecoder: raiseNotificationResultDecoder },
     requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder },
     notificationShow: { name: "notificationShow", dataDecoder: notificationEventPayloadDecoder },
@@ -4125,7 +4213,14 @@ const operations$5 = {
     notificationClosed: { name: "notificationClosed", dataDecoder: simpleNotificationSelectDecoder },
     click: { name: "click" },
     clear: { name: "clear" },
-    clearAll: { name: "clearAll" }
+    clearAll: { name: "clearAll" },
+    clearOld: { name: "clearOld" },
+    configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder },
+    getConfiguration: { name: "getConfiguration", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    configurationChanged: { name: "configurationChanged", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    setState: { name: "setState", dataDecoder: notificationSetStateRequestDecoder },
+    activeCountChange: { name: "activeCountChange", resultDecoder: activeNotificationsCountChangeDecoder },
+    stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder }
 };
 
 var shortidExports$1 = {};
@@ -4502,7 +4597,7 @@ class NotificationsController {
     handleBridgeMessage(args) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const operationName = notificationsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$5[operationName];
+            const operation = operations$6[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -4523,19 +4618,28 @@ class NotificationsController {
             onClosed: this.onClosed.bind(this),
             click: this.click.bind(this),
             clear: this.clear.bind(this),
-            clearAll: this.clearAll.bind(this)
+            clearAll: this.clearAll.bind(this),
+            clearOld: this.clearOld.bind(this),
+            configure: this.configure.bind(this),
+            getConfiguration: this.getConfiguration.bind(this),
+            getFilter: this.getFilter.bind(this),
+            setFilter: this.setFilter.bind(this),
+            setState: this.setState.bind(this),
+            onConfigurationChanged: this.onConfigurationChanged.bind(this),
+            onActiveCountChanged: this.onActiveCountChanged.bind(this),
+            onStateChanged: this.onStateChanged.bind(this)
         };
         return Object.freeze(api);
     }
     getPermission() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const queryResult = yield this.bridge.send("notifications", operations$5.getPermission, undefined);
+            const queryResult = yield this.bridge.send("notifications", operations$6.getPermission, undefined);
             return queryResult.permission;
         });
     }
     requestPermission() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const permissionResult = yield this.bridge.send("notifications", operations$5.requestPermission, undefined);
+            const permissionResult = yield this.bridge.send("notifications", operations$6.requestPermission, undefined);
             return permissionResult.permissionGranted;
         });
     }
@@ -4549,7 +4653,7 @@ class NotificationsController {
                 throw new Error("Cannot raise the notification, because the user has declined the permission request");
             }
             const id = shortidExports$1.generate();
-            const raiseResult = yield this.bridge.send("notifications", operations$5.raiseNotification, { settings, id });
+            const raiseResult = yield this.bridge.send("notifications", operations$6.raiseNotification, { settings, id });
             const notification = this.buildNotificationFunc(raiseResult.settings, id);
             this.notifications[id] = notification;
             return notification;
@@ -4557,7 +4661,7 @@ class NotificationsController {
     }
     list() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("notifications", operations$5.list, undefined, undefined, { includeOperationCheck: true });
+            const bridgeResponse = yield this.bridge.send("notifications", operations$6.list, undefined, undefined, { includeOperationCheck: true });
             return bridgeResponse.notifications;
         });
     }
@@ -4579,25 +4683,98 @@ class NotificationsController {
             if (action) {
                 nonEmptyStringDecoder.runWithException(action);
             }
-            yield this.bridge.send("notifications", operations$5.click, { id, action }, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("notifications", operations$6.click, { id, action }, undefined, { includeOperationCheck: true });
         });
     }
     clear(id) {
         return __awaiter$1(this, void 0, void 0, function* () {
             nonEmptyStringDecoder.runWithException(id);
-            yield this.bridge.send("notifications", operations$5.clear, { id }, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("notifications", operations$6.clear, { id }, undefined, { includeOperationCheck: true });
         });
     }
     clearAll() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("notifications", operations$5.clearAll, undefined, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("notifications", operations$6.clearAll, undefined, undefined, { includeOperationCheck: true });
         });
     }
+    clearOld() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            yield this.bridge.send("notifications", operations$6.clearOld, undefined, undefined, { includeOperationCheck: true });
+        });
+    }
+    configure(config) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedConfig = notificationsConfigurationDecoder.runWithException(config);
+            yield this.bridge.send("notifications", operations$6.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
+        });
+    }
+    getConfiguration() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const response = yield this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+            return response.configuration;
+        });
+    }
+    getFilter() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const response = yield this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+            return response.configuration.sourceFilter;
+        });
+    }
+    setFilter(filter) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedFilter = notificationFilterDecoder.runWithException(filter);
+            yield this.bridge.send("notifications", operations$6.configure, { configuration: { sourceFilter: verifiedFilter } }, undefined, { includeOperationCheck: true });
+            return verifiedFilter;
+        });
+    }
+    setState(id, state) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            nonEmptyStringDecoder.runWithException(id);
+            notificationStateDecoder.runWithException(state);
+            yield this.bridge.send("notifications", operations$6.setState, { id, state }, undefined, { includeOperationCheck: true });
+        });
+    }
+    onConfigurationChanged(callback) {
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to configuration changed, because the provided callback is not a function!");
+        }
+        return this.registry.add("notifications-config-changed", callback);
+    }
+    onActiveCountChanged(callback) {
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to onActiveCountChanged changed, because the provided callback is not a function!");
+        }
+        return this.registry.add("notifications-active-count-changed", callback);
+    }
+    onStateChanged(callback) {
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to onStateChanged changed, because the provided callback is not a function!");
+        }
+        return this.registry.add("notification-state-changed", callback);
+    }
     addOperationExecutors() {
-        operations$5.notificationShow.execute = this.handleNotificationShow.bind(this);
-        operations$5.notificationClick.execute = this.handleNotificationClick.bind(this);
-        operations$5.notificationRaised.execute = this.handleNotificationRaised.bind(this);
-        operations$5.notificationClosed.execute = this.handleNotificationClosed.bind(this);
+        operations$6.notificationShow.execute = this.handleNotificationShow.bind(this);
+        operations$6.notificationClick.execute = this.handleNotificationClick.bind(this);
+        operations$6.notificationRaised.execute = this.handleNotificationRaised.bind(this);
+        operations$6.notificationClosed.execute = this.handleNotificationClosed.bind(this);
+        operations$6.configurationChanged.execute = this.handleConfigurationChanged.bind(this);
+        operations$6.activeCountChange.execute = this.handleActiveCountChanged.bind(this);
+        operations$6.stateChange.execute = this.handleNotificationStateChanged.bind(this);
+    }
+    handleConfigurationChanged(data) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            this.registry.execute("notifications-config-changed", data.configuration);
+        });
+    }
+    handleActiveCountChanged(data) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            this.registry.execute("notifications-active-count-changed", data);
+        });
+    }
+    handleNotificationStateChanged(data) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            this.registry.execute("notification-state-changed", { id: data.id }, data.state);
+        });
     }
     handleNotificationShow(data) {
         return __awaiter$1(this, void 0, void 0, function* () {
@@ -4642,12 +4819,13 @@ class NotificationsController {
     }
 }
 
-const operations$4 = {
+const operations$5 = {
     getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder },
     findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder, resultDecoder: wrappedIntentsDecoder },
     raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder },
     raise: { name: "raise", dataDecoder: raiseIntentRequestDecoder, resultDecoder: intentResultDecoder },
-    filterHandlers: { name: "filterHandlers", dataDecoder: filterHandlersWithResolverConfigDecoder, resultDecoder: filterHandlersResultDecoder }
+    filterHandlers: { name: "filterHandlers", dataDecoder: filterHandlersWithResolverConfigDecoder, resultDecoder: filterHandlersResultDecoder },
+    getIntentsByHandler: { name: "getIntentsByHandler", dataDecoder: intentHandlerDecoder, resultDecoder: getIntentsResultDecoder }
 };
 
 const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
@@ -4686,7 +4864,7 @@ class IntentsController {
     handleBridgeMessage(args) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const operationName = intentsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$4[operationName];
+            const operation = operations$5[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -4704,7 +4882,8 @@ class IntentsController {
             addIntentListener: this.addIntentListener.bind(this),
             register: this.register.bind(this),
             find: this.find.bind(this),
-            filterHandlers: this.filterHandlers.bind(this)
+            filterHandlers: this.filterHandlers.bind(this),
+            getIntents: this.getIntentsByHandler.bind(this)
         };
         return api;
     }
@@ -4725,7 +4904,7 @@ class IntentsController {
             const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
                 ? MAX_SET_TIMEOUT_DELAY
                 : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-            const response = yield this.bridge.send("intents", operations$4.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
+            const response = yield this.bridge.send("intents", operations$5.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
             return response;
         });
     }
@@ -4765,7 +4944,7 @@ class IntentsController {
     all() {
         return __awaiter$1(this, void 0, void 0, function* () {
             yield Promise.all(this.unregisterIntentPromises);
-            const result = yield this.bridge.send("intents", operations$4.getIntents, undefined);
+            const result = yield this.bridge.send("intents", operations$5.getIntents, undefined);
             return result.intents;
         });
     }
@@ -4863,7 +5042,7 @@ class IntentsController {
                 }
             }
             yield Promise.all(this.unregisterIntentPromises);
-            const result = yield this.bridge.send("intents", operations$4.findIntent, data);
+            const result = yield this.bridge.send("intents", operations$5.findIntent, data);
             return result.intents;
         });
     }
@@ -4904,19 +5083,28 @@ class IntentsController {
             }
             const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
             const filterHandlersRequestWithResolverConfig = { filterHandlersRequest: handlerFilter, resolverConfig: this.getResolverConfigByRequest({ handlerFilter }) };
-            const result = yield this.bridge.send("intents", operations$4.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
-            return result.handlers;
+            const result = yield this.bridge.send("intents", operations$5.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
+            return result;
         });
     }
     checkIfAtLeastOneFilterIsPresent(filter) {
-        const errorMsg = "Provide at least one filter criteria of the following: 'contextTypes' | 'intent' | 'resultType'";
+        const errorMsg = "Provide at least one filter criteria of the following: 'intent' | 'contextTypes' | 'resultType' | 'applicationNames'";
         if (!Object.keys(filter).length) {
             throw new Error(errorMsg);
         }
-        const { intent, resultType, contextTypes } = filter;
-        if (!intent && !resultType && (!contextTypes || !contextTypes.length)) {
+        const { intent, resultType, contextTypes, applicationNames } = filter;
+        const existingValidContextTypes = contextTypes === null || contextTypes === void 0 ? void 0 : contextTypes.length;
+        const existingValidApplicationNames = applicationNames === null || applicationNames === void 0 ? void 0 : applicationNames.length;
+        if (!intent && !resultType && !existingValidContextTypes && !existingValidApplicationNames) {
             throw new Error(errorMsg);
         }
+    }
+    getIntentsByHandler(handler) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            intentHandlerDecoder.runWithException(handler);
+            const result = yield this.bridge.send("intents", operations$5.getIntentsByHandler, handler, undefined, { includeOperationCheck: true });
+            return result;
+        });
     }
 }
 
@@ -4934,7 +5122,7 @@ const Glue42CoreMessageTypes = {
 const webPlatformTransportName = "web-platform";
 const latestFDC3Type = "latest_fdc3_type";
 
-const operations$3 = {
+const operations$4 = {
     addChannel: { name: "addChannel", dataDecoder: channelContextDecoder },
     getMyChannel: { name: "getMyChannel", resultDecoder: getMyChanelResultDecoder },
     getWindowIdsOnChannel: { name: "getWindowIdsOnChannel", dataDecoder: getWindowIdsOnChannelDataDecoder, resultDecoder: getWindowIdsOnChannelResultDecoder },
@@ -4971,8 +5159,8 @@ class ChannelsController {
         this.registry.clear();
     }
     addOperationsExecutors() {
-        operations$3.getMyChannel.execute = this.handleGetMyChannel.bind(this);
-        operations$3.joinChannel.execute = this.handleJoinChannel.bind(this);
+        operations$4.getMyChannel.execute = this.handleGetMyChannel.bind(this);
+        operations$4.joinChannel.execute = this.handleJoinChannel.bind(this);
     }
     start(coreGlue, ioc) {
         return __awaiter$1(this, void 0, void 0, function* () {
@@ -4991,7 +5179,7 @@ class ChannelsController {
     handleBridgeMessage(args) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const operationName = channelsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$3[operationName];
+            const operation = operations$4[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -5027,7 +5215,7 @@ class ChannelsController {
                 yield this.switchToChannel(name);
             }
             else {
-                yield this.bridge.send("channels", operations$3.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
+                yield this.bridge.send("channels", operations$4.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
             }
         });
     }
@@ -5198,7 +5386,7 @@ class ChannelsController {
             if (channelWithSuchNameExists) {
                 throw new Error("There's an already existing channel with such name");
             }
-            yield this.bridge.send("channels", operations$3.addChannel, channelContext);
+            yield this.bridge.send("channels", operations$4.addChannel, channelContext);
             return channelContext;
         });
     }
@@ -5214,7 +5402,7 @@ class ChannelsController {
         return __awaiter$1(this, void 0, void 0, function* () {
             const channelNames = this.getAllChannelNames();
             channelNameDecoder(channelNames).runWithException(channel);
-            const { windowIds } = yield this.bridge.send("channels", operations$3.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
+            const { windowIds } = yield this.bridge.send("channels", operations$4.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
             const result = windowIds.reduce((windows, windowId) => {
                 const window = this.windowsController.findById(windowId);
                 return window ? [...windows, window] : windows;
@@ -5227,7 +5415,7 @@ class ChannelsController {
             const operationData = filter !== undefined
                 ? { filter: windowWithChannelFilterDecoder.runWithException(filter) }
                 : {};
-            const { windowIdsWithChannels } = yield this.bridge.send("channels", operations$3.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
+            const { windowIdsWithChannels } = yield this.bridge.send("channels", operations$4.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
             const result = windowIdsWithChannels.reduce((windowsWithChannels, { application, channel, windowId }) => {
                 const window = this.windowsController.findById(windowId);
                 return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
@@ -5237,7 +5425,7 @@ class ChannelsController {
     }
 }
 
-const operations$2 = {
+const operations$3 = {
     getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder },
     getBase: { name: "getBase", resultDecoder: anyDecoder },
     platformShutdown: { name: "platformShutdown" }
@@ -5255,7 +5443,7 @@ class SystemController {
     handleBridgeMessage(args) {
         return __awaiter$1(this, void 0, void 0, function* () {
             const operationName = systemOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$2[operationName];
+            const operation = operations$3[operationName];
             if (!operation.execute) {
                 return;
             }
@@ -5276,8 +5464,8 @@ class SystemController {
     }
     setEnvironment() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const environment = yield this.bridge.send("system", operations$2.getEnvironment, undefined);
-            const base = yield this.bridge.send("system", operations$2.getBase, undefined);
+            const environment = yield this.bridge.send("system", operations$3.getEnvironment, undefined);
+            const base = yield this.bridge.send("system", operations$3.getBase, undefined);
             const globalNamespace = window.glue42core || window.iobrowser;
             const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
             const globalObj = Object.assign({}, globalNamespace, base, { environment });
@@ -5285,7 +5473,7 @@ class SystemController {
         });
     }
     addOperationsExecutors() {
-        operations$2.platformShutdown.execute = this.processPlatformShutdown.bind(this);
+        operations$3.platformShutdown.execute = this.processPlatformShutdown.bind(this);
     }
 }
 
@@ -5314,6 +5502,7 @@ class Notification {
         this.severity = config.severity;
         this.showToast = config.showToast;
         this.showInPanel = config.showInPanel;
+        this.state = config.state;
     }
 }
 
@@ -5324,7 +5513,7 @@ const extensionConfigDecoder = object$1({
     })
 });
 
-const operations$1 = {
+const operations$2 = {
     clientHello: { name: "clientHello", resultDecoder: extensionConfigDecoder }
 };
 
@@ -5382,7 +5571,7 @@ class ExtController {
     registerWithPlatform() {
         return __awaiter$1(this, void 0, void 0, function* () {
             this.logger.trace("registering with the platform");
-            this.config = yield this.bridge.send("extension", operations$1.clientHello, { windowId: this.windowId });
+            this.config = yield this.bridge.send("extension", operations$2.clientHello, { windowId: this.windowId });
             this.logger.trace("the platform responded to the hello message with a valid extension config");
         });
     }
@@ -5728,7 +5917,7 @@ class LegacyIntentsHelper {
         });
     }
     invokeRaiseIntent(requestObj) {
-        return this.bridge.send("intents", operations$4.raiseIntent, requestObj);
+        return this.bridge.send("intents", operations$5.raiseIntent, requestObj);
     }
     registerResponseMethod() {
         return __awaiter$1(this, void 0, void 0, function* () {
@@ -5888,7 +6077,7 @@ class LegacyIntentsHelper {
     }
 }
 
-const operations = {
+const operations$1 = {
     getCurrent: { name: "getCurrent", resultDecoder: simpleThemeResponseDecoder },
     list: { name: "list", resultDecoder: allThemesResponseDecoder },
     select: { name: "select", dataDecoder: selectThemeConfigDecoder }
@@ -5931,20 +6120,20 @@ class ThemesController {
     }
     getCurrent() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("themes", operations.getCurrent, undefined, undefined, { includeOperationCheck: true });
+            const bridgeResponse = yield this.bridge.send("themes", operations$1.getCurrent, undefined, undefined, { includeOperationCheck: true });
             return bridgeResponse.theme;
         });
     }
     list() {
         return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("themes", operations.list, undefined, undefined, { includeOperationCheck: true });
+            const bridgeResponse = yield this.bridge.send("themes", operations$1.list, undefined, undefined, { includeOperationCheck: true });
             return bridgeResponse.themes;
         });
     }
     select(name) {
         return __awaiter$1(this, void 0, void 0, function* () {
             nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("themes", operations.select, { name }, undefined, { includeOperationCheck: true });
+            yield this.bridge.send("themes", operations$1.select, { name }, undefined, { includeOperationCheck: true });
         });
     }
     onChanged(callback) {
@@ -6026,6 +6215,175 @@ class SessionStorageController {
     }
 }
 
+const operations = {
+    clear: { name: "clear", dataDecoder: basePrefsConfigDecoder },
+    clearAll: { name: "clearAll" },
+    get: { name: "get", dataDecoder: basePrefsConfigDecoder, resultDecoder: getPrefsResultDecoder },
+    getAll: { name: "getAll", resultDecoder: getAllPrefsResultDecoder },
+    set: { name: "set", dataDecoder: changePrefsDataDecoder },
+    update: { name: "update", dataDecoder: changePrefsDataDecoder },
+    prefsChanged: { name: "prefsChanged", dataDecoder: getPrefsResultDecoder },
+    prefsHello: { name: "prefsHello", resultDecoder: prefsHelloSuccessDecoder },
+};
+
+class PrefsController {
+    constructor() {
+        this.registry = lib$3();
+    }
+    handlePlatformShutdown() {
+        this.registry.clear();
+    }
+    start(coreGlue, ioc) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            this.logger = coreGlue.logger.subLogger("prefs.controller.web");
+            this.logger.trace("starting the web prefs controller");
+            this.addOperationsExecutors();
+            this.bridge = ioc.bridge;
+            this.config = ioc.config;
+            this.appManagerController = ioc.appManagerController;
+            try {
+                const prefsHelloSuccess = yield this.bridge.send("prefs", operations.prefsHello, undefined, undefined, { includeOperationCheck: true });
+                this.platformAppName = prefsHelloSuccess.platform.app;
+            }
+            catch (error) {
+                this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
+                return;
+            }
+            this.logger.trace("no need for platform registration, attaching the prefs property to glue and returning");
+            const api = this.toApi();
+            coreGlue.prefs = api;
+        });
+    }
+    handleBridgeMessage(args) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const operationName = prefsOperationTypesDecoder.runWithException(args.operation);
+            const operation = operations[operationName];
+            if (!operation.execute) {
+                return;
+            }
+            let operationData = args.data;
+            if (operation.dataDecoder) {
+                operationData = operation.dataDecoder.runWithException(args.data);
+            }
+            return yield operation.execute(operationData);
+        });
+    }
+    addOperationsExecutors() {
+        operations.prefsChanged.execute = this.handleOnChanged.bind(this);
+    }
+    toApi() {
+        const api = {
+            clear: this.clear.bind(this),
+            clearAll: this.clearAll.bind(this),
+            clearFor: this.clearFor.bind(this),
+            get: this.get.bind(this),
+            getAll: this.getAll.bind(this),
+            set: this.set.bind(this),
+            setFor: this.setFor.bind(this),
+            subscribe: this.subscribe.bind(this),
+            subscribeFor: this.subscribeFor.bind(this),
+            update: this.update.bind(this),
+            updateFor: this.updateFor.bind(this),
+        };
+        return api;
+    }
+    clear() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const app = this.getMyAppName();
+            yield this.clearFor(app);
+        });
+    }
+    clearAll() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            yield this.bridge.send("prefs", operations.clearAll, undefined, undefined, { includeOperationCheck: true });
+        });
+    }
+    clearFor(app) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+            yield this.bridge.send("prefs", operations.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
+        });
+    }
+    get(app) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedApp = app === undefined || app === null ? this.getMyAppName() : nonEmptyStringDecoder.runWithException(app);
+            const { prefs } = yield this.bridge.send("prefs", operations.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
+            return prefs;
+        });
+    }
+    getAll() {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const result = yield this.bridge.send("prefs", operations.getAll, undefined, undefined, { includeOperationCheck: true });
+            return result;
+        });
+    }
+    set(data, options) {
+        var _a;
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
+            const app = (_a = verifiedOptions === null || verifiedOptions === void 0 ? void 0 : verifiedOptions.app) !== null && _a !== void 0 ? _a : this.getMyAppName();
+            yield this.setFor(app, data);
+        });
+    }
+    setFor(app, data) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+            const verifiedData = object$1().runWithException(data);
+            yield this.bridge.send("prefs", operations.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
+        });
+    }
+    subscribe(callback) {
+        const app = this.getMyAppName();
+        return this.subscribeFor(app, callback);
+    }
+    subscribeFor(app, callback) {
+        const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+        const applications = this.appManagerController.getApplications();
+        const isValidApp = verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp);
+        if (!isValidApp) {
+            throw new Error(`The provided app name "${app}" is not valid.`);
+        }
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to prefs, because the provided callback is not a function!");
+        }
+        const subscriptionKey = this.getSubscriptionKey(verifiedApp);
+        this.get(verifiedApp).then(callback);
+        return this.registry.add(subscriptionKey, callback);
+    }
+    update(data, options) {
+        var _a;
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
+            const app = (_a = verifiedOptions === null || verifiedOptions === void 0 ? void 0 : verifiedOptions.app) !== null && _a !== void 0 ? _a : this.getMyAppName();
+            yield this.updateFor(app, data);
+        });
+    }
+    updateFor(app, data) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+            const verifiedData = object$1().runWithException(data);
+            yield this.bridge.send("prefs", operations.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
+        });
+    }
+    getMyAppName() {
+        var _a;
+        const myAppName = this.config.isPlatformInternal ? this.platformAppName : (_a = this.appManagerController.me) === null || _a === void 0 ? void 0 : _a.application.name;
+        if (!myAppName) {
+            throw new Error("App Preferences operations can not be executed for windows that do not have app!");
+        }
+        return myAppName;
+    }
+    getSubscriptionKey(app) {
+        return `prefs-changed-${app}`;
+    }
+    handleOnChanged({ prefs }) {
+        return __awaiter$1(this, void 0, void 0, function* () {
+            const subscriptionKey = this.getSubscriptionKey(prefs.app);
+            this.registry.execute(subscriptionKey, prefs);
+        });
+    }
+}
+
 class IoC {
     constructor() {
         this.controllers = {
@@ -6037,7 +6395,8 @@ class IoC {
             channels: this.channelsController,
             system: this.systemController,
             extension: this.extensionController,
-            themes: this.themesController
+            themes: this.themesController,
+            prefs: this.prefsController
         };
     }
     get communicationId() {
@@ -6099,6 +6458,12 @@ class IoC {
             this._channelsControllerInstance = new ChannelsController();
         }
         return this._channelsControllerInstance;
+    }
+    get prefsController() {
+        if (!this._prefsControllerInstance) {
+            this._prefsControllerInstance = new PrefsController();
+        }
+        return this._prefsControllerInstance;
     }
     get extensionController() {
         if (!this._extensionController) {
@@ -6165,7 +6530,7 @@ class IoC {
     }
 }
 
-var version$2 = "3.1.2";
+var version$2 = "3.2.0";
 
 const createFactoryFunction = (coreFactoryFunction) => {
     return (userConfig) => __awaiter$1(void 0, void 0, void 0, function* () {
@@ -9818,7 +10183,7 @@ var ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.1.0";
+var version = "6.2.0";
 
 function prepareConfig (configuration, ext, glue42gd) {
     var _a, _b, _c, _d;
@@ -12094,7 +12459,7 @@ var GW3Bridge = (function () {
                         currentContext = _b.sent();
                         _b.label = 4;
                     case 4:
-                        calculatedDelta = this.protocolVersion === 2 ?
+                        calculatedDelta = this.setPathSupported ?
                             this.calculateContextDeltaV2(currentContext, delta) :
                             this.calculateContextDeltaV1(currentContext, delta);
                         if (!Object.keys(calculatedDelta.added).length
