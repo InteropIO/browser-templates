@@ -34,6 +34,7 @@ const App = () => {
     };
 
     useIOConnect(async (io) => {
+        (window as any).io = io;
 
         const isPlatform = (window as any).iobrowser?.isPlatformFrame;
 
