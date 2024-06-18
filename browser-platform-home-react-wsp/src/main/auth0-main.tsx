@@ -5,7 +5,7 @@ import { useMemo } from "react";
 export const Auth0Main = () => {
     const ioConnectHomeConfig: IOConnectHomeConfig = useMemo(
         () => ({
-            ioConnectConfig: getIoConfig(),
+            getIOConnectConfig: getIoConfig,
             login: {
                 type: 'auth0',
                 providerOptions: {
