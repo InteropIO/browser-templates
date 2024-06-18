@@ -1,6 +1,6 @@
 import IOBrowserPlatform from "./libs/browser.platform.es.js";
 
-import config from "./config.json" assert { type: "json" };
+import config from "./config.json" with { type: "json" };
 
 document.getElementById("connection-status").innerHTML = "IO.Connect Browser Platform Not Connected";
 

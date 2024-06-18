@@ -5,7 +5,7 @@ import { useMemo } from "react";
 export const NoAuthMain = () => {
     const ioConnectHomeConfig: IOConnectHomeConfig = useMemo(
         () => ({
-            ioConnectConfig: getIoConfig(),
+            getIOConnectConfig: getIoConfig,
         }),
         []
     );
