@@ -1,40 +1,3 @@
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-
-function __rest$2(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-}
-
-function __awaiter$1(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-}
-
 const defaultConfig = {
     logger: "info",
     gateway: { webPlatform: {} },
@@ -42,11 +5,10 @@ const defaultConfig = {
     exposeAPI: true
 };
 const parseConfig = (config) => {
-    var _a, _b, _c;
-    const isPlatformInternal = !!((_b = (_a = config === null || config === void 0 ? void 0 : config.gateway) === null || _a === void 0 ? void 0 : _a.webPlatform) === null || _b === void 0 ? void 0 : _b.port);
+    const isPlatformInternal = !!config?.gateway?.webPlatform?.port;
     const combined = Object.assign({}, defaultConfig, config, { isPlatformInternal });
     if (combined.systemLogger) {
-        combined.logger = (_c = combined.systemLogger.level) !== null && _c !== void 0 ? _c : "info";
+        combined.logger = combined.systemLogger.level ?? "info";
     }
     return combined;
 };
@@ -64,14 +26,13 @@ const checkSingleton = () => {
 };
 
 const enterprise = (config) => {
-    var _a, _b, _c;
     const enterpriseConfig = {
         windows: true,
         layouts: "full",
         appManager: "full",
         channels: true,
-        libraries: (_a = config === null || config === void 0 ? void 0 : config.libraries) !== null && _a !== void 0 ? _a : [],
-        logger: (_c = (_b = config === null || config === void 0 ? void 0 : config.systemLogger) === null || _b === void 0 ? void 0 : _b.level) !== null && _c !== void 0 ? _c : "warn"
+        libraries: config?.libraries ?? [],
+        logger: config?.systemLogger?.level ?? "warn"
     };
     const injectedFactory = window.IODesktop || window.Glue;
     return injectedFactory(enterpriseConfig);
@@ -183,15 +144,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 
 
-var __assign$2 = function() {
-    __assign$2 = Object.assign || function __assign(t) {
+var __assign$1 = function() {
+    __assign$1 = Object.assign || function __assign(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
             s = arguments[i];
             for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
         }
         return t;
     };
-    return __assign$2.apply(this, arguments);
+    return __assign$1.apply(this, arguments);
 };
 
 function __rest$1(s, e) {
@@ -287,7 +248,7 @@ var printPath$1 = function (paths) {
 };
 var prependAt$1 = function (newAt, _a) {
     var at = _a.at, rest = __rest$1(_a, ["at"]);
-    return (__assign$2({ at: newAt + (at || '') }, rest));
+    return (__assign$1({ at: newAt + (at || '') }, rest));
 };
 /**
  * Decoders transform json objects with unknown structure into known and
@@ -967,15 +928,15 @@ PERFORMANCE OF THIS SOFTWARE.
 
 
 
-var __assign$1 = function() {
-    __assign$1 = Object.assign || function __assign(t) {
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
             s = arguments[i];
             for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
         }
         return t;
     };
-    return __assign$1.apply(this, arguments);
+    return __assign.apply(this, arguments);
 };
 
 function __rest(s, e) {
@@ -1071,7 +1032,7 @@ var printPath = function (paths) {
 };
 var prependAt = function (newAt, _a) {
     var at = _a.at, rest = __rest(_a, ["at"]);
-    return (__assign$1({ at: newAt + (at || '') }, rest));
+    return (__assign({ at: newAt + (at || '') }, rest));
 };
 /**
  * Decoders transform json objects with unknown structure into known and
@@ -1711,7 +1672,8 @@ const glue42HostManifestsBrowserDecoder = object({
     hidden: optional(boolean())
 });
 const hostManifestsBrowserDecoder = oneOf(object({
-    "Glue42": oneOf(glue42HostManifestsBrowserDecoder, anyJson())
+    "ioConnect": optional(oneOf(glue42HostManifestsBrowserDecoder, anyJson())),
+    "Glue42": optional(oneOf(glue42HostManifestsBrowserDecoder, anyJson()))
 }), anyJson());
 const v1DefinitionDecoder = object({
     name: nonEmptyStringDecoder$1,
@@ -1779,15 +1741,13 @@ const parseDecoderErrorToStringMessage = (error) => {
 };
 
 class FDC3Service {
-    constructor() {
-        this.fdc3ToDesktopDefinitionType = {
-            web: "window",
-            native: "exe",
-            citrix: "citrix",
-            onlineNative: "clickonce",
-            other: "window"
-        };
-    }
+    fdc3ToDesktopDefinitionType = {
+        web: "window",
+        native: "exe",
+        citrix: "citrix",
+        onlineNative: "clickonce",
+        other: "window"
+    };
     toApi() {
         return {
             isFdc3Definition: this.isFdc3Definition.bind(this),
@@ -1809,7 +1769,6 @@ class FDC3Service {
         return { isFdc3: false, reason: "The passed definition is not FDC3" };
     }
     parseToBrowserBaseAppData(definition) {
-        var _a;
         const { isFdc3, version } = this.isFdc3Definition(definition);
         if (!isFdc3) {
             throw new Error("The passed definition is not FDC3");
@@ -1820,33 +1779,37 @@ class FDC3Service {
         }
         const userProperties = this.getUserPropertiesFromDefinition(definition, version);
         const createOptions = { url: this.getUrl(definition, version) };
-        let baseApplicationData = {
+        const baseApplicationData = {
             name: definition.appId,
             type: "window",
             createOptions,
-            userProperties: Object.assign(Object.assign({}, userProperties), { intents: version === "1.2"
+            userProperties: {
+                ...userProperties,
+                intents: version === "1.2"
                     ? userProperties.intents
-                    : this.getIntentsFromV2AppDefinition(definition), details: createOptions }),
+                    : this.getIntentsFromV2AppDefinition(definition),
+                details: createOptions
+            },
             title: definition.title,
             version: definition.version,
             icon: this.getIconFromDefinition(definition, version),
             caption: definition.description,
-            fdc3: version === "2.0" ? Object.assign(Object.assign({}, definition), { definitionVersion: "2.0" }) : undefined,
+            fdc3: version === "2.0" ? { ...definition, definitionVersion: "2.0" } : undefined,
         };
-        if ((_a = definition.hostManifests) === null || _a === void 0 ? void 0 : _a["Glue42"]) {
-            const decodeRes = glue42HostManifestsBrowserDecoder.run(definition.hostManifests["Glue42"]);
-            if (!decodeRes.ok) {
-                throw new Error(`Invalid FDC3 ${version} definition. Error: ${parseDecoderErrorToStringMessage(decodeRes.error)}`);
-            }
-            if (!Object.keys(decodeRes.result).length) {
-                throw new Error("Invalid 'hostManifests['Glue42]' key");
-            }
-            baseApplicationData = this.mergeBaseAppDataWithGlueManifest(baseApplicationData, decodeRes.result);
+        const ioConnectDefinition = definition.hostManifests?.ioConnect || definition.hostManifests?.["Glue42"];
+        if (!ioConnectDefinition) {
+            return baseApplicationData;
         }
-        return baseApplicationData;
+        const ioDefinitionDecodeRes = glue42HostManifestsBrowserDecoder.run(ioConnectDefinition);
+        if (!ioDefinitionDecodeRes.ok) {
+            throw new Error(`Invalid FDC3 ${version} definition. Error: ${parseDecoderErrorToStringMessage(ioDefinitionDecodeRes.error)}`);
+        }
+        if (!Object.keys(ioDefinitionDecodeRes.result).length) {
+            return baseApplicationData;
+        }
+        return this.mergeBaseAppDataWithGlueManifest(baseApplicationData, ioDefinitionDecodeRes.result);
     }
     parseToDesktopAppConfig(definition) {
-        var _a, _b, _c;
         const { isFdc3, version } = this.isFdc3Definition(definition);
         if (!isFdc3) {
             throw new Error("The passed definition is not FDC3");
@@ -1867,7 +1830,7 @@ class FDC3Service {
                 title: fdc3v1Definition.title,
                 tooltip: fdc3v1Definition.tooltip,
                 caption: fdc3v1Definition.description,
-                icon: (_a = fdc3v1Definition.icons) === null || _a === void 0 ? void 0 : _a[0].icon,
+                icon: fdc3v1Definition.icons?.[0].icon,
                 intents: fdc3v1Definition.intents,
                 customProperties: {
                     manifestType: fdc3v1Definition.manifestType,
@@ -1881,7 +1844,7 @@ class FDC3Service {
             };
         }
         const fdc3v2Definition = definition;
-        let desktopDefinition = {
+        const desktopDefinition = {
             name: fdc3v2Definition.appId,
             type: this.fdc3ToDesktopDefinitionType[fdc3v2Definition.type],
             details: fdc3v2Definition.details,
@@ -1891,15 +1854,16 @@ class FDC3Service {
             caption: fdc3v2Definition.description,
             icon: this.getIconFromDefinition(fdc3v2Definition, "2.0"),
             intents: this.getIntentsFromV2AppDefinition(fdc3v2Definition),
-            fdc3: Object.assign(Object.assign({}, fdc3v2Definition), { definitionVersion: "2.0" })
+            fdc3: { ...fdc3v2Definition, definitionVersion: "2.0" }
         };
-        if ((_b = fdc3v2Definition.hostManifests) === null || _b === void 0 ? void 0 : _b["Glue42"]) {
-            if (typeof fdc3v2Definition.hostManifests["Glue42"] !== "object" || Array.isArray(fdc3v2Definition.hostManifests["Glue42"])) {
-                throw new Error("Invalid 'hostManifests['Glue42]' key");
-            }
-            desktopDefinition = this.mergeDesktopConfigWithGlueManifest(desktopDefinition, (_c = fdc3v2Definition.hostManifests) === null || _c === void 0 ? void 0 : _c["Glue42"]);
+        const ioConnectDefinition = definition.hostManifests?.ioConnect || definition.hostManifests?.["Glue42"];
+        if (!ioConnectDefinition) {
+            return desktopDefinition;
         }
-        return desktopDefinition;
+        if (typeof ioConnectDefinition !== "object" || Array.isArray(ioConnectDefinition)) {
+            throw new Error(`Invalid '${definition.hostManifests.ioConnect ? "hostManifests.ioConnect" : "hostManifests['Glue42']"}' key`);
+        }
+        return this.mergeDesktopConfigWithGlueManifest(desktopDefinition, ioConnectDefinition);
     }
     getUserPropertiesFromDefinition(definition, version) {
         if (version === "1.2") {
@@ -1908,14 +1872,13 @@ class FDC3Service {
         return Object.fromEntries(Object.entries(definition).filter(([key]) => !connectBrowserAppProps.includes(key) && !fdc3v2AppProps.includes(key)));
     }
     getUrl(definition, version) {
-        var _a, _b;
         let url;
         if (version === "1.2") {
             const parsedManifest = JSON.parse(definition.manifest);
-            url = ((_a = parsedManifest.details) === null || _a === void 0 ? void 0 : _a.url) || parsedManifest.url;
+            url = parsedManifest.details?.url || parsedManifest.url;
         }
         else {
-            url = (_b = definition.details) === null || _b === void 0 ? void 0 : _b.url;
+            url = definition.details?.url;
         }
         if (!url || typeof url !== "string") {
             throw new Error(`Invalid FDC3 ${version} definition. Provide valid 'url' under '${version === "1.2" ? "manifest" : "details"}' key`);
@@ -1923,41 +1886,42 @@ class FDC3Service {
         return url;
     }
     getIntentsFromV2AppDefinition(definition) {
-        var _a, _b;
-        const fdc3Intents = (_b = (_a = definition.interop) === null || _a === void 0 ? void 0 : _a.intents) === null || _b === void 0 ? void 0 : _b.listensFor;
+        const fdc3Intents = definition.interop?.intents?.listensFor;
         if (!fdc3Intents) {
             return;
         }
         const intents = Object.entries(fdc3Intents).map((fdc3Intent) => {
             const [intentName, intentData] = fdc3Intent;
-            return Object.assign({ name: intentName }, intentData);
+            return {
+                name: intentName,
+                ...intentData
+            };
         });
         return intents;
     }
     getIconFromDefinition(definition, version) {
-        var _a, _b, _c, _d;
         if (version === "1.2") {
-            return ((_b = (_a = definition.icons) === null || _a === void 0 ? void 0 : _a.find((iconDef) => iconDef.icon)) === null || _b === void 0 ? void 0 : _b.icon) || undefined;
+            return definition.icons?.find((iconDef) => iconDef.icon)?.icon || undefined;
         }
-        return ((_d = (_c = definition.icons) === null || _c === void 0 ? void 0 : _c.find((iconDef) => iconDef.src)) === null || _d === void 0 ? void 0 : _d.src) || undefined;
+        return definition.icons?.find((iconDef) => iconDef.src)?.src || undefined;
     }
     mergeBaseAppDataWithGlueManifest(baseAppData, hostManifestDefinition) {
         let baseApplicationDefinition = baseAppData;
         if (hostManifestDefinition.details) {
-            const details = Object.assign(Object.assign({}, baseAppData.createOptions), hostManifestDefinition.details);
+            const details = { ...baseAppData.createOptions, ...hostManifestDefinition.details };
             baseApplicationDefinition.createOptions = details;
             baseApplicationDefinition.userProperties.details = details;
         }
         if (Array.isArray(hostManifestDefinition.intents)) {
             baseApplicationDefinition.userProperties.intents = (baseApplicationDefinition.userProperties.intents || []).concat(hostManifestDefinition.intents);
         }
-        baseApplicationDefinition = Object.assign(Object.assign({}, baseApplicationDefinition), hostManifestDefinition);
+        baseApplicationDefinition = { ...baseApplicationDefinition, ...hostManifestDefinition };
         delete baseApplicationDefinition.details;
         delete baseApplicationDefinition.intents;
         return baseApplicationDefinition;
     }
     mergeDesktopConfigWithGlueManifest(config, desktopDefinition) {
-        const appConfig = Object.assign({}, config, desktopDefinition, { details: Object.assign(Object.assign({}, config.details), desktopDefinition.details) });
+        const appConfig = Object.assign({}, config, desktopDefinition, { details: { ...config.details, ...desktopDefinition.details } });
         if (Array.isArray(desktopDefinition.intents)) {
             appConfig.intents = (config.intents || []).concat(desktopDefinition.intents);
         }
@@ -1993,12 +1957,11 @@ var INTENTS_ERRORS;
 })(INTENTS_ERRORS || (INTENTS_ERRORS = {}));
 
 let IoC$1 = class IoC {
-    constructor() {
-        this._decoders = decoders$1;
-        this._errors = {
-            intents: INTENTS_ERRORS
-        };
-    }
+    _fdc3;
+    _decoders = decoders$1;
+    _errors = {
+        intents: INTENTS_ERRORS
+    };
     get fdc3() {
         if (!this._fdc3) {
             this._fdc3 = new FDC3Service().toApi();
@@ -2024,7 +1987,7 @@ const optionalNonEmptyStringDecoder = optional$1(nonEmptyStringDecoder);
 const libDomainDecoder = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("intents"), constant$1("notifications"), constant$1("channels"), constant$1("extension"), constant$1("themes"), constant$1("prefs"));
 const windowOperationTypesDecoder = oneOf$1(constant$1("openWindow"), constant$1("windowHello"), constant$1("windowAdded"), constant$1("windowRemoved"), constant$1("getBounds"), constant$1("getFrameBounds"), constant$1("getUrl"), constant$1("moveResize"), constant$1("focus"), constant$1("close"), constant$1("getTitle"), constant$1("setTitle"), constant$1("focusChange"), constant$1("getChannel"));
 const appManagerOperationTypesDecoder = oneOf$1(constant$1("appHello"), constant$1("appDirectoryStateChange"), constant$1("instanceStarted"), constant$1("instanceStopped"), constant$1("applicationStart"), constant$1("instanceStop"), constant$1("clear"));
-const layoutsOperationTypesDecoder = oneOf$1(constant$1("layoutAdded"), constant$1("layoutChanged"), constant$1("layoutRemoved"), constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"), constant$1("getDefaultGlobal"), constant$1("setDefaultGlobal"), constant$1("clearDefaultGlobal"));
+const layoutsOperationTypesDecoder = oneOf$1(constant$1("layoutAdded"), constant$1("layoutChanged"), constant$1("layoutRemoved"), constant$1("layoutRenamed"), constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("rename"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"), constant$1("getDefaultGlobal"), constant$1("setDefaultGlobal"), constant$1("clearDefaultGlobal"), constant$1("updateMetadata"));
 const notificationsOperationTypesDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("notificationShow"), constant$1("notificationClick"), constant$1("getPermission"), constant$1("list"), constant$1("notificationRaised"), constant$1("notificationClosed"), constant$1("click"), constant$1("clear"), constant$1("clearAll"), constant$1("configure"), constant$1("getConfiguration"), constant$1("configurationChanged"), constant$1("setState"), constant$1("clearOld"), constant$1("activeCountChange"), constant$1("stateChange"));
 const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"), constant$1("platformShutdown"));
 const windowRelativeDirectionDecoder = oneOf$1(constant$1("top"), constant$1("left"), constant$1("right"), constant$1("bottom"));
@@ -2325,6 +2288,16 @@ const simpleLayoutConfigDecoder = object$1({
 const saveLayoutConfigDecoder = object$1({
     layout: newLayoutOptionsDecoder
 });
+const renameLayoutConfigDecoder = object$1({
+    layout: glueLayoutDecoder,
+    newName: nonEmptyStringDecoder
+});
+const layoutResultDecoder = object$1({
+    status: nonEmptyStringDecoder
+});
+const updateLayoutMetadataConfigDecoder = object$1({
+    layout: glueLayoutDecoder,
+});
 const restoreLayoutConfigDecoder = object$1({
     layout: restoreOptionsDecoder
 });
@@ -2338,7 +2311,7 @@ const importModeDecoder = oneOf$1(constant$1("replace"), constant$1("merge"));
 const layoutsImportConfigDecoder = object$1({
     layouts: array$1(glueLayoutDecoder),
     mode: importModeDecoder,
-    isManagerOperation: optional$1(boolean$1())
+    skipManagerRequest: optional$1(boolean$1())
 });
 const allLayoutsSummariesResultDecoder = object$1({
     summaries: array$1(layoutSummaryDecoder)
@@ -2526,6 +2499,38 @@ const channelContextDecoder = object$1({
     }),
     data: optional$1(object$1()),
 });
+const removeChannelDataDecoder = object$1({
+    name: nonEmptyStringDecoder
+});
+const channelRestrictionsDecoder = object$1({
+    name: nonEmptyStringDecoder,
+    read: boolean$1(),
+    write: boolean$1(),
+    windowId: optional$1(nonEmptyStringDecoder)
+});
+const channelRestrictionConfigWithWindowIdDecoder = object$1({
+    name: nonEmptyStringDecoder,
+    read: boolean$1(),
+    write: boolean$1(),
+    windowId: nonEmptyStringDecoder
+});
+const restrictionConfigDataDecoder = object$1({
+    config: channelRestrictionConfigWithWindowIdDecoder
+});
+const restrictionsDecoder = object$1({
+    channels: array$1(channelRestrictionsDecoder)
+});
+const getRestrictionsDataDecoder = object$1({
+    windowId: nonEmptyStringDecoder
+});
+const restrictionsConfigDecoder = object$1({
+    read: boolean$1(),
+    write: boolean$1(),
+    windowId: optional$1(nonEmptyStringDecoder)
+});
+const restrictAllDataDecoder = object$1({
+    restrictions: restrictionsConfigDecoder
+});
 const raiseNotificationDecoder = object$1({
     settings: glue42NotificationOptionsDecoder,
     id: nonEmptyStringDecoder
@@ -2644,7 +2649,7 @@ const getWindowIdsOnChannelDataDecoder = object$1({
 const getWindowIdsOnChannelResultDecoder = object$1({
     windowIds: array$1(nonEmptyStringDecoder)
 });
-const channelsOperationTypesDecoder = oneOf$1(constant$1("addChannel"), constant$1("getMyChannel"), constant$1("getWindowIdsOnChannel"), constant$1("getWindowIdsWithChannels"), constant$1("joinChannel"));
+const channelsOperationTypesDecoder = oneOf$1(constant$1("addChannel"), constant$1("getMyChannel"), constant$1("getWindowIdsOnChannel"), constant$1("getWindowIdsWithChannels"), constant$1("joinChannel"), constant$1("restrict"), constant$1("getRestrictions"), constant$1("restrictAll"));
 const getMyChanelResultDecoder = object$1({
     channel: optional$1(nonEmptyStringDecoder)
 });
@@ -2843,14 +2848,23 @@ function createRegistry$1(options) {
     };
 }
 createRegistry$1.default = createRegistry$1;
-var lib$3 = createRegistry$1;
+var lib$1 = createRegistry$1;
+
+
+var CallbackRegistryFactory$1 = /*@__PURE__*/getDefaultExportFromCjs$1(lib$1);
 
 class WebWindowModel {
+    _id;
+    _name;
+    _bridge;
+    registry = CallbackRegistryFactory$1();
+    myCtxKey;
+    ctxUnsubscribe;
+    me;
     constructor(_id, _name, _bridge) {
         this._id = _id;
         this._name = _name;
         this._bridge = _bridge;
-        this.registry = lib$3();
         this.myCtxKey = `___window___${this.id}`;
     }
     get id() {
@@ -2868,37 +2882,33 @@ class WebWindowModel {
         this.me.isFocused = hasFocus;
         this.registry.execute("focus-change", this.me);
     }
-    toApi() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.ctxUnsubscribe = yield this._bridge.contextLib.subscribe(this.myCtxKey, (data) => this.registry.execute("context-updated", data));
-            this.me = {
-                id: this.id,
-                name: this.name,
-                isFocused: false,
-                getURL: this.getURL.bind(this),
-                moveResize: this.moveResize.bind(this),
-                resizeTo: this.resizeTo.bind(this),
-                moveTo: this.moveTo.bind(this),
-                focus: this.focus.bind(this),
-                close: this.close.bind(this),
-                getTitle: this.getTitle.bind(this),
-                setTitle: this.setTitle.bind(this),
-                getBounds: this.getBounds.bind(this),
-                getContext: this.getContext.bind(this),
-                updateContext: this.updateContext.bind(this),
-                setContext: this.setContext.bind(this),
-                onContextUpdated: this.onContextUpdated.bind(this),
-                onFocusChanged: this.onFocusChanged.bind(this),
-                getChannel: this.getChannel.bind(this),
-            };
-            return this.me;
-        });
+    async toApi() {
+        this.ctxUnsubscribe = await this._bridge.contextLib.subscribe(this.myCtxKey, (data) => this.registry.execute("context-updated", data));
+        this.me = {
+            id: this.id,
+            name: this.name,
+            isFocused: false,
+            getURL: this.getURL.bind(this),
+            moveResize: this.moveResize.bind(this),
+            resizeTo: this.resizeTo.bind(this),
+            moveTo: this.moveTo.bind(this),
+            focus: this.focus.bind(this),
+            close: this.close.bind(this),
+            getTitle: this.getTitle.bind(this),
+            setTitle: this.setTitle.bind(this),
+            getBounds: this.getBounds.bind(this),
+            getContext: this.getContext.bind(this),
+            updateContext: this.updateContext.bind(this),
+            setContext: this.setContext.bind(this),
+            onContextUpdated: this.onContextUpdated.bind(this),
+            onFocusChanged: this.onFocusChanged.bind(this),
+            getChannel: this.getChannel.bind(this),
+        };
+        return this.me;
     }
-    getURL() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$9.getUrl, { windowId: this.id });
-            return result.url;
-        });
+    async getURL() {
+        const result = await this._bridge.send("windows", operations$9.getUrl, { windowId: this.id });
+        return result.url;
     }
     onFocusChanged(callback) {
         if (typeof callback !== "function") {
@@ -2906,116 +2916,96 @@ class WebWindowModel {
         }
         return this.registry.add("focus-change", callback);
     }
-    moveResize(dimension) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const targetBounds = boundsDecoder.runWithException(dimension);
-            const commandArgs = Object.assign({}, targetBounds, { windowId: this.id, relative: false });
-            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
+    async moveResize(dimension) {
+        const targetBounds = boundsDecoder.runWithException(dimension);
+        const commandArgs = Object.assign({}, targetBounds, { windowId: this.id, relative: false });
+        await this._bridge.send("windows", operations$9.moveResize, commandArgs);
+        return this.me;
+    }
+    async resizeTo(width, height) {
+        if (typeof width === "undefined" && typeof height === "undefined") {
             return this.me;
-        });
+        }
+        if (typeof width !== "undefined") {
+            nonNegativeNumberDecoder.runWithException(width);
+        }
+        if (typeof height !== "undefined") {
+            nonNegativeNumberDecoder.runWithException(height);
+        }
+        const commandArgs = Object.assign({}, { width, height }, { windowId: this.id, relative: true });
+        await this._bridge.send("windows", operations$9.moveResize, commandArgs);
+        return this.me;
     }
-    resizeTo(width, height) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (typeof width === "undefined" && typeof height === "undefined") {
-                return this.me;
-            }
-            if (typeof width !== "undefined") {
-                nonNegativeNumberDecoder.runWithException(width);
-            }
-            if (typeof height !== "undefined") {
-                nonNegativeNumberDecoder.runWithException(height);
-            }
-            const commandArgs = Object.assign({}, { width, height }, { windowId: this.id, relative: true });
-            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
+    async moveTo(top, left) {
+        if (typeof top === "undefined" && typeof left === "undefined") {
             return this.me;
-        });
+        }
+        if (typeof top !== "undefined") {
+            number$1().runWithException(top);
+        }
+        if (typeof left !== "undefined") {
+            number$1().runWithException(left);
+        }
+        const commandArgs = Object.assign({}, { top, left }, { windowId: this.id, relative: true });
+        await this._bridge.send("windows", operations$9.moveResize, commandArgs);
+        return this.me;
     }
-    moveTo(top, left) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (typeof top === "undefined" && typeof left === "undefined") {
-                return this.me;
-            }
-            if (typeof top !== "undefined") {
-                number$1().runWithException(top);
-            }
-            if (typeof left !== "undefined") {
-                number$1().runWithException(left);
-            }
-            const commandArgs = Object.assign({}, { top, left }, { windowId: this.id, relative: true });
-            yield this._bridge.send("windows", operations$9.moveResize, commandArgs);
-            return this.me;
-        });
+    async focus() {
+        if (this.name === "Platform") {
+            window.open(undefined, this.id);
+        }
+        else {
+            await this._bridge.send("windows", operations$9.focus, { windowId: this.id });
+        }
+        return this.me;
     }
-    focus() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.name === "Platform") {
-                window.open(undefined, this.id);
-            }
-            else {
-                yield this._bridge.send("windows", operations$9.focus, { windowId: this.id });
-            }
-            return this.me;
-        });
+    async close() {
+        await this._bridge.send("windows", operations$9.close, { windowId: this.id });
+        return this.me;
     }
-    close() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this._bridge.send("windows", operations$9.close, { windowId: this.id });
-            return this.me;
-        });
+    async getTitle() {
+        const result = await this._bridge.send("windows", operations$9.getTitle, { windowId: this.id });
+        return result.title;
     }
-    getTitle() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$9.getTitle, { windowId: this.id });
-            return result.title;
-        });
+    async setTitle(title) {
+        const ttl = nonEmptyStringDecoder.runWithException(title);
+        await this._bridge.send("windows", operations$9.setTitle, { windowId: this.id, title: ttl });
+        return this.me;
     }
-    setTitle(title) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const ttl = nonEmptyStringDecoder.runWithException(title);
-            yield this._bridge.send("windows", operations$9.setTitle, { windowId: this.id, title: ttl });
-            return this.me;
-        });
+    async getBounds() {
+        const result = await this._bridge.send("windows", operations$9.getBounds, { windowId: this.id });
+        return result.bounds;
     }
-    getBounds() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$9.getBounds, { windowId: this.id });
-            return result.bounds;
-        });
+    async getContext() {
+        const ctx = await this._bridge.contextLib.get(this.myCtxKey);
+        const { ___io___, ...rest } = ctx;
+        return rest;
     }
-    getContext() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const ctx = yield this._bridge.contextLib.get(this.myCtxKey);
-            return ctx;
-        });
+    async updateContext(context) {
+        const ctx = anyDecoder.runWithException(context);
+        await this._bridge.contextLib.update(this.myCtxKey, ctx);
+        return this.me;
     }
-    updateContext(context) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const ctx = anyDecoder.runWithException(context);
-            yield this._bridge.contextLib.update(this.myCtxKey, ctx);
-            return this.me;
-        });
-    }
-    setContext(context) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const ctx = anyDecoder.runWithException(context);
-            yield this._bridge.contextLib.set(this.myCtxKey, ctx);
-            return this.me;
-        });
+    async setContext(context) {
+        const ctx = anyDecoder.runWithException(context);
+        const current = await this._bridge.contextLib.get(this.myCtxKey);
+        const newCtx = current.___io___ ? { ...ctx, ___io___: current.___io___ } : ctx;
+        await this._bridge.contextLib.set(this.myCtxKey, newCtx);
+        return this.me;
     }
     onContextUpdated(callback) {
         if (typeof callback !== "function") {
             throw new Error("Cannot subscribe to context changes, because the provided callback is not a function!");
         }
         const wrappedCallback = (data) => {
-            callback(data, this.me);
+            const { ___io___, ...rest } = data;
+            callback(rest, this.me);
         };
         return this.registry.add("context-updated", wrappedCallback);
     }
-    getChannel() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this._bridge.send("windows", operations$9.getChannel, { windowId: this.id }, undefined, { includeOperationCheck: true });
-            return result.channel;
-        });
+    async getChannel() {
+        const result = await this._bridge.send("windows", operations$9.getChannel, { windowId: this.id }, undefined, { includeOperationCheck: true });
+        return result.channel;
     }
 }
 
@@ -3074,28 +3064,34 @@ const PromisePlus$1 = (executor, timeoutMilliseconds, timeoutMessage) => {
 };
 
 class WindowsController {
-    constructor() {
-        this.registry = lib$3();
-        this.allWindowProjections = [];
-    }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("windows.controller.web");
-            this.logger.trace("starting the web windows controller");
-            this.publicWindowId = ioc.publicWindowId;
-            this.addWindowOperationExecutors();
-            this.ioc = ioc;
-            this.bridge = ioc.bridge;
-            this.instanceId = coreGlue.interop.instance.instance;
-            this.channelsController = ioc.channelsController;
-            this.logger.trace(`set the public window id: ${this.publicWindowId}, set the bridge operations and ioc, registering with the platform now`);
-            this.platformRegistration = this.registerWithPlatform();
-            yield this.platformRegistration;
-            yield this.initializeFocusTracking();
-            this.logger.trace("registration with the platform successful, attaching the windows property to glue and returning");
-            const api = this.toApi();
-            coreGlue.windows = api;
-        });
+    focusEventHandler;
+    registry = CallbackRegistryFactory$1();
+    platformRegistration;
+    ioc;
+    bridge;
+    publicWindowId;
+    allWindowProjections = [];
+    me;
+    logger;
+    isWorkspaceFrame;
+    instanceId;
+    channelsController;
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("windows.controller.web");
+        this.logger.trace("starting the web windows controller");
+        this.publicWindowId = ioc.publicWindowId;
+        this.addWindowOperationExecutors();
+        this.ioc = ioc;
+        this.bridge = ioc.bridge;
+        this.instanceId = coreGlue.interop.instance.instance;
+        this.channelsController = ioc.channelsController;
+        this.logger.trace(`set the public window id: ${this.publicWindowId}, set the bridge operations and ioc, registering with the platform now`);
+        this.platformRegistration = this.registerWithPlatform();
+        await this.platformRegistration;
+        await this.initializeFocusTracking();
+        this.logger.trace("registration with the platform successful, attaching the windows property to glue and returning");
+        const api = this.toApi();
+        coreGlue.windows = api;
     }
     handlePlatformShutdown() {
         this.registry.clear();
@@ -3107,37 +3103,32 @@ class WindowsController {
         window.removeEventListener("focus", this.focusEventHandler);
         window.removeEventListener("blur", this.focusEventHandler);
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.platformRegistration;
-            const operationName = windowOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$9[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        await this.platformRegistration;
+        const operationName = windowOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$9[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
-    open(name, url, options) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(name);
-            nonEmptyStringDecoder.runWithException(url);
-            const settings = windowOpenSettingsDecoder.runWithException(options);
-            const windowSuccess = yield this.bridge.send("windows", operations$9.openWindow, { name, url, options: settings });
-            return this.waitForWindowAdded(windowSuccess.windowId);
-        });
+    async open(name, url, options) {
+        nonEmptyStringDecoder.runWithException(name);
+        nonEmptyStringDecoder.runWithException(url);
+        const settings = windowOpenSettingsDecoder.runWithException(options);
+        const windowSuccess = await this.bridge.send("windows", operations$9.openWindow, { name, url, options: settings });
+        return this.waitForWindowAdded(windowSuccess.windowId);
     }
     list() {
         return this.allWindowProjections.map((projection) => projection.api);
     }
     findById(id) {
-        var _a;
         nonEmptyStringDecoder.runWithException(id);
-        return (_a = this.allWindowProjections.find((projection) => projection.id === id)) === null || _a === void 0 ? void 0 : _a.api;
+        return this.allWindowProjections.find((projection) => projection.id === id)?.api;
     }
     toApi() {
         return {
@@ -3190,145 +3181,123 @@ class WindowsController {
         }
         return this.registry.add("window-lost-focus", callback);
     }
-    sayHello() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const helloSuccess = yield this.bridge.send("windows", operations$9.windowHello, { windowId: this.publicWindowId });
-            return helloSuccess;
-        });
+    async sayHello() {
+        const helloSuccess = await this.bridge.send("windows", operations$9.windowHello, { windowId: this.publicWindowId });
+        return helloSuccess;
     }
-    registerWithPlatform() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const { windows, isWorkspaceFrame } = yield this.sayHello();
-            this.isWorkspaceFrame = isWorkspaceFrame;
-            this.logger.trace("the platform responded to the hello message");
-            if (!this.isWorkspaceFrame && this.publicWindowId) {
-                this.logger.trace("i am not treated as a workspace frame, setting my window");
-                const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
-                if (!myWindow) {
-                    throw new Error("Cannot initialize the window library, because I received no information about me from the platform");
-                }
-                const myProjection = yield this.ioc.buildWebWindow(this.publicWindowId, myWindow.name);
-                this.me = myProjection.api;
-                this.allWindowProjections.push(myProjection);
+    async registerWithPlatform() {
+        const { windows, isWorkspaceFrame } = await this.sayHello();
+        this.isWorkspaceFrame = isWorkspaceFrame;
+        this.logger.trace("the platform responded to the hello message");
+        if (!this.isWorkspaceFrame && this.publicWindowId) {
+            this.logger.trace("i am not treated as a workspace frame, setting my window");
+            const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
+            if (!myWindow) {
+                throw new Error("Cannot initialize the window library, because I received no information about me from the platform");
             }
-            const currentWindows = yield Promise.all(windows
-                .filter((w) => w.windowId !== this.publicWindowId)
-                .map((w) => this.ioc.buildWebWindow(w.windowId, w.name)));
-            this.logger.trace("all windows projections are completed, building the list collection");
-            this.allWindowProjections.push(...currentWindows);
-        });
+            const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name);
+            this.me = myProjection.api;
+            this.allWindowProjections.push(myProjection);
+        }
+        const currentWindows = await Promise.all(windows
+            .filter((w) => w.windowId !== this.publicWindowId)
+            .map((w) => this.ioc.buildWebWindow(w.windowId, w.name)));
+        this.logger.trace("all windows projections are completed, building the list collection");
+        this.allWindowProjections.push(...currentWindows);
     }
-    handleFocusChangeEvent(focusData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const foundProjection = this.allWindowProjections.find((projection) => projection.id === focusData.windowId);
-            if (!foundProjection) {
-                return;
-            }
-            foundProjection.model.processSelfFocusEvent(focusData.hasFocus);
-            const keyToExecute = focusData.hasFocus ? "window-got-focus" : "window-lost-focus";
-            this.registry.execute(keyToExecute, foundProjection.api);
-        });
+    async handleFocusChangeEvent(focusData) {
+        const foundProjection = this.allWindowProjections.find((projection) => projection.id === focusData.windowId);
+        if (!foundProjection) {
+            return;
+        }
+        foundProjection.model.processSelfFocusEvent(focusData.hasFocus);
+        const keyToExecute = focusData.hasFocus ? "window-got-focus" : "window-lost-focus";
+        this.registry.execute(keyToExecute, foundProjection.api);
     }
-    handleWindowAdded(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.allWindowProjections.some((projection) => projection.id === data.windowId)) {
-                return;
-            }
-            const webWindowProjection = yield this.ioc.buildWebWindow(data.windowId, data.name);
-            this.allWindowProjections.push(webWindowProjection);
-            this.registry.execute("window-added", webWindowProjection.api);
-        });
+    async handleWindowAdded(data) {
+        if (this.allWindowProjections.some((projection) => projection.id === data.windowId)) {
+            return;
+        }
+        const webWindowProjection = await this.ioc.buildWebWindow(data.windowId, data.name);
+        this.allWindowProjections.push(webWindowProjection);
+        this.registry.execute("window-added", webWindowProjection.api);
     }
-    handleWindowRemoved(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const removed = this.allWindowProjections.find((w) => w.id === data.windowId);
-            if (!removed) {
-                return;
-            }
-            this.allWindowProjections = this.allWindowProjections.filter((w) => w.id !== data.windowId);
-            removed.model.clean();
-            this.registry.execute("window-removed", removed.api);
-        });
+    async handleWindowRemoved(data) {
+        const removed = this.allWindowProjections.find((w) => w.id === data.windowId);
+        if (!removed) {
+            return;
+        }
+        this.allWindowProjections = this.allWindowProjections.filter((w) => w.id !== data.windowId);
+        removed.model.clean();
+        this.registry.execute("window-removed", removed.api);
     }
-    handleGetBounds() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!this.me && !this.isWorkspaceFrame) {
-                throw new Error("This window cannot report it's bounds, because it is not a Glue Window, most likely because it is an iframe");
+    async handleGetBounds() {
+        if (!this.me && !this.isWorkspaceFrame) {
+            throw new Error("This window cannot report it's bounds, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.isWorkspaceFrame ? "noop" : this.me.id,
+            bounds: {
+                top: window.screenTop,
+                left: window.screenLeft,
+                width: window.innerWidth,
+                height: window.innerHeight
             }
-            return {
-                windowId: this.isWorkspaceFrame ? "noop" : this.me.id,
-                bounds: {
-                    top: window.screenTop,
-                    left: window.screenLeft,
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                }
-            };
-        });
+        };
     }
-    handleGetTitle() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!this.me) {
-                throw new Error("This window cannot report it's title, because it is not a Glue Window, most likely because it is an iframe");
-            }
-            return {
-                windowId: this.me.id,
-                title: document.title
-            };
-        });
+    async handleGetTitle() {
+        if (!this.me) {
+            throw new Error("This window cannot report it's title, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.me.id,
+            title: document.title
+        };
     }
-    handleGetUrl() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!this.me) {
-                throw new Error("This window cannot report it's url, because it is not a Glue Window, most likely because it is an iframe");
-            }
-            return {
-                windowId: this.me.id,
-                url: window.location.href
-            };
-        });
+    async handleGetUrl() {
+        if (!this.me) {
+            throw new Error("This window cannot report it's url, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.me.id,
+            url: window.location.href
+        };
     }
-    handleMoveResize(config) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const targetTop = typeof config.top === "number" ? config.top :
-                config.relative ? 0 : window.screenTop;
-            const targetLeft = typeof config.left === "number" ? config.left :
-                config.relative ? 0 : window.screenLeft;
-            const targetHeight = typeof config.height === "number" ? config.height :
-                config.relative ? 0 : window.innerHeight;
-            const targetWidth = typeof config.width === "number" ? config.width :
-                config.relative ? 0 : window.innerWidth;
-            const moveMethod = config.relative ? window.moveBy : window.moveTo;
-            const resizeMethod = config.relative ? window.resizeBy : window.resizeTo;
-            moveMethod(targetLeft, targetTop);
-            resizeMethod(targetWidth, targetHeight);
-        });
+    async handleMoveResize(config) {
+        const targetTop = typeof config.top === "number" ? config.top :
+            config.relative ? 0 : window.screenTop;
+        const targetLeft = typeof config.left === "number" ? config.left :
+            config.relative ? 0 : window.screenLeft;
+        const targetHeight = typeof config.height === "number" ? config.height :
+            config.relative ? 0 : window.innerHeight;
+        const targetWidth = typeof config.width === "number" ? config.width :
+            config.relative ? 0 : window.innerWidth;
+        const moveMethod = config.relative ? window.moveBy : window.moveTo;
+        const resizeMethod = config.relative ? window.resizeBy : window.resizeTo;
+        moveMethod(targetLeft, targetTop);
+        resizeMethod(targetWidth, targetHeight);
     }
-    handleSetTitle(config) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            document.title = config.title;
-        });
+    async handleSetTitle(config) {
+        document.title = config.title;
     }
-    initializeFocusTracking() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.isWorkspaceFrame) {
-                this.logger.trace("Ignoring the focus tracking, because this client is a workspace frame");
-                return;
-            }
-            try {
-                yield this.bridge.send("windows", systemOperations.operationCheck, { operation: "focusChange" });
-            }
-            catch (error) {
-                this.logger.warn("The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.");
-                return;
-            }
-            const hasFocus = document.hasFocus();
-            yield this.transmitFocusChange(true);
-            if (!hasFocus) {
-                yield this.transmitFocusChange(false);
-            }
-            this.defineEventListeners();
-        });
+    async initializeFocusTracking() {
+        if (this.isWorkspaceFrame) {
+            this.logger.trace("Ignoring the focus tracking, because this client is a workspace frame");
+            return;
+        }
+        try {
+            await this.bridge.send("windows", systemOperations.operationCheck, { operation: "focusChange" });
+        }
+        catch (error) {
+            this.logger.warn("The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.");
+            return;
+        }
+        const hasFocus = document.hasFocus();
+        await this.transmitFocusChange(true);
+        if (!hasFocus) {
+            await this.transmitFocusChange(false);
+        }
+        this.defineEventListeners();
     }
     processFocusEvent() {
         const hasFocus = document.hasFocus();
@@ -3348,18 +3317,15 @@ class WindowsController {
             });
         }, 30000, `Timed out waiting for ${windowId} to be announced`);
     }
-    transmitFocusChange(hasFocus) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const eventData = {
-                windowId: ((_a = this.me) === null || _a === void 0 ? void 0 : _a.id) || `iframe-${this.instanceId}`,
-                hasFocus
-            };
-            if (this.me) {
-                this.me.isFocused = hasFocus;
-            }
-            yield this.bridge.send("windows", operations$9.focusChange, eventData);
-        });
+    async transmitFocusChange(hasFocus) {
+        const eventData = {
+            windowId: this.me?.id || `iframe-${this.instanceId}`,
+            hasFocus
+        };
+        if (this.me) {
+            this.me.isFocused = hasFocus;
+        }
+        await this.bridge.send("windows", operations$9.focusChange, eventData);
     }
     defineEventListeners() {
         this.focusEventHandler = this.processFocusEvent.bind(this);
@@ -3367,14 +3333,14 @@ class WindowsController {
         window.addEventListener("focus", this.focusEventHandler);
         window.addEventListener("blur", this.focusEventHandler);
     }
-    handleGetChannel() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!this.me) {
-                throw new Error("This window cannot report it's channel, because it is not a Glue Window, most likely because it is an iframe");
-            }
-            const channel = this.channelsController.my();
-            return Object.assign({}, (channel ? { channel } : {}));
-        });
+    async handleGetChannel() {
+        if (!this.me) {
+            throw new Error("This window cannot report it's channel, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        const channel = this.channelsController.my();
+        return {
+            ...(channel ? { channel } : {}),
+        };
     }
 }
 
@@ -3384,10 +3350,15 @@ const GlueClientControlName = "T42.Web.Client.Control";
 const GlueCorePlusThemesStream = "T42.Core.Plus.Themes.Stream";
 
 class GlueBridge {
+    coreGlue;
+    communicationId;
+    platformMethodTimeoutMs = 10000;
+    controllers;
+    sub;
+    running;
     constructor(coreGlue, communicationId) {
         this.coreGlue = coreGlue;
         this.communicationId = communicationId;
-        this.platformMethodTimeoutMs = 10000;
     }
     get contextLib() {
         return this.coreGlue.contexts;
@@ -3395,90 +3366,80 @@ class GlueBridge {
     get interopInstance() {
         return this.coreGlue.interop.instance.instance;
     }
-    stop() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.running = false;
-            this.sub.close();
-            yield this.coreGlue.interop.unregister(GlueClientControlName);
-        });
+    async stop() {
+        this.running = false;
+        this.sub.close();
+        await this.coreGlue.interop.unregister(GlueClientControlName);
     }
-    start(controllers) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.running = true;
-            this.controllers = controllers;
-            yield Promise.all([
-                this.checkWaitMethod(GlueWebPlatformControlName),
-                this.checkWaitMethod(GlueWebPlatformStreamName)
-            ]);
-            const systemId = this.communicationId;
-            const [sub] = yield Promise.all([
-                this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
-                this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
-            ]);
-            this.sub = sub;
-            this.sub.onData((pkg) => this.passMessageController(pkg.data));
-        });
+    async start(controllers) {
+        this.running = true;
+        this.controllers = controllers;
+        await Promise.all([
+            this.checkWaitMethod(GlueWebPlatformControlName),
+            this.checkWaitMethod(GlueWebPlatformStreamName)
+        ]);
+        const systemId = this.communicationId;
+        const [sub] = await Promise.all([
+            this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
+            this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
+        ]);
+        this.sub = sub;
+        this.sub.onData((pkg) => this.passMessageController(pkg.data));
     }
     getInteropInstance(windowId) {
         const result = this.coreGlue.interop.servers().find((s) => s.windowId && s.windowId === windowId);
         return {
-            application: result === null || result === void 0 ? void 0 : result.application,
-            applicationName: result === null || result === void 0 ? void 0 : result.applicationName,
-            peerId: result === null || result === void 0 ? void 0 : result.peerId,
-            instance: result === null || result === void 0 ? void 0 : result.instance,
-            windowId: result === null || result === void 0 ? void 0 : result.windowId
+            application: result?.application,
+            applicationName: result?.applicationName,
+            peerId: result?.peerId,
+            instance: result?.instance,
+            windowId: result?.windowId
         };
     }
-    send(domain, operation, operationData, options, webOptions) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (operation.dataDecoder) {
-                try {
-                    operation.dataDecoder.runWithException(operationData);
-                }
-                catch (error) {
-                    throw new Error(`Unexpected Web->Platform outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
-                }
-            }
-            const operationSupported = (webOptions === null || webOptions === void 0 ? void 0 : webOptions.includeOperationCheck) ?
-                (yield this.checkOperationSupported(domain, operation)).isSupported :
-                true;
-            if (!operationSupported) {
-                throw new Error(`Cannot complete operation: ${operation.name} for domain: ${domain} because this client is connected to a platform which does not support it`);
-            }
+    async send(domain, operation, operationData, options, webOptions) {
+        if (operation.dataDecoder) {
             try {
-                const operationResult = yield this.transmitMessage(domain, operation, operationData, options);
-                if (operation.resultDecoder) {
-                    operation.resultDecoder.runWithException(operationResult);
-                }
-                return operationResult;
+                operation.dataDecoder.runWithException(operationData);
             }
             catch (error) {
-                if (error.kind) {
-                    throw new Error(`Unexpected Web<-Platform incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
-                }
-                throw new Error(error.message);
+                throw new Error(`Unexpected Web->Platform outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
             }
-        });
+        }
+        const operationSupported = webOptions?.includeOperationCheck ?
+            (await this.checkOperationSupported(domain, operation)).isSupported :
+            true;
+        if (!operationSupported) {
+            throw new Error(`Cannot complete operation: ${operation.name} for domain: ${domain} because this client is connected to a platform which does not support it`);
+        }
+        try {
+            const operationResult = await this.transmitMessage(domain, operation, operationData, options);
+            if (operation.resultDecoder) {
+                operation.resultDecoder.runWithException(operationResult);
+            }
+            return operationResult;
+        }
+        catch (error) {
+            if (error.kind) {
+                throw new Error(`Unexpected Web<-Platform incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
+            }
+            throw new Error(error.message);
+        }
     }
-    createNotificationsSteam() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
-            if (!streamExists) {
-                throw new Error("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
-            }
-            return this.coreGlue.interop.subscribe(GlueCorePlusThemesStream, this.communicationId ? { target: { instance: this.communicationId } } : undefined);
-        });
+    async createNotificationsSteam() {
+        const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
+        if (!streamExists) {
+            throw new Error("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
+        }
+        return this.coreGlue.interop.subscribe(GlueCorePlusThemesStream, this.communicationId ? { target: { instance: this.communicationId } } : undefined);
     }
-    checkOperationSupported(domain, operation) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                const result = yield this.send(domain, systemOperations.operationCheck, { operation: operation.name });
-                return result;
-            }
-            catch (error) {
-                return { isSupported: false };
-            }
-        });
+    async checkOperationSupported(domain, operation) {
+        try {
+            const result = await this.send(domain, systemOperations.operationCheck, { operation: operation.name });
+            return result;
+        }
+        catch (error) {
+            return { isSupported: false };
+        }
     }
     checkWaitMethod(name) {
         return PromisePlus$1((resolve) => {
@@ -3528,33 +3489,31 @@ class GlueBridge {
             console.warn(err);
         });
     }
-    transmitMessage(domain, operation, data, options) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const messageData = { domain, data, operation: operation.name };
-            let invocationResult;
-            const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
-            const systemId = this.communicationId;
-            try {
-                if (!this.running) {
-                    throw new Error("Cannot send a control message, because the platform shut down");
-                }
-                invocationResult = yield this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
-                if (!invocationResult) {
-                    throw new Error("Received unsupported result from the platform - empty result");
-                }
-                if (!Array.isArray(invocationResult.all_return_values) || invocationResult.all_return_values.length === 0) {
-                    throw new Error("Received unsupported result from the platform - empty values collection");
-                }
+    async transmitMessage(domain, operation, data, options) {
+        const messageData = { domain, data, operation: operation.name };
+        let invocationResult;
+        const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
+        const systemId = this.communicationId;
+        try {
+            if (!this.running) {
+                throw new Error("Cannot send a control message, because the platform shut down");
             }
-            catch (error) {
-                if (error && error.all_errors && error.all_errors.length) {
-                    const invocationErrorMessage = error.all_errors[0].message;
-                    throw new Error(`${baseErrorMessage} -> Inner message: ${invocationErrorMessage}`);
-                }
-                throw new Error(`${baseErrorMessage} -> Inner message: ${error.message}`);
+            invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
+            if (!invocationResult) {
+                throw new Error("Received unsupported result from the platform - empty result");
             }
-            return invocationResult.all_return_values[0].returned;
-        });
+            if (!Array.isArray(invocationResult.all_return_values) || invocationResult.all_return_values.length === 0) {
+                throw new Error("Received unsupported result from the platform - empty values collection");
+            }
+        }
+        catch (error) {
+            if (error && error.all_errors && error.all_errors.length) {
+                const invocationErrorMessage = error.all_errors[0].message;
+                throw new Error(`${baseErrorMessage} -> Inner message: ${invocationErrorMessage}`);
+            }
+            throw new Error(`${baseErrorMessage} -> Inner message: ${error.message}`);
+        }
+        return invocationResult.all_return_values[0].returned;
     }
 }
 
@@ -3572,50 +3531,52 @@ const operations$8 = {
 };
 
 class AppManagerController {
-    constructor() {
-        this.baseApplicationsTimeoutMS = 60000;
-        this.appImportTimeoutMS = 20;
-        this.registry = lib$3();
-        this.applications = [];
-        this.instances = [];
-    }
+    me;
+    baseApplicationsTimeoutMS = 60000;
+    appImportTimeoutMS = 20;
+    registry = CallbackRegistryFactory$1();
+    ioc;
+    bridge;
+    publicWindowId;
+    applications = [];
+    instances = [];
+    platformRegistration;
+    logger;
+    channelsController;
+    sessionController;
     handlePlatformShutdown() {
         this.registry.clear();
         this.applications = [];
         this.instances = [];
         delete this.me;
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("appManger.controller.web");
-            this.logger.trace("starting the web appManager controller");
-            this.publicWindowId = ioc.publicWindowId;
-            this.addOperationsExecutors();
-            this.ioc = ioc;
-            this.bridge = ioc.bridge;
-            this.channelsController = ioc.channelsController;
-            this.sessionController = ioc.sessionController;
-            this.platformRegistration = this.registerWithPlatform();
-            yield this.platformRegistration;
-            this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
-            const api = this.toApi();
-            coreGlue.appManager = api;
-        });
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("appManger.controller.web");
+        this.logger.trace("starting the web appManager controller");
+        this.publicWindowId = ioc.publicWindowId;
+        this.addOperationsExecutors();
+        this.ioc = ioc;
+        this.bridge = ioc.bridge;
+        this.channelsController = ioc.channelsController;
+        this.sessionController = ioc.sessionController;
+        this.platformRegistration = this.registerWithPlatform();
+        await this.platformRegistration;
+        this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
+        const api = this.toApi();
+        coreGlue.appManager = api;
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.platformRegistration;
-            const operationName = appManagerOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$8[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        await this.platformRegistration;
+        const operationName = appManagerOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$8[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
     onInstanceStarted(callback) {
         if (typeof callback !== "function") {
@@ -3629,32 +3590,29 @@ class AppManagerController {
         }
         return this.registry.add("instance-stopped", callback);
     }
-    startApplication(appName, context, options) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channels = yield this.channelsController.all();
-            if ((options === null || options === void 0 ? void 0 : options.channelId) && !channels.includes(options.channelId)) {
-                throw new Error(`The channel with name "${options.channelId}" doesn't exist!`);
-            }
-            const startOptions = {
-                name: appName,
-                waitForAGMReady: (_a = options === null || options === void 0 ? void 0 : options.waitForAGMReady) !== null && _a !== void 0 ? _a : true,
-                context,
-                top: options === null || options === void 0 ? void 0 : options.top,
-                left: options === null || options === void 0 ? void 0 : options.left,
-                width: options === null || options === void 0 ? void 0 : options.width,
-                height: options === null || options === void 0 ? void 0 : options.height,
-                relativeTo: options === null || options === void 0 ? void 0 : options.relativeTo,
-                relativeDirection: options === null || options === void 0 ? void 0 : options.relativeDirection,
-                id: options === null || options === void 0 ? void 0 : options.reuseId,
-                forceChromeTab: options === null || options === void 0 ? void 0 : options.forceTab,
-                layoutComponentId: options === null || options === void 0 ? void 0 : options.layoutComponentId,
-                channelId: options === null || options === void 0 ? void 0 : options.channelId
-            };
-            const openResult = yield this.bridge.send("appManager", operations$8.applicationStart, startOptions);
-            const app = this.applications.find((a) => a.name === openResult.applicationName);
-            return this.ioc.buildInstance(openResult, app);
-        });
+    async startApplication(appName, context, options) {
+        const channels = await this.channelsController.all();
+        if (options?.channelId && !channels.includes(options.channelId)) {
+            throw new Error(`The channel with name "${options.channelId}" doesn't exist!`);
+        }
+        const startOptions = {
+            name: appName,
+            waitForAGMReady: options?.waitForAGMReady ?? true,
+            context,
+            top: options?.top,
+            left: options?.left,
+            width: options?.width,
+            height: options?.height,
+            relativeTo: options?.relativeTo,
+            relativeDirection: options?.relativeDirection,
+            id: options?.reuseId,
+            forceChromeTab: options?.forceTab,
+            layoutComponentId: options?.layoutComponentId,
+            channelId: options?.channelId
+        };
+        const openResult = await this.bridge.send("appManager", operations$8.applicationStart, startOptions);
+        const app = this.applications.find((a) => a.name === openResult.applicationName);
+        return this.ioc.buildInstance(openResult, app);
     }
     getApplication(name) {
         const verifiedName = nonEmptyStringDecoder.runWithException(name);
@@ -3688,12 +3646,10 @@ class AppManagerController {
         operations$8.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
         operations$8.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
     }
-    handleAppDirectoryStateChange(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            data.appsAdded.forEach(this.handleApplicationAddedMessage.bind(this));
-            data.appsChanged.forEach(this.handleApplicationChangedMessage.bind(this));
-            data.appsRemoved.forEach(this.handleApplicationRemovedMessage.bind(this));
-        });
+    async handleAppDirectoryStateChange(data) {
+        data.appsAdded.forEach(this.handleApplicationAddedMessage.bind(this));
+        data.appsChanged.forEach(this.handleApplicationChangedMessage.bind(this));
+        data.appsRemoved.forEach(this.handleApplicationRemovedMessage.bind(this));
     }
     onAppAdded(callback) {
         if (typeof callback !== "function") {
@@ -3713,150 +3669,128 @@ class AppManagerController {
         }
         return this.registry.add("application-changed", callback);
     }
-    handleApplicationAddedMessage(appData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.applications.some((app) => app.name === appData.name)) {
-                return;
-            }
-            const app = yield this.ioc.buildApplication(appData, []);
-            const instances = this.instances.filter((instance) => instance.application.name === app.name);
-            app.instances.push(...instances);
-            this.applications.push(app);
-            this.registry.execute("application-added", app);
-        });
+    async handleApplicationAddedMessage(appData) {
+        if (this.applications.some((app) => app.name === appData.name)) {
+            return;
+        }
+        const app = await this.ioc.buildApplication(appData, []);
+        const instances = this.instances.filter((instance) => instance.application.name === app.name);
+        app.instances.push(...instances);
+        this.applications.push(app);
+        this.registry.execute("application-added", app);
     }
-    handleApplicationRemovedMessage(appData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const appIndex = this.applications.findIndex((app) => app.name === appData.name);
-            if (appIndex < 0) {
-                return;
-            }
-            const app = this.applications[appIndex];
-            this.applications.splice(appIndex, 1);
-            this.registry.execute("application-removed", app);
-        });
+    async handleApplicationRemovedMessage(appData) {
+        const appIndex = this.applications.findIndex((app) => app.name === appData.name);
+        if (appIndex < 0) {
+            return;
+        }
+        const app = this.applications[appIndex];
+        this.applications.splice(appIndex, 1);
+        this.registry.execute("application-removed", app);
     }
-    handleApplicationChangedMessage(appData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const app = this.applications.find((app) => app.name === appData.name);
-            if (!app) {
-                return this.handleApplicationAddedMessage(appData);
-            }
-            app.title = appData.title;
-            app.version = appData.version;
-            app.icon = appData.icon;
-            app.caption = appData.caption;
-            app.userProperties = appData.userProperties;
-            this.registry.execute("application-changed", app);
-        });
+    async handleApplicationChangedMessage(appData) {
+        const app = this.applications.find((app) => app.name === appData.name);
+        if (!app) {
+            return this.handleApplicationAddedMessage(appData);
+        }
+        app.title = appData.title;
+        app.version = appData.version;
+        app.icon = appData.icon;
+        app.caption = appData.caption;
+        app.userProperties = appData.userProperties;
+        this.registry.execute("application-changed", app);
     }
-    handleInstanceStartedMessage(instanceData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.instances.some((instance) => instance.id === instanceData.id)) {
-                return;
-            }
-            const application = this.applications.find((app) => app.name === instanceData.applicationName);
-            if (!application) {
-                throw new Error(`Cannot add instance: ${instanceData.id}, because there is no application definition associated with it`);
-            }
-            const instance = this.ioc.buildInstance(instanceData, application);
-            this.instances.push(instance);
-            application.instances.push(instance);
-            this.registry.execute("instance-started", instance);
-        });
+    async handleInstanceStartedMessage(instanceData) {
+        if (this.instances.some((instance) => instance.id === instanceData.id)) {
+            return;
+        }
+        const application = this.applications.find((app) => app.name === instanceData.applicationName);
+        if (!application) {
+            throw new Error(`Cannot add instance: ${instanceData.id}, because there is no application definition associated with it`);
+        }
+        const instance = this.ioc.buildInstance(instanceData, application);
+        this.instances.push(instance);
+        application.instances.push(instance);
+        this.registry.execute("instance-started", instance);
     }
-    handleInstanceStoppedMessage(instanceData) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const instance = this.instances.find((i) => i.id === instanceData.id);
-            if (instance) {
-                const instIdx = this.instances.findIndex((inst) => inst.id === instanceData.id);
-                this.instances.splice(instIdx, 1);
-            }
-            const application = this.applications.find((app) => app.instances.some((inst) => inst.id === instanceData.id));
-            if (application) {
-                const instIdxApps = application.instances.findIndex((inst) => inst.id === instanceData.id);
-                application.instances.splice(instIdxApps, 1);
-            }
-            if (!instance) {
-                return;
-            }
-            this.registry.execute("instance-stopped", instance);
-        });
+    async handleInstanceStoppedMessage(instanceData) {
+        const instance = this.instances.find((i) => i.id === instanceData.id);
+        if (instance) {
+            const instIdx = this.instances.findIndex((inst) => inst.id === instanceData.id);
+            this.instances.splice(instIdx, 1);
+        }
+        const application = this.applications.find((app) => app.instances.some((inst) => inst.id === instanceData.id));
+        if (application) {
+            const instIdxApps = application.instances.findIndex((inst) => inst.id === instanceData.id);
+            application.instances.splice(instIdxApps, 1);
+        }
+        if (!instance) {
+            return;
+        }
+        this.registry.execute("instance-stopped", instance);
     }
-    import(definitions, mode = "replace") {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            importModeDecoder.runWithException(mode);
-            if (!Array.isArray(definitions)) {
-                throw new Error("Import must be called with an array of definitions");
+    async import(definitions, mode = "replace") {
+        importModeDecoder.runWithException(mode);
+        if (!Array.isArray(definitions)) {
+            throw new Error("Import must be called with an array of definitions");
+        }
+        if (definitions.length > 10000) {
+            throw new Error("Cannot import more than 10000 app definitions in Glue42 Core.");
+        }
+        const parseResult = definitions.reduce((soFar, definition) => {
+            const decodeResult = allApplicationDefinitionsDecoder.run(definition);
+            if (!decodeResult.ok) {
+                soFar.invalid.push({ app: definition?.name, error: JSON.stringify(decodeResult.error) });
             }
-            if (definitions.length > 10000) {
-                throw new Error("Cannot import more than 10000 app definitions in Glue42 Core.");
+            else {
+                soFar.valid.push(definition);
             }
-            const parseResult = definitions.reduce((soFar, definition) => {
-                const decodeResult = allApplicationDefinitionsDecoder.run(definition);
-                if (!decodeResult.ok) {
-                    soFar.invalid.push({ app: definition === null || definition === void 0 ? void 0 : definition.name, error: JSON.stringify(decodeResult.error) });
-                }
-                else {
-                    soFar.valid.push(definition);
-                }
-                return soFar;
-            }, { valid: [], invalid: [] });
-            const responseTimeout = this.baseApplicationsTimeoutMS + this.appImportTimeoutMS * parseResult.valid.length;
-            yield this.bridge.send("appManager", operations$8.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
-            return {
-                imported: parseResult.valid.map((valid) => valid.name),
-                errors: parseResult.invalid
-            };
-        });
+            return soFar;
+        }, { valid: [], invalid: [] });
+        const responseTimeout = this.baseApplicationsTimeoutMS + this.appImportTimeoutMS * parseResult.valid.length;
+        await this.bridge.send("appManager", operations$8.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
+        return {
+            imported: parseResult.valid.map((valid) => valid.name),
+            errors: parseResult.invalid
+        };
     }
-    remove(name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("appManager", operations$8.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-        });
+    async remove(name) {
+        nonEmptyStringDecoder.runWithException(name);
+        await this.bridge.send("appManager", operations$8.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
     }
-    clear() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("appManager", operations$8.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-        });
+    async clear() {
+        await this.bridge.send("appManager", operations$8.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
     }
-    export() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const response = yield this.bridge.send("appManager", operations$8.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-            return response.definitions;
-        });
+    async export() {
+        const response = await this.bridge.send("appManager", operations$8.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+        return response.definitions;
     }
     getApplications() {
         return this.applications.slice();
     }
-    joinInitialChannel(initialChannelId) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                yield this.channelsController.join(initialChannelId);
-            }
-            catch (error) {
-                this.logger.warn(`Application instance ${this.me} was unable to join the ${initialChannelId} channel. Reason: ${JSON.stringify(error)}`);
-            }
-        });
+    async joinInitialChannel(initialChannelId) {
+        try {
+            await this.channelsController.join(initialChannelId);
+        }
+        catch (error) {
+            this.logger.warn(`Application instance ${this.me} was unable to join the ${initialChannelId} channel. Reason: ${JSON.stringify(error)}`);
+        }
     }
-    registerWithPlatform() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this.bridge.send("appManager", operations$8.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-            this.logger.trace("the platform responded to the hello message with a full list of apps");
-            this.applications = yield Promise.all(result.apps.map((app) => this.ioc.buildApplication(app, app.instances)));
-            this.instances = this.applications.reduce((instancesSoFar, app) => {
-                instancesSoFar.push(...app.instances);
-                return instancesSoFar;
-            }, []);
-            this.me = this.findMyInstance();
-            this.logger.trace(`all applications were parsed and saved. I am ${this.me ? "NOT a" : "a"} valid instance`);
-            const { channels: channelsStorageData } = this.sessionController.getWindowData();
-            const channel = channelsStorageData ? channelsStorageData.currentName : result.initialChannelId;
-            if (channel) {
-                yield this.joinInitialChannel(channel);
-            }
-        });
+    async registerWithPlatform() {
+        const result = await this.bridge.send("appManager", operations$8.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+        this.logger.trace("the platform responded to the hello message with a full list of apps");
+        this.applications = await Promise.all(result.apps.map((app) => this.ioc.buildApplication(app, app.instances)));
+        this.instances = this.applications.reduce((instancesSoFar, app) => {
+            instancesSoFar.push(...app.instances);
+            return instancesSoFar;
+        }, []);
+        this.me = this.findMyInstance();
+        this.logger.trace(`all applications were parsed and saved. I am ${this.me ? "NOT a" : "a"} valid instance`);
+        const { channels: channelsStorageData } = this.sessionController.getWindowData();
+        const channel = channelsStorageData ? channelsStorageData.currentName : result.initialChannelId;
+        if (channel) {
+            await this.joinInitialChannel(channel);
+        }
     }
     findMyInstance() {
         for (const app of this.applications) {
@@ -3870,6 +3804,11 @@ class AppManagerController {
 }
 
 class InstanceModel {
+    data;
+    bridge;
+    application;
+    me;
+    myCtxKey;
     constructor(data, bridge, application) {
         this.data = data;
         this.bridge = bridge;
@@ -3888,19 +3827,19 @@ class InstanceModel {
         this.me = Object.freeze(api);
         return this.me;
     }
-    getContext() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            return this.bridge.contextLib.get(this.myCtxKey);
-        });
+    async getContext() {
+        return this.bridge.contextLib.get(this.myCtxKey);
     }
-    stop() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("appManager", operations$8.instanceStop, { id: this.data.id });
-        });
+    async stop() {
+        await this.bridge.send("appManager", operations$8.instanceStop, { id: this.data.id });
     }
 }
 
 class ApplicationModel {
+    data;
+    instances;
+    controller;
+    me;
     constructor(data, instances, controller) {
         this.data = data;
         this.instances = instances;
@@ -3942,12 +3881,10 @@ class ApplicationModel {
             }
         });
     }
-    start(context, options) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedContext = startApplicationContextDecoder.runWithException(context);
-            const verifiedOptions = startApplicationOptionsDecoder.runWithException(options);
-            return this.controller.startApplication(this.data.name, verifiedContext, verifiedOptions);
-        });
+    async start(context, options) {
+        const verifiedContext = startApplicationContextDecoder.runWithException(context);
+        const verifiedOptions = startApplicationOptionsDecoder.runWithException(options);
+        return this.controller.startApplication(this.data.name, verifiedContext, verifiedOptions);
     }
 }
 
@@ -3955,11 +3892,13 @@ const operations$7 = {
     layoutAdded: { name: "layoutAdded", dataDecoder: glueLayoutDecoder },
     layoutChanged: { name: "layoutChanged", dataDecoder: glueLayoutDecoder },
     layoutRemoved: { name: "layoutRemoved", dataDecoder: glueLayoutDecoder },
+    layoutRenamed: { name: "layoutRenamed", dataDecoder: glueLayoutDecoder },
     get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult },
     getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
     export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
     import: { name: "import", dataDecoder: layoutsImportConfigDecoder },
     remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder },
+    rename: { name: "rename", dataDecoder: renameLayoutConfigDecoder, resultDecoder: layoutResultDecoder },
     save: { name: "save", dataDecoder: saveLayoutConfigDecoder, resultDecoder: simpleLayoutResultDecoder },
     restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder },
     clientSaveRequest: { name: "clientSaveRequest", dataDecoder: platformSaveRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder },
@@ -3968,42 +3907,41 @@ const operations$7 = {
     checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder },
     getDefaultGlobal: { name: "getDefaultGlobal", resultDecoder: optionalSimpleLayoutResult },
     setDefaultGlobal: { name: "setDefaultGlobal", dataDecoder: setDefaultGlobalConfigDecoder },
-    clearDefaultGlobal: { name: "clearDefaultGlobal" }
+    clearDefaultGlobal: { name: "clearDefaultGlobal" },
+    updateMetadata: { name: "updateMetadata", dataDecoder: updateLayoutMetadataConfigDecoder }
 };
 
 class LayoutsController {
-    constructor() {
-        this.defaultLayoutRestoreTimeoutMS = 120000;
-        this.registry = lib$3();
-    }
+    defaultLayoutRestoreTimeoutMS = 120000;
+    registry = CallbackRegistryFactory$1();
+    bridge;
+    logger;
+    windowsController;
+    saveRequestSubscription;
     handlePlatformShutdown() {
         this.registry.clear();
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("layouts.controller.web");
-            this.logger.trace("starting the web layouts controller");
-            this.bridge = ioc.bridge;
-            this.windowsController = ioc.windowsController;
-            this.addOperationsExecutors();
-            const api = this.toApi();
-            this.logger.trace("no need for platform registration, attaching the layouts property to glue and returning");
-            coreGlue.layouts = api;
-        });
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("layouts.controller.web");
+        this.logger.trace("starting the web layouts controller");
+        this.bridge = ioc.bridge;
+        this.windowsController = ioc.windowsController;
+        this.addOperationsExecutors();
+        const api = this.toApi();
+        this.logger.trace("no need for platform registration, attaching the layouts property to glue and returning");
+        coreGlue.layouts = api;
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = layoutsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$7[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = layoutsOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$7[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
     toApi() {
         const api = {
@@ -4023,7 +3961,10 @@ class LayoutsController {
             getGlobalTypeState: this.checkGlobalActivated.bind(this),
             getDefaultGlobal: this.getDefaultGlobal.bind(this),
             setDefaultGlobal: this.setDefaultGlobal.bind(this),
-            clearDefaultGlobal: this.clearDefaultGlobal.bind(this)
+            clearDefaultGlobal: this.clearDefaultGlobal.bind(this),
+            rename: this.rename.bind(this),
+            onRenamed: this.onRenamed.bind(this),
+            updateMetadata: this.updateMetadata.bind(this)
         };
         return Object.freeze(api);
     }
@@ -4031,136 +3972,119 @@ class LayoutsController {
         operations$7.layoutAdded.execute = this.handleOnAdded.bind(this);
         operations$7.layoutChanged.execute = this.handleOnChanged.bind(this);
         operations$7.layoutRemoved.execute = this.handleOnRemoved.bind(this);
+        operations$7.layoutRenamed.execute = this.handleOnRenamed.bind(this);
         operations$7.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
     }
-    get(name, type) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(name);
-            layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$7.get, { name, type });
-            return result.layout;
-        });
+    async get(name, type) {
+        nonEmptyStringDecoder.runWithException(name);
+        layoutTypeDecoder.runWithException(type);
+        const result = await this.bridge.send("layouts", operations$7.get, { name, type });
+        return result.layout;
     }
-    getAll(type) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$7.getAll, { type });
-            return result.summaries;
-        });
+    async getAll(type) {
+        layoutTypeDecoder.runWithException(type);
+        const result = await this.bridge.send("layouts", operations$7.getAll, { type });
+        return result.summaries;
     }
-    export(type) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            layoutTypeDecoder.runWithException(type);
-            const result = yield this.bridge.send("layouts", operations$7.export, { type });
-            return result.layouts;
-        });
+    async export(type) {
+        layoutTypeDecoder.runWithException(type);
+        const result = await this.bridge.send("layouts", operations$7.export, { type });
+        return result.layouts;
     }
-    import(layouts, mode = "replace") {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            importModeDecoder.runWithException(mode);
-            if (!Array.isArray(layouts)) {
-                throw new Error("Import must be called with an array of layouts");
+    async import(layouts, mode = "replace") {
+        importModeDecoder.runWithException(mode);
+        if (!Array.isArray(layouts)) {
+            throw new Error("Import must be called with an array of layouts");
+        }
+        if (layouts.length > 1000) {
+            throw new Error("Cannot import more than 1000 layouts at once in Glue42 Core.");
+        }
+        const parseResult = layouts.reduce((soFar, layout) => {
+            const decodeResult = glueLayoutDecoder.run(layout);
+            if (decodeResult.ok) {
+                soFar.valid.push(layout);
             }
-            if (layouts.length > 1000) {
-                throw new Error("Cannot import more than 1000 layouts at once in Glue42 Core.");
+            else {
+                this.logger.warn(`A layout with name: ${layout.name} was not imported, because of error: ${JSON.stringify(decodeResult.error)}`);
             }
-            const parseResult = layouts.reduce((soFar, layout) => {
-                const decodeResult = glueLayoutDecoder.run(layout);
-                if (decodeResult.ok) {
-                    soFar.valid.push(layout);
-                }
-                else {
-                    this.logger.warn(`A layout with name: ${layout.name} was not imported, because of error: ${JSON.stringify(decodeResult.error)}`);
-                }
-                return soFar;
-            }, { valid: [] });
-            const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
-            yield this.bridge.send("layouts", operations$7.import, { layouts: layoutsToImport, mode });
-        });
+            return soFar;
+        }, { valid: [] });
+        const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
+        await this.bridge.send("layouts", operations$7.import, { layouts: layoutsToImport, mode });
     }
-    save(layout) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            newLayoutOptionsDecoder.runWithException(layout);
-            const saveResult = yield this.bridge.send("layouts", operations$7.save, { layout });
-            return saveResult.layout;
-        });
+    async save(layout) {
+        newLayoutOptionsDecoder.runWithException(layout);
+        const saveResult = await this.bridge.send("layouts", operations$7.save, { layout });
+        return saveResult.layout;
     }
-    restore(options) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            restoreOptionsDecoder.runWithException(options);
-            const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
-            yield this.bridge.send("layouts", operations$7.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
-        });
+    async restore(options) {
+        restoreOptionsDecoder.runWithException(options);
+        const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
+        await this.bridge.send("layouts", operations$7.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
     }
-    remove(type, name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            layoutTypeDecoder.runWithException(type);
-            nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("layouts", operations$7.remove, { type, name });
-        });
+    async remove(type, name) {
+        layoutTypeDecoder.runWithException(type);
+        nonEmptyStringDecoder.runWithException(name);
+        await this.bridge.send("layouts", operations$7.remove, { type, name });
     }
-    handleSaveRequest(config) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const response = {};
-            if (this.saveRequestSubscription) {
-                try {
-                    const onSaveRequestResponse = this.saveRequestSubscription(config);
-                    response.windowContext = onSaveRequestResponse === null || onSaveRequestResponse === void 0 ? void 0 : onSaveRequestResponse.windowContext;
-                }
-                catch (error) {
-                    this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
-                }
+    async handleSaveRequest(config) {
+        const response = {};
+        if (this.saveRequestSubscription) {
+            try {
+                const onSaveRequestResponse = this.saveRequestSubscription(config);
+                response.windowContext = onSaveRequestResponse?.windowContext;
             }
-            return response;
-        });
-    }
-    getGlobalPermissionState() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$7.getGlobalPermissionState, undefined);
-            return requestResult;
-        });
-    }
-    requestGlobalPermission() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const currentState = (yield this.getGlobalPermissionState()).state;
-            if (currentState === "denied") {
-                return { permissionGranted: false };
+            catch (error) {
+                this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
             }
-            if (currentState === "granted") {
-                return { permissionGranted: true };
-            }
-            const myWindow = this.windowsController.my();
-            const globalNamespace = window.glue42core || window.iobrowser;
-            const amIWorkspaceFrame = globalNamespace.isPlatformFrame;
-            if (myWindow.name !== "Platform" && !amIWorkspaceFrame) {
-                throw new Error("Cannot request permission for multi-window placement from any app other than the Platform.");
-            }
-            const requestResult = yield this.bridge.send("layouts", operations$7.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
-            return { permissionGranted: requestResult.isAvailable };
-        });
+        }
+        return response;
     }
-    checkGlobalActivated() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$7.checkGlobalActivated, undefined);
-            return { activated: requestResult.isAvailable };
-        });
+    async getGlobalPermissionState() {
+        const requestResult = await this.bridge.send("layouts", operations$7.getGlobalPermissionState, undefined);
+        return requestResult;
     }
-    getDefaultGlobal() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const requestResult = yield this.bridge.send("layouts", operations$7.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
-            return requestResult.layout;
-        });
+    async requestGlobalPermission() {
+        const currentState = (await this.getGlobalPermissionState()).state;
+        if (currentState === "denied") {
+            return { permissionGranted: false };
+        }
+        if (currentState === "granted") {
+            return { permissionGranted: true };
+        }
+        const myWindow = this.windowsController.my();
+        const globalNamespace = window.glue42core || window.iobrowser;
+        const amIWorkspaceFrame = globalNamespace.isPlatformFrame;
+        if (myWindow.name !== "Platform" && !amIWorkspaceFrame) {
+            throw new Error("Cannot request permission for multi-window placement from any app other than the Platform.");
+        }
+        const requestResult = await this.bridge.send("layouts", operations$7.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
+        return { permissionGranted: requestResult.isAvailable };
     }
-    setDefaultGlobal(name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("layouts", operations$7.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
-        });
+    async checkGlobalActivated() {
+        const requestResult = await this.bridge.send("layouts", operations$7.checkGlobalActivated, undefined);
+        return { activated: requestResult.isAvailable };
     }
-    clearDefaultGlobal() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("layouts", operations$7.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
-        });
+    async getDefaultGlobal() {
+        const requestResult = await this.bridge.send("layouts", operations$7.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+        return requestResult.layout;
+    }
+    async setDefaultGlobal(name) {
+        nonEmptyStringDecoder.runWithException(name);
+        await this.bridge.send("layouts", operations$7.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
+    }
+    async clearDefaultGlobal() {
+        await this.bridge.send("layouts", operations$7.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+    }
+    async rename(layout, newName) {
+        glueLayoutDecoder.runWithException(layout);
+        nonEmptyStringDecoder.runWithException(newName);
+        const result = await this.bridge.send("layouts", operations$7.rename, { layout, newName }, undefined, { includeOperationCheck: true });
+        return result;
+    }
+    async updateMetadata(layout) {
+        glueLayoutDecoder.runWithException(layout);
+        await this.bridge.send("layouts", operations$7.updateMetadata, { layout }, undefined, { includeOperationCheck: true });
     }
     onAdded(callback) {
         this.export("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
@@ -4172,6 +4096,12 @@ class LayoutsController {
     }
     onRemoved(callback) {
         return this.registry.add(operations$7.layoutRemoved.name, callback);
+    }
+    onRenamed(callback) {
+        if (typeof callback !== "function") {
+            throw new Error("Cannot subscribe to onRenamed, because the provided callback is not a function!");
+        }
+        return this.registry.add(operations$7.layoutRenamed.name, callback);
     }
     subscribeOnSaveRequested(callback) {
         if (typeof callback !== "function") {
@@ -4185,20 +4115,17 @@ class LayoutsController {
             delete this.saveRequestSubscription;
         };
     }
-    handleOnAdded(layout) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$7.layoutAdded.name, layout);
-        });
+    async handleOnAdded(layout) {
+        this.registry.execute(operations$7.layoutAdded.name, layout);
     }
-    handleOnChanged(layout) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$7.layoutChanged.name, layout);
-        });
+    async handleOnChanged(layout) {
+        this.registry.execute(operations$7.layoutChanged.name, layout);
     }
-    handleOnRemoved(layout) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute(operations$7.layoutRemoved.name, layout);
-        });
+    async handleOnRemoved(layout) {
+        this.registry.execute(operations$7.layoutRemoved.name, layout);
+    }
+    async handleOnRenamed(layout) {
+        this.registry.execute(operations$7.layoutRenamed.name, layout);
     }
 }
 
@@ -4223,390 +4150,53 @@ const operations$6 = {
     stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder }
 };
 
-var shortidExports$1 = {};
-var shortid$3 = {
-  get exports(){ return shortidExports$1; },
-  set exports(v){ shortidExports$1 = v; },
-};
+const urlAlphabet$1 =
+  'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 
-var libExports$1 = {};
-var lib$2 = {
-  get exports(){ return libExports$1; },
-  set exports(v){ libExports$1 = v; },
-};
-
-// Found this seed-based random generator somewhere
-// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
-
-var seed$1 = 1;
-
-/**
- * return a random number based on a seed
- * @param seed
- * @returns {number}
- */
-function getNextValue$1() {
-    seed$1 = (seed$1 * 9301 + 49297) % 233280;
-    return seed$1/(233280.0);
-}
-
-function setSeed$3(_seed_) {
-    seed$1 = _seed_;
-}
-
-var randomFromSeed$3 = {
-    nextValue: getNextValue$1,
-    seed: setSeed$3
-};
-
-var randomFromSeed$2 = randomFromSeed$3;
-
-var ORIGINAL$1 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
-var alphabet$5;
-var previousSeed$1;
-
-var shuffled$1;
-
-function reset$1() {
-    shuffled$1 = false;
-}
-
-function setCharacters$1(_alphabet_) {
-    if (!_alphabet_) {
-        if (alphabet$5 !== ORIGINAL$1) {
-            alphabet$5 = ORIGINAL$1;
-            reset$1();
-        }
-        return;
-    }
-
-    if (_alphabet_ === alphabet$5) {
-        return;
-    }
-
-    if (_alphabet_.length !== ORIGINAL$1.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$1.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
-    }
-
-    var unique = _alphabet_.split('').filter(function(item, ind, arr){
-       return ind !== arr.lastIndexOf(item);
-    });
-
-    if (unique.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL$1.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
-    }
-
-    alphabet$5 = _alphabet_;
-    reset$1();
-}
-
-function characters$1(_alphabet_) {
-    setCharacters$1(_alphabet_);
-    return alphabet$5;
-}
-
-function setSeed$2(seed) {
-    randomFromSeed$2.seed(seed);
-    if (previousSeed$1 !== seed) {
-        reset$1();
-        previousSeed$1 = seed;
-    }
-}
-
-function shuffle$1() {
-    if (!alphabet$5) {
-        setCharacters$1(ORIGINAL$1);
-    }
-
-    var sourceArray = alphabet$5.split('');
-    var targetArray = [];
-    var r = randomFromSeed$2.nextValue();
-    var characterIndex;
-
-    while (sourceArray.length > 0) {
-        r = randomFromSeed$2.nextValue();
-        characterIndex = Math.floor(r * sourceArray.length);
-        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
-    }
-    return targetArray.join('');
-}
-
-function getShuffled$1() {
-    if (shuffled$1) {
-        return shuffled$1;
-    }
-    shuffled$1 = shuffle$1();
-    return shuffled$1;
-}
-
-/**
- * lookup shuffled letter
- * @param index
- * @returns {string}
- */
-function lookup$1(index) {
-    var alphabetShuffled = getShuffled$1();
-    return alphabetShuffled[index];
-}
-
-function get$1 () {
-  return alphabet$5 || ORIGINAL$1;
-}
-
-var alphabet_1$1 = {
-    get: get$1,
-    characters: characters$1,
-    seed: setSeed$2,
-    lookup: lookup$1,
-    shuffled: getShuffled$1
-};
-
-var crypto$1 = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
-
-var randomByte$1;
-
-if (!crypto$1 || !crypto$1.getRandomValues) {
-    randomByte$1 = function(size) {
-        var bytes = [];
-        for (var i = 0; i < size; i++) {
-            bytes.push(Math.floor(Math.random() * 256));
-        }
-        return bytes;
-    };
-} else {
-    randomByte$1 = function(size) {
-        return crypto$1.getRandomValues(new Uint8Array(size));
-    };
-}
-
-var randomByteBrowser$1 = randomByte$1;
-
-// This file replaces `format.js` in bundlers like webpack or Rollup,
-// according to `browser` config in `package.json`.
-
-var format_browser$1 = function (random, alphabet, size) {
-  // We can’t use bytes bigger than the alphabet. To make bytes values closer
-  // to the alphabet, we apply bitmask on them. We look for the closest
-  // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
-  // 30 symbols in the alphabet, we will take 31 (00011111).
-  // We do not use faster Math.clz32, because it is not available in browsers.
-  var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1;
-  // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
-  // which is bigger than the alphabet). As a result, we will need more bytes,
-  // than ID size, because we will refuse bytes bigger than the alphabet.
-
-  // Every hardware random generator call is costly,
-  // because we need to wait for entropy collection. This is why often it will
-  // be faster to ask for few extra bytes in advance, to avoid additional calls.
-
-  // Here we calculate how many random bytes should we call in advance.
-  // It depends on ID length, mask / alphabet size and magic number 1.6
-  // (which was selected according benchmarks).
-
-  // -~f => Math.ceil(f) if n is float number
-  // -~i => i + 1 if n is integer number
-  var step = -~(1.6 * mask * size / alphabet.length);
-  var id = '';
-
-  while (true) {
-    var bytes = random(step);
-    // Compact alternative for `for (var i = 0; i < step; i++)`
-    var i = step;
-    while (i--) {
-      // If random byte is bigger than alphabet even after bitmask,
-      // we refuse it by `|| ''`.
-      id += alphabet[bytes[i] & mask] || '';
-      // More compact than `id.length + 1 === size`
-      if (id.length === +size) return id
-    }
+let nanoid$1 = (size = 21) => {
+  let id = '';
+  let bytes = crypto.getRandomValues(new Uint8Array(size));
+  while (size--) {
+    id += urlAlphabet$1[bytes[size] & 63];
   }
+  return id
 };
-
-var alphabet$4 = alphabet_1$1;
-var random$1 = randomByteBrowser$1;
-var format$1 = format_browser$1;
-
-function generate$3(number) {
-    var loopCounter = 0;
-    var done;
-
-    var str = '';
-
-    while (!done) {
-        str = str + format$1(random$1, alphabet$4.get(), 1);
-        done = number < (Math.pow(16, loopCounter + 1 ) );
-        loopCounter++;
-    }
-    return str;
-}
-
-var generate_1$1 = generate$3;
-
-var generate$2 = generate_1$1;
-
-// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
-// This number should be updated every year or so to keep the generated id short.
-// To regenerate `new Date() - 0` and bump the version. Always bump the version!
-var REDUCE_TIME$1 = 1567752802062;
-
-// don't change unless we change the algos or REDUCE_TIME
-// must be an integer and less than 16
-var version$3 = 7;
-
-// Counter is used when shortid is called multiple times in one second.
-var counter$1;
-
-// Remember the last time shortid was called in case counter is needed.
-var previousSeconds$1;
-
-/**
- * Generate unique id
- * Returns string id
- */
-function build$1(clusterWorkerId) {
-    var str = '';
-
-    var seconds = Math.floor((Date.now() - REDUCE_TIME$1) * 0.001);
-
-    if (seconds === previousSeconds$1) {
-        counter$1++;
-    } else {
-        counter$1 = 0;
-        previousSeconds$1 = seconds;
-    }
-
-    str = str + generate$2(version$3);
-    str = str + generate$2(clusterWorkerId);
-    if (counter$1 > 0) {
-        str = str + generate$2(counter$1);
-    }
-    str = str + generate$2(seconds);
-    return str;
-}
-
-var build_1$1 = build$1;
-
-var alphabet$3 = alphabet_1$1;
-
-function isShortId$1(id) {
-    if (!id || typeof id !== 'string' || id.length < 6 ) {
-        return false;
-    }
-
-    var nonAlphabetic = new RegExp('[^' +
-      alphabet$3.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
-    ']');
-    return !nonAlphabetic.test(id);
-}
-
-var isValid$1 = isShortId$1;
-
-(function (module) {
-
-	var alphabet = alphabet_1$1;
-	var build = build_1$1;
-	var isValid = isValid$1;
-
-	// if you are using cluster or multiple servers use this to make each instance
-	// has a unique value for worker
-	// Note: I don't know if this is automatically set when using third
-	// party cluster solutions such as pm2.
-	var clusterWorkerId = 0;
-
-	/**
-	 * Set the seed.
-	 * Highly recommended if you don't want people to try to figure out your id schema.
-	 * exposed as shortid.seed(int)
-	 * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
-	 */
-	function seed(seedValue) {
-	    alphabet.seed(seedValue);
-	    return module.exports;
-	}
-
-	/**
-	 * Set the cluster worker or machine id
-	 * exposed as shortid.worker(int)
-	 * @param workerId worker must be positive integer.  Number less than 16 is recommended.
-	 * returns shortid module so it can be chained.
-	 */
-	function worker(workerId) {
-	    clusterWorkerId = workerId;
-	    return module.exports;
-	}
-
-	/**
-	 *
-	 * sets new characters to use in the alphabet
-	 * returns the shuffled alphabet
-	 */
-	function characters(newCharacters) {
-	    if (newCharacters !== undefined) {
-	        alphabet.characters(newCharacters);
-	    }
-
-	    return alphabet.shuffled();
-	}
-
-	/**
-	 * Generate unique id
-	 * Returns string id
-	 */
-	function generate() {
-	  return build(clusterWorkerId);
-	}
-
-	// Export all other functions as properties of the generate function
-	module.exports = generate;
-	module.exports.generate = generate;
-	module.exports.seed = seed;
-	module.exports.worker = worker;
-	module.exports.characters = characters;
-	module.exports.isValid = isValid;
-} (lib$2));
-
-(function (module) {
-	module.exports = libExports$1;
-} (shortid$3));
-
-var shortid$2 = /*@__PURE__*/getDefaultExportFromCjs$1(shortidExports$1);
 
 class NotificationsController {
-    constructor() {
-        this.registry = lib$3();
-        this.notifications = {};
-    }
+    registry = CallbackRegistryFactory$1();
+    logger;
+    bridge;
+    notificationsSettings;
+    notifications = {};
+    coreGlue;
+    buildNotificationFunc;
     handlePlatformShutdown() {
         this.notifications = {};
         this.registry.clear();
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("notifications.controller.web");
-            this.logger.trace("starting the web notifications controller");
-            this.bridge = ioc.bridge;
-            this.coreGlue = coreGlue;
-            this.notificationsSettings = ioc.config.notifications;
-            this.buildNotificationFunc = ioc.buildNotification;
-            const api = this.toApi();
-            this.addOperationExecutors();
-            coreGlue.notifications = api;
-            this.logger.trace("notifications are ready");
-        });
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("notifications.controller.web");
+        this.logger.trace("starting the web notifications controller");
+        this.bridge = ioc.bridge;
+        this.coreGlue = coreGlue;
+        this.notificationsSettings = ioc.config.notifications;
+        this.buildNotificationFunc = ioc.buildNotification;
+        const api = this.toApi();
+        this.addOperationExecutors();
+        coreGlue.notifications = api;
+        this.logger.trace("notifications are ready");
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = notificationsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$6[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = notificationsOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$6[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
     toApi() {
         const api = {
@@ -4631,39 +4221,31 @@ class NotificationsController {
         };
         return Object.freeze(api);
     }
-    getPermission() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const queryResult = yield this.bridge.send("notifications", operations$6.getPermission, undefined);
-            return queryResult.permission;
-        });
+    async getPermission() {
+        const queryResult = await this.bridge.send("notifications", operations$6.getPermission, undefined);
+        return queryResult.permission;
     }
-    requestPermission() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const permissionResult = yield this.bridge.send("notifications", operations$6.requestPermission, undefined);
-            return permissionResult.permissionGranted;
-        });
+    async requestPermission() {
+        const permissionResult = await this.bridge.send("notifications", operations$6.requestPermission, undefined);
+        return permissionResult.permissionGranted;
     }
-    raise(options) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const settings = glue42NotificationOptionsDecoder.runWithException(options);
-            settings.showToast = typeof settings.showToast === "boolean" ? settings.showToast : true;
-            settings.showInPanel = typeof settings.showInPanel === "boolean" ? settings.showInPanel : true;
-            const permissionGranted = yield this.requestPermission();
-            if (!permissionGranted) {
-                throw new Error("Cannot raise the notification, because the user has declined the permission request");
-            }
-            const id = shortidExports$1.generate();
-            const raiseResult = yield this.bridge.send("notifications", operations$6.raiseNotification, { settings, id });
-            const notification = this.buildNotificationFunc(raiseResult.settings, id);
-            this.notifications[id] = notification;
-            return notification;
-        });
+    async raise(options) {
+        const settings = glue42NotificationOptionsDecoder.runWithException(options);
+        settings.showToast = typeof settings.showToast === "boolean" ? settings.showToast : true;
+        settings.showInPanel = typeof settings.showInPanel === "boolean" ? settings.showInPanel : true;
+        const permissionGranted = await this.requestPermission();
+        if (!permissionGranted) {
+            throw new Error("Cannot raise the notification, because the user has declined the permission request");
+        }
+        const id = nanoid$1(10);
+        const raiseResult = await this.bridge.send("notifications", operations$6.raiseNotification, { settings, id });
+        const notification = this.buildNotificationFunc(raiseResult.settings, id);
+        this.notifications[id] = notification;
+        return notification;
     }
-    list() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("notifications", operations$6.list, undefined, undefined, { includeOperationCheck: true });
-            return bridgeResponse.notifications;
-        });
+    async list() {
+        const bridgeResponse = await this.bridge.send("notifications", operations$6.list, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.notifications;
     }
     onRaised(callback) {
         if (typeof callback !== "function") {
@@ -4677,62 +4259,44 @@ class NotificationsController {
         }
         return this.registry.add("notification-closed", callback);
     }
-    click(id, action) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(id);
-            if (action) {
-                nonEmptyStringDecoder.runWithException(action);
-            }
-            yield this.bridge.send("notifications", operations$6.click, { id, action }, undefined, { includeOperationCheck: true });
-        });
+    async click(id, action) {
+        nonEmptyStringDecoder.runWithException(id);
+        if (action) {
+            nonEmptyStringDecoder.runWithException(action);
+        }
+        await this.bridge.send("notifications", operations$6.click, { id, action }, undefined, { includeOperationCheck: true });
     }
-    clear(id) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(id);
-            yield this.bridge.send("notifications", operations$6.clear, { id }, undefined, { includeOperationCheck: true });
-        });
+    async clear(id) {
+        nonEmptyStringDecoder.runWithException(id);
+        await this.bridge.send("notifications", operations$6.clear, { id }, undefined, { includeOperationCheck: true });
     }
-    clearAll() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("notifications", operations$6.clearAll, undefined, undefined, { includeOperationCheck: true });
-        });
+    async clearAll() {
+        await this.bridge.send("notifications", operations$6.clearAll, undefined, undefined, { includeOperationCheck: true });
     }
-    clearOld() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("notifications", operations$6.clearOld, undefined, undefined, { includeOperationCheck: true });
-        });
+    async clearOld() {
+        await this.bridge.send("notifications", operations$6.clearOld, undefined, undefined, { includeOperationCheck: true });
     }
-    configure(config) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedConfig = notificationsConfigurationDecoder.runWithException(config);
-            yield this.bridge.send("notifications", operations$6.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
-        });
+    async configure(config) {
+        const verifiedConfig = notificationsConfigurationDecoder.runWithException(config);
+        await this.bridge.send("notifications", operations$6.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
     }
-    getConfiguration() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const response = yield this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
-            return response.configuration;
-        });
+    async getConfiguration() {
+        const response = await this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+        return response.configuration;
     }
-    getFilter() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const response = yield this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
-            return response.configuration.sourceFilter;
-        });
+    async getFilter() {
+        const response = await this.bridge.send("notifications", operations$6.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+        return response.configuration.sourceFilter;
     }
-    setFilter(filter) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedFilter = notificationFilterDecoder.runWithException(filter);
-            yield this.bridge.send("notifications", operations$6.configure, { configuration: { sourceFilter: verifiedFilter } }, undefined, { includeOperationCheck: true });
-            return verifiedFilter;
-        });
+    async setFilter(filter) {
+        const verifiedFilter = notificationFilterDecoder.runWithException(filter);
+        await this.bridge.send("notifications", operations$6.configure, { configuration: { sourceFilter: verifiedFilter } }, undefined, { includeOperationCheck: true });
+        return verifiedFilter;
     }
-    setState(id, state) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(id);
-            notificationStateDecoder.runWithException(state);
-            yield this.bridge.send("notifications", operations$6.setState, { id, state }, undefined, { includeOperationCheck: true });
-        });
+    async setState(id, state) {
+        nonEmptyStringDecoder.runWithException(id);
+        notificationStateDecoder.runWithException(state);
+        await this.bridge.send("notifications", operations$6.setState, { id, state }, undefined, { includeOperationCheck: true });
     }
     onConfigurationChanged(callback) {
         if (typeof callback !== "function") {
@@ -4761,61 +4325,46 @@ class NotificationsController {
         operations$6.activeCountChange.execute = this.handleActiveCountChanged.bind(this);
         operations$6.stateChange.execute = this.handleNotificationStateChanged.bind(this);
     }
-    handleConfigurationChanged(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute("notifications-config-changed", data.configuration);
-        });
+    async handleConfigurationChanged(data) {
+        this.registry.execute("notifications-config-changed", data.configuration);
     }
-    handleActiveCountChanged(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute("notifications-active-count-changed", data);
-        });
+    async handleActiveCountChanged(data) {
+        this.registry.execute("notifications-active-count-changed", data);
     }
-    handleNotificationStateChanged(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute("notification-state-changed", { id: data.id }, data.state);
-        });
+    async handleNotificationStateChanged(data) {
+        this.registry.execute("notification-state-changed", { id: data.id }, data.state);
     }
-    handleNotificationShow(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!data.id) {
-                return;
-            }
-            const notification = this.notifications[data.id];
-            if (notification && notification.onshow) {
-                notification.onshow();
-            }
-        });
+    async handleNotificationShow(data) {
+        if (!data.id) {
+            return;
+        }
+        const notification = this.notifications[data.id];
+        if (notification && notification.onshow) {
+            notification.onshow();
+        }
     }
-    handleNotificationClick(data) {
-        var _a, _b, _c, _d, _e;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!data.action && ((_a = this.notificationsSettings) === null || _a === void 0 ? void 0 : _a.defaultClick)) {
-                this.notificationsSettings.defaultClick(this.coreGlue, data.definition);
-            }
-            if (data.action && ((_c = (_b = this.notificationsSettings) === null || _b === void 0 ? void 0 : _b.actionClicks) === null || _c === void 0 ? void 0 : _c.some((actionDef) => actionDef.action === data.action))) {
-                const foundHandler = (_e = (_d = this.notificationsSettings) === null || _d === void 0 ? void 0 : _d.actionClicks) === null || _e === void 0 ? void 0 : _e.find((actionDef) => actionDef.action === data.action);
-                foundHandler.handler(this.coreGlue, data.definition);
-            }
-            if (!data.id) {
-                return;
-            }
-            const notification = this.notifications[data.id];
-            if (notification && notification.onclick) {
-                notification.onclick();
-                delete this.notifications[data.id];
-            }
-        });
+    async handleNotificationClick(data) {
+        if (!data.action && this.notificationsSettings?.defaultClick) {
+            this.notificationsSettings.defaultClick(this.coreGlue, data.definition);
+        }
+        if (data.action && this.notificationsSettings?.actionClicks?.some((actionDef) => actionDef.action === data.action)) {
+            const foundHandler = this.notificationsSettings?.actionClicks?.find((actionDef) => actionDef.action === data.action);
+            foundHandler.handler(this.coreGlue, data.definition);
+        }
+        if (!data.id) {
+            return;
+        }
+        const notification = this.notifications[data.id];
+        if (notification && notification.onclick) {
+            notification.onclick();
+            delete this.notifications[data.id];
+        }
     }
-    handleNotificationRaised(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute("notification-raised", data.notification);
-        });
+    async handleNotificationRaised(data) {
+        this.registry.execute("notification-raised", data.notification);
     }
-    handleNotificationClosed(data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.registry.execute("notification-closed", data);
-        });
+    async handleNotificationClosed(data) {
+        this.registry.execute("notification-closed", data);
     }
 }
 
@@ -4839,41 +4388,41 @@ const MAX_SET_TIMEOUT_DELAY = 2147483647;
 const DEFAULT_PICK_HANDLER_BY_TIMEOUT = 90 * 1000;
 
 class IntentsController {
-    constructor() {
-        this.myIntents = new Set();
-        this.useIntentsResolverUI = true;
-        this.unregisterIntentPromises = [];
-    }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("intents.controller.web");
-            this.logger.trace("starting the web intents controller");
-            this.bridge = ioc.bridge;
-            this.interop = coreGlue.interop;
-            this.legacyIntentsController = ioc.legacyIntentsHelper;
-            this.checkIfIntentsResolverIsEnabled(ioc.config);
-            const api = this.toApi();
-            this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
-            coreGlue.intents = api;
-        });
+    bridge;
+    logger;
+    interop;
+    legacyIntentsController;
+    myIntents = new Set();
+    useIntentsResolverUI = true;
+    intentsResolverAppName;
+    intentResolverResponseTimeout;
+    unregisterIntentPromises = [];
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("intents.controller.web");
+        this.logger.trace("starting the web intents controller");
+        this.bridge = ioc.bridge;
+        this.interop = coreGlue.interop;
+        this.legacyIntentsController = ioc.legacyIntentsHelper;
+        this.checkIfIntentsResolverIsEnabled(ioc.config);
+        const api = this.toApi();
+        this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
+        coreGlue.intents = api;
     }
     handlePlatformShutdown() {
         this.myIntents = new Set();
         this.unregisterIntentPromises = [];
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = intentsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$5[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = intentsOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$5[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
     toApi() {
         const api = {
@@ -4887,66 +4436,59 @@ class IntentsController {
         };
         return api;
     }
-    raise(request) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const validatedIntentRequest = raiseRequestDecoder.runWithException(request);
-            const intentRequest = typeof validatedIntentRequest === "string"
-                ? { intent: validatedIntentRequest }
-                : validatedIntentRequest;
-            yield Promise.all(this.unregisterIntentPromises);
-            const requestWithResolverInfo = { intentRequest, resolverConfig: this.getResolverConfigByRequest({ intentRequest }) };
-            const isRaiseOperationSupported = yield this.isRaiseOperationSupported();
-            if (!isRaiseOperationSupported.supported) {
-                this.logger.warn(`${isRaiseOperationSupported.reason}. Invoking legacy raise method`);
-                return this.legacyIntentsController.raise(requestWithResolverInfo, this.find.bind(this));
-            }
-            this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${this.intentResolverResponseTimeout}ms`);
-            const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
-                ? MAX_SET_TIMEOUT_DELAY
-                : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-            const response = yield this.bridge.send("intents", operations$5.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
-            return response;
-        });
+    async raise(request) {
+        const validatedIntentRequest = raiseRequestDecoder.runWithException(request);
+        const intentRequest = typeof validatedIntentRequest === "string"
+            ? { intent: validatedIntentRequest }
+            : validatedIntentRequest;
+        await Promise.all(this.unregisterIntentPromises);
+        const requestWithResolverInfo = { intentRequest, resolverConfig: this.getResolverConfigByRequest({ intentRequest }) };
+        const isRaiseOperationSupported = await this.isRaiseOperationSupported();
+        if (!isRaiseOperationSupported.supported) {
+            this.logger.warn(`${isRaiseOperationSupported.reason}. Invoking legacy raise method`);
+            return this.legacyIntentsController.raise(requestWithResolverInfo, this.find.bind(this));
+        }
+        this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${this.intentResolverResponseTimeout}ms`);
+        const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
+            ? MAX_SET_TIMEOUT_DELAY
+            : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+        const response = await this.bridge.send("intents", operations$5.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
+        return response;
     }
     getResolverConfigByRequest(filter) {
-        var _a, _b, _c, _d;
         if (filter.handlerFilter) {
             return {
-                enabled: typeof ((_a = filter.handlerFilter) === null || _a === void 0 ? void 0 : _a.openResolver) === "boolean" ? (_b = filter.handlerFilter) === null || _b === void 0 ? void 0 : _b.openResolver : this.useIntentsResolverUI,
+                enabled: typeof filter.handlerFilter?.openResolver === "boolean" ? filter.handlerFilter?.openResolver : this.useIntentsResolverUI,
                 appName: this.intentsResolverAppName,
-                waitResponseTimeout: ((_c = filter.handlerFilter) === null || _c === void 0 ? void 0 : _c.timeout) || DEFAULT_PICK_HANDLER_BY_TIMEOUT
+                waitResponseTimeout: filter.handlerFilter?.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT
             };
         }
-        const waitResponseTimeout = ((_d = filter.intentRequest) === null || _d === void 0 ? void 0 : _d.waitUserResponseIndefinitely) ? MAX_SET_TIMEOUT_DELAY : this.intentResolverResponseTimeout;
+        const waitResponseTimeout = filter.intentRequest?.waitUserResponseIndefinitely ? MAX_SET_TIMEOUT_DELAY : this.intentResolverResponseTimeout;
         return {
             enabled: this.useIntentsResolverUI,
             appName: this.intentsResolverAppName,
             waitResponseTimeout
         };
     }
-    isRaiseOperationSupported() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                const { isSupported } = yield this.bridge.send("intents", systemOperations.operationCheck, { operation: "raise" });
-                return {
-                    supported: isSupported,
-                    reason: isSupported ? "" : "The platform of this client is outdated and does not support \"raise\" operation"
-                };
-            }
-            catch (error) {
-                return {
-                    supported: false,
-                    reason: "The platform of this client is outdated and does not support \"operationCheck\" command"
-                };
-            }
-        });
+    async isRaiseOperationSupported() {
+        try {
+            const { isSupported } = await this.bridge.send("intents", systemOperations.operationCheck, { operation: "raise" });
+            return {
+                supported: isSupported,
+                reason: isSupported ? "" : "The platform of this client is outdated and does not support \"raise\" operation"
+            };
+        }
+        catch (error) {
+            return {
+                supported: false,
+                reason: "The platform of this client is outdated and does not support \"operationCheck\" command"
+            };
+        }
     }
-    all() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield Promise.all(this.unregisterIntentPromises);
-            const result = yield this.bridge.send("intents", operations$5.getIntents, undefined);
-            return result.intents;
-        });
+    async all() {
+        await Promise.all(this.unregisterIntentPromises);
+        const result = await this.bridge.send("intents", operations$5.getIntents, undefined);
+        return result.intents;
     }
     addIntentListener(intent, handler) {
         AddIntentListenerDecoder.runWithException(intent);
@@ -4971,12 +4513,12 @@ class IntentsController {
         };
         let intentFlag = {};
         if (typeof intent === "object") {
-            const rest = __rest$2(intent, ["intent"]);
+            const { intent: removed, ...rest } = intent;
             intentFlag = rest;
         }
         registerPromise = this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
             if (this.myIntents.has(intentName)) {
-                const rest = __rest$2(args, ["_initialCallerId"]);
+                const { _initialCallerId, ...rest } = args;
                 return handler(rest);
             }
         });
@@ -4986,73 +4528,68 @@ class IntentsController {
         });
         return result;
     }
-    register(intent, handler) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            AddIntentListenerDecoder.runWithException(intent);
-            if (typeof handler !== "function") {
-                throw new Error("Cannot add intent listener, because the provided handler is not a function!");
-            }
-            yield Promise.all(this.unregisterIntentPromises);
-            const intentName = typeof intent === "string" ? intent : intent.intent;
-            const methodName = this.buildInteropMethodName(intentName);
-            const alreadyRegistered = this.myIntents.has(intentName);
-            if (alreadyRegistered) {
-                throw new Error(`Intent listener for intent ${intentName} already registered!`);
-            }
-            this.myIntents.add(intentName);
-            let intentFlag = {};
-            if (typeof intent === "object") {
-                const rest = __rest$2(intent, ["intent"]);
-                intentFlag = rest;
-            }
-            try {
-                yield this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
-                    if (this.myIntents.has(intentName)) {
-                        const { _initialCallerId } = args, rest = __rest$2(args, ["_initialCallerId"]);
-                        const caller = this.interop.servers().find((server) => server.instance === _initialCallerId);
-                        return handler(rest, caller);
-                    }
-                });
-            }
-            catch (err) {
-                this.myIntents.delete(intentName);
-                throw new Error(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`);
-            }
-            return {
-                unsubscribe: () => this.unsubscribeIntent(intentName)
-            };
-        });
+    async register(intent, handler) {
+        AddIntentListenerDecoder.runWithException(intent);
+        if (typeof handler !== "function") {
+            throw new Error("Cannot add intent listener, because the provided handler is not a function!");
+        }
+        await Promise.all(this.unregisterIntentPromises);
+        const intentName = typeof intent === "string" ? intent : intent.intent;
+        const methodName = this.buildInteropMethodName(intentName);
+        const alreadyRegistered = this.myIntents.has(intentName);
+        if (alreadyRegistered) {
+            throw new Error(`Intent listener for intent ${intentName} already registered!`);
+        }
+        this.myIntents.add(intentName);
+        let intentFlag = {};
+        if (typeof intent === "object") {
+            const { intent: removed, ...rest } = intent;
+            intentFlag = rest;
+        }
+        try {
+            await this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
+                if (this.myIntents.has(intentName)) {
+                    const { _initialCallerId, ...rest } = args;
+                    const caller = this.interop.servers().find((server) => server.instance === _initialCallerId);
+                    return handler(rest, caller);
+                }
+            });
+        }
+        catch (err) {
+            this.myIntents.delete(intentName);
+            throw new Error(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`);
+        }
+        return {
+            unsubscribe: () => this.unsubscribeIntent(intentName)
+        };
     }
-    find(intentFilter) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            let data = undefined;
-            if (typeof intentFilter !== "undefined") {
-                const intentFilterObj = findFilterDecoder.runWithException(intentFilter);
-                if (typeof intentFilterObj === "string") {
-                    data = {
-                        filter: {
-                            name: intentFilterObj
-                        }
-                    };
-                }
-                else if (typeof intentFilterObj === "object") {
-                    data = {
-                        filter: intentFilterObj
-                    };
-                }
+    async find(intentFilter) {
+        let data = undefined;
+        if (typeof intentFilter !== "undefined") {
+            const intentFilterObj = findFilterDecoder.runWithException(intentFilter);
+            if (typeof intentFilterObj === "string") {
+                data = {
+                    filter: {
+                        name: intentFilterObj
+                    }
+                };
             }
-            yield Promise.all(this.unregisterIntentPromises);
-            const result = yield this.bridge.send("intents", operations$5.findIntent, data);
-            return result.intents;
-        });
+            else if (typeof intentFilterObj === "object") {
+                data = {
+                    filter: intentFilterObj
+                };
+            }
+        }
+        await Promise.all(this.unregisterIntentPromises);
+        const result = await this.bridge.send("intents", operations$5.findIntent, data);
+        return result.intents;
     }
     checkIfIntentsResolverIsEnabled(options) {
-        var _a, _b, _c, _d, _e;
-        this.useIntentsResolverUI = typeof ((_a = options.intents) === null || _a === void 0 ? void 0 : _a.enableIntentsResolverUI) === "boolean"
+        this.useIntentsResolverUI = typeof options.intents?.enableIntentsResolverUI === "boolean"
             ? options.intents.enableIntentsResolverUI
             : true;
-        this.intentsResolverAppName = (_c = (_b = options.intents) === null || _b === void 0 ? void 0 : _b.intentsResolverAppName) !== null && _c !== void 0 ? _c : INTENTS_RESOLVER_APP_NAME;
-        this.intentResolverResponseTimeout = (_e = (_d = options.intents) === null || _d === void 0 ? void 0 : _d.methodResponseTimeoutMs) !== null && _e !== void 0 ? _e : DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
+        this.intentsResolverAppName = options.intents?.intentsResolverAppName ?? INTENTS_RESOLVER_APP_NAME;
+        this.intentResolverResponseTimeout = options.intents?.methodResponseTimeoutMs ?? DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
     }
     clearUnregistrationPromise(promiseToRemove) {
         this.unregisterIntentPromises = this.unregisterIntentPromises.filter(promise => promise !== promiseToRemove);
@@ -5074,18 +4611,16 @@ class IntentsController {
             this.clearUnregistrationPromise(unregisterPromise);
         });
     }
-    filterHandlers(handlerFilter) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            handlersFilterDecoder.runWithException(handlerFilter);
-            this.checkIfAtLeastOneFilterIsPresent(handlerFilter);
-            if (handlerFilter.openResolver && !this.useIntentsResolverUI) {
-                throw new Error("Cannot resolve 'filterHandlers' request using Intents Resolver UI because it's globally disabled");
-            }
-            const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-            const filterHandlersRequestWithResolverConfig = { filterHandlersRequest: handlerFilter, resolverConfig: this.getResolverConfigByRequest({ handlerFilter }) };
-            const result = yield this.bridge.send("intents", operations$5.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
-            return result;
-        });
+    async filterHandlers(handlerFilter) {
+        handlersFilterDecoder.runWithException(handlerFilter);
+        this.checkIfAtLeastOneFilterIsPresent(handlerFilter);
+        if (handlerFilter.openResolver && !this.useIntentsResolverUI) {
+            throw new Error("Cannot resolve 'filterHandlers' request using Intents Resolver UI because it's globally disabled");
+        }
+        const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+        const filterHandlersRequestWithResolverConfig = { filterHandlersRequest: handlerFilter, resolverConfig: this.getResolverConfigByRequest({ handlerFilter }) };
+        const result = await this.bridge.send("intents", operations$5.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
+        return result;
     }
     checkIfAtLeastOneFilterIsPresent(filter) {
         const errorMsg = "Provide at least one filter criteria of the following: 'intent' | 'contextTypes' | 'resultType' | 'applicationNames'";
@@ -5093,18 +4628,16 @@ class IntentsController {
             throw new Error(errorMsg);
         }
         const { intent, resultType, contextTypes, applicationNames } = filter;
-        const existingValidContextTypes = contextTypes === null || contextTypes === void 0 ? void 0 : contextTypes.length;
-        const existingValidApplicationNames = applicationNames === null || applicationNames === void 0 ? void 0 : applicationNames.length;
+        const existingValidContextTypes = contextTypes?.length;
+        const existingValidApplicationNames = applicationNames?.length;
         if (!intent && !resultType && !existingValidContextTypes && !existingValidApplicationNames) {
             throw new Error(errorMsg);
         }
     }
-    getIntentsByHandler(handler) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            intentHandlerDecoder.runWithException(handler);
-            const result = yield this.bridge.send("intents", operations$5.getIntentsByHandler, handler, undefined, { includeOperationCheck: true });
-            return result;
-        });
+    async getIntentsByHandler(handler) {
+        intentHandlerDecoder.runWithException(handler);
+        const result = await this.bridge.send("intents", operations$5.getIntentsByHandler, handler, undefined, { includeOperationCheck: true });
+        return result;
     }
 }
 
@@ -5124,100 +4657,84 @@ const latestFDC3Type = "latest_fdc3_type";
 
 const operations$4 = {
     addChannel: { name: "addChannel", dataDecoder: channelContextDecoder },
+    removeChannel: { name: "removeChannel", dataDecoder: removeChannelDataDecoder },
     getMyChannel: { name: "getMyChannel", resultDecoder: getMyChanelResultDecoder },
     getWindowIdsOnChannel: { name: "getWindowIdsOnChannel", dataDecoder: getWindowIdsOnChannelDataDecoder, resultDecoder: getWindowIdsOnChannelResultDecoder },
     getWindowIdsWithChannels: { name: "getWindowIdsWithChannels", dataDecoder: wrappedWindowWithChannelFilterDecoder, resultDecoder: getWindowIdsWithChannelsResultDecoder },
     joinChannel: { name: "joinChannel", dataDecoder: joinChannelDataDecoder },
+    restrict: { name: "restrict", dataDecoder: restrictionConfigDataDecoder },
+    getRestrictions: { name: "getRestrictions", dataDecoder: getRestrictionsDataDecoder, resultDecoder: restrictionsDecoder },
+    restrictAll: { name: "restrictAll", dataDecoder: restrictAllDataDecoder }
 };
 
 class ChannelsController {
-    constructor() {
-        this.registry = lib$3();
-        this.GlueWebChannelsPrefix = "___channel___";
-        this.SubsKey = "subs";
-        this.ChangedKey = "changed";
-        this.replaySubscribe = (callback, channelId) => {
-            this.get(channelId)
-                .then((channelContext) => {
-                if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
-                    const contextName = this.createContextName(channelContext.name);
-                    return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-                        callback(context.data, context, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
-                    });
-                }
-                return undefined;
-            })
-                .then((un) => {
-                if (un && typeof un === "function") {
-                    un();
-                }
-            })
-                .catch(err => this.logger.trace(err));
-        };
-    }
+    registry = CallbackRegistryFactory$1();
+    logger;
+    contexts;
+    bridge;
+    currentChannelName;
+    windowsController;
+    sessionController;
+    unsubscribeFunc;
+    GlueWebChannelsPrefix = "___channel___";
+    SubsKey = "subs";
+    ChangedKey = "changed";
     handlePlatformShutdown() {
         this.registry.clear();
     }
     addOperationsExecutors() {
         operations$4.getMyChannel.execute = this.handleGetMyChannel.bind(this);
         operations$4.joinChannel.execute = this.handleJoinChannel.bind(this);
+        operations$4.restrict.execute = ({ config }) => this.restrict(config);
+        operations$4.getRestrictions.execute = ({ windowId }) => this.getRestrictions(windowId);
+        operations$4.restrictAll.execute = ({ restrictions }) => this.restrictAll(restrictions);
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("channels.controller.web");
-            this.logger.trace("starting the web channels controller");
-            this.contexts = coreGlue.contexts;
-            this.addOperationsExecutors();
-            this.bridge = ioc.bridge;
-            this.windowsController = ioc.windowsController;
-            this.sessionController = ioc.sessionController;
-            this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
-            const api = this.toApi();
-            coreGlue.channels = api;
-        });
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("channels.controller.web");
+        this.logger.trace("starting the web channels controller");
+        this.contexts = coreGlue.contexts;
+        this.addOperationsExecutors();
+        this.bridge = ioc.bridge;
+        this.windowsController = ioc.windowsController;
+        this.sessionController = ioc.sessionController;
+        this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
+        const api = this.toApi();
+        coreGlue.channels = api;
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = channelsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$4[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = channelsOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$4[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
-    list() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            const channelContexts = yield Promise.all(channelNames.map((channelName) => this.get(channelName)));
-            return channelContexts;
-        });
+    async list() {
+        const channelNames = this.getAllChannelNames();
+        const channelContexts = await Promise.all(channelNames.map((channelName) => this.get(channelName)));
+        return channelContexts;
     }
     my() {
         return this.current();
     }
-    handleGetMyChannel() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channel = this.my();
-            return channel ? { channel } : {};
-        });
+    async handleGetMyChannel() {
+        const channel = this.my();
+        return channel ? { channel } : {};
     }
-    join(name, windowId) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            channelNameDecoder(channelNames).runWithException(name);
-            optionalNonEmptyStringDecoder.runWithException(windowId);
-            if (!windowId || windowId === this.windowsController.my().id) {
-                yield this.switchToChannel(name);
-            }
-            else {
-                yield this.bridge.send("channels", operations$4.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
-            }
-        });
+    async join(name, windowId) {
+        const channelNames = this.getAllChannelNames();
+        channelNameDecoder(channelNames).runWithException(name);
+        optionalNonEmptyStringDecoder.runWithException(windowId);
+        if (!windowId || windowId === this.windowsController.my().id) {
+            await this.switchToChannel(name);
+        }
+        else {
+            await this.bridge.send("channels", operations$4.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
+        }
     }
     handleJoinChannel({ channel, windowId }) {
         return this.join(channel, windowId);
@@ -5225,10 +4742,8 @@ class ChannelsController {
     onChanged(callback) {
         return this.changed(callback);
     }
-    leave() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.switchToChannel();
-        });
+    async leave() {
+        await this.switchToChannel();
     }
     toApi() {
         const api = {
@@ -5245,9 +4760,13 @@ class ChannelsController {
             changed: this.changed.bind(this),
             onChanged: this.onChanged.bind(this),
             add: this.add.bind(this),
+            remove: this.remove.bind(this),
             getMy: this.getMy.bind(this),
             getWindowsOnChannel: this.getWindowsOnChannel.bind(this),
             getWindowsWithChannels: this.getWindowsWithChannels.bind(this),
+            restrict: this.restrict.bind(this),
+            getRestrictions: this.getRestrictions.bind(this),
+            restrictAll: this.restrictAll.bind(this)
         };
         return Object.freeze(api);
     }
@@ -5266,43 +4785,39 @@ class ChannelsController {
             this.unsubscribeFunc = undefined;
         }
     }
-    switchToChannel(name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.unsubscribe();
-            this.currentChannelName = name;
-            if (typeof name !== "undefined") {
-                const contextName = this.createContextName(name);
-                this.unsubscribeFunc = yield this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-                    this.registry.execute(this.SubsKey, context.data, context, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
-                });
-            }
-            this.registry.execute(this.ChangedKey, name);
-            this.sessionController.setWindowData({ currentName: name }, "channels");
-        });
-    }
-    updateData(name, data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
+    async switchToChannel(name) {
+        this.unsubscribe();
+        this.currentChannelName = name;
+        if (typeof name !== "undefined") {
             const contextName = this.createContextName(name);
-            const fdc3Type = this.getFDC3Type(data);
-            if (this.contexts.setPathSupported) {
-                const pathValues = Object.keys(data).map((key) => {
-                    return {
-                        path: `data.${key}`,
-                        value: data[key]
-                    };
-                });
-                if (fdc3Type) {
-                    pathValues.push({ path: latestFDC3Type, value: fdc3Type });
-                }
-                yield this.contexts.setPaths(contextName, pathValues);
+            this.unsubscribeFunc = await this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+                this.registry.execute(this.SubsKey, context.data, context, extraData?.updaterId);
+            });
+        }
+        this.registry.execute(this.ChangedKey, name);
+        this.sessionController.setWindowData({ currentName: name }, "channels");
+    }
+    async updateData(name, data) {
+        const contextName = this.createContextName(name);
+        const fdc3Type = this.getFDC3Type(data);
+        if (this.contexts.setPathSupported) {
+            const pathValues = Object.keys(data).map((key) => {
+                return {
+                    path: `data.${key}`,
+                    value: data[key]
+                };
+            });
+            if (fdc3Type) {
+                pathValues.push({ path: latestFDC3Type, value: fdc3Type });
             }
-            else {
-                if (fdc3Type) {
-                    data[latestFDC3Type] = fdc3Type;
-                }
-                yield this.contexts.update(contextName, { data });
+            await this.contexts.setPaths(contextName, pathValues);
+        }
+        else {
+            if (fdc3Type) {
+                data[latestFDC3Type] = fdc3Type;
             }
-        });
+            await this.contexts.update(contextName, { data });
+        }
     }
     getFDC3Type(data) {
         const fdc3PropsArr = Object.keys(data).filter((key) => key.indexOf("fdc3_") === 0);
@@ -5319,22 +4834,22 @@ class ChannelsController {
             throw new Error("Cannot subscribe to channels, because the provided callback is not a function!");
         }
         const currentChannel = this.current();
+        const wrappedCallback = this.getWrappedCallbackWithPermissionCheck(callback);
         if (currentChannel) {
-            this.replaySubscribe(callback, currentChannel);
+            this.replaySubscribe(wrappedCallback, currentChannel);
         }
-        return this.registry.add(this.SubsKey, callback);
+        return this.registry.add(this.SubsKey, wrappedCallback);
     }
-    subscribeFor(name, callback) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            channelNameDecoder(channelNames).runWithException(name);
-            if (typeof callback !== "function") {
-                throw new Error(`Cannot subscribe to channel ${name}, because the provided callback is not a function!`);
-            }
-            const contextName = this.createContextName(name);
-            return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-                callback(context.data, context, extraData === null || extraData === void 0 ? void 0 : extraData.updaterId);
-            });
+    async subscribeFor(name, callback) {
+        const channelNames = this.getAllChannelNames();
+        channelNameDecoder(channelNames).runWithException(name);
+        if (typeof callback !== "function") {
+            throw new Error(`Cannot subscribe to channel ${name}, because the provided callback is not a function!`);
+        }
+        const contextName = this.createContextName(name);
+        const wrappedCallback = this.getWrappedCallbackWithPermissionCheck(callback);
+        return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+            wrappedCallback(context.data, context, extraData?.updaterId);
         });
     }
     publish(data, name) {
@@ -5344,31 +4859,31 @@ class ChannelsController {
         if (typeof name !== "undefined") {
             const channelNames = this.getAllChannelNames();
             channelNameDecoder(channelNames).runWithException(name);
-            return this.updateData(name, data);
         }
-        if (typeof this.currentChannelName === "undefined") {
+        const channelName = name || this.currentChannelName;
+        if (!channelName) {
             throw new Error("Cannot publish to channel, because not joined to a channel!");
         }
-        return this.updateData(this.currentChannelName, data);
+        const canPublish = this.isAllowedByRestrictions(channelName, "write");
+        if (!canPublish) {
+            throw new Error(`Cannot publish on channel ${channelName} due to restrictions`);
+        }
+        return this.updateData(channelName, data);
     }
-    all() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            return channelNames;
-        });
+    async all() {
+        const channelNames = this.getAllChannelNames();
+        return channelNames;
     }
-    get(name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            channelNameDecoder(channelNames).runWithException(name);
-            const contextName = this.createContextName(name);
-            const channelContext = yield this.contexts.get(contextName);
-            if (channelContext.latest_fdc3_type) {
-                const rest = __rest$2(channelContext, ["latest_fdc3_type"]);
-                return Object.assign({}, rest);
-            }
-            return channelContext;
-        });
+    async get(name) {
+        const channelNames = this.getAllChannelNames();
+        channelNameDecoder(channelNames).runWithException(name);
+        const contextName = this.createContextName(name);
+        const channelContext = await this.contexts.get(contextName);
+        if (channelContext.latest_fdc3_type) {
+            const { latest_fdc3_type, ...rest } = channelContext;
+            return { ...rest };
+        }
+        return channelContext;
     }
     current() {
         return this.currentChannelName;
@@ -5379,49 +4894,154 @@ class ChannelsController {
         }
         return this.registry.add(this.ChangedKey, callback);
     }
-    add(info) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelContext = channelContextDecoder.runWithException(info);
-            const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
-            if (channelWithSuchNameExists) {
-                throw new Error("There's an already existing channel with such name");
-            }
-            yield this.bridge.send("channels", operations$4.addChannel, channelContext);
-            return channelContext;
-        });
+    async add(info) {
+        const channelContext = channelContextDecoder.runWithException(info);
+        const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
+        if (channelWithSuchNameExists) {
+            throw new Error("There's an already existing channel with such name");
+        }
+        await this.bridge.send("channels", operations$4.addChannel, channelContext);
+        return channelContext;
     }
-    getMy() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!this.currentChannelName) {
+    async remove(name) {
+        nonEmptyStringDecoder.runWithException(name);
+        const channelWithSuchNameExists = this.getAllChannelNames().includes(name);
+        if (!channelWithSuchNameExists) {
+            throw new Error("There's no channel with such name");
+        }
+        await this.bridge.send("channels", operations$4.removeChannel, { name }, undefined, { includeOperationCheck: true });
+    }
+    replaySubscribe = (callback, channelId) => {
+        this.get(channelId)
+            .then((channelContext) => {
+            if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
+                const contextName = this.createContextName(channelContext.name);
+                return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+                    callback(context.data, context, extraData?.updaterId);
+                });
+            }
+            return undefined;
+        })
+            .then((un) => {
+            if (un && typeof un === "function") {
+                un();
+            }
+        })
+            .catch(err => this.logger.trace(err));
+    };
+    async getMy() {
+        if (!this.currentChannelName) {
+            return;
+        }
+        return this.get(this.currentChannelName);
+    }
+    async getWindowsOnChannel(channel) {
+        const channelNames = this.getAllChannelNames();
+        channelNameDecoder(channelNames).runWithException(channel);
+        const { windowIds } = await this.bridge.send("channels", operations$4.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
+        const result = windowIds.reduce((windows, windowId) => {
+            const window = this.windowsController.findById(windowId);
+            return window ? [...windows, window] : windows;
+        }, []);
+        return result;
+    }
+    async getWindowsWithChannels(filter) {
+        const operationData = filter !== undefined
+            ? { filter: windowWithChannelFilterDecoder.runWithException(filter) }
+            : {};
+        const { windowIdsWithChannels } = await this.bridge.send("channels", operations$4.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
+        const result = windowIdsWithChannels.reduce((windowsWithChannels, { application, channel, windowId }) => {
+            const window = this.windowsController.findById(windowId);
+            return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
+        }, []);
+        return result;
+    }
+    async restrict(config) {
+        channelRestrictionsDecoder.runWithException(config);
+        const channelNames = this.getAllChannelNames();
+        channelNameDecoder(channelNames).runWithException(config.name);
+        const forAnotherClient = config.windowId && config.windowId !== this.windowsController.my().id;
+        if (forAnotherClient) {
+            return this.bridge.send("channels", operations$4.restrict, { config }, undefined, { includeOperationCheck: true });
+        }
+        const sessionStorageData = this.sessionController.getWindowData();
+        const restrictions = sessionStorageData?.restrictions ? { ...sessionStorageData.restrictions, [config.name]: config } : { [config.name]: config };
+        const currentChannel = await this.getMy();
+        const prevReadAllowed = this.checkPreviousReadAllowed(currentChannel?.name);
+        this.sessionController.setWindowData(restrictions, "restrictions");
+        if (!currentChannel || prevReadAllowed || !config.read || currentChannel.name !== config.name) {
+            return;
+        }
+        this.replaySubscribeCallback(config.name);
+    }
+    async getRestrictions(windowId) {
+        optionalNonEmptyStringDecoder.runWithException(windowId);
+        if (!windowId || windowId === this.windowsController.my().id) {
+            return this.getMyRestrictions();
+        }
+        return this.bridge.send("channels", operations$4.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
+    }
+    async restrictAll(restrictions) {
+        restrictionsConfigDecoder.runWithException(restrictions);
+        const allChannelNames = this.getAllChannelNames();
+        const forAnotherClient = restrictions.windowId && restrictions.windowId !== this.windowsController.my().id;
+        if (forAnotherClient) {
+            return this.bridge.send("channels", operations$4.restrictAll, { restrictions }, undefined, { includeOperationCheck: true });
+        }
+        const allRestrictions = {};
+        allChannelNames.forEach((name) => {
+            allRestrictions[name] = { ...restrictions, name };
+        });
+        const currentChannel = await this.getMy();
+        const prevReadAllowed = this.checkPreviousReadAllowed(currentChannel?.name);
+        this.sessionController.setWindowData(allRestrictions, "restrictions");
+        if (!currentChannel || prevReadAllowed || !restrictions.read) {
+            return;
+        }
+        this.replaySubscribeCallback(currentChannel.name);
+    }
+    isAllowedByRestrictions(channelName, action) {
+        const { channels } = this.getMyRestrictions();
+        if (!channels?.length) {
+            return true;
+        }
+        const restriction = channels.find((restriction) => restriction.name === channelName);
+        return restriction ? restriction[action] : true;
+    }
+    getMyRestrictions() {
+        const sessionStorageData = this.sessionController.getWindowData();
+        const restrictions = Object.values(sessionStorageData?.restrictions || {});
+        return { channels: restrictions };
+    }
+    getWrappedCallbackWithPermissionCheck(callback) {
+        const wrappedCallback = (data, context, updaterId) => {
+            const canRead = this.isAllowedByRestrictions(context.name, "read");
+            if (!canRead) {
                 return;
             }
-            return this.get(this.currentChannelName);
-        });
+            callback(data, context, updaterId);
+        };
+        return wrappedCallback;
     }
-    getWindowsOnChannel(channel) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const channelNames = this.getAllChannelNames();
-            channelNameDecoder(channelNames).runWithException(channel);
-            const { windowIds } = yield this.bridge.send("channels", operations$4.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
-            const result = windowIds.reduce((windows, windowId) => {
-                const window = this.windowsController.findById(windowId);
-                return window ? [...windows, window] : windows;
-            }, []);
-            return result;
-        });
+    replaySubscribeCallback(channelName) {
+        const contextName = this.createContextName(channelName);
+        this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
+            this.registry.execute(this.SubsKey, context.data, context, extraData?.updaterId);
+        }).then((unsub) => {
+            if (unsub && typeof unsub === "function") {
+                unsub();
+            }
+        }).catch(err => this.logger.error(err));
     }
-    getWindowsWithChannels(filter) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationData = filter !== undefined
-                ? { filter: windowWithChannelFilterDecoder.runWithException(filter) }
-                : {};
-            const { windowIdsWithChannels } = yield this.bridge.send("channels", operations$4.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
-            const result = windowIdsWithChannels.reduce((windowsWithChannels, { application, channel, windowId }) => {
-                const window = this.windowsController.findById(windowId);
-                return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
-            }, []);
-            return result;
-        });
+    checkPreviousReadAllowed(channelName) {
+        if (!channelName) {
+            return true;
+        }
+        const prevRestrictions = this.sessionController.getWindowData().restrictions;
+        if (!prevRestrictions?.[channelName]) {
+            return true;
+        }
+        return prevRestrictions[channelName].read;
     }
 }
 
@@ -5432,45 +5052,39 @@ const operations$3 = {
 };
 
 class SystemController {
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.bridge = ioc.bridge;
-            this.ioc = ioc;
-            this.addOperationsExecutors();
-            yield this.setEnvironment();
-        });
+    bridge;
+    ioc;
+    async start(coreGlue, ioc) {
+        this.bridge = ioc.bridge;
+        this.ioc = ioc;
+        this.addOperationsExecutors();
+        await this.setEnvironment();
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = systemOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations$3[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = systemOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations$3[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
-    processPlatformShutdown() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            Object.values(this.ioc.controllers).forEach((controller) => controller.handlePlatformShutdown ? controller.handlePlatformShutdown() : null);
-            this.ioc.preferredConnectionController.stop();
-            this.ioc.eventsDispatcher.stop();
-            yield this.bridge.stop();
-        });
+    async processPlatformShutdown() {
+        Object.values(this.ioc.controllers).forEach((controller) => controller.handlePlatformShutdown ? controller.handlePlatformShutdown() : null);
+        this.ioc.preferredConnectionController.stop();
+        this.ioc.eventsDispatcher.stop();
+        await this.bridge.stop();
     }
-    setEnvironment() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const environment = yield this.bridge.send("system", operations$3.getEnvironment, undefined);
-            const base = yield this.bridge.send("system", operations$3.getBase, undefined);
-            const globalNamespace = window.glue42core || window.iobrowser;
-            const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
-            const globalObj = Object.assign({}, globalNamespace, base, { environment });
-            window[globalNamespaceName] = Object.freeze(globalObj);
-        });
+    async setEnvironment() {
+        const environment = await this.bridge.send("system", operations$3.getEnvironment, undefined);
+        const base = await this.bridge.send("system", operations$3.getBase, undefined);
+        const globalNamespace = window.glue42core || window.iobrowser;
+        const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
+        const globalObj = Object.assign({}, globalNamespace, base, { environment });
+        window[globalNamespaceName] = Object.freeze(globalObj);
     }
     addOperationsExecutors() {
         operations$3.platformShutdown.execute = this.processPlatformShutdown.bind(this);
@@ -5478,9 +5092,31 @@ class SystemController {
 }
 
 class Notification {
+    onclick = () => { };
+    onshow = () => { };
+    id;
+    title;
+    badge;
+    body;
+    data;
+    dir;
+    icon;
+    image;
+    lang;
+    renotify;
+    requireInteraction;
+    silent;
+    tag;
+    timestamp;
+    vibrate;
+    clickInterop;
+    actions;
+    focusPlatformOnDefaultClick;
+    severity;
+    showToast;
+    showInPanel;
+    state;
     constructor(config, id) {
-        this.onclick = () => { };
-        this.onshow = () => { };
         this.id = id;
         this.badge = config.badge;
         this.body = config.body;
@@ -5518,45 +5154,45 @@ const operations$2 = {
 };
 
 class ExtController {
-    constructor() {
-        this.channels = [];
-        this.unsubFuncs = [];
-        this.contentCommands = {
-            widgetVisualizationPermission: { name: "widgetVisualizationPermission", handle: this.handleWidgetVisualizationPermission.bind(this) },
-            changeChannel: { name: "changeChannel", handle: this.handleChangeChannel.bind(this) }
-        };
-    }
+    windowId;
+    logger;
+    bridge;
+    eventsDispatcher;
+    channelsController;
+    config;
+    channels = [];
+    unsubFuncs = [];
+    contentCommands = {
+        widgetVisualizationPermission: { name: "widgetVisualizationPermission", handle: this.handleWidgetVisualizationPermission.bind(this) },
+        changeChannel: { name: "changeChannel", handle: this.handleChangeChannel.bind(this) }
+    };
     handlePlatformShutdown() {
         this.unsubFuncs.forEach((unsub) => unsub());
         this.channels = [];
         this.unsubFuncs = [];
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("extension.controller.web");
-            this.windowId = ioc.publicWindowId;
-            this.logger.trace("starting the extension web controller");
-            this.bridge = ioc.bridge;
-            this.channelsController = ioc.channelsController;
-            this.eventsDispatcher = ioc.eventsDispatcher;
-            try {
-                yield this.registerWithPlatform();
-            }
-            catch (error) {
-                return;
-            }
-            this.channels = yield this.channelsController.list();
-            const unsubDispatcher = this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
-            const unsubChannels = this.channelsController.onChanged((channel) => {
-                this.eventsDispatcher.sendContentMessage({ command: "channelChange", newChannel: channel });
-            });
-            this.unsubFuncs.push(unsubDispatcher);
-            this.unsubFuncs.push(unsubChannels);
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("extension.controller.web");
+        this.windowId = ioc.publicWindowId;
+        this.logger.trace("starting the extension web controller");
+        this.bridge = ioc.bridge;
+        this.channelsController = ioc.channelsController;
+        this.eventsDispatcher = ioc.eventsDispatcher;
+        try {
+            await this.registerWithPlatform();
+        }
+        catch (error) {
+            return;
+        }
+        this.channels = await this.channelsController.list();
+        const unsubDispatcher = this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
+        const unsubChannels = this.channelsController.onChanged((channel) => {
+            this.eventsDispatcher.sendContentMessage({ command: "channelChange", newChannel: channel });
         });
+        this.unsubFuncs.push(unsubDispatcher);
+        this.unsubFuncs.push(unsubChannels);
     }
-    handleBridgeMessage(_) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-        });
+    async handleBridgeMessage(_) {
     }
     handleContentMessage(message) {
         if (!message || typeof message.command !== "string") {
@@ -5568,45 +5204,41 @@ class ExtController {
         }
         foundHandler.handle(message);
     }
-    registerWithPlatform() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger.trace("registering with the platform");
-            this.config = yield this.bridge.send("extension", operations$2.clientHello, { windowId: this.windowId });
-            this.logger.trace("the platform responded to the hello message with a valid extension config");
-        });
+    async registerWithPlatform() {
+        this.logger.trace("registering with the platform");
+        this.config = await this.bridge.send("extension", operations$2.clientHello, { windowId: this.windowId });
+        this.logger.trace("the platform responded to the hello message with a valid extension config");
     }
-    handleWidgetVisualizationPermission() {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (!((_a = this.config) === null || _a === void 0 ? void 0 : _a.widget.inject)) {
-                return this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: false });
-            }
-            const currentChannel = this.channels.find((channel) => channel.name === this.channelsController.my());
-            this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: true, channels: this.channels, currentChannel });
-        });
+    async handleWidgetVisualizationPermission() {
+        if (!this.config?.widget.inject) {
+            return this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: false });
+        }
+        const currentChannel = this.channels.find((channel) => channel.name === this.channelsController.my());
+        this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: true, channels: this.channels, currentChannel });
     }
-    handleChangeChannel(message) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (message.name === "no-channel") {
-                yield this.channelsController.leave();
-                return;
-            }
-            yield this.channelsController.join(message.name);
-        });
+    async handleChangeChannel(message) {
+        if (message.name === "no-channel") {
+            await this.channelsController.leave();
+            return;
+        }
+        await this.channelsController.join(message.name);
     }
 }
 
 class EventsDispatcher {
+    config;
+    glue;
+    registry = CallbackRegistryFactory$1();
+    glue42EventName = "Glue42";
+    _handleMessage;
     constructor(config) {
         this.config = config;
-        this.registry = lib$3();
-        this.glue42EventName = "Glue42";
-        this.events = {
-            notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
-            contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
-            requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
-        };
     }
+    events = {
+        notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
+        contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
+        requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) }
+    };
     stop() {
         window.removeEventListener(this.glue42EventName, this._handleMessage);
     }
@@ -5626,9 +5258,8 @@ class EventsDispatcher {
         window.addEventListener(this.glue42EventName, this._handleMessage);
     }
     handleMessage(event) {
-        var _a;
         const data = event.detail;
-        const namespace = (_a = data === null || data === void 0 ? void 0 : data.glue42) !== null && _a !== void 0 ? _a : data === null || data === void 0 ? void 0 : data.glue42core;
+        const namespace = data?.glue42 ?? data?.glue42core;
         if (!namespace) {
             return;
         }
@@ -5664,11 +5295,15 @@ class EventsDispatcher {
 }
 
 class PreferredConnectionController {
+    coreGlue;
+    transactionTimeout = 15000;
+    transactionLocks = {};
+    webPlatformTransport;
+    webPlatformMessagesUnsubscribe;
+    reconnectCounter = 0;
+    logger;
     constructor(coreGlue) {
         this.coreGlue = coreGlue;
-        this.transactionTimeout = 15000;
-        this.transactionLocks = {};
-        this.reconnectCounter = 0;
         this.logger = this.coreGlue.logger.subLogger("web.preferred.connection.controller");
     }
     stop() {
@@ -5677,25 +5312,23 @@ class PreferredConnectionController {
         }
         this.webPlatformMessagesUnsubscribe();
     }
-    start(coreConfig) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (coreConfig.isPlatformInternal) {
-                this.logger.trace("This is an internal client to the platform, skipping all client preferred communication logic.");
-                return;
-            }
-            const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
-            if (!isConnectedToPlatform) {
-                throw new Error("Cannot initiate the Glue Web Bridge, because the initial connection was not handled by a Web Platform transport.");
-            }
-            if (!this.coreGlue.connection.transport.isPreferredActivated) {
-                this.logger.trace("The platform of this client was configured without a preferred connection, skipping the rest of the initialization.");
-                return;
-            }
-            this.webPlatformTransport = this.coreGlue.connection.transport;
-            this.webPlatformMessagesUnsubscribe = this.webPlatformTransport.onMessage(this.handleWebPlatformMessage.bind(this));
-            const transportState = yield this.getCurrentPlatformTransportState();
-            yield this.checkSwitchTransport(transportState);
-        });
+    async start(coreConfig) {
+        if (coreConfig.isPlatformInternal) {
+            this.logger.trace("This is an internal client to the platform, skipping all client preferred communication logic.");
+            return;
+        }
+        const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
+        if (!isConnectedToPlatform) {
+            throw new Error("Cannot initiate the Glue Web Bridge, because the initial connection was not handled by a Web Platform transport.");
+        }
+        if (!this.coreGlue.connection.transport.isPreferredActivated) {
+            this.logger.trace("The platform of this client was configured without a preferred connection, skipping the rest of the initialization.");
+            return;
+        }
+        this.webPlatformTransport = this.coreGlue.connection.transport;
+        this.webPlatformMessagesUnsubscribe = this.webPlatformTransport.onMessage(this.handleWebPlatformMessage.bind(this));
+        const transportState = await this.getCurrentPlatformTransportState();
+        await this.checkSwitchTransport(transportState);
     }
     handleWebPlatformMessage(msg) {
         if (typeof msg === "string") {
@@ -5721,52 +5354,46 @@ class PreferredConnectionController {
             return this.handleCheckPreferredConnection(args, transactionId);
         }
     }
-    reEstablishPlatformPort() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                yield this.webPlatformTransport.connect();
+    async reEstablishPlatformPort() {
+        try {
+            await this.webPlatformTransport.connect();
+        }
+        catch (error) {
+            this.logger.trace(`Error when re-establishing port connection to the platform: ${JSON.stringify(error)}`);
+            --this.reconnectCounter;
+            if (this.reconnectCounter > 0) {
+                return this.reEstablishPlatformPort();
             }
-            catch (error) {
-                this.logger.trace(`Error when re-establishing port connection to the platform: ${JSON.stringify(error)}`);
-                --this.reconnectCounter;
-                if (this.reconnectCounter > 0) {
-                    return this.reEstablishPlatformPort();
-                }
-                this.logger.warn("This client lost connection to the platform while connected to a preferred GW and was not able to re-connect to the platform.");
-            }
-            this.logger.trace("The connection to the platform was re-established, closing the connection to the web gateway.");
-            this.reconnectCounter = 0;
-            this.webPlatformTransport.close();
-            const transportState = yield this.getCurrentPlatformTransportState();
-            yield this.checkSwitchTransport(transportState);
-        });
+            this.logger.warn("This client lost connection to the platform while connected to a preferred GW and was not able to re-connect to the platform.");
+        }
+        this.logger.trace("The connection to the platform was re-established, closing the connection to the web gateway.");
+        this.reconnectCounter = 0;
+        this.webPlatformTransport.close();
+        const transportState = await this.getCurrentPlatformTransportState();
+        await this.checkSwitchTransport(transportState);
     }
-    checkSwitchTransport(config) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const myCurrentTransportName = this.coreGlue.connection.transport.name();
-            if (myCurrentTransportName === config.transportName) {
-                this.logger.trace("A check switch was requested, but the platform transport and my transport are identical, no switch is necessary");
-                return;
-            }
-            this.logger.trace(`A check switch was requested and a transport switch is necessary, because this client is now on ${myCurrentTransportName}, but it should reconnect to ${JSON.stringify(config)}`);
-            const result = yield this.coreGlue.connection.switchTransport(config);
-            this.setConnected();
-            this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
-        });
+    async checkSwitchTransport(config) {
+        const myCurrentTransportName = this.coreGlue.connection.transport.name();
+        if (myCurrentTransportName === config.transportName) {
+            this.logger.trace("A check switch was requested, but the platform transport and my transport are identical, no switch is necessary");
+            return;
+        }
+        this.logger.trace(`A check switch was requested and a transport switch is necessary, because this client is now on ${myCurrentTransportName}, but it should reconnect to ${JSON.stringify(config)}`);
+        const result = await this.coreGlue.connection.switchTransport(config);
+        this.setConnected();
+        this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
     }
-    getCurrentPlatformTransportState() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger.trace("Requesting the current transport state of the platform.");
-            const transaction = this.setTransaction(Glue42CoreMessageTypes.getCurrentTransport.name);
-            this.sendPlatformMessage(Glue42CoreMessageTypes.getCurrentTransport.name, transaction.id);
-            const transportState = yield transaction.lock;
-            this.logger.trace(`The platform responded with transport state: ${JSON.stringify(transportState)}`);
-            return transportState;
-        });
+    async getCurrentPlatformTransportState() {
+        this.logger.trace("Requesting the current transport state of the platform.");
+        const transaction = this.setTransaction(Glue42CoreMessageTypes.getCurrentTransport.name);
+        this.sendPlatformMessage(Glue42CoreMessageTypes.getCurrentTransport.name, transaction.id);
+        const transportState = await transaction.lock;
+        this.logger.trace(`The platform responded with transport state: ${JSON.stringify(transportState)}`);
+        return transportState;
     }
     setTransaction(operation) {
         const transaction = {};
-        const transactionId = shortidExports$1.generate();
+        const transactionId = nanoid$1(10);
         const transactionLock = new Promise((resolve, reject) => {
             let transactionLive = true;
             transaction.lift = (args) => {
@@ -5822,7 +5449,7 @@ class PreferredConnectionController {
         this.logger.trace(`Got a current transport response from the platform with id: ${transactionId} and data: ${JSON.stringify(args)}`);
         const transportState = args.transportState;
         const transaction = this.transactionLocks[transactionId];
-        transaction === null || transaction === void 0 ? void 0 : transaction.lift(transportState);
+        transaction?.lift(transportState);
     }
     handleCheckPreferredLogic(transactionId) {
         setTimeout(() => this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredLogicResponse.name, transactionId), 0);
@@ -5856,99 +5483,90 @@ class PreferredConnectionController {
 }
 
 class LegacyIntentsHelper {
+    bridge;
+    interop;
+    appManagerController;
+    windowsController;
+    logger;
+    intentsResolverResponsePromises = {};
     constructor(logger, bridge, interop, appManagerController, windowsController) {
         this.bridge = bridge;
         this.interop = interop;
         this.appManagerController = appManagerController;
         this.windowsController = windowsController;
-        this.intentsResolverResponsePromises = {};
         this.logger = this.configureLogger(logger);
     }
-    raise(requestWithResolverInfo, findIntentFn) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const { intentRequest, resolverConfig } = requestWithResolverInfo;
-            const intent = (yield findIntentFn(intentRequest.intent)).find(intent => intent.name === intentRequest.intent);
-            if (!intent) {
-                throw new Error(`Intent with name ${intentRequest.intent} not found`);
-            }
-            const { open, reason } = this.checkIfResolverShouldBeOpened(intent, intentRequest, resolverConfig);
-            if (!open) {
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`Intent Resolver UI won't be used. Reason: ${reason}`);
-                return this.invokeRaiseIntent(intentRequest);
-            }
-            const intentResult = yield this.raiseIntentWithResolverApp(requestWithResolverInfo);
-            return intentResult;
-        });
+    async raise(requestWithResolverInfo, findIntentFn) {
+        const { intentRequest, resolverConfig } = requestWithResolverInfo;
+        const intent = (await findIntentFn(intentRequest.intent)).find(intent => intent.name === intentRequest.intent);
+        if (!intent) {
+            throw new Error(`Intent with name ${intentRequest.intent} not found`);
+        }
+        const { open, reason } = this.checkIfResolverShouldBeOpened(intent, intentRequest, resolverConfig);
+        if (!open) {
+            this.logger?.trace(`Intent Resolver UI won't be used. Reason: ${reason}`);
+            return this.invokeRaiseIntent(intentRequest);
+        }
+        const intentResult = await this.raiseIntentWithResolverApp(requestWithResolverInfo);
+        return intentResult;
     }
     configureLogger(loggerInst) {
         return loggerInst.subLogger("intents.legacy.helper.web");
     }
-    raiseIntentWithResolverApp(requestWithResolverInfo) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const { intentRequest, resolverConfig } = requestWithResolverInfo;
-            this.logger.trace(`Intents Resolver UI with app name ${resolverConfig.appName} will be used`);
-            const responseMethodName = yield this.registerResponseMethod();
-            this.logger.trace(`Registered interop method ${responseMethodName}`);
-            const resolverInstance = yield this.openIntentResolverApplication(requestWithResolverInfo, responseMethodName);
-            this.logger.trace(`Intents Resolver Instance with id ${resolverInstance.id} opened`);
-            const handler = yield this.handleInstanceResponse(resolverInstance.id);
-            const target = handler.type === "app"
-                ? { app: handler.applicationName }
-                : { instance: handler.instanceId };
-            this.logger.trace(`Intent handler chosen by the user: ${JSON.stringify(target)}`);
-            const intentResult = yield this.invokeRaiseIntent(Object.assign(Object.assign({}, intentRequest), { target }));
-            return intentResult;
-        });
+    async raiseIntentWithResolverApp(requestWithResolverInfo) {
+        const { intentRequest, resolverConfig } = requestWithResolverInfo;
+        this.logger.trace(`Intents Resolver UI with app name ${resolverConfig.appName} will be used`);
+        const responseMethodName = await this.registerResponseMethod();
+        this.logger.trace(`Registered interop method ${responseMethodName}`);
+        const resolverInstance = await this.openIntentResolverApplication(requestWithResolverInfo, responseMethodName);
+        this.logger.trace(`Intents Resolver Instance with id ${resolverInstance.id} opened`);
+        const handler = await this.handleInstanceResponse(resolverInstance.id);
+        const target = handler.type === "app"
+            ? { app: handler.applicationName }
+            : { instance: handler.instanceId };
+        this.logger.trace(`Intent handler chosen by the user: ${JSON.stringify(target)}`);
+        const intentResult = await this.invokeRaiseIntent({ ...intentRequest, target });
+        return intentResult;
     }
-    handleInstanceResponse(instanceId) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                const { handler, intent } = yield this.intentsResolverResponsePromises[instanceId].promise;
-                (_a = this.logger) === null || _a === void 0 ? void 0 : _a.trace(`Intent handler chosen for intent ${intent}: ${JSON.stringify(handler)}`);
-                this.stopResolverInstance(instanceId);
-                return handler;
-            }
-            catch (error) {
-                this.stopResolverInstance(instanceId);
-                throw new Error(error);
-            }
-        });
+    async handleInstanceResponse(instanceId) {
+        try {
+            const { handler, intent } = await this.intentsResolverResponsePromises[instanceId].promise;
+            this.logger?.trace(`Intent handler chosen for intent ${intent}: ${JSON.stringify(handler)}`);
+            this.stopResolverInstance(instanceId);
+            return handler;
+        }
+        catch (error) {
+            this.stopResolverInstance(instanceId);
+            throw new Error(error);
+        }
     }
     invokeRaiseIntent(requestObj) {
         return this.bridge.send("intents", operations$5.raiseIntent, requestObj);
     }
-    registerResponseMethod() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const methodName = INTENTS_RESOLVER_INTEROP_PREFIX + shortid$2();
-            yield this.interop.register(methodName, this.resolverResponseHandler.bind(this));
-            return methodName;
-        });
+    async registerResponseMethod() {
+        const methodName = INTENTS_RESOLVER_INTEROP_PREFIX + nanoid$1(10);
+        await this.interop.register(methodName, this.resolverResponseHandler.bind(this));
+        return methodName;
     }
-    openIntentResolverApplication(requestWithResolverInfo, methodName) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const { intentRequest, resolverConfig } = requestWithResolverInfo;
-            const startContext = this.buildStartContext(intentRequest, methodName);
-            const startOptions = yield this.buildStartOptions();
-            this.logger.trace(`Starting Intents Resolver UI with context: ${JSON.stringify(startContext)} and options: ${startOptions}`);
-            const instance = yield this.appManagerController.getApplication(resolverConfig.appName).start(startContext, startOptions);
-            this.logger.trace(`Intents Resolver instance with id ${instance.id} opened`);
-            this.subscribeOnInstanceStopped(instance);
-            this.createResponsePromise(intentRequest.intent, instance.id, methodName, resolverConfig.waitResponseTimeout);
-            return instance;
-        });
+    async openIntentResolverApplication(requestWithResolverInfo, methodName) {
+        const { intentRequest, resolverConfig } = requestWithResolverInfo;
+        const startContext = this.buildStartContext(intentRequest, methodName);
+        const startOptions = await this.buildStartOptions();
+        this.logger.trace(`Starting Intents Resolver UI with context: ${JSON.stringify(startContext)} and options: ${startOptions}`);
+        const instance = await this.appManagerController.getApplication(resolverConfig.appName).start(startContext, startOptions);
+        this.logger.trace(`Intents Resolver instance with id ${instance.id} opened`);
+        this.subscribeOnInstanceStopped(instance);
+        this.createResponsePromise(intentRequest.intent, instance.id, methodName, resolverConfig.waitResponseTimeout);
+        return instance;
     }
-    cleanUpIntentResolverPromise(instanceId) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const intentPromise = this.intentsResolverResponsePromises[instanceId];
-            if (!intentPromise) {
-                return;
-            }
-            const unregisterPromise = this.interop.unregister(intentPromise.methodName);
-            unregisterPromise.catch((error) => this.logger.warn(error));
-            delete this.intentsResolverResponsePromises[instanceId];
-        });
+    async cleanUpIntentResolverPromise(instanceId) {
+        const intentPromise = this.intentsResolverResponsePromises[instanceId];
+        if (!intentPromise) {
+            return;
+        }
+        const unregisterPromise = this.interop.unregister(intentPromise.methodName);
+        unregisterPromise.catch((error) => this.logger.warn(error));
+        delete this.intentsResolverResponsePromises[instanceId];
     }
     buildStartContext(requestObj, methodName) {
         return {
@@ -5957,61 +5575,53 @@ class LegacyIntentsHelper {
             methodName
         };
     }
-    buildStartOptions() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const bounds = yield this.getTargetBounds();
-            return {
-                top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
-                left: (bounds.width - INTENTS_RESOLVER_WIDTH) / 2 + bounds.left,
-                width: INTENTS_RESOLVER_WIDTH,
-                height: INTENTS_RESOLVER_HEIGHT
-            };
-        });
+    async buildStartOptions() {
+        const bounds = await this.getTargetBounds();
+        return {
+            top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
+            left: (bounds.width - INTENTS_RESOLVER_WIDTH) / 2 + bounds.left,
+            width: INTENTS_RESOLVER_WIDTH,
+            height: INTENTS_RESOLVER_HEIGHT
+        };
     }
-    getTargetBounds() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const bounds = (yield this.tryGetWindowBasedBounds()) || (yield this.tryGetWorkspaceBasedBounds());
-            if (bounds) {
-                this.logger.trace(`Opening Intents Resolver UI with bounds: ${JSON.stringify(bounds)}`);
-                return bounds;
-            }
-            const defaultBounds = {
-                top: window.screen.availTop || 0,
-                left: window.screen.availLeft || 0,
-                width: window.screen.width,
-                height: window.screen.height
-            };
-            this.logger.trace(`Opening Intents Resolver UI relative to my screen bounds: ${JSON.stringify(defaultBounds)}`);
-            return defaultBounds;
-        });
+    async getTargetBounds() {
+        const bounds = await this.tryGetWindowBasedBounds() || await this.tryGetWorkspaceBasedBounds();
+        if (bounds) {
+            this.logger.trace(`Opening Intents Resolver UI with bounds: ${JSON.stringify(bounds)}`);
+            return bounds;
+        }
+        const defaultBounds = {
+            top: window.screen.availTop || 0,
+            left: window.screen.availLeft || 0,
+            width: window.screen.width,
+            height: window.screen.height
+        };
+        this.logger.trace(`Opening Intents Resolver UI relative to my screen bounds: ${JSON.stringify(defaultBounds)}`);
+        return defaultBounds;
     }
-    tryGetWindowBasedBounds() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                const myWindowBounds = yield this.windowsController.my().getBounds();
-                this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(myWindowBounds)}`);
-                return myWindowBounds;
-            }
-            catch (error) {
-                this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
-            }
-            return undefined;
-        });
+    async tryGetWindowBasedBounds() {
+        try {
+            const myWindowBounds = await this.windowsController.my().getBounds();
+            this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(myWindowBounds)}`);
+            return myWindowBounds;
+        }
+        catch (error) {
+            this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
+        }
+        return undefined;
     }
-    tryGetWorkspaceBasedBounds() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            try {
-                yield this.bridge.send("workspaces", systemOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
-                const bridgeResponse = yield this.bridge.send("workspaces", systemOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsController.my().id });
-                const myWorkspaceBounds = bridgeResponse.bounds;
-                this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(myWorkspaceBounds)}`);
-                return myWorkspaceBounds;
-            }
-            catch (error) {
-                this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
-            }
-            return undefined;
-        });
+    async tryGetWorkspaceBasedBounds() {
+        try {
+            await this.bridge.send("workspaces", systemOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
+            const bridgeResponse = await this.bridge.send("workspaces", systemOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsController.my().id });
+            const myWorkspaceBounds = bridgeResponse.bounds;
+            this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(myWorkspaceBounds)}`);
+            return myWorkspaceBounds;
+        }
+        catch (error) {
+            this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
+        }
+        return undefined;
     }
     subscribeOnInstanceStopped(instance) {
         const { application } = instance;
@@ -6084,30 +5694,26 @@ const operations$1 = {
 };
 
 class ThemesController {
-    constructor() {
-        this.registry = lib$3();
-        this.activeThemeSubs = 0;
-    }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("themes.controller.web");
-            this.logger.trace("starting the web themes controller");
-            this.bridge = ioc.bridge;
-            const api = this.toApi();
-            coreGlue.themes = api;
-            this.logger.trace("themes are ready");
-        });
+    logger;
+    bridge;
+    registry = CallbackRegistryFactory$1();
+    themesSubscription;
+    activeThemeSubs = 0;
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("themes.controller.web");
+        this.logger.trace("starting the web themes controller");
+        this.bridge = ioc.bridge;
+        const api = this.toApi();
+        coreGlue.themes = api;
+        this.logger.trace("themes are ready");
     }
     handlePlatformShutdown() {
-        var _a;
         this.registry.clear();
         this.activeThemeSubs = 0;
-        (_a = this.themesSubscription) === null || _a === void 0 ? void 0 : _a.close();
+        this.themesSubscription?.close();
         delete this.themesSubscription;
     }
-    handleBridgeMessage() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-        });
+    async handleBridgeMessage() {
     }
     toApi() {
         const api = {
@@ -6118,78 +5724,66 @@ class ThemesController {
         };
         return Object.freeze(api);
     }
-    getCurrent() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("themes", operations$1.getCurrent, undefined, undefined, { includeOperationCheck: true });
-            return bridgeResponse.theme;
-        });
+    async getCurrent() {
+        const bridgeResponse = await this.bridge.send("themes", operations$1.getCurrent, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.theme;
     }
-    list() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const bridgeResponse = yield this.bridge.send("themes", operations$1.list, undefined, undefined, { includeOperationCheck: true });
-            return bridgeResponse.themes;
-        });
+    async list() {
+        const bridgeResponse = await this.bridge.send("themes", operations$1.list, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.themes;
     }
-    select(name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            nonEmptyStringDecoder.runWithException(name);
-            yield this.bridge.send("themes", operations$1.select, { name }, undefined, { includeOperationCheck: true });
-        });
+    async select(name) {
+        nonEmptyStringDecoder.runWithException(name);
+        await this.bridge.send("themes", operations$1.select, { name }, undefined, { includeOperationCheck: true });
     }
-    onChanged(callback) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (typeof callback !== "function") {
-                throw new Error("onChanged requires a callback of type function");
-            }
-            const subReady = this.themesSubscription ?
-                Promise.resolve() :
-                this.configureThemeSubscription();
-            yield subReady;
-            ++this.activeThemeSubs;
-            const unsubFunc = this.registry.add("on-theme-change", callback);
-            return () => this.themeUnsub(unsubFunc);
-        });
+    async onChanged(callback) {
+        if (typeof callback !== "function") {
+            throw new Error("onChanged requires a callback of type function");
+        }
+        const subReady = this.themesSubscription ?
+            Promise.resolve() :
+            this.configureThemeSubscription();
+        await subReady;
+        ++this.activeThemeSubs;
+        const unsubFunc = this.registry.add("on-theme-change", callback);
+        return () => this.themeUnsub(unsubFunc);
     }
-    configureThemeSubscription() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            if (this.themesSubscription) {
+    async configureThemeSubscription() {
+        if (this.themesSubscription) {
+            return;
+        }
+        this.themesSubscription = await this.bridge.createNotificationsSteam();
+        this.themesSubscription.onData((data) => {
+            const eventData = data.data;
+            const validation = simpleThemeResponseDecoder.run(eventData);
+            if (!validation.ok) {
+                this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
                 return;
             }
-            this.themesSubscription = yield this.bridge.createNotificationsSteam();
-            this.themesSubscription.onData((data) => {
-                const eventData = data.data;
-                const validation = simpleThemeResponseDecoder.run(eventData);
-                if (!validation.ok) {
-                    this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
-                    return;
-                }
-                const themeChanged = validation.result;
-                this.registry.execute("on-theme-change", themeChanged.theme);
-            });
-            this.themesSubscription.onClosed(() => {
-                this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
-                this.registry.clear();
-                this.activeThemeSubs = 0;
-                delete this.themesSubscription;
-            });
+            const themeChanged = validation.result;
+            this.registry.execute("on-theme-change", themeChanged.theme);
+        });
+        this.themesSubscription.onClosed(() => {
+            this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
+            this.registry.clear();
+            this.activeThemeSubs = 0;
+            delete this.themesSubscription;
         });
     }
     themeUnsub(registryUnsub) {
-        var _a;
         registryUnsub();
         --this.activeThemeSubs;
         if (this.activeThemeSubs) {
             return;
         }
-        (_a = this.themesSubscription) === null || _a === void 0 ? void 0 : _a.close();
+        this.themesSubscription?.close();
         delete this.themesSubscription;
     }
 }
 
 class SessionStorageController {
-    constructor() {
-        this.sessionStorage = window.sessionStorage;
-    }
+    sessionStorage = window.sessionStorage;
+    windowId;
     get allNamespaces() {
         return [{ namespace: this.windowNamespace, defaultValue: {} }];
     }
@@ -6227,46 +5821,45 @@ const operations = {
 };
 
 class PrefsController {
-    constructor() {
-        this.registry = lib$3();
-    }
+    bridge;
+    config;
+    logger;
+    appManagerController;
+    platformAppName;
+    registry = CallbackRegistryFactory$1();
     handlePlatformShutdown() {
         this.registry.clear();
     }
-    start(coreGlue, ioc) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            this.logger = coreGlue.logger.subLogger("prefs.controller.web");
-            this.logger.trace("starting the web prefs controller");
-            this.addOperationsExecutors();
-            this.bridge = ioc.bridge;
-            this.config = ioc.config;
-            this.appManagerController = ioc.appManagerController;
-            try {
-                const prefsHelloSuccess = yield this.bridge.send("prefs", operations.prefsHello, undefined, undefined, { includeOperationCheck: true });
-                this.platformAppName = prefsHelloSuccess.platform.app;
-            }
-            catch (error) {
-                this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
-                return;
-            }
-            this.logger.trace("no need for platform registration, attaching the prefs property to glue and returning");
-            const api = this.toApi();
-            coreGlue.prefs = api;
-        });
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("prefs.controller.web");
+        this.logger.trace("starting the web prefs controller");
+        this.addOperationsExecutors();
+        this.bridge = ioc.bridge;
+        this.config = ioc.config;
+        this.appManagerController = ioc.appManagerController;
+        try {
+            const prefsHelloSuccess = await this.bridge.send("prefs", operations.prefsHello, undefined, undefined, { includeOperationCheck: true });
+            this.platformAppName = prefsHelloSuccess.platform.app;
+        }
+        catch (error) {
+            this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
+            return;
+        }
+        this.logger.trace("no need for platform registration, attaching the prefs property to glue and returning");
+        const api = this.toApi();
+        coreGlue.prefs = api;
     }
-    handleBridgeMessage(args) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const operationName = prefsOperationTypesDecoder.runWithException(args.operation);
-            const operation = operations[operationName];
-            if (!operation.execute) {
-                return;
-            }
-            let operationData = args.data;
-            if (operation.dataDecoder) {
-                operationData = operation.dataDecoder.runWithException(args.data);
-            }
-            return yield operation.execute(operationData);
-        });
+    async handleBridgeMessage(args) {
+        const operationName = prefsOperationTypesDecoder.runWithException(args.operation);
+        const operation = operations[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = operation.dataDecoder.runWithException(args.data);
+        }
+        return await operation.execute(operationData);
     }
     addOperationsExecutors() {
         operations.prefsChanged.execute = this.handleOnChanged.bind(this);
@@ -6287,50 +5880,35 @@ class PrefsController {
         };
         return api;
     }
-    clear() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const app = this.getMyAppName();
-            yield this.clearFor(app);
-        });
+    async clear() {
+        const app = this.getMyAppName();
+        await this.clearFor(app);
     }
-    clearAll() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            yield this.bridge.send("prefs", operations.clearAll, undefined, undefined, { includeOperationCheck: true });
-        });
+    async clearAll() {
+        await this.bridge.send("prefs", operations.clearAll, undefined, undefined, { includeOperationCheck: true });
     }
-    clearFor(app) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
-            yield this.bridge.send("prefs", operations.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
-        });
+    async clearFor(app) {
+        const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+        await this.bridge.send("prefs", operations.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
     }
-    get(app) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedApp = app === undefined || app === null ? this.getMyAppName() : nonEmptyStringDecoder.runWithException(app);
-            const { prefs } = yield this.bridge.send("prefs", operations.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
-            return prefs;
-        });
+    async get(app) {
+        const verifiedApp = app === undefined || app === null ? this.getMyAppName() : nonEmptyStringDecoder.runWithException(app);
+        const { prefs } = await this.bridge.send("prefs", operations.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
+        return prefs;
     }
-    getAll() {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const result = yield this.bridge.send("prefs", operations.getAll, undefined, undefined, { includeOperationCheck: true });
-            return result;
-        });
+    async getAll() {
+        const result = await this.bridge.send("prefs", operations.getAll, undefined, undefined, { includeOperationCheck: true });
+        return result;
     }
-    set(data, options) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
-            const app = (_a = verifiedOptions === null || verifiedOptions === void 0 ? void 0 : verifiedOptions.app) !== null && _a !== void 0 ? _a : this.getMyAppName();
-            yield this.setFor(app, data);
-        });
+    async set(data, options) {
+        const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
+        const app = verifiedOptions?.app ?? this.getMyAppName();
+        await this.setFor(app, data);
     }
-    setFor(app, data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
-            const verifiedData = object$1().runWithException(data);
-            yield this.bridge.send("prefs", operations.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
-        });
+    async setFor(app, data) {
+        const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+        const verifiedData = object$1().runWithException(data);
+        await this.bridge.send("prefs", operations.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
     }
     subscribe(callback) {
         const app = this.getMyAppName();
@@ -6350,24 +5928,18 @@ class PrefsController {
         this.get(verifiedApp).then(callback);
         return this.registry.add(subscriptionKey, callback);
     }
-    update(data, options) {
-        var _a;
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
-            const app = (_a = verifiedOptions === null || verifiedOptions === void 0 ? void 0 : verifiedOptions.app) !== null && _a !== void 0 ? _a : this.getMyAppName();
-            yield this.updateFor(app, data);
-        });
+    async update(data, options) {
+        const verifiedOptions = optional$1(basePrefsConfigDecoder).runWithException(options);
+        const app = verifiedOptions?.app ?? this.getMyAppName();
+        await this.updateFor(app, data);
     }
-    updateFor(app, data) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const verifiedApp = nonEmptyStringDecoder.runWithException(app);
-            const verifiedData = object$1().runWithException(data);
-            yield this.bridge.send("prefs", operations.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
-        });
+    async updateFor(app, data) {
+        const verifiedApp = nonEmptyStringDecoder.runWithException(app);
+        const verifiedData = object$1().runWithException(data);
+        await this.bridge.send("prefs", operations.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
     }
     getMyAppName() {
-        var _a;
-        const myAppName = this.config.isPlatformInternal ? this.platformAppName : (_a = this.appManagerController.me) === null || _a === void 0 ? void 0 : _a.application.name;
+        const myAppName = this.config.isPlatformInternal ? this.platformAppName : this.appManagerController.me?.application.name;
         if (!myAppName) {
             throw new Error("App Preferences operations can not be executed for windows that do not have app!");
         }
@@ -6376,29 +5948,44 @@ class PrefsController {
     getSubscriptionKey(app) {
         return `prefs-changed-${app}`;
     }
-    handleOnChanged({ prefs }) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const subscriptionKey = this.getSubscriptionKey(prefs.app);
-            this.registry.execute(subscriptionKey, prefs);
-        });
+    async handleOnChanged({ prefs }) {
+        const subscriptionKey = this.getSubscriptionKey(prefs.app);
+        this.registry.execute(subscriptionKey, prefs);
     }
 }
 
 class IoC {
-    constructor() {
-        this.controllers = {
-            windows: this.windowsController,
-            appManager: this.appManagerController,
-            layouts: this.layoutsController,
-            notifications: this.notificationsController,
-            intents: this.intentsController,
-            channels: this.channelsController,
-            system: this.systemController,
-            extension: this.extensionController,
-            themes: this.themesController,
-            prefs: this.prefsController
-        };
-    }
+    _coreGlue;
+    _communicationId;
+    _publicWindowId;
+    _webConfig;
+    _windowsControllerInstance;
+    _appManagerControllerInstance;
+    _layoutsControllerInstance;
+    _notificationsControllerInstance;
+    _intentsControllerInstance;
+    _legacyIntentsHelperInstance;
+    _channelsControllerInstance;
+    _themesControllerInstance;
+    _extensionController;
+    _systemControllerInstance;
+    _bridgeInstance;
+    _eventsDispatcher;
+    _preferredConnectionController;
+    _sessionController;
+    _prefsControllerInstance;
+    controllers = {
+        windows: this.windowsController,
+        appManager: this.appManagerController,
+        layouts: this.layoutsController,
+        notifications: this.notificationsController,
+        intents: this.intentsController,
+        channels: this.channelsController,
+        system: this.systemController,
+        extension: this.extensionController,
+        themes: this.themesController,
+        prefs: this.prefsController
+    };
     get communicationId() {
         return this._communicationId;
     }
@@ -6507,146 +6094,52 @@ class IoC {
     defineConfig(config) {
         this._webConfig = config;
     }
-    buildWebWindow(id, name) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const model = new WebWindowModel(id, name, this.bridge);
-            const api = yield model.toApi();
-            return { id, model, api };
-        });
+    async buildWebWindow(id, name) {
+        const model = new WebWindowModel(id, name, this.bridge);
+        const api = await model.toApi();
+        return { id, model, api };
     }
     buildNotification(config, id) {
         return new Notification(config, id);
     }
-    buildApplication(app, applicationInstances) {
-        return __awaiter$1(this, void 0, void 0, function* () {
-            const application = (new ApplicationModel(app, [], this.appManagerController)).toApi();
-            const instances = applicationInstances.map((instanceData) => this.buildInstance(instanceData, application));
-            application.instances.push(...instances);
-            return application;
-        });
+    async buildApplication(app, applicationInstances) {
+        const application = (new ApplicationModel(app, [], this.appManagerController)).toApi();
+        const instances = applicationInstances.map((instanceData) => this.buildInstance(instanceData, application));
+        application.instances.push(...instances);
+        return application;
     }
     buildInstance(instanceData, app) {
         return (new InstanceModel(instanceData, this.bridge, app)).toApi();
     }
 }
 
-var version$2 = "3.2.0";
+var version$1 = "3.3.1";
 
 const createFactoryFunction = (coreFactoryFunction) => {
-    return (userConfig) => __awaiter$1(void 0, void 0, void 0, function* () {
+    return async (userConfig) => {
         if (window.glue42gd || window.iodesktop) {
             return enterprise(userConfig);
         }
         const ioc = new IoC();
         const config = parseConfig(userConfig);
         checkSingleton();
-        const glue = yield PromiseWrap(() => coreFactoryFunction(config, { version: version$2 }), 30000, "Glue Web initialization timed out, because core didn't resolve");
+        const glue = await PromiseWrap(() => coreFactoryFunction(config, { version: version$1 }), 30000, "Glue Web initialization timed out, because core didn't resolve");
         const logger = glue.logger.subLogger("web.main.controller");
         ioc.defineGlue(glue);
         ioc.sessionController.configure({ windowId: glue.interop.instance.instance });
-        yield ioc.preferredConnectionController.start(config);
-        yield ioc.bridge.start(ioc.controllers);
+        await ioc.preferredConnectionController.start(config);
+        await ioc.bridge.start(ioc.controllers);
         ioc.defineConfig(config);
         logger.trace("the bridge has been started, initializing all controllers");
-        yield Promise.all(Object.values(ioc.controllers).map((controller) => controller.start(glue, ioc)));
+        await Promise.all(Object.values(ioc.controllers).map((controller) => controller.start(glue, ioc)));
         logger.trace("all controllers reported started, starting all additional libraries");
-        yield Promise.all(config.libraries.map((lib) => lib(glue, config)));
+        await Promise.all(config.libraries.map((lib) => lib(glue, config)));
         logger.trace("all libraries were started");
         ioc.eventsDispatcher.start(glue);
         logger.trace("start event dispatched, glue is ready, returning it");
         return glue;
-    });
-};
-
-/******************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-var extendStatics = function(d, b) {
-    extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-    return extendStatics(d, b);
-};
-
-function __extends(d, b) {
-    if (typeof b !== "function" && b !== null)
-        throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
-    extendStatics(d, b);
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-}
-
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
     };
-    return __assign.apply(this, arguments);
 };
-
-function __awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-}
-
-function __generator(thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
-    function verb(n) { return function (v) { return step([n, v]); }; }
-    function step(op) {
-        if (f) throw new TypeError("Generator is already executing.");
-        while (g && (g = 0, op[0] && (_ = 0)), _) try {
-            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
-            switch (op[0]) {
-                case 0: case 1: t = op; break;
-                case 4: _.label++; return { value: op[1], done: false };
-                case 5: _.label++; y = op[1]; op = [0]; continue;
-                case 7: op = _.ops.pop(); _.trys.pop(); continue;
-                default:
-                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
-                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
-                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
-                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
-            }
-            op = body.call(thisArg, _);
-        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
-        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
-    }
-}
-
-function __spreadArray(to, from, pack) {
-    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
-        if (ar || !(i in from)) {
-            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
-            ar[i] = from[i];
-        }
-    }
-    return to.concat(ar || Array.prototype.slice.call(from));
-}
 
 var MetricTypes = {
     STRING: 1,
@@ -6688,18 +6181,18 @@ function getTypeByValue(value) {
     }
 }
 function serializeMetric(metric) {
-    var serializedMetrics = {};
-    var type = getMetricTypeByValue(metric);
+    const serializedMetrics = {};
+    const type = getMetricTypeByValue(metric);
     if (type === "object") {
-        var values = Object.keys(metric.value).reduce(function (memo, key) {
-            var innerType = getTypeByValue(metric.value[key]);
+        const values = Object.keys(metric.value).reduce((memo, key) => {
+            const innerType = getTypeByValue(metric.value[key]);
             if (innerType === "object") {
-                var composite = defineNestedComposite(metric.value[key]);
+                const composite = defineNestedComposite(metric.value[key]);
                 memo[key] = {
                     type: "object",
                     description: "",
                     context: {},
-                    composite: composite,
+                    composite,
                 };
             }
             else {
@@ -6720,8 +6213,8 @@ function serializeMetric(metric) {
     return serializedMetrics;
 }
 function defineNestedComposite(values) {
-    return Object.keys(values).reduce(function (memo, key) {
-        var type = getTypeByValue(values[key]);
+    return Object.keys(values).reduce((memo, key) => {
+        const type = getTypeByValue(values[key]);
         if (type === "object") {
             memo[key] = {
                 type: "object",
@@ -6732,7 +6225,7 @@ function defineNestedComposite(values) {
         }
         else {
             memo[key] = {
-                type: type,
+                type,
                 description: "",
                 context: {},
             };
@@ -6749,7 +6242,7 @@ function normalizeMetricName(name) {
     }
 }
 function getMetricValueByType(metric) {
-    var type = getMetricTypeByValue(metric);
+    const type = getMetricTypeByValue(metric);
     if (type === "timestamp") {
         return Date.now();
     }
@@ -6761,8 +6254,8 @@ function publishNestedComposite(values) {
     if (typeof values !== "object") {
         return values;
     }
-    return Object.keys(values).reduce(function (memo, key) {
-        var value = values[key];
+    return Object.keys(values).reduce((memo, key) => {
+        const value = values[key];
         if (typeof value === "object" && value.constructor !== Date) {
             memo[key] = publishNestedComposite(value);
         }
@@ -6779,12 +6272,12 @@ function publishNestedComposite(values) {
     }, {});
 }
 function flatten(arr) {
-    return arr.reduce(function (flat, toFlatten) {
+    return arr.reduce((flat, toFlatten) => {
         return flat.concat(Array.isArray(toFlatten) ? flatten(toFlatten) : toFlatten);
     }, []);
 }
 function getHighestState(arr) {
-    return arr.sort(function (a, b) {
+    return arr.sort((a, b) => {
         if (!a.state) {
             return 1;
         }
@@ -6795,9 +6288,9 @@ function getHighestState(arr) {
     })[0];
 }
 function aggregateDescription(arr) {
-    var msg = "";
-    arr.forEach(function (m, idx, a) {
-        var path = m.path.join(".");
+    let msg = "";
+    arr.forEach((m, idx, a) => {
+        const path = m.path.join(".");
         if (idx === a.length - 1) {
             msg += path + "." + m.name + ": " + m.description;
         }
@@ -6813,10 +6306,10 @@ function aggregateDescription(arr) {
     }
 }
 function composeMsgForRootStateMetric(system) {
-    var aggregatedState = system.root.getAggregateState();
-    var merged = flatten(aggregatedState);
-    var highestState = getHighestState(merged);
-    var aggregateDesc = aggregateDescription(merged);
+    const aggregatedState = system.root.getAggregateState();
+    const merged = flatten(aggregatedState);
+    const highestState = getHighestState(merged);
+    const aggregateDesc = aggregateDescription(merged);
     return {
         description: aggregateDesc,
         value: highestState.state,
@@ -6824,24 +6317,23 @@ function composeMsgForRootStateMetric(system) {
 }
 
 function gw3 (connection, config) {
-    var _this = this;
     if (!connection || typeof connection !== "object") {
         throw new Error("Connection is required parameter");
     }
-    var joinPromise;
-    var session;
-    var init = function (repo) {
-        var resolveReadyPromise;
-        joinPromise = new Promise(function (resolve) {
+    let joinPromise;
+    let session;
+    const init = (repo) => {
+        let resolveReadyPromise;
+        joinPromise = new Promise((resolve) => {
             resolveReadyPromise = resolve;
         });
         session = connection.domain("metrics");
-        session.onJoined(function (reconnect) {
+        session.onJoined((reconnect) => {
             if (!reconnect && resolveReadyPromise) {
                 resolveReadyPromise();
                 resolveReadyPromise = undefined;
             }
-            var rootStateMetric = {
+            const rootStateMetric = {
                 name: "/State",
                 type: "object",
                 composite: {
@@ -6857,7 +6349,7 @@ function gw3 (connection, config) {
                 description: "System state",
                 context: {},
             };
-            var defineRootMetricsMsg = {
+            const defineRootMetricsMsg = {
                 type: "define",
                 metrics: [rootStateMetric],
             };
@@ -6872,135 +6364,100 @@ function gw3 (connection, config) {
             instance: config.instance
         });
     };
-    var replayRepo = function (repo) {
+    const replayRepo = (repo) => {
         replaySystem(repo.root);
     };
-    var replaySystem = function (system) {
+    const replaySystem = (system) => {
         createSystem(system);
-        system.metrics.forEach(function (m) {
+        system.metrics.forEach((m) => {
             createMetric(m);
         });
-        system.subSystems.forEach(function (ss) {
+        system.subSystems.forEach((ss) => {
             replaySystem(ss);
         });
     };
-    var createSystem = function (system) { return __awaiter(_this, void 0, void 0, function () {
-        var metric, createMetricsMsg;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    if (system.parent === undefined) {
-                        return [2];
-                    }
-                    return [4, joinPromise];
-                case 1:
-                    _a.sent();
-                    metric = {
-                        name: normalizeMetricName(system.path.join("/") + "/" + system.name + "/State"),
-                        type: "object",
-                        composite: {
-                            Description: {
-                                type: "string",
-                                description: "",
-                            },
-                            Value: {
-                                type: "number",
-                                description: "",
-                            },
-                        },
-                        description: "System state",
-                        context: {},
-                    };
-                    createMetricsMsg = {
-                        type: "define",
-                        metrics: [metric],
-                    };
-                    session.send(createMetricsMsg);
-                    return [2];
-            }
-        });
-    }); };
-    var updateSystem = function (system, state) { return __awaiter(_this, void 0, void 0, function () {
-        var shadowedUpdateMetric, stateObj, rootMetric;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4, joinPromise];
-                case 1:
-                    _a.sent();
-                    shadowedUpdateMetric = {
-                        type: "publish",
-                        values: [{
-                                name: normalizeMetricName(system.path.join("/") + "/" + system.name + "/State"),
-                                value: {
-                                    Description: state.description,
-                                    Value: state.state,
-                                },
-                                timestamp: Date.now(),
-                            }],
-                    };
-                    session.send(shadowedUpdateMetric);
-                    stateObj = composeMsgForRootStateMetric(system);
-                    rootMetric = {
-                        type: "publish",
-                        peer_id: connection.peerId,
-                        values: [{
-                                name: "/State",
-                                value: {
-                                    Description: stateObj.description,
-                                    Value: stateObj.value,
-                                },
-                                timestamp: Date.now(),
-                            }],
-                    };
-                    session.send(rootMetric);
-                    return [2];
-            }
-        });
-    }); };
-    var createMetric = function (metric) { return __awaiter(_this, void 0, void 0, function () {
-        var metricClone, m, createMetricsMsg;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    metricClone = cloneMetric(metric);
-                    return [4, joinPromise];
-                case 1:
-                    _a.sent();
-                    m = serializeMetric(metricClone);
-                    createMetricsMsg = {
-                        type: "define",
-                        metrics: [m],
-                    };
-                    session.send(createMetricsMsg);
-                    if (typeof metricClone.value !== "undefined") {
-                        updateMetricCore(metricClone);
-                    }
-                    return [2];
-            }
-        });
-    }); };
-    var updateMetric = function (metric) { return __awaiter(_this, void 0, void 0, function () {
-        var metricClone;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    metricClone = cloneMetric(metric);
-                    return [4, joinPromise];
-                case 1:
-                    _a.sent();
-                    updateMetricCore(metricClone);
-                    return [2];
-            }
-        });
-    }); };
-    var updateMetricCore = function (metric) {
+    const createSystem = async (system) => {
+        if (system.parent === undefined) {
+            return;
+        }
+        await joinPromise;
+        const metric = {
+            name: normalizeMetricName(system.path.join("/") + "/" + system.name + "/State"),
+            type: "object",
+            composite: {
+                Description: {
+                    type: "string",
+                    description: "",
+                },
+                Value: {
+                    type: "number",
+                    description: "",
+                },
+            },
+            description: "System state",
+            context: {},
+        };
+        const createMetricsMsg = {
+            type: "define",
+            metrics: [metric],
+        };
+        session.send(createMetricsMsg);
+    };
+    const updateSystem = async (system, state) => {
+        await joinPromise;
+        const shadowedUpdateMetric = {
+            type: "publish",
+            values: [{
+                    name: normalizeMetricName(system.path.join("/") + "/" + system.name + "/State"),
+                    value: {
+                        Description: state.description,
+                        Value: state.state,
+                    },
+                    timestamp: Date.now(),
+                }],
+        };
+        session.send(shadowedUpdateMetric);
+        const stateObj = composeMsgForRootStateMetric(system);
+        const rootMetric = {
+            type: "publish",
+            peer_id: connection.peerId,
+            values: [{
+                    name: "/State",
+                    value: {
+                        Description: stateObj.description,
+                        Value: stateObj.value,
+                    },
+                    timestamp: Date.now(),
+                }],
+        };
+        session.send(rootMetric);
+    };
+    const createMetric = async (metric) => {
+        const metricClone = cloneMetric(metric);
+        await joinPromise;
+        const m = serializeMetric(metricClone);
+        const createMetricsMsg = {
+            type: "define",
+            metrics: [m],
+        };
+        session.send(createMetricsMsg);
+        if (typeof metricClone.value !== "undefined") {
+            updateMetricCore(metricClone);
+        }
+    };
+    const updateMetric = async (metric) => {
+        const metricClone = cloneMetric(metric);
+        await joinPromise;
+        updateMetricCore(metricClone);
+    };
+    const updateMetricCore = (metric) => {
         if (canUpdate()) {
-            var value = getMetricValueByType(metric);
-            var publishMetricsMsg = {
+            const value = getMetricValueByType(metric);
+            const publishMetricsMsg = {
                 type: "publish",
                 values: [{
                         name: normalizeMetricName(metric.path.join("/") + "/" + metric.name),
-                        value: value,
+                        value,
                         timestamp: Date.now(),
                     }],
             };
@@ -7008,34 +6465,33 @@ function gw3 (connection, config) {
         }
         return Promise.resolve();
     };
-    var cloneMetric = function (metric) {
-        var metricClone = __assign({}, metric);
+    const cloneMetric = (metric) => {
+        const metricClone = { ...metric };
         if (typeof metric.value === "object" && metric.value !== null) {
-            metricClone.value = __assign({}, metric.value);
+            metricClone.value = { ...metric.value };
         }
         return metricClone;
     };
-    var canUpdate = function () {
-        var _a;
+    const canUpdate = () => {
         try {
-            var func = (_a = config.canUpdateMetric) !== null && _a !== void 0 ? _a : (function () { return true; });
+            const func = config.canUpdateMetric ?? (() => true);
             return func();
         }
-        catch (_b) {
+        catch {
             return true;
         }
     };
     return {
-        init: init,
-        createSystem: createSystem,
-        updateSystem: updateSystem,
-        createMetric: createMetric,
-        updateMetric: updateMetric,
+        init,
+        createSystem,
+        updateSystem,
+        createMetric,
+        updateMetric,
     };
 }
 
 var Helpers = {
-    validate: function (definition, parent, transport) {
+    validate: (definition, parent, transport) => {
         if (definition === null || typeof definition !== "object") {
             throw new Error("Missing definition");
         }
@@ -7048,14 +6504,25 @@ var Helpers = {
     },
 };
 
-var BaseMetric = (function () {
-    function BaseMetric(definition, system, transport, value, type) {
+class BaseMetric {
+    definition;
+    system;
+    transport;
+    value;
+    type;
+    path = [];
+    name;
+    description;
+    get repo() {
+        return this.system?.repo;
+    }
+    get id() { return `${this.system.path}/${name}`; }
+    constructor(definition, system, transport, value, type) {
         this.definition = definition;
         this.system = system;
         this.transport = transport;
         this.value = value;
         this.type = type;
-        this.path = [];
         Helpers.validate(definition, system, transport);
         this.path = system.path.slice(0);
         this.path.push(system.name);
@@ -7063,84 +6530,61 @@ var BaseMetric = (function () {
         this.description = definition.description;
         transport.createMetric(this);
     }
-    Object.defineProperty(BaseMetric.prototype, "repo", {
-        get: function () {
-            var _a;
-            return (_a = this.system) === null || _a === void 0 ? void 0 : _a.repo;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseMetric.prototype, "id", {
-        get: function () { return "".concat(this.system.path, "/").concat(name); },
-        enumerable: false,
-        configurable: true
-    });
-    BaseMetric.prototype.update = function (newValue) {
+    update(newValue) {
         this.value = newValue;
         return this.transport.updateMetric(this);
-    };
-    return BaseMetric;
-}());
-
-var NumberMetric = (function (_super) {
-    __extends(NumberMetric, _super);
-    function NumberMetric(definition, system, transport, value) {
-        return _super.call(this, definition, system, transport, value, MetricTypes.NUMBER) || this;
     }
-    NumberMetric.prototype.incrementBy = function (num) {
+}
+
+class NumberMetric extends BaseMetric {
+    constructor(definition, system, transport, value) {
+        super(definition, system, transport, value, MetricTypes.NUMBER);
+    }
+    incrementBy(num) {
         this.update(this.value + num);
-    };
-    NumberMetric.prototype.increment = function () {
-        this.incrementBy(1);
-    };
-    NumberMetric.prototype.decrement = function () {
-        this.incrementBy(-1);
-    };
-    NumberMetric.prototype.decrementBy = function (num) {
-        this.incrementBy(num * -1);
-    };
-    return NumberMetric;
-}(BaseMetric));
-
-var ObjectMetric = (function (_super) {
-    __extends(ObjectMetric, _super);
-    function ObjectMetric(definition, system, transport, value) {
-        return _super.call(this, definition, system, transport, value, MetricTypes.OBJECT) || this;
     }
-    ObjectMetric.prototype.update = function (newValue) {
+    increment() {
+        this.incrementBy(1);
+    }
+    decrement() {
+        this.incrementBy(-1);
+    }
+    decrementBy(num) {
+        this.incrementBy(num * -1);
+    }
+}
+
+class ObjectMetric extends BaseMetric {
+    constructor(definition, system, transport, value) {
+        super(definition, system, transport, value, MetricTypes.OBJECT);
+    }
+    update(newValue) {
         this.mergeValues(newValue);
         return this.transport.updateMetric(this);
-    };
-    ObjectMetric.prototype.mergeValues = function (values) {
-        var _this = this;
-        return Object.keys(this.value).forEach(function (k) {
+    }
+    mergeValues(values) {
+        return Object.keys(this.value).forEach((k) => {
             if (typeof values[k] !== "undefined") {
-                _this.value[k] = values[k];
+                this.value[k] = values[k];
             }
         });
-    };
-    return ObjectMetric;
-}(BaseMetric));
-
-var StringMetric = (function (_super) {
-    __extends(StringMetric, _super);
-    function StringMetric(definition, system, transport, value) {
-        return _super.call(this, definition, system, transport, value, MetricTypes.STRING) || this;
     }
-    return StringMetric;
-}(BaseMetric));
+}
 
-var TimestampMetric = (function (_super) {
-    __extends(TimestampMetric, _super);
-    function TimestampMetric(definition, system, transport, value) {
-        return _super.call(this, definition, system, transport, value, MetricTypes.TIMESTAMP) || this;
+class StringMetric extends BaseMetric {
+    constructor(definition, system, transport, value) {
+        super(definition, system, transport, value, MetricTypes.STRING);
     }
-    TimestampMetric.prototype.now = function () {
+}
+
+class TimestampMetric extends BaseMetric {
+    constructor(definition, system, transport, value) {
+        super(definition, system, transport, value, MetricTypes.TIMESTAMP);
+    }
+    now() {
         this.update(new Date());
-    };
-    return TimestampMetric;
-}(BaseMetric));
+    }
+}
 
 function system(name, repo, protocol, parent, description) {
     if (!repo) {
@@ -7149,67 +6593,67 @@ function system(name, repo, protocol, parent, description) {
     if (!protocol) {
         throw new Error("Transport is required");
     }
-    var _transport = protocol;
-    var _name = name;
-    var _description = description || "";
-    var _repo = repo;
-    var _parent = parent;
-    var _path = _buildPath(parent);
-    var _state = {};
-    var id = _arrayToString(_path, "/") + name;
-    var root = repo.root;
-    var _subSystems = [];
-    var _metrics = [];
+    const _transport = protocol;
+    const _name = name;
+    const _description = description || "";
+    const _repo = repo;
+    const _parent = parent;
+    const _path = _buildPath(parent);
+    let _state = {};
+    const id = _arrayToString(_path, "/") + name;
+    const root = repo.root;
+    const _subSystems = [];
+    const _metrics = [];
     function subSystem(nameSystem, descriptionSystem) {
         if (!nameSystem || nameSystem.length === 0) {
             throw new Error("name is required");
         }
-        var match = _subSystems.filter(function (s) { return s.name === nameSystem; });
+        const match = _subSystems.filter((s) => s.name === nameSystem);
         if (match.length > 0) {
             return match[0];
         }
-        var _system = system(nameSystem, _repo, _transport, me, descriptionSystem);
+        const _system = system(nameSystem, _repo, _transport, me, descriptionSystem);
         _subSystems.push(_system);
         return _system;
     }
     function setState(state, stateDescription) {
-        _state = { state: state, description: stateDescription };
+        _state = { state, description: stateDescription };
         _transport.updateSystem(me, _state);
     }
     function stringMetric(definition, value) {
-        return _getOrCreateMetric(definition, MetricTypes.STRING, value, function (metricDef) { return new StringMetric(metricDef, me, _transport, value); });
+        return _getOrCreateMetric(definition, MetricTypes.STRING, value, (metricDef) => new StringMetric(metricDef, me, _transport, value));
     }
     function numberMetric(definition, value) {
-        return _getOrCreateMetric(definition, MetricTypes.NUMBER, value, function (metricDef) { return new NumberMetric(metricDef, me, _transport, value); });
+        return _getOrCreateMetric(definition, MetricTypes.NUMBER, value, (metricDef) => new NumberMetric(metricDef, me, _transport, value));
     }
     function objectMetric(definition, value) {
-        return _getOrCreateMetric(definition, MetricTypes.OBJECT, value, function (metricDef) { return new ObjectMetric(metricDef, me, _transport, value); });
+        return _getOrCreateMetric(definition, MetricTypes.OBJECT, value, (metricDef) => new ObjectMetric(metricDef, me, _transport, value));
     }
     function timestampMetric(definition, value) {
-        return _getOrCreateMetric(definition, MetricTypes.TIMESTAMP, value, function (metricDef) { return new TimestampMetric(metricDef, me, _transport, value); });
+        return _getOrCreateMetric(definition, MetricTypes.TIMESTAMP, value, (metricDef) => new TimestampMetric(metricDef, me, _transport, value));
     }
     function _getOrCreateMetric(metricObject, expectedType, value, createMetric) {
-        var metricDef = { name: "" };
+        let metricDef = { name: "" };
         if (typeof metricObject === "string") {
             metricDef = { name: metricObject };
         }
         else {
             metricDef = metricObject;
         }
-        var matching = _metrics.filter(function (shadowedMetric) { return shadowedMetric.name === metricDef.name; });
+        const matching = _metrics.filter((shadowedMetric) => shadowedMetric.name === metricDef.name);
         if (matching.length > 0) {
-            var existing = matching[0];
+            const existing = matching[0];
             if (existing.type !== expectedType) {
-                throw new Error("A metric named ".concat(metricDef.name, " is already defined with different type."));
+                throw new Error(`A metric named ${metricDef.name} is already defined with different type.`);
             }
             if (typeof value !== "undefined") {
                 existing
                     .update(value)
-                    .catch(function () { });
+                    .catch(() => { });
             }
             return existing;
         }
-        var metric = createMetric(metricDef);
+        const metric = createMetric(metricDef);
         _metrics.push(metric);
         return metric;
     }
@@ -7217,7 +6661,7 @@ function system(name, repo, protocol, parent, description) {
         if (!shadowedSystem || !shadowedSystem.parent) {
             return [];
         }
-        var path = _buildPath(shadowedSystem.parent);
+        const path = _buildPath(shadowedSystem.parent);
         path.push(shadowedSystem.name);
         return path;
     }
@@ -7225,7 +6669,7 @@ function system(name, repo, protocol, parent, description) {
         return ((path && path.length > 0) ? path.join(separator) : "");
     }
     function getAggregateState() {
-        var aggState = [];
+        const aggState = [];
         if (Object.keys(_state).length > 0) {
             aggState.push({
                 name: _name,
@@ -7234,15 +6678,15 @@ function system(name, repo, protocol, parent, description) {
                 description: _state.description,
             });
         }
-        _subSystems.forEach(function (shadowedSubSystem) {
-            var result = shadowedSubSystem.getAggregateState();
+        _subSystems.forEach((shadowedSubSystem) => {
+            const result = shadowedSubSystem.getAggregateState();
             if (result.length > 0) {
-                aggState.push.apply(aggState, result);
+                aggState.push(...result);
             }
         });
         return aggState;
     }
-    var me = {
+    const me = {
         get name() {
             return _name;
         },
@@ -7256,60 +6700,60 @@ function system(name, repo, protocol, parent, description) {
             return _parent;
         },
         path: _path,
-        id: id,
-        root: root,
+        id,
+        root,
         get subSystems() {
             return _subSystems;
         },
         get metrics() {
             return _metrics;
         },
-        subSystem: subSystem,
-        getState: function () {
+        subSystem,
+        getState: () => {
             return _state;
         },
-        setState: setState,
-        stringMetric: stringMetric,
-        timestampMetric: timestampMetric,
-        objectMetric: objectMetric,
-        numberMetric: numberMetric,
-        getAggregateState: getAggregateState,
+        setState,
+        stringMetric,
+        timestampMetric,
+        objectMetric,
+        numberMetric,
+        getAggregateState,
     };
     _transport.createSystem(me);
     return me;
 }
 
-var Repository = (function () {
-    function Repository(options, protocol) {
+class Repository {
+    root;
+    constructor(options, protocol) {
         protocol.init(this);
         this.root = system("", this, protocol);
         this.addSystemMetrics(this.root, options.clickStream || options.clickStream === undefined);
     }
-    Repository.prototype.addSystemMetrics = function (rootSystem, useClickStream) {
+    addSystemMetrics(rootSystem, useClickStream) {
         if (typeof navigator !== "undefined") {
             rootSystem.stringMetric("UserAgent", navigator.userAgent);
         }
         if (useClickStream && typeof document !== "undefined") {
-            var clickStream_1 = rootSystem.subSystem("ClickStream");
-            var documentClickHandler = function (e) {
-                var _a;
+            const clickStream = rootSystem.subSystem("ClickStream");
+            const documentClickHandler = (e) => {
                 if (!e.target) {
                     return;
                 }
-                var target = e.target;
-                var className = target ? (_a = target.getAttribute("class")) !== null && _a !== void 0 ? _a : "" : "";
-                clickStream_1.objectMetric("LastBrowserEvent", {
+                const target = e.target;
+                const className = target ? target.getAttribute("class") ?? "" : "";
+                clickStream.objectMetric("LastBrowserEvent", {
                     type: "click",
                     timestamp: new Date(),
                     target: {
-                        className: className,
+                        className,
                         id: target.id,
                         type: "<" + target.tagName.toLowerCase() + ">",
                         href: target.href || "",
                     },
                 });
             };
-            clickStream_1.objectMetric("Page", {
+            clickStream.objectMetric("Page", {
                 title: document.title,
                 page: window.location.href,
             });
@@ -7321,125 +6765,120 @@ var Repository = (function () {
             }
         }
         rootSystem.stringMetric("StartTime", (new Date()).toString());
-        var urlMetric = rootSystem.stringMetric("StartURL", "");
-        var appNameMetric = rootSystem.stringMetric("AppName", "");
+        const urlMetric = rootSystem.stringMetric("StartURL", "");
+        const appNameMetric = rootSystem.stringMetric("AppName", "");
         if (typeof window !== "undefined") {
             if (typeof window.location !== "undefined") {
-                var startUrl = window.location.href;
+                const startUrl = window.location.href;
                 urlMetric.update(startUrl);
             }
             if (typeof window.glue42gd !== "undefined") {
                 appNameMetric.update(window.glue42gd.appName);
             }
         }
-    };
-    return Repository;
-}());
-
-var NullProtocol = (function () {
-    function NullProtocol() {
     }
-    NullProtocol.prototype.init = function (repo) {
-    };
-    NullProtocol.prototype.createSystem = function (system) {
-        return Promise.resolve();
-    };
-    NullProtocol.prototype.updateSystem = function (metric, state) {
-        return Promise.resolve();
-    };
-    NullProtocol.prototype.createMetric = function (metric) {
-        return Promise.resolve();
-    };
-    NullProtocol.prototype.updateMetric = function (metric) {
-        return Promise.resolve();
-    };
-    return NullProtocol;
-}());
+}
 
-var PerfTracker = (function () {
-    function PerfTracker(api, initialPublishTimeout, publishInterval) {
+class NullProtocol {
+    init(repo) {
+    }
+    createSystem(system) {
+        return Promise.resolve();
+    }
+    updateSystem(metric, state) {
+        return Promise.resolve();
+    }
+    createMetric(metric) {
+        return Promise.resolve();
+    }
+    updateMetric(metric) {
+        return Promise.resolve();
+    }
+}
+
+class PerfTracker {
+    api;
+    lastCount = 0;
+    initialPublishTimeout = 10 * 1000;
+    publishInterval = 60 * 1000;
+    system;
+    constructor(api, initialPublishTimeout, publishInterval) {
         this.api = api;
-        this.lastCount = 0;
-        this.initialPublishTimeout = 10 * 1000;
-        this.publishInterval = 60 * 1000;
-        this.initialPublishTimeout = initialPublishTimeout !== null && initialPublishTimeout !== void 0 ? initialPublishTimeout : this.initialPublishTimeout;
-        this.publishInterval = publishInterval !== null && publishInterval !== void 0 ? publishInterval : this.publishInterval;
+        this.initialPublishTimeout = initialPublishTimeout ?? this.initialPublishTimeout;
+        this.publishInterval = publishInterval ?? this.publishInterval;
         this.scheduleCollection();
         this.system = this.api.subSystem("performance", "Performance data published by the web application");
     }
-    PerfTracker.prototype.scheduleCollection = function () {
-        var _this = this;
-        setTimeout(function () {
-            _this.collect();
-            setInterval(function () {
-                _this.collect();
-            }, _this.publishInterval);
+    scheduleCollection() {
+        setTimeout(() => {
+            this.collect();
+            setInterval(() => {
+                this.collect();
+            }, this.publishInterval);
         }, this.initialPublishTimeout);
-    };
-    PerfTracker.prototype.collect = function () {
+    }
+    collect() {
         try {
             this.collectMemory();
             this.collectEntries();
         }
-        catch (_a) {
+        catch {
         }
-    };
-    PerfTracker.prototype.collectMemory = function () {
-        var memory = window.performance.memory;
+    }
+    collectMemory() {
+        const memory = window.performance.memory;
         this.system.stringMetric("memory", JSON.stringify({
             totalJSHeapSize: memory.totalJSHeapSize,
             usedJSHeapSize: memory.usedJSHeapSize
         }));
-    };
-    PerfTracker.prototype.collectEntries = function () {
-        var allEntries = window.performance.getEntries();
+    }
+    collectEntries() {
+        const allEntries = window.performance.getEntries();
         if (allEntries.length <= this.lastCount) {
             return;
         }
         this.lastCount = allEntries.length;
-        var jsonfiedEntries = allEntries.map(function (i) { return i.toJSON(); });
+        const jsonfiedEntries = allEntries.map((i) => i.toJSON());
         this.system.stringMetric("entries", JSON.stringify(jsonfiedEntries));
-    };
-    return PerfTracker;
-}());
+    }
+}
 
-var metrics = (function (options) {
-    var protocol;
+var metrics = (options) => {
+    let protocol;
     if (!options.connection || typeof options.connection !== "object") {
         protocol = new NullProtocol();
     }
     else {
         protocol = gw3(options.connection, options);
     }
-    var repo = new Repository(options, protocol);
-    var rootSystem = repo.root;
+    const repo = new Repository(options, protocol);
+    let rootSystem = repo.root;
     if (!options.disableAutoAppSystem) {
         rootSystem = rootSystem.subSystem("App");
     }
-    var api = addFAVSupport(rootSystem);
+    const api = addFAVSupport(rootSystem);
     initPerf(api, options.pagePerformanceMetrics);
     return api;
-});
+};
 function initPerf(api, config) {
-    var _a, _b;
     if (typeof window === "undefined") {
         return;
     }
-    var perfConfig = (_b = (_a = window === null || window === void 0 ? void 0 : window.glue42gd) === null || _a === void 0 ? void 0 : _a.metrics) === null || _b === void 0 ? void 0 : _b.pagePerformanceMetrics;
+    const perfConfig = window?.glue42gd?.metrics?.pagePerformanceMetrics;
     if (perfConfig) {
         config = perfConfig;
     }
-    if (config === null || config === void 0 ? void 0 : config.enabled) {
+    if (config?.enabled) {
         new PerfTracker(api, config.initialPublishTimeout, config.publishInterval);
     }
 }
 function addFAVSupport(system) {
-    var reportingSystem = system.subSystem("reporting");
-    var def = {
+    const reportingSystem = system.subSystem("reporting");
+    const def = {
         name: "features"
     };
-    var featureMetric;
-    var featureMetricFunc = function (name, action, payload) {
+    let featureMetric;
+    const featureMetricFunc = (name, action, payload) => {
         if (typeof name === "undefined" || name === "") {
             throw new Error("name is mandatory");
         }
@@ -7450,13 +6889,13 @@ function addFAVSupport(system) {
             throw new Error("payload is mandatory");
         }
         if (!featureMetric) {
-            featureMetric = reportingSystem.objectMetric(def, { name: name, action: action, payload: payload });
+            featureMetric = reportingSystem.objectMetric(def, { name, action, payload });
         }
         else {
             featureMetric.update({
-                name: name,
-                action: action,
-                payload: payload
+                name,
+                action,
+                payload
             });
         }
     };
@@ -7585,116 +7024,109 @@ function createRegistry(options) {
     };
 }
 createRegistry.default = createRegistry;
-var lib$1 = createRegistry;
+var lib = createRegistry;
 
-var InProcTransport = (function () {
-    function InProcTransport(settings, logger) {
-        var _this = this;
-        this.registry = lib$1();
+
+var CallbackRegistryFactory = /*@__PURE__*/getDefaultExportFromCjs(lib);
+
+class InProcTransport {
+    gw;
+    registry = CallbackRegistryFactory();
+    client;
+    constructor(settings, logger) {
         this.gw = settings.facade;
-        this.gw.connect(function (_client, message) {
-            _this.messageHandler(message);
-        }).then(function (client) {
-            _this.client = client;
+        this.gw.connect((_client, message) => {
+            this.messageHandler(message);
+        }).then((client) => {
+            this.client = client;
         });
     }
-    Object.defineProperty(InProcTransport.prototype, "isObjectBasedTransport", {
-        get: function () {
-            return true;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    InProcTransport.prototype.sendObject = function (msg) {
+    get isObjectBasedTransport() {
+        return true;
+    }
+    sendObject(msg) {
         if (this.client) {
             this.client.send(msg);
             return Promise.resolve(undefined);
         }
         else {
-            return Promise.reject("not connected");
+            return Promise.reject(`not connected`);
         }
-    };
-    InProcTransport.prototype.send = function (_msg) {
+    }
+    send(_msg) {
         return Promise.reject("not supported");
-    };
-    InProcTransport.prototype.onMessage = function (callback) {
+    }
+    onMessage(callback) {
         return this.registry.add("onMessage", callback);
-    };
-    InProcTransport.prototype.onConnectedChanged = function (callback) {
+    }
+    onConnectedChanged(callback) {
         callback(true);
-        return function () { };
-    };
-    InProcTransport.prototype.close = function () {
+        return () => { };
+    }
+    close() {
         return Promise.resolve();
-    };
-    InProcTransport.prototype.open = function () {
+    }
+    open() {
         return Promise.resolve();
-    };
-    InProcTransport.prototype.name = function () {
+    }
+    name() {
         return "in-memory";
-    };
-    InProcTransport.prototype.reconnect = function () {
+    }
+    reconnect() {
         return Promise.resolve();
-    };
-    InProcTransport.prototype.messageHandler = function (msg) {
+    }
+    messageHandler(msg) {
         this.registry.execute("onMessage", msg);
-    };
-    return InProcTransport;
-}());
+    }
+}
 
-var SharedWorkerTransport = (function () {
-    function SharedWorkerTransport(workerFile, logger) {
-        var _this = this;
+class SharedWorkerTransport {
+    logger;
+    worker;
+    registry = CallbackRegistryFactory();
+    constructor(workerFile, logger) {
         this.logger = logger;
-        this.registry = lib$1();
         this.worker = new SharedWorker(workerFile);
-        this.worker.port.onmessage = function (e) {
-            _this.messageHandler(e.data);
+        this.worker.port.onmessage = (e) => {
+            this.messageHandler(e.data);
         };
     }
-    Object.defineProperty(SharedWorkerTransport.prototype, "isObjectBasedTransport", {
-        get: function () {
-            return true;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    SharedWorkerTransport.prototype.sendObject = function (msg) {
+    get isObjectBasedTransport() {
+        return true;
+    }
+    sendObject(msg) {
         this.worker.port.postMessage(msg);
         return Promise.resolve();
-    };
-    SharedWorkerTransport.prototype.send = function (_msg) {
-        return Promise.reject("not supported");
-    };
-    SharedWorkerTransport.prototype.onMessage = function (callback) {
-        return this.registry.add("onMessage", callback);
-    };
-    SharedWorkerTransport.prototype.onConnectedChanged = function (callback) {
-        callback(true);
-        return function () { };
-    };
-    SharedWorkerTransport.prototype.close = function () {
-        return Promise.resolve();
-    };
-    SharedWorkerTransport.prototype.open = function () {
-        return Promise.resolve();
-    };
-    SharedWorkerTransport.prototype.name = function () {
-        return "shared-worker";
-    };
-    SharedWorkerTransport.prototype.reconnect = function () {
-        return Promise.resolve();
-    };
-    SharedWorkerTransport.prototype.messageHandler = function (msg) {
-        this.registry.execute("onMessage", msg);
-    };
-    return SharedWorkerTransport;
-}());
-
-var Utils = (function () {
-    function Utils() {
     }
-    Utils.isNode = function () {
+    send(_msg) {
+        return Promise.reject("not supported");
+    }
+    onMessage(callback) {
+        return this.registry.add("onMessage", callback);
+    }
+    onConnectedChanged(callback) {
+        callback(true);
+        return () => { };
+    }
+    close() {
+        return Promise.resolve();
+    }
+    open() {
+        return Promise.resolve();
+    }
+    name() {
+        return "shared-worker";
+    }
+    reconnect() {
+        return Promise.resolve();
+    }
+    messageHandler(msg) {
+        this.registry.execute("onMessage", msg);
+    }
+}
+
+class Utils {
+    static isNode() {
         if (typeof Utils._isNode !== "undefined") {
             return Utils._isNode;
         }
@@ -7709,56 +7141,53 @@ var Utils = (function () {
             Utils._isNode = false;
         }
         return Utils._isNode;
-    };
-    return Utils;
-}());
+    }
+    static _isNode;
+}
 
-var PromiseWrapper = (function () {
-    function PromiseWrapper() {
-        var _this = this;
-        this.rejected = false;
-        this.resolved = false;
-        this.promise = new Promise(function (resolve, reject) {
-            _this.resolve = function (t) {
-                _this.resolved = true;
+class PromiseWrapper {
+    static delay(time) {
+        return new Promise((resolve) => setTimeout(resolve, time));
+    }
+    resolve;
+    reject;
+    promise;
+    rejected = false;
+    resolved = false;
+    get ended() {
+        return this.rejected || this.resolved;
+    }
+    constructor() {
+        this.promise = new Promise((resolve, reject) => {
+            this.resolve = (t) => {
+                this.resolved = true;
                 resolve(t);
             };
-            _this.reject = function (err) {
-                _this.rejected = true;
+            this.reject = (err) => {
+                this.rejected = true;
                 reject(err);
             };
         });
     }
-    PromiseWrapper.delay = function (time) {
-        return new Promise(function (resolve) { return setTimeout(resolve, time); });
-    };
-    Object.defineProperty(PromiseWrapper.prototype, "ended", {
-        get: function () {
-            return this.rejected || this.resolved;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    return PromiseWrapper;
-}());
+}
 
-var timers = {};
+const timers = {};
 function getAllTimers() {
     return timers;
 }
 function timer (timerName) {
-    var existing = timers[timerName];
+    const existing = timers[timerName];
     if (existing) {
         return existing;
     }
-    var marks = [];
+    const marks = [];
     function now() {
         return new Date().getTime();
     }
-    var startTime = now();
+    const startTime = now();
     mark("start", startTime);
-    var endTime;
-    var period;
+    let endTime;
+    let period;
     function stop() {
         endTime = now();
         mark("end", endTime);
@@ -7766,14 +7195,14 @@ function timer (timerName) {
         return period;
     }
     function mark(name, time) {
-        var currentTime = time !== null && time !== void 0 ? time : now();
-        var diff = 0;
+        const currentTime = time ?? now();
+        let diff = 0;
         if (marks.length > 0) {
             diff = currentTime - marks[marks.length - 1].time;
         }
-        marks.push({ name: name, time: currentTime, diff: diff });
+        marks.push({ name, time: currentTime, diff });
     }
-    var timerObj = {
+    const timerObj = {
         get startTime() {
             return startTime;
         },
@@ -7783,37 +7212,38 @@ function timer (timerName) {
         get period() {
             return period;
         },
-        stop: stop,
-        mark: mark,
-        marks: marks
+        stop,
+        mark,
+        marks
     };
     timers[timerName] = timerObj;
     return timerObj;
 }
 
-var WebSocketConstructor = Utils.isNode() ? require("ws") : window.WebSocket;
-var WS = (function () {
-    function WS(settings, logger) {
-        this.startupTimer = timer("connection");
-        this._running = true;
-        this._registry = lib$1();
-        this.wsRequests = [];
+const WebSocketConstructor = Utils.isNode() ? require("ws") : window.WebSocket;
+class WS {
+    ws;
+    logger;
+    settings;
+    startupTimer = timer("connection");
+    _running = true;
+    _registry = CallbackRegistryFactory();
+    wsRequests = [];
+    constructor(settings, logger) {
         this.settings = settings;
         this.logger = logger;
         if (!this.settings.ws) {
             throw new Error("ws is missing");
         }
     }
-    WS.prototype.onMessage = function (callback) {
+    onMessage(callback) {
         return this._registry.add("onMessage", callback);
-    };
-    WS.prototype.send = function (msg, options) {
-        var _this = this;
-        return new Promise(function (resolve, reject) {
-            _this.waitForSocketConnection(function () {
-                var _a;
+    }
+    send(msg, options) {
+        return new Promise((resolve, reject) => {
+            this.waitForSocketConnection(() => {
                 try {
-                    (_a = _this.ws) === null || _a === void 0 ? void 0 : _a.send(msg);
+                    this.ws?.send(msg);
                     resolve();
                 }
                 catch (e) {
@@ -7821,140 +7251,123 @@ var WS = (function () {
                 }
             }, reject);
         });
-    };
-    WS.prototype.open = function () {
-        var _this = this;
+    }
+    open() {
         this.logger.info("opening ws...");
         this._running = true;
-        return new Promise(function (resolve, reject) {
-            _this.waitForSocketConnection(resolve, reject);
+        return new Promise((resolve, reject) => {
+            this.waitForSocketConnection(resolve, reject);
         });
-    };
-    WS.prototype.close = function () {
+    }
+    close() {
         this._running = false;
         if (this.ws) {
             this.ws.close();
         }
         return Promise.resolve();
-    };
-    WS.prototype.onConnectedChanged = function (callback) {
+    }
+    onConnectedChanged(callback) {
         return this._registry.add("onConnectedChanged", callback);
-    };
-    WS.prototype.name = function () {
+    }
+    name() {
         return this.settings.ws;
-    };
-    WS.prototype.reconnect = function () {
-        var _a;
-        (_a = this.ws) === null || _a === void 0 ? void 0 : _a.close();
-        var pw = new PromiseWrapper();
-        this.waitForSocketConnection(function () {
+    }
+    reconnect() {
+        this.ws?.close();
+        const pw = new PromiseWrapper();
+        this.waitForSocketConnection(() => {
             pw.resolve();
         });
         return pw.promise;
-    };
-    WS.prototype.waitForSocketConnection = function (callback, failed) {
-        var _a;
-        failed = failed !== null && failed !== void 0 ? failed : (function () { });
+    }
+    waitForSocketConnection(callback, failed) {
+        failed = failed ?? (() => { });
         if (!this._running) {
-            failed("wait for socket on ".concat(this.settings.ws, " failed - socket closed by user"));
+            failed(`wait for socket on ${this.settings.ws} failed - socket closed by user`);
             return;
         }
-        if (((_a = this.ws) === null || _a === void 0 ? void 0 : _a.readyState) === 1) {
+        if (this.ws?.readyState === 1) {
             callback();
             return;
         }
-        this.wsRequests.push({ callback: callback, failed: failed });
+        this.wsRequests.push({ callback, failed });
         if (this.wsRequests.length > 1) {
             return;
         }
         this.openSocket();
-    };
-    WS.prototype.openSocket = function (retryInterval, retriesLeft) {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        this.startupTimer.mark("opening-socket");
-                        if (retryInterval === undefined) {
-                            retryInterval = this.settings.reconnectInterval;
-                        }
-                        if (typeof retriesLeft === "undefined") {
-                            retriesLeft = this.settings.reconnectAttempts;
-                        }
-                        if (retriesLeft !== undefined) {
-                            if (retriesLeft === 0) {
-                                this.notifyForSocketState("wait for socket on ".concat(this.settings.ws, " failed - no more retries left"));
-                                return [2];
-                            }
-                            this.logger.debug("will retry ".concat(retriesLeft, " more times (every ").concat(retryInterval, " ms)"));
-                        }
-                        _b.label = 1;
-                    case 1:
-                        _b.trys.push([1, 3, , 4]);
-                        return [4, this.initiateSocket()];
-                    case 2:
-                        _b.sent();
-                        this.startupTimer.mark("socket-initiated");
-                        this.notifyForSocketState();
-                        return [3, 4];
-                    case 3:
-                        _b.sent();
-                        setTimeout(function () {
-                            var retries = retriesLeft === undefined ? undefined : retriesLeft - 1;
-                            _this.openSocket(retryInterval, retries);
-                        }, retryInterval);
-                        return [3, 4];
-                    case 4: return [2];
-                }
-            });
-        });
-    };
-    WS.prototype.initiateSocket = function () {
-        var _this = this;
-        var pw = new PromiseWrapper();
-        this.logger.debug("initiating ws to ".concat(this.settings.ws, "..."));
-        this.ws = new WebSocketConstructor(this.settings.ws || "");
-        this.ws.onerror = function (err) {
-            var reason = "";
+    }
+    async openSocket(retryInterval, retriesLeft) {
+        this.logger.info(`opening ws to ${this.settings.ws}, retryInterval: ${retryInterval}, retriesLeft: ${retriesLeft}...`);
+        this.startupTimer.mark("opening-socket");
+        if (retryInterval === undefined) {
+            retryInterval = this.settings.reconnectInterval;
+        }
+        if (typeof retriesLeft === "undefined") {
+            retriesLeft = this.settings.reconnectAttempts;
+        }
+        if (retriesLeft !== undefined) {
+            if (retriesLeft === 0) {
+                this.notifyForSocketState(`wait for socket on ${this.settings.ws} failed - no more retries left`);
+                return;
+            }
+            this.logger.debug(`will retry ${retriesLeft} more times (every ${retryInterval} ms)`);
+        }
+        try {
+            await this.initiateSocket();
+            this.startupTimer.mark("socket-initiated");
+            this.notifyForSocketState();
+        }
+        catch {
+            setTimeout(() => {
+                const retries = retriesLeft === undefined ? undefined : retriesLeft - 1;
+                this.openSocket(retryInterval, retries);
+            }, retryInterval);
+        }
+    }
+    initiateSocket() {
+        const pw = new PromiseWrapper();
+        this.logger.debug(`initiating ws to ${this.settings.ws}...`);
+        this.ws = new WebSocketConstructor(this.settings.ws ?? "");
+        this.ws.onerror = (err) => {
+            let reason = "";
             try {
                 reason = JSON.stringify(err);
             }
             catch (error) {
-                var seen_1 = new WeakSet();
-                var replacer = function (key, value) {
+                const seen = new WeakSet();
+                const replacer = (key, value) => {
                     if (typeof value === "object" && value !== null) {
-                        if (seen_1.has(value)) {
+                        if (seen.has(value)) {
                             return;
                         }
-                        seen_1.add(value);
+                        seen.add(value);
                     }
                     return value;
                 };
                 reason = JSON.stringify(err, replacer);
             }
+            this.logger.info(`ws error - reason: ${reason}`);
             pw.reject("error");
-            _this.notifyStatusChanged(false, reason);
+            this.notifyStatusChanged(false, reason);
         };
-        this.ws.onclose = function (err) {
-            _this.logger.info("ws closed ".concat(err));
+        this.ws.onclose = (err) => {
+            this.logger.info(`ws closed - code: ${err?.code} reason: ${err?.reason}`);
             pw.reject("closed");
-            _this.notifyStatusChanged(false);
+            this.notifyStatusChanged(false);
         };
-        this.ws.onopen = function () {
-            var _a;
-            _this.startupTimer.mark("ws-opened");
-            _this.logger.info("ws opened ".concat((_a = _this.settings.identity) === null || _a === void 0 ? void 0 : _a.application));
+        this.ws.onopen = () => {
+            this.startupTimer.mark("ws-opened");
+            this.logger.info(`ws opened ${this.settings.identity?.application}`);
             pw.resolve();
-            _this.notifyStatusChanged(true);
+            this.notifyStatusChanged(true);
         };
-        this.ws.onmessage = function (message) {
-            _this._registry.execute("onMessage", message.data);
+        this.ws.onmessage = (message) => {
+            this._registry.execute("onMessage", message.data);
         };
         return pw.promise;
-    };
-    WS.prototype.notifyForSocketState = function (error) {
-        this.wsRequests.forEach(function (wsRequest) {
+    }
+    notifyForSocketState(error) {
+        this.wsRequests.forEach((wsRequest) => {
             if (error) {
                 if (wsRequest.failed) {
                     wsRequest.failed(error);
@@ -7965,415 +7378,782 @@ var WS = (function () {
             }
         });
         this.wsRequests = [];
-    };
-    WS.prototype.notifyStatusChanged = function (status, reason) {
+    }
+    notifyStatusChanged(status, reason) {
         this._registry.execute("onConnectedChanged", status, reason);
-    };
-    return WS;
-}());
-
-var shortidExports = {};
-var shortid$1 = {
-  get exports(){ return shortidExports; },
-  set exports(v){ shortidExports = v; },
-};
-
-var libExports = {};
-var lib = {
-  get exports(){ return libExports; },
-  set exports(v){ libExports = v; },
-};
-
-// Found this seed-based random generator somewhere
-// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
-
-var seed = 1;
-
-/**
- * return a random number based on a seed
- * @param seed
- * @returns {number}
- */
-function getNextValue() {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed/(233280.0);
+    }
 }
 
-function setSeed$1(_seed_) {
-    seed = _seed_;
-}
-
-var randomFromSeed$1 = {
-    nextValue: getNextValue,
-    seed: setSeed$1
-};
-
-var randomFromSeed = randomFromSeed$1;
-
-var ORIGINAL = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
-var alphabet$2;
-var previousSeed;
-
-var shuffled;
-
-function reset() {
-    shuffled = false;
-}
-
-function setCharacters(_alphabet_) {
-    if (!_alphabet_) {
-        if (alphabet$2 !== ORIGINAL) {
-            alphabet$2 = ORIGINAL;
-            reset();
+class MessageReplayerImpl {
+    specs;
+    specsNames = [];
+    messages = {};
+    isDone;
+    subs = {};
+    subsRefCount = {};
+    connection;
+    constructor(specs) {
+        this.specs = {};
+        for (const spec of specs) {
+            this.specs[spec.name] = spec;
+            this.specsNames.push(spec.name);
         }
-        return;
     }
-
-    if (_alphabet_ === alphabet$2) {
-        return;
-    }
-
-    if (_alphabet_.length !== ORIGINAL.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
-    }
-
-    var unique = _alphabet_.split('').filter(function(item, ind, arr){
-       return ind !== arr.lastIndexOf(item);
-    });
-
-    if (unique.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
-    }
-
-    alphabet$2 = _alphabet_;
-    reset();
-}
-
-function characters(_alphabet_) {
-    setCharacters(_alphabet_);
-    return alphabet$2;
-}
-
-function setSeed(seed) {
-    randomFromSeed.seed(seed);
-    if (previousSeed !== seed) {
-        reset();
-        previousSeed = seed;
-    }
-}
-
-function shuffle() {
-    if (!alphabet$2) {
-        setCharacters(ORIGINAL);
-    }
-
-    var sourceArray = alphabet$2.split('');
-    var targetArray = [];
-    var r = randomFromSeed.nextValue();
-    var characterIndex;
-
-    while (sourceArray.length > 0) {
-        r = randomFromSeed.nextValue();
-        characterIndex = Math.floor(r * sourceArray.length);
-        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
-    }
-    return targetArray.join('');
-}
-
-function getShuffled() {
-    if (shuffled) {
-        return shuffled;
-    }
-    shuffled = shuffle();
-    return shuffled;
-}
-
-/**
- * lookup shuffled letter
- * @param index
- * @returns {string}
- */
-function lookup(index) {
-    var alphabetShuffled = getShuffled();
-    return alphabetShuffled[index];
-}
-
-function get () {
-  return alphabet$2 || ORIGINAL;
-}
-
-var alphabet_1 = {
-    get: get,
-    characters: characters,
-    seed: setSeed,
-    lookup: lookup,
-    shuffled: getShuffled
-};
-
-var crypto = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
-
-var randomByte;
-
-if (!crypto || !crypto.getRandomValues) {
-    randomByte = function(size) {
-        var bytes = [];
-        for (var i = 0; i < size; i++) {
-            bytes.push(Math.floor(Math.random() * 256));
+    init(connection) {
+        this.connection = connection;
+        for (const name of this.specsNames) {
+            for (const type of this.specs[name].types) {
+                let refCount = this.subsRefCount[type];
+                if (!refCount) {
+                    refCount = 0;
+                }
+                refCount += 1;
+                this.subsRefCount[type] = refCount;
+                if (refCount > 1) {
+                    continue;
+                }
+                const sub = connection.on(type, (msg) => this.processMessage(type, msg));
+                this.subs[type] = sub;
+            }
         }
-        return bytes;
-    };
-} else {
-    randomByte = function(size) {
-        return crypto.getRandomValues(new Uint8Array(size));
-    };
+    }
+    processMessage(type, msg) {
+        if (this.isDone || !msg) {
+            return;
+        }
+        for (const name of this.specsNames) {
+            if (this.specs[name].types.indexOf(type) !== -1) {
+                const messages = this.messages[name] || [];
+                this.messages[name] = messages;
+                messages.push(msg);
+            }
+        }
+    }
+    drain(name, callback) {
+        if (callback) {
+            (this.messages[name] || []).forEach(callback);
+        }
+        delete this.messages[name];
+        for (const type of this.specs[name].types) {
+            this.subsRefCount[type] -= 1;
+            if (this.subsRefCount[type] <= 0) {
+                this.connection?.off(this.subs[type]);
+                delete this.subs[type];
+                delete this.subsRefCount[type];
+            }
+        }
+        delete this.specs[name];
+        if (!this.specs.length) {
+            this.isDone = true;
+        }
+    }
 }
 
-var randomByteBrowser = randomByte;
+const urlAlphabet =
+  'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 
-// This file replaces `format.js` in bundlers like webpack or Rollup,
-// according to `browser` config in `package.json`.
-
-var format_browser = function (random, alphabet, size) {
-  // We can’t use bytes bigger than the alphabet. To make bytes values closer
-  // to the alphabet, we apply bitmask on them. We look for the closest
-  // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
-  // 30 symbols in the alphabet, we will take 31 (00011111).
-  // We do not use faster Math.clz32, because it is not available in browsers.
-  var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1;
-  // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
-  // which is bigger than the alphabet). As a result, we will need more bytes,
-  // than ID size, because we will refuse bytes bigger than the alphabet.
-
-  // Every hardware random generator call is costly,
-  // because we need to wait for entropy collection. This is why often it will
-  // be faster to ask for few extra bytes in advance, to avoid additional calls.
-
-  // Here we calculate how many random bytes should we call in advance.
-  // It depends on ID length, mask / alphabet size and magic number 1.6
-  // (which was selected according benchmarks).
-
-  // -~f => Math.ceil(f) if n is float number
-  // -~i => i + 1 if n is integer number
-  var step = -~(1.6 * mask * size / alphabet.length);
-  var id = '';
-
-  while (true) {
-    var bytes = random(step);
-    // Compact alternative for `for (var i = 0; i < step; i++)`
-    var i = step;
-    while (i--) {
-      // If random byte is bigger than alphabet even after bitmask,
-      // we refuse it by `|| ''`.
-      id += alphabet[bytes[i] & mask] || '';
-      // More compact than `id.length + 1 === size`
-      if (id.length === +size) return id
-    }
+let nanoid = (size = 21) => {
+  let id = '';
+  let bytes = crypto.getRandomValues(new Uint8Array(size));
+  while (size--) {
+    id += urlAlphabet[bytes[size] & 63];
   }
+  return id
 };
 
-var alphabet$1 = alphabet_1;
-var random = randomByteBrowser;
-var format = format_browser;
+const PromisePlus = (executor, timeoutMilliseconds, timeoutMessage) => {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
+            reject(message);
+        }, timeoutMilliseconds);
+        const providedPromise = new Promise(executor);
+        providedPromise
+            .then((result) => {
+            clearTimeout(timeout);
+            resolve(result);
+        })
+            .catch((error) => {
+            clearTimeout(timeout);
+            reject(error);
+        });
+    });
+};
 
-function generate$1(number) {
-    var loopCounter = 0;
-    var done;
-
-    var str = '';
-
-    while (!done) {
-        str = str + format(random, alphabet$1.get(), 1);
-        done = number < (Math.pow(16, loopCounter + 1 ) );
-        loopCounter++;
+class WebPlatformTransport {
+    settings;
+    logger;
+    identity;
+    isPreferredActivated;
+    _communicationId;
+    publicWindowId;
+    selfAssignedWindowId;
+    iAmConnected = false;
+    parentReady = false;
+    rejected = false;
+    parentPingResolve;
+    parentPingInterval;
+    connectionResolve;
+    extConnectionResolve;
+    extConnectionReject;
+    connectionReject;
+    port;
+    myClientId;
+    children = [];
+    extContentAvailable = false;
+    extContentConnecting = false;
+    extContentConnected = false;
+    parentWindowId;
+    parentInExtMode = false;
+    webNamespace = "g42_core_web";
+    parent;
+    parentType;
+    parentPingTimeout = 5000;
+    connectionRequestTimeout = 7000;
+    defaultTargetString = "*";
+    registry = CallbackRegistryFactory();
+    messages = {
+        connectionAccepted: { name: "connectionAccepted", handle: this.handleConnectionAccepted.bind(this) },
+        connectionRejected: { name: "connectionRejected", handle: this.handleConnectionRejected.bind(this) },
+        connectionRequest: { name: "connectionRequest", handle: this.handleConnectionRequest.bind(this) },
+        parentReady: {
+            name: "parentReady", handle: () => {
+            }
+        },
+        parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
+        platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
+        platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
+        clientUnload: { name: "clientUnload", handle: this.handleClientUnload.bind(this) },
+        manualUnload: { name: "manualUnload", handle: this.handleManualUnload.bind(this) },
+        extConnectionResponse: { name: "extConnectionResponse", handle: this.handleExtConnectionResponse.bind(this) },
+        extSetupRequest: { name: "extSetupRequest", handle: this.handleExtSetupRequest.bind(this) },
+        gatewayDisconnect: { name: "gatewayDisconnect", handle: this.handleGatewayDisconnect.bind(this) },
+        gatewayInternalConnect: { name: "gatewayInternalConnect", handle: this.handleGatewayInternalConnect.bind(this) }
+    };
+    constructor(settings, logger, identity) {
+        this.settings = settings;
+        this.logger = logger;
+        this.identity = identity;
+        this.extContentAvailable = !!window.glue42ext;
+        this.setUpMessageListener();
+        this.setUpUnload();
+        this.setupPlatformUnloadListener();
+        this.parentType = window.name.includes("#wsp") ? "workspace" : undefined;
     }
-    return str;
+    manualSetReadyState() {
+        this.iAmConnected = true;
+        this.parentReady = true;
+    }
+    get transportWindowId() {
+        return this.publicWindowId;
+    }
+    get communicationId() {
+        return this._communicationId;
+    }
+    async sendObject(msg) {
+        if (this.extContentConnected) {
+            return window.postMessage({ glue42ExtOut: msg }, this.defaultTargetString);
+        }
+        if (!this.port) {
+            throw new Error("Cannot send message, because the port was not opened yet");
+        }
+        this.port.postMessage(msg);
+    }
+    get isObjectBasedTransport() {
+        return true;
+    }
+    onMessage(callback) {
+        return this.registry.add("onMessage", callback);
+    }
+    send() {
+        return Promise.reject("not supported");
+    }
+    onConnectedChanged(callback) {
+        return this.registry.add("onConnectedChanged", callback);
+    }
+    async open() {
+        this.logger.debug("opening a connection to the web platform gateway.");
+        await this.connect();
+        this.notifyStatusChanged(true);
+    }
+    close() {
+        const message = {
+            glue42core: {
+                type: this.messages.gatewayDisconnect.name,
+                data: {
+                    clientId: this.myClientId,
+                    ownWindowId: this.identity?.windowId
+                }
+            }
+        };
+        this.port?.postMessage(message);
+        this.parentReady = false;
+        this.notifyStatusChanged(false, "manual reconnection");
+        return Promise.resolve();
+    }
+    name() {
+        return "web-platform";
+    }
+    async reconnect() {
+        await this.close();
+        return Promise.resolve();
+    }
+    initiateInternalConnection() {
+        return new Promise((resolve, reject) => {
+            this.logger.debug("opening an internal web platform connection");
+            this.port = this.settings.port;
+            if (this.iAmConnected) {
+                this.logger.warn("cannot open a new connection, because this client is currently connected");
+                return;
+            }
+            this.port.onmessage = (event) => {
+                if (this.iAmConnected && !event.data?.glue42core) {
+                    this.registry.execute("onMessage", event.data);
+                    return;
+                }
+                const data = event.data?.glue42core;
+                if (!data) {
+                    return;
+                }
+                if (data.type === this.messages.gatewayInternalConnect.name && data.success) {
+                    this.publicWindowId = this.settings.windowId;
+                    if (this.identity && this.publicWindowId) {
+                        this.identity.windowId = this.publicWindowId;
+                        this.identity.instance = this.publicWindowId;
+                    }
+                    resolve();
+                }
+                if (data.type === this.messages.gatewayInternalConnect.name && data.error) {
+                    reject(data.error);
+                }
+            };
+            this.port.postMessage({
+                glue42core: {
+                    type: this.messages.gatewayInternalConnect.name
+                }
+            });
+        });
+    }
+    initiateRemoteConnection(target) {
+        return PromisePlus((resolve, reject) => {
+            this.connectionResolve = resolve;
+            this.connectionReject = reject;
+            this.myClientId = this.myClientId ?? nanoid(10);
+            const bridgeInstanceId = this.getMyWindowId() || nanoid(10);
+            const request = {
+                glue42core: {
+                    type: this.messages.connectionRequest.name,
+                    clientId: this.myClientId,
+                    clientType: "child",
+                    bridgeInstanceId,
+                    selfAssignedWindowId: this.selfAssignedWindowId
+                }
+            };
+            this.logger.debug("sending connection request");
+            if (this.extContentConnecting) {
+                request.glue42core.clientType = "child";
+                request.glue42core.bridgeInstanceId = this.myClientId;
+                request.glue42core.parentWindowId = this.parentWindowId;
+                return window.postMessage(request, this.defaultTargetString);
+            }
+            if (!target) {
+                throw new Error("Cannot send a connection request, because no glue target was specified!");
+            }
+            target.postMessage(request, this.defaultTargetString);
+        }, this.connectionRequestTimeout, "The connection to the target glue window timed out");
+    }
+    async isParentCheckSuccess(parentCheck) {
+        try {
+            await parentCheck;
+            return { success: true };
+        }
+        catch (error) {
+            return { success: false };
+        }
+    }
+    setUpMessageListener() {
+        if (this.settings.port) {
+            this.logger.debug("skipping generic message listener, because this is an internal client");
+            return;
+        }
+        window.addEventListener("message", (event) => {
+            const data = event.data?.glue42core;
+            if (!data || this.rejected) {
+                return;
+            }
+            const allowedOrigins = this.settings.allowedOrigins || [];
+            if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
+                this.logger.warn(`received a message from an origin which is not in the allowed list: ${event.origin}`);
+                return;
+            }
+            if (!this.checkMessageTypeValid(data.type)) {
+                this.logger.error(`cannot handle the incoming glue42 core message, because the type is invalid: ${data.type}`);
+                return;
+            }
+            const messageType = data.type;
+            this.logger.debug(`received valid glue42core message of type: ${messageType}`);
+            this.messages[messageType].handle(event);
+        });
+    }
+    setUpUnload() {
+        if (this.settings.port) {
+            this.logger.debug("skipping unload event listener, because this is an internal client");
+            return;
+        }
+        window.addEventListener("beforeunload", () => {
+            if (this.extContentConnected) {
+                return;
+            }
+            const message = {
+                glue42core: {
+                    type: this.messages.clientUnload.name,
+                    data: {
+                        clientId: this.myClientId,
+                        ownWindowId: this.identity?.windowId
+                    }
+                }
+            };
+            if (this.parent) {
+                this.parent.postMessage(message, this.defaultTargetString);
+            }
+            this.port?.postMessage(message);
+        });
+    }
+    handlePlatformReady(event) {
+        this.logger.debug("the web platform gave the ready signal");
+        this.parentReady = true;
+        if (this.parentPingResolve) {
+            this.parentPingResolve();
+            delete this.parentPingResolve;
+        }
+        if (this.parentPingInterval) {
+            clearInterval(this.parentPingInterval);
+            delete this.parentPingInterval;
+        }
+        this.parent = event.source;
+        this.parentType = window.name.includes("#wsp") ? "workspace" : "window";
+    }
+    handleConnectionAccepted(event) {
+        const data = event.data?.glue42core;
+        if (this.myClientId === data.clientId) {
+            return this.handleAcceptanceOfMyRequest(data);
+        }
+        return this.handleAcceptanceOfGrandChildRequest(data, event);
+    }
+    handleAcceptanceOfMyRequest(data) {
+        this.logger.debug("handling a connection accepted signal targeted at me.");
+        this.isPreferredActivated = data.isPreferredActivated;
+        if (this.extContentConnecting) {
+            return this.processExtContentConnection(data);
+        }
+        if (!data.port) {
+            this.logger.error("cannot set up my connection, because I was not provided with a port");
+            return;
+        }
+        this.publicWindowId = this.getMyWindowId();
+        if (this.identity) {
+            this.identity.windowId = this.publicWindowId;
+            this.identity.instance = this.identity.instance ? this.identity.instance : this.publicWindowId || nanoid(10);
+        }
+        if (this.identity && data.appName) {
+            this.identity.application = data.appName;
+            this.identity.applicationName = data.appName;
+        }
+        this._communicationId = data.communicationId;
+        this.port = data.port;
+        this.port.onmessage = (e) => this.registry.execute("onMessage", e.data);
+        if (this.connectionResolve) {
+            this.logger.debug("my connection is set up, calling the connection resolve.");
+            this.connectionResolve();
+            delete this.connectionResolve;
+            return;
+        }
+        this.logger.error("unable to call the connection resolve, because no connection promise was found");
+    }
+    processExtContentConnection(data) {
+        this.logger.debug("handling a connection accepted signal targeted at me for extension content connection.");
+        this.extContentConnecting = false;
+        this.extContentConnected = true;
+        this.publicWindowId = this.parentWindowId || this.myClientId;
+        if (this.extContentConnecting && this.identity) {
+            this.identity.windowId = this.publicWindowId;
+        }
+        if (this.identity && data.appName) {
+            this.identity.application = data.appName;
+            this.identity.applicationName = data.appName;
+        }
+        window.addEventListener("message", (event) => {
+            const extData = event.data?.glue42ExtInc;
+            if (!extData) {
+                return;
+            }
+            const allowedOrigins = this.settings.allowedOrigins || [];
+            if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
+                this.logger.warn(`received a message from an origin which is not in the allowed list: ${event.origin}`);
+                return;
+            }
+            this.registry.execute("onMessage", extData);
+        });
+        if (this.connectionResolve) {
+            this.logger.debug("my connection is set up, calling the connection resolve.");
+            this.connectionResolve();
+            delete this.connectionResolve;
+            return;
+        }
+    }
+    handleAcceptanceOfGrandChildRequest(data, event) {
+        if (this.extContentConnecting || this.extContentConnected) {
+            this.logger.debug("cannot process acceptance of a grandchild, because I am connected to a content script");
+            return;
+        }
+        this.logger.debug(`handling a connection accepted signal targeted at a grandchild: ${data.clientId}`);
+        const child = this.children.find((c) => c.grandChildId === data.clientId);
+        if (!child) {
+            this.logger.error(`cannot handle connection accepted for grandchild: ${data.clientId}, because there is no grandchild with this id`);
+            return;
+        }
+        child.connected = true;
+        this.logger.debug(`the grandchild connection for ${data.clientId} is set up, forwarding the success message and the gateway port`);
+        data.parentWindowId = this.publicWindowId;
+        child.source.postMessage(event.data, child.origin, [data.port]);
+        return;
+    }
+    handleConnectionRejected() {
+        this.logger.debug("handling a connection rejection. Most likely the reason is that this window was not created by a glue API call");
+        if (this.connectionReject) {
+            this.connectionReject("The platform connection was rejected. Most likely because this window was not created by a glue API call");
+            delete this.connectionReject;
+        }
+    }
+    handleConnectionRequest(event) {
+        if (this.extContentConnecting) {
+            this.logger.debug("This connection request event is targeted at the extension content");
+            return;
+        }
+        const source = event.source;
+        const data = event.data.glue42core;
+        if (!data.clientType || data.clientType !== "grandChild") {
+            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source was not opened by a glue API call");
+        }
+        if (!data.clientId) {
+            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source did not provide a valid id");
+        }
+        if (!this.parent) {
+            return this.rejectConnectionRequest(source, event.origin, "Cannot forward the connection request, because no direct connection to the platform was found");
+        }
+        this.logger.debug(`handling a connection request for a grandchild: ${data.clientId}`);
+        this.children.push({ grandChildId: data.clientId, source, connected: false, origin: event.origin });
+        this.logger.debug(`grandchild: ${data.clientId} is prepared, forwarding connection request to the platform`);
+        this.parent.postMessage(event.data, this.defaultTargetString);
+    }
+    handleParentPing(event) {
+        if (!this.parentReady) {
+            this.logger.debug("my parent is not ready, I am ignoring the parent ping");
+            return;
+        }
+        if (!this.iAmConnected) {
+            this.logger.debug("i am not fully connected yet, I am ignoring the parent ping");
+            return;
+        }
+        const message = {
+            glue42core: {
+                type: this.messages.parentReady.name
+            }
+        };
+        if (this.extContentConnected) {
+            message.glue42core.extMode = { windowId: this.myClientId };
+        }
+        const source = event.source;
+        this.logger.debug("responding to a parent ping with a ready message");
+        source.postMessage(message, event.origin);
+    }
+    setupPlatformUnloadListener() {
+        this.onMessage((msg) => {
+            if (msg.type === "platformUnload") {
+                this.logger.debug("detected a web platform unload");
+                this.parentReady = false;
+                this.notifyStatusChanged(false, "Gateway unloaded");
+            }
+        });
+    }
+    handleManualUnload() {
+        const message = {
+            glue42core: {
+                type: this.messages.clientUnload.name,
+                data: {
+                    clientId: this.myClientId,
+                    ownWindowId: this.identity?.windowId
+                }
+            }
+        };
+        if (this.extContentConnected) {
+            return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);
+        }
+        this.port?.postMessage(message);
+    }
+    handleClientUnload(event) {
+        const data = event.data.glue42core;
+        const clientId = data?.data.clientId;
+        if (!clientId) {
+            this.logger.warn("cannot process grand child unload, because the provided id was not valid");
+            return;
+        }
+        const foundChild = this.children.find((child) => child.grandChildId === clientId);
+        if (!foundChild) {
+            this.logger.warn("cannot process grand child unload, because this client is unaware of this grandchild");
+            return;
+        }
+        this.logger.debug(`handling grandchild unload for id: ${clientId}`);
+        this.children = this.children.filter((child) => child.grandChildId !== clientId);
+    }
+    handlePlatformPing() {
+        return;
+    }
+    notifyStatusChanged(status, reason) {
+        this.iAmConnected = status;
+        this.registry.execute("onConnectedChanged", status, reason);
+    }
+    checkMessageTypeValid(typeToValidate) {
+        return typeof typeToValidate === "string" && !!this.messages[typeToValidate];
+    }
+    rejectConnectionRequest(source, origin, reason) {
+        this.rejected = true;
+        this.logger.error(reason);
+        const rejection = {
+            glue42core: {
+                type: this.messages.connectionRejected.name
+            }
+        };
+        source.postMessage(rejection, origin);
+    }
+    requestConnectionPermissionFromExt() {
+        return this.waitForContentScript()
+            .then(() => PromisePlus((resolve, reject) => {
+            this.extConnectionResolve = resolve;
+            this.extConnectionReject = reject;
+            const message = {
+                glue42core: {
+                    type: "extSetupRequest"
+                }
+            };
+            this.logger.debug("permission request to the extension content script was sent");
+            window.postMessage(message, this.defaultTargetString);
+        }, this.parentPingTimeout, "Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection timed out"));
+    }
+    handleExtConnectionResponse(event) {
+        const data = event.data?.glue42core;
+        if (!data.approved) {
+            return this.extConnectionReject ? this.extConnectionReject("Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection was rejected") : undefined;
+        }
+        if (this.extConnectionResolve) {
+            this.extConnectionResolve();
+            delete this.extConnectionResolve;
+        }
+        this.extContentConnecting = true;
+        this.parentType = "extension";
+        this.logger.debug("The extension connection was approved, proceeding.");
+    }
+    handleExtSetupRequest() {
+        return;
+    }
+    handleGatewayDisconnect() {
+        return;
+    }
+    handleGatewayInternalConnect() {
+        return;
+    }
+    waitForContentScript() {
+        const contentReady = !!window.glue42ext?.content;
+        if (contentReady) {
+            return Promise.resolve();
+        }
+        return PromisePlus((resolve) => {
+            window.addEventListener("Glue42EXTReady", () => {
+                resolve();
+            });
+        }, this.connectionRequestTimeout, "The content script was available, but was never heard to be ready");
+    }
+    async connect() {
+        if (this.settings.port) {
+            await this.initiateInternalConnection();
+            this.logger.debug("internal web platform connection completed");
+            return;
+        }
+        this.logger.debug("opening a client web platform connection");
+        await this.findParent();
+        await this.initiateRemoteConnection(this.parent);
+        this.logger.debug("the client is connected");
+    }
+    async findParent() {
+        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
+        const myInsideParents = this.getPossibleParentsInWindow(window);
+        const myOutsideParents = this.getPossibleParentsOutsideWindow(window.top?.opener, window.top);
+        const uniqueParents = new Set([...myInsideParents, ...myOutsideParents]);
+        if (!uniqueParents.size && !this.extContentAvailable) {
+            throw new Error(connectionNotPossibleMsg);
+        }
+        if (!uniqueParents.size && this.extContentAvailable) {
+            await this.requestConnectionPermissionFromExt();
+            return;
+        }
+        const defaultParentCheck = await this.isParentCheckSuccess(this.confirmParent(Array.from(uniqueParents)));
+        if (defaultParentCheck.success) {
+            this.logger.debug("The default parent was found!");
+            return;
+        }
+        if (!this.extContentAvailable) {
+            throw new Error(connectionNotPossibleMsg);
+        }
+        await this.requestConnectionPermissionFromExt();
+    }
+    getPossibleParentsInWindow(currentWindow) {
+        return (!currentWindow || currentWindow === currentWindow.top) ? [] : [currentWindow.parent, ...this.getPossibleParentsInWindow(currentWindow.parent)];
+    }
+    getPossibleParentsOutsideWindow(opener, current) {
+        return (!opener || !current || opener === current) ? [] : [opener, ...this.getPossibleParentsInWindow(opener), ...this.getPossibleParentsOutsideWindow(opener.opener, opener)];
+    }
+    confirmParent(targets) {
+        const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
+        const parentCheck = PromisePlus((resolve) => {
+            this.parentPingResolve = resolve;
+            const message = {
+                glue42core: {
+                    type: this.messages.platformPing.name
+                }
+            };
+            this.parentPingInterval = setInterval(() => {
+                targets.forEach((target) => {
+                    target.postMessage(message, this.defaultTargetString);
+                });
+            }, 1000);
+        }, this.parentPingTimeout, connectionNotPossibleMsg);
+        parentCheck.catch(() => {
+            if (this.parentPingInterval) {
+                clearInterval(this.parentPingInterval);
+                delete this.parentPingInterval;
+            }
+        });
+        return parentCheck;
+    }
+    getMyWindowId() {
+        if (this.parentType === "workspace") {
+            return window.name.substring(0, window.name.indexOf("#wsp"));
+        }
+        if (window !== window.top) {
+            return;
+        }
+        if (window.name?.includes("g42")) {
+            return window.name;
+        }
+        this.selfAssignedWindowId = this.selfAssignedWindowId || `g42-${nanoid(10)}`;
+        return this.selfAssignedWindowId;
+    }
 }
 
-var generate_1 = generate$1;
+const waitForInvocations = (invocations, callback) => {
+    let left = invocations;
+    return () => {
+        left--;
+        if (left === 0) {
+            callback();
+        }
+    };
+};
 
-var generate = generate_1;
-
-// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
-// This number should be updated every year or so to keep the generated id short.
-// To regenerate `new Date() - 0` and bump the version. Always bump the version!
-var REDUCE_TIME = 1567752802062;
-
-// don't change unless we change the algos or REDUCE_TIME
-// must be an integer and less than 16
-var version$1 = 7;
-
-// Counter is used when shortid is called multiple times in one second.
-var counter;
-
-// Remember the last time shortid was called in case counter is needed.
-var previousSeconds;
-
-/**
- * Generate unique id
- * Returns string id
- */
-function build(clusterWorkerId) {
-    var str = '';
-
-    var seconds = Math.floor((Date.now() - REDUCE_TIME) * 0.001);
-
-    if (seconds === previousSeconds) {
-        counter++;
-    } else {
-        counter = 0;
-        previousSeconds = seconds;
+class AsyncSequelizer {
+    minSequenceInterval;
+    queue = [];
+    isExecutingQueue = false;
+    constructor(minSequenceInterval = 0) {
+        this.minSequenceInterval = minSequenceInterval;
     }
-
-    str = str + generate(version$1);
-    str = str + generate(clusterWorkerId);
-    if (counter > 0) {
-        str = str + generate(counter);
+    enqueue(action) {
+        return new Promise((resolve, reject) => {
+            this.queue.push({ action, resolve, reject });
+            this.executeQueue();
+        });
     }
-    str = str + generate(seconds);
-    return str;
+    async executeQueue() {
+        if (this.isExecutingQueue) {
+            return;
+        }
+        this.isExecutingQueue = true;
+        while (this.queue.length) {
+            const operation = this.queue.shift();
+            if (!operation) {
+                this.isExecutingQueue = false;
+                return;
+            }
+            try {
+                const actionResult = await operation.action();
+                operation.resolve(actionResult);
+            }
+            catch (error) {
+                operation.reject(error);
+            }
+            await this.intervalBreak();
+        }
+        this.isExecutingQueue = false;
+    }
+    intervalBreak() {
+        return new Promise((res) => setTimeout(res, this.minSequenceInterval));
+    }
 }
-
-var build_1 = build;
-
-var alphabet = alphabet_1;
-
-function isShortId(id) {
-    if (!id || typeof id !== 'string' || id.length < 6 ) {
-        return false;
-    }
-
-    var nonAlphabetic = new RegExp('[^' +
-      alphabet.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
-    ']');
-    return !nonAlphabetic.test(id);
-}
-
-var isValid = isShortId;
-
-(function (module) {
-
-	var alphabet = alphabet_1;
-	var build = build_1;
-	var isValid$1 = isValid;
-
-	// if you are using cluster or multiple servers use this to make each instance
-	// has a unique value for worker
-	// Note: I don't know if this is automatically set when using third
-	// party cluster solutions such as pm2.
-	var clusterWorkerId = 0;
-
-	/**
-	 * Set the seed.
-	 * Highly recommended if you don't want people to try to figure out your id schema.
-	 * exposed as shortid.seed(int)
-	 * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
-	 */
-	function seed(seedValue) {
-	    alphabet.seed(seedValue);
-	    return module.exports;
-	}
-
-	/**
-	 * Set the cluster worker or machine id
-	 * exposed as shortid.worker(int)
-	 * @param workerId worker must be positive integer.  Number less than 16 is recommended.
-	 * returns shortid module so it can be chained.
-	 */
-	function worker(workerId) {
-	    clusterWorkerId = workerId;
-	    return module.exports;
-	}
-
-	/**
-	 *
-	 * sets new characters to use in the alphabet
-	 * returns the shuffled alphabet
-	 */
-	function characters(newCharacters) {
-	    if (newCharacters !== undefined) {
-	        alphabet.characters(newCharacters);
-	    }
-
-	    return alphabet.shuffled();
-	}
-
-	/**
-	 * Generate unique id
-	 * Returns string id
-	 */
-	function generate() {
-	  return build(clusterWorkerId);
-	}
-
-	// Export all other functions as properties of the generate function
-	module.exports = generate;
-	module.exports.generate = generate;
-	module.exports.seed = seed;
-	module.exports.worker = worker;
-	module.exports.characters = characters;
-	module.exports.isValid = isValid$1;
-} (lib));
-
-(function (module) {
-	module.exports = libExports;
-} (shortid$1));
-
-var shortid = /*@__PURE__*/getDefaultExportFromCjs(shortidExports);
 
 function domainSession (domain, connection, logger, successMessages, errorMessages) {
     if (domain == null) {
         domain = "global";
     }
-    successMessages = successMessages || ["success"];
-    errorMessages = errorMessages || ["error"];
-    var isJoined = false;
-    var tryReconnecting = false;
-    var _latestOptions;
-    var _connectionOn = false;
-    var callbacks = lib$1();
+    successMessages = successMessages ?? ["success"];
+    errorMessages = errorMessages ?? ["error"];
+    let isJoined = domain === "global";
+    let tryReconnecting = false;
+    let _latestOptions;
+    let _connectionOn = false;
+    const callbacks = CallbackRegistryFactory();
     connection.disconnected(handleConnectionDisconnected);
     connection.loggedIn(handleConnectionLoggedIn);
-    connection.on("success", function (msg) { return handleSuccessMessage(msg); });
-    connection.on("error", function (msg) { return handleErrorMessage(msg); });
-    connection.on("result", function (msg) { return handleSuccessMessage(msg); });
+    connection.on("success", (msg) => handleSuccessMessage(msg));
+    connection.on("error", (msg) => handleErrorMessage(msg));
+    connection.on("result", (msg) => handleSuccessMessage(msg));
     if (successMessages) {
-        successMessages.forEach(function (sm) {
-            connection.on(sm, function (msg) { return handleSuccessMessage(msg); });
+        successMessages.forEach((sm) => {
+            connection.on(sm, (msg) => handleSuccessMessage(msg));
         });
     }
     if (errorMessages) {
-        errorMessages.forEach(function (sm) {
-            connection.on(sm, function (msg) { return handleErrorMessage(msg); });
+        errorMessages.forEach((sm) => {
+            connection.on(sm, (msg) => handleErrorMessage(msg));
         });
     }
-    var requestsMap = {};
+    const requestsMap = {};
     function join(options) {
         _latestOptions = options;
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
             if (isJoined) {
                 resolve({});
                 return;
             }
-            var joinPromise;
+            let joinPromise;
             if (domain === "global") {
                 joinPromise = _connectionOn ? Promise.resolve({}) : Promise.reject("not connected to gateway");
             }
             else {
-                logger.debug("joining domain ".concat(domain));
-                var joinMsg = {
+                logger.debug(`joining domain ${domain}`);
+                const joinMsg = {
                     type: "join",
                     destination: domain,
                     domain: "global",
-                    options: options,
+                    options,
                 };
                 joinPromise = send(joinMsg);
             }
             joinPromise
-                .then(function () {
+                .then(() => {
                 handleJoined();
                 resolve({});
             })
-                .catch(function (err) {
+                .catch((err) => {
                 logger.debug("error joining " + domain + " domain: " + JSON.stringify(err));
                 reject(err);
             });
@@ -8384,18 +8164,18 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
             return Promise.resolve();
         }
         logger.debug("stopping session " + domain + "...");
-        var leaveMsg = {
+        const leaveMsg = {
             type: "leave",
             destination: domain,
             domain: "global",
         };
         tryReconnecting = false;
         return send(leaveMsg)
-            .then(function () {
+            .then(() => {
             isJoined = false;
             callbacks.execute("onLeft");
         })
-            .catch(function () {
+            .catch(() => {
             isJoined = false;
             callbacks.execute("onLeft");
         });
@@ -8403,7 +8183,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
     function handleJoined() {
         logger.debug("did join " + domain);
         isJoined = true;
-        var wasReconnect = tryReconnecting;
+        const wasReconnect = tryReconnecting;
         tryReconnecting = false;
         callbacks.execute("onJoined", wasReconnect);
     }
@@ -8437,11 +8217,11 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         if (domain !== msg.domain) {
             return;
         }
-        var requestId = msg.request_id;
+        const requestId = msg.request_id;
         if (!requestId) {
             return;
         }
-        var entry = requestsMap[requestId];
+        const entry = requestsMap[requestId];
         if (!entry) {
             return;
         }
@@ -8451,36 +8231,58 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         if (msg.domain !== domain) {
             return;
         }
-        var requestId = msg.request_id;
+        const requestId = msg.request_id;
         if (!requestId) {
             return;
         }
-        var entry = requestsMap[requestId];
+        const entry = requestsMap[requestId];
         if (!entry) {
             return;
         }
         entry.success(msg);
     }
     function getNextRequestId() {
-        return shortid();
+        return nanoid(10);
     }
+    let queuedCalls = [];
     function send(msg, tag, options) {
-        options = options || {};
-        msg.request_id = msg.request_id || getNextRequestId();
-        msg.domain = msg.domain || domain;
+        const ignore = ["hello", "join"];
+        if (msg.type && ignore.indexOf(msg.type) === -1) {
+            if (!isJoined) {
+                console.warn(`trying to send a message (${msg.domain} ${msg.type}) but not connected, will queue`);
+                const pw = new PromiseWrapper();
+                queuedCalls.push({ msg, tag, options, pw });
+                if (queuedCalls.length === 1) {
+                    const unsubscribe = onJoined(() => {
+                        logger.info(`joined - will now send queued messages (${queuedCalls.length} -> [${queuedCalls.map((m) => m.msg.type)}])`);
+                        queuedCalls.forEach((qm) => {
+                            send(qm.msg, qm.tag, qm.options)
+                                .then((t) => qm.pw.resolve(t))
+                                .catch((e) => qm.pw.reject(e));
+                        });
+                        queuedCalls = [];
+                        unsubscribe();
+                    });
+                }
+                return pw.promise;
+            }
+        }
+        options = options ?? {};
+        msg.request_id = msg.request_id ?? getNextRequestId();
+        msg.domain = msg.domain ?? domain;
         if (!options.skipPeerId) {
             msg.peer_id = connection.peerId;
         }
-        var requestId = msg.request_id;
-        return new Promise(function (resolve, reject) {
+        const requestId = msg.request_id;
+        return new Promise((resolve, reject) => {
             requestsMap[requestId] = {
-                success: function (successMsg) {
+                success: (successMsg) => {
                     delete requestsMap[requestId];
                     successMsg._tag = tag;
                     resolve(successMsg);
                 },
-                error: function (errorMsg) {
-                    logger.warn("GW error - ".concat(JSON.stringify(errorMsg), " for request ").concat(JSON.stringify(msg)));
+                error: (errorMsg) => {
+                    logger.warn(`Gateway error - ${JSON.stringify(errorMsg)}`);
                     delete requestsMap[requestId];
                     errorMsg._tag = tag;
                     reject(errorMsg);
@@ -8488,26 +8290,26 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
             };
             connection
                 .send(msg, options)
-                .catch(function (err) {
-                requestsMap[requestId].error({ err: err });
+                .catch((err) => {
+                requestsMap[requestId].error({ err });
             });
         });
     }
     function sendFireAndForget(msg) {
         msg.request_id = msg.request_id ? msg.request_id : getNextRequestId();
-        msg.domain = msg.domain || domain;
+        msg.domain = msg.domain ?? domain;
         msg.peer_id = connection.peerId;
         return connection.send(msg);
     }
     return {
-        join: join,
-        leave: leave,
-        onJoined: onJoined,
-        onLeft: onLeft,
-        send: send,
-        sendFireAndForget: sendFireAndForget,
-        on: function (type, callback) {
-            connection.on(type, function (msg) {
+        join,
+        leave,
+        onJoined,
+        onLeft,
+        send,
+        sendFireAndForget,
+        on: (type, callback) => {
+            connection.on(type, (msg) => {
                 if (msg.domain !== domain) {
                     return;
                 }
@@ -8515,13 +8317,13 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
                     callback(msg);
                 }
                 catch (e) {
-                    logger.error("Callback  failed: ".concat(e, " \n ").concat(e.stack, " \n msg was: ").concat(JSON.stringify(msg)), e);
+                    logger.error(`Callback  failed: ${e} \n ${e.stack} \n msg was: ${JSON.stringify(msg)}`, e);
                 }
             });
         },
-        loggedIn: function (callback) { return connection.loggedIn(callback); },
-        connected: function (callback) { return connection.connected(callback); },
-        disconnected: function (callback) { return connection.disconnected(callback); },
+        loggedIn: (callback) => connection.loggedIn(callback),
+        connected: (callback) => connection.connected(callback),
+        disconnected: (callback) => connection.disconnected(callback),
         get peerId() {
             return connection.peerId;
         },
@@ -8531,1164 +8333,49 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
     };
 }
 
-var GW3ProtocolImpl = (function () {
-    function GW3ProtocolImpl(connection, settings, logger) {
-        var _this = this;
-        this.connection = connection;
+class Connection {
+    settings;
+    logger;
+    protocolVersion = 3;
+    peerId;
+    token;
+    info;
+    resolvedIdentity;
+    availableDomains;
+    gatewayToken;
+    replayer;
+    messageHandlers = {};
+    ids = 1;
+    registry = CallbackRegistryFactory();
+    _connected = false;
+    isTrace = false;
+    transport;
+    _defaultTransport;
+    _defaultAuth;
+    _targetTransport;
+    _targetAuth;
+    _swapTransport = false;
+    _switchInProgress = false;
+    _transportSubscriptions = [];
+    datePrefix = "#T42_DATE#";
+    datePrefixLen = this.datePrefix.length;
+    dateMinLen = this.datePrefixLen + 1;
+    datePrefixFirstChar = this.datePrefix[0];
+    _sequelizer = new AsyncSequelizer();
+    _isLoggedIn = false;
+    shouldTryLogin = true;
+    pingTimer;
+    sessions = [];
+    globalDomain;
+    initialLogin = true;
+    initialLoginAttempts = 3;
+    loginConfig;
+    constructor(settings, logger) {
         this.settings = settings;
         this.logger = logger;
-        this.protocolVersion = 3;
-        this.datePrefix = "#T42_DATE#";
-        this.datePrefixLen = this.datePrefix.length;
-        this.dateMinLen = this.datePrefixLen + 1;
-        this.datePrefixFirstChar = this.datePrefix[0];
-        this.registry = lib$1();
-        this._isLoggedIn = false;
-        this.shouldTryLogin = true;
-        this.initialLogin = true;
-        this.initialLoginAttempts = 3;
-        this.sessions = [];
-        connection.disconnected(function () {
-            _this.handleDisconnected();
-        });
-        this.ping();
-    }
-    Object.defineProperty(GW3ProtocolImpl.prototype, "isLoggedIn", {
-        get: function () {
-            return this._isLoggedIn;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    GW3ProtocolImpl.prototype.processStringMessage = function (message) {
-        var _this = this;
-        var msg = JSON.parse(message, function (key, value) {
-            if (typeof value !== "string") {
-                return value;
-            }
-            if (value.length < _this.dateMinLen) {
-                return value;
-            }
-            if (value[0] !== _this.datePrefixFirstChar) {
-                return value;
-            }
-            if (value.substring(0, _this.datePrefixLen) !== _this.datePrefix) {
-                return value;
-            }
-            try {
-                var milliseconds = parseInt(value.substring(_this.datePrefixLen, value.length), 10);
-                if (isNaN(milliseconds)) {
-                    return value;
-                }
-                return new Date(milliseconds);
-            }
-            catch (ex) {
-                return value;
-            }
-        });
-        return {
-            msg: msg,
-            msgType: msg.type,
-        };
-    };
-    GW3ProtocolImpl.prototype.createStringMessage = function (message) {
-        var oldToJson = Date.prototype.toJSON;
-        try {
-            var datePrefix_1 = this.datePrefix;
-            Date.prototype.toJSON = function () {
-                return datePrefix_1 + this.getTime();
-            };
-            var result = JSON.stringify(message);
-            return result;
-        }
-        finally {
-            Date.prototype.toJSON = oldToJson;
-        }
-    };
-    GW3ProtocolImpl.prototype.processObjectMessage = function (message) {
-        if (!message.type) {
-            throw new Error("Object should have type property");
-        }
-        return {
-            msg: message,
-            msgType: message.type,
-        };
-    };
-    GW3ProtocolImpl.prototype.createObjectMessage = function (message) {
-        return message;
-    };
-    GW3ProtocolImpl.prototype.login = function (config, reconnect) {
-        return __awaiter(this, void 0, void 0, function () {
-            var authentication, token, e_1, _a, helloMsg, sendOptions, welcomeMsg, msg, token, _b, err_1;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
-                    case 0:
-                        this.logger.debug("logging in...");
-                        this.loginConfig = config;
-                        if (!this.loginConfig) {
-                            this.loginConfig = { username: "", password: "" };
-                        }
-                        this.shouldTryLogin = true;
-                        authentication = {};
-                        this.connection.gatewayToken = config.gatewayToken;
-                        if (!config.gatewayToken) return [3, 5];
-                        if (!reconnect) return [3, 4];
-                        _c.label = 1;
-                    case 1:
-                        _c.trys.push([1, 3, , 4]);
-                        return [4, this.getNewGWToken()];
-                    case 2:
-                        token = _c.sent();
-                        config.gatewayToken = token;
-                        return [3, 4];
-                    case 3:
-                        e_1 = _c.sent();
-                        this.logger.warn("failed to get GW token when reconnecting ".concat((e_1 === null || e_1 === void 0 ? void 0 : e_1.message) || e_1));
-                        return [3, 4];
-                    case 4:
-                        authentication.method = "gateway-token";
-                        authentication.token = config.gatewayToken;
-                        this.connection.gatewayToken = config.gatewayToken;
-                        return [3, 10];
-                    case 5:
-                        if (!(config.flowName === "sspi")) return [3, 9];
-                        authentication.provider = "win";
-                        authentication.method = "access-token";
-                        if (!(config.flowCallback && config.sessionId)) return [3, 7];
-                        _a = authentication;
-                        return [4, config.flowCallback(config.sessionId, null)];
-                    case 6:
-                        _a.token =
-                            (_c.sent())
-                                .data
-                                .toString("base64");
-                        return [3, 8];
-                    case 7: throw new Error("Invalid SSPI config");
-                    case 8: return [3, 10];
-                    case 9:
-                        if (config.token) {
-                            authentication.method = "access-token";
-                            authentication.token = config.token;
-                        }
-                        else if (config.username) {
-                            authentication.method = "secret";
-                            authentication.login = config.username;
-                            authentication.secret = config.password;
-                        }
-                        else if (config.provider) {
-                            authentication.provider = config.provider;
-                            authentication.providerContext = config.providerContext;
-                        }
-                        else {
-                            throw new Error("invalid auth message" + JSON.stringify(config));
-                        }
-                        _c.label = 10;
-                    case 10:
-                        helloMsg = {
-                            type: "hello",
-                            identity: this.settings.identity,
-                            authentication: authentication
-                        };
-                        if (config.sessionId) {
-                            helloMsg.request_id = config.sessionId;
-                        }
-                        this.globalDomain = domainSession("global", this.connection, this.logger.subLogger("global-domain"), [
-                            "welcome",
-                            "token",
-                            "authentication-request"
-                        ]);
-                        sendOptions = { skipPeerId: true };
-                        if (this.initialLogin) {
-                            sendOptions.retryInterval = this.settings.reconnectInterval;
-                            sendOptions.maxRetries = this.settings.reconnectAttempts;
-                        }
-                        _c.label = 11;
-                    case 11:
-                        _c.trys.push([11, 19, 20, 21]);
-                        welcomeMsg = void 0;
-                        _c.label = 12;
-                    case 12:
-                        return [4, this.globalDomain.send(helloMsg, undefined, sendOptions)];
-                    case 13:
-                        msg = _c.sent();
-                        if (!(msg.type === "authentication-request")) return [3, 16];
-                        token = Buffer.from(msg.authentication.token, "base64");
-                        if (!(config.flowCallback && config.sessionId)) return [3, 15];
-                        _b = helloMsg.authentication;
-                        return [4, config.flowCallback(config.sessionId, token)];
-                    case 14:
-                        _b.token =
-                            (_c.sent())
-                                .data
-                                .toString("base64");
-                        _c.label = 15;
-                    case 15:
-                        helloMsg.request_id = config.sessionId;
-                        return [3, 12];
-                    case 16:
-                        if (msg.type === "welcome") {
-                            welcomeMsg = msg;
-                            return [3, 18];
-                        }
-                        else if (msg.type === "error") {
-                            throw new Error("Authentication failed: " + msg.reason);
-                        }
-                        else {
-                            throw new Error("Unexpected message type during authentication: " + msg.type);
-                        }
-                    case 17: return [3, 12];
-                    case 18:
-                        this.initialLogin = false;
-                        this.logger.debug("login successful with peerId " + welcomeMsg.peer_id);
-                        this.connection.peerId = welcomeMsg.peer_id;
-                        this.connection.resolvedIdentity = welcomeMsg.resolved_identity;
-                        this.connection.availableDomains = welcomeMsg.available_domains;
-                        if (welcomeMsg.options) {
-                            this.connection.token = welcomeMsg.options.access_token;
-                            this.connection.info = welcomeMsg.options.info;
-                        }
-                        this.setLoggedIn(true);
-                        return [2, welcomeMsg.resolved_identity];
-                    case 19:
-                        err_1 = _c.sent();
-                        this.logger.error("error sending hello message - " + (err_1.message || err_1.msg || err_1.reason || err_1), err_1);
-                        throw err_1;
-                    case 20:
-                        if (config && config.flowCallback && config.sessionId) {
-                            config.flowCallback(config.sessionId, null);
-                        }
-                        return [7];
-                    case 21: return [2];
-                }
-            });
-        });
-    };
-    GW3ProtocolImpl.prototype.logout = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var promises;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.logger.debug("logging out...");
-                        this.shouldTryLogin = false;
-                        if (this.pingTimer) {
-                            clearTimeout(this.pingTimer);
-                        }
-                        promises = this.sessions.map(function (session) {
-                            session.leave();
-                        });
-                        return [4, Promise.all(promises)];
-                    case 1:
-                        _a.sent();
-                        return [2];
-                }
-            });
-        });
-    };
-    GW3ProtocolImpl.prototype.loggedIn = function (callback) {
-        if (this._isLoggedIn) {
-            callback();
-        }
-        return this.registry.add("onLoggedIn", callback);
-    };
-    GW3ProtocolImpl.prototype.domain = function (domainName, domainLogger, successMessages, errorMessages) {
-        var session = this.sessions.filter(function (s) { return s.domain === domainName; })[0];
-        if (!session) {
-            session = domainSession(domainName, this.connection, domainLogger, successMessages, errorMessages);
-            this.sessions.push(session);
-        }
-        return session;
-    };
-    GW3ProtocolImpl.prototype.handleDisconnected = function () {
-        var _this = this;
-        this.setLoggedIn(false);
-        var tryToLogin = this.shouldTryLogin;
-        if (tryToLogin && this.initialLogin) {
-            if (this.initialLoginAttempts <= 0) {
-                return;
-            }
-            this.initialLoginAttempts--;
-        }
-        this.logger.debug("disconnected - will try new login?" + this.shouldTryLogin);
-        if (this.shouldTryLogin) {
-            if (!this.loginConfig) {
-                throw new Error("no login info");
-            }
-            this.connection.login(this.loginConfig, true)
-                .catch(function () {
-                setTimeout(_this.handleDisconnected.bind(_this), _this.settings.reconnectInterval || 1000);
-            });
-        }
-    };
-    GW3ProtocolImpl.prototype.setLoggedIn = function (value) {
-        this._isLoggedIn = value;
-        if (this._isLoggedIn) {
-            this.registry.execute("onLoggedIn");
-        }
-    };
-    GW3ProtocolImpl.prototype.ping = function () {
-        var _this = this;
-        if (!this.shouldTryLogin) {
-            return;
-        }
-        if (this._isLoggedIn) {
-            this.connection.send({ type: "ping" });
-        }
-        this.pingTimer = setTimeout(function () {
-            _this.ping();
-        }, 30 * 1000);
-    };
-    GW3ProtocolImpl.prototype.authToken = function () {
-        var createTokenReq = {
-            type: "create-token"
-        };
-        if (!this.globalDomain) {
-            return Promise.reject(new Error("no global domain session"));
-        }
-        return this.globalDomain.send(createTokenReq)
-            .then(function (res) {
-            return res.token;
-        });
-    };
-    GW3ProtocolImpl.prototype.getNewGWToken = function () {
-        if (typeof window !== "undefined") {
-            var glue42gd = window.glue42gd;
-            if (glue42gd) {
-                return glue42gd.getGWToken();
-            }
-        }
-        return Promise.reject(new Error("not running in GD"));
-    };
-    return GW3ProtocolImpl;
-}());
-
-var MessageReplayerImpl = (function () {
-    function MessageReplayerImpl(specs) {
-        this.specsNames = [];
-        this.messages = {};
-        this.subs = {};
-        this.subsRefCount = {};
-        this.specs = {};
-        for (var _i = 0, specs_1 = specs; _i < specs_1.length; _i++) {
-            var spec = specs_1[_i];
-            this.specs[spec.name] = spec;
-            this.specsNames.push(spec.name);
-        }
-    }
-    MessageReplayerImpl.prototype.init = function (connection) {
-        var _this = this;
-        this.connection = connection;
-        for (var _i = 0, _a = this.specsNames; _i < _a.length; _i++) {
-            var name_1 = _a[_i];
-            var _loop_1 = function (type) {
-                var refCount = this_1.subsRefCount[type];
-                if (!refCount) {
-                    refCount = 0;
-                }
-                refCount += 1;
-                this_1.subsRefCount[type] = refCount;
-                if (refCount > 1) {
-                    return "continue";
-                }
-                var sub = connection.on(type, function (msg) { return _this.processMessage(type, msg); });
-                this_1.subs[type] = sub;
-            };
-            var this_1 = this;
-            for (var _b = 0, _c = this.specs[name_1].types; _b < _c.length; _b++) {
-                var type = _c[_b];
-                _loop_1(type);
-            }
-        }
-    };
-    MessageReplayerImpl.prototype.processMessage = function (type, msg) {
-        if (this.isDone || !msg) {
-            return;
-        }
-        for (var _i = 0, _a = this.specsNames; _i < _a.length; _i++) {
-            var name_2 = _a[_i];
-            if (this.specs[name_2].types.indexOf(type) !== -1) {
-                var messages = this.messages[name_2] || [];
-                this.messages[name_2] = messages;
-                messages.push(msg);
-            }
-        }
-    };
-    MessageReplayerImpl.prototype.drain = function (name, callback) {
-        var _a;
-        if (callback) {
-            (this.messages[name] || []).forEach(callback);
-        }
-        delete this.messages[name];
-        for (var _i = 0, _b = this.specs[name].types; _i < _b.length; _i++) {
-            var type = _b[_i];
-            this.subsRefCount[type] -= 1;
-            if (this.subsRefCount[type] <= 0) {
-                (_a = this.connection) === null || _a === void 0 ? void 0 : _a.off(this.subs[type]);
-                delete this.subs[type];
-                delete this.subsRefCount[type];
-            }
-        }
-        delete this.specs[name];
-        if (!this.specs.length) {
-            this.isDone = true;
-        }
-    };
-    return MessageReplayerImpl;
-}());
-
-var PromisePlus = function (executor, timeoutMilliseconds, timeoutMessage) {
-    return new Promise(function (resolve, reject) {
-        var timeout = setTimeout(function () {
-            var message = timeoutMessage || "Promise timeout hit: ".concat(timeoutMilliseconds);
-            reject(message);
-        }, timeoutMilliseconds);
-        var providedPromise = new Promise(executor);
-        providedPromise
-            .then(function (result) {
-            clearTimeout(timeout);
-            resolve(result);
-        })
-            .catch(function (error) {
-            clearTimeout(timeout);
-            reject(error);
-        });
-    });
-};
-
-var WebPlatformTransport = (function () {
-    function WebPlatformTransport(settings, logger, identity) {
-        this.settings = settings;
-        this.logger = logger;
-        this.identity = identity;
-        this.iAmConnected = false;
-        this.parentReady = false;
-        this.rejected = false;
-        this.children = [];
-        this.extContentAvailable = false;
-        this.extContentConnecting = false;
-        this.extContentConnected = false;
-        this.parentInExtMode = false;
-        this.webNamespace = "g42_core_web";
-        this.parentPingTimeout = 5000;
-        this.connectionRequestTimeout = 7000;
-        this.defaultTargetString = "*";
-        this.registry = lib$1();
-        this.messages = {
-            connectionAccepted: { name: "connectionAccepted", handle: this.handleConnectionAccepted.bind(this) },
-            connectionRejected: { name: "connectionRejected", handle: this.handleConnectionRejected.bind(this) },
-            connectionRequest: { name: "connectionRequest", handle: this.handleConnectionRequest.bind(this) },
-            parentReady: {
-                name: "parentReady", handle: function () {
-                }
-            },
-            parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
-            platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
-            platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
-            clientUnload: { name: "clientUnload", handle: this.handleClientUnload.bind(this) },
-            manualUnload: { name: "manualUnload", handle: this.handleManualUnload.bind(this) },
-            extConnectionResponse: { name: "extConnectionResponse", handle: this.handleExtConnectionResponse.bind(this) },
-            extSetupRequest: { name: "extSetupRequest", handle: this.handleExtSetupRequest.bind(this) },
-            gatewayDisconnect: { name: "gatewayDisconnect", handle: this.handleGatewayDisconnect.bind(this) },
-            gatewayInternalConnect: { name: "gatewayInternalConnect", handle: this.handleGatewayInternalConnect.bind(this) }
-        };
-        this.extContentAvailable = !!window.glue42ext;
-        this.setUpMessageListener();
-        this.setUpUnload();
-        this.setupPlatformUnloadListener();
-        this.parentType = window.name.includes("#wsp") ? "workspace" : undefined;
-    }
-    WebPlatformTransport.prototype.manualSetReadyState = function () {
-        this.iAmConnected = true;
-        this.parentReady = true;
-    };
-    Object.defineProperty(WebPlatformTransport.prototype, "transportWindowId", {
-        get: function () {
-            return this.publicWindowId;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(WebPlatformTransport.prototype, "communicationId", {
-        get: function () {
-            return this._communicationId;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    WebPlatformTransport.prototype.sendObject = function (msg) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                if (this.extContentConnected) {
-                    return [2, window.postMessage({ glue42ExtOut: msg }, this.defaultTargetString)];
-                }
-                if (!this.port) {
-                    throw new Error("Cannot send message, because the port was not opened yet");
-                }
-                this.port.postMessage(msg);
-                return [2];
-            });
-        });
-    };
-    Object.defineProperty(WebPlatformTransport.prototype, "isObjectBasedTransport", {
-        get: function () {
-            return true;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    WebPlatformTransport.prototype.onMessage = function (callback) {
-        return this.registry.add("onMessage", callback);
-    };
-    WebPlatformTransport.prototype.send = function () {
-        return Promise.reject("not supported");
-    };
-    WebPlatformTransport.prototype.onConnectedChanged = function (callback) {
-        return this.registry.add("onConnectedChanged", callback);
-    };
-    WebPlatformTransport.prototype.open = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        this.logger.debug("opening a connection to the web platform gateway.");
-                        return [4, this.connect()];
-                    case 1:
-                        _a.sent();
-                        this.notifyStatusChanged(true);
-                        return [2];
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.close = function () {
-        var _a, _b;
-        var message = {
-            glue42core: {
-                type: this.messages.gatewayDisconnect.name,
-                data: {
-                    clientId: this.myClientId,
-                    ownWindowId: (_a = this.identity) === null || _a === void 0 ? void 0 : _a.windowId
-                }
-            }
-        };
-        (_b = this.port) === null || _b === void 0 ? void 0 : _b.postMessage(message);
-        this.parentReady = false;
-        this.notifyStatusChanged(false, "manual reconnection");
-        return Promise.resolve();
-    };
-    WebPlatformTransport.prototype.name = function () {
-        return "web-platform";
-    };
-    WebPlatformTransport.prototype.reconnect = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, this.close()];
-                    case 1:
-                        _a.sent();
-                        return [2, Promise.resolve()];
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.initiateInternalConnection = function () {
-        var _this = this;
-        return new Promise(function (resolve, reject) {
-            _this.logger.debug("opening an internal web platform connection");
-            _this.port = _this.settings.port;
-            if (_this.iAmConnected) {
-                _this.logger.warn("cannot open a new connection, because this client is currently connected");
-                return;
-            }
-            _this.port.onmessage = function (event) {
-                var _a, _b;
-                if (_this.iAmConnected && !((_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42core)) {
-                    _this.registry.execute("onMessage", event.data);
-                    return;
-                }
-                var data = (_b = event.data) === null || _b === void 0 ? void 0 : _b.glue42core;
-                if (!data) {
-                    return;
-                }
-                if (data.type === _this.messages.gatewayInternalConnect.name && data.success) {
-                    _this.publicWindowId = _this.settings.windowId;
-                    if (_this.identity && _this.publicWindowId) {
-                        _this.identity.windowId = _this.publicWindowId;
-                        _this.identity.instance = _this.publicWindowId;
-                    }
-                    resolve();
-                }
-                if (data.type === _this.messages.gatewayInternalConnect.name && data.error) {
-                    reject(data.error);
-                }
-            };
-            _this.port.postMessage({
-                glue42core: {
-                    type: _this.messages.gatewayInternalConnect.name
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.initiateRemoteConnection = function (target) {
-        var _this = this;
-        return PromisePlus(function (resolve, reject) {
-            var _a;
-            _this.connectionResolve = resolve;
-            _this.connectionReject = reject;
-            _this.myClientId = (_a = _this.myClientId) !== null && _a !== void 0 ? _a : shortid();
-            var bridgeInstanceId = _this.getMyWindowId() || shortid();
-            var request = {
-                glue42core: {
-                    type: _this.messages.connectionRequest.name,
-                    clientId: _this.myClientId,
-                    clientType: "child",
-                    bridgeInstanceId: bridgeInstanceId,
-                    selfAssignedWindowId: _this.selfAssignedWindowId
-                }
-            };
-            _this.logger.debug("sending connection request");
-            if (_this.extContentConnecting) {
-                request.glue42core.clientType = "child";
-                request.glue42core.bridgeInstanceId = _this.myClientId;
-                request.glue42core.parentWindowId = _this.parentWindowId;
-                return window.postMessage(request, _this.defaultTargetString);
-            }
-            if (!target) {
-                throw new Error("Cannot send a connection request, because no glue target was specified!");
-            }
-            target.postMessage(request, _this.defaultTargetString);
-        }, this.connectionRequestTimeout, "The connection to the target glue window timed out");
-    };
-    WebPlatformTransport.prototype.isParentCheckSuccess = function (parentCheck) {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 2, , 3]);
-                        return [4, parentCheck];
-                    case 1:
-                        _a.sent();
-                        return [2, { success: true }];
-                    case 2:
-                        _a.sent();
-                        return [2, { success: false }];
-                    case 3: return [2];
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.setUpMessageListener = function () {
-        var _this = this;
-        if (this.settings.port) {
-            this.logger.debug("skipping generic message listener, because this is an internal client");
-            return;
-        }
-        window.addEventListener("message", function (event) {
-            var _a;
-            var data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42core;
-            if (!data || _this.rejected) {
-                return;
-            }
-            var allowedOrigins = _this.settings.allowedOrigins || [];
-            if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
-                _this.logger.warn("received a message from an origin which is not in the allowed list: ".concat(event.origin));
-                return;
-            }
-            if (!_this.checkMessageTypeValid(data.type)) {
-                _this.logger.error("cannot handle the incoming glue42 core message, because the type is invalid: ".concat(data.type));
-                return;
-            }
-            var messageType = data.type;
-            _this.logger.debug("received valid glue42core message of type: ".concat(messageType));
-            _this.messages[messageType].handle(event);
-        });
-    };
-    WebPlatformTransport.prototype.setUpUnload = function () {
-        var _this = this;
-        if (this.settings.port) {
-            this.logger.debug("skipping unload event listener, because this is an internal client");
-            return;
-        }
-        window.addEventListener("beforeunload", function () {
-            var _a, _b;
-            if (_this.extContentConnected) {
-                return;
-            }
-            var message = {
-                glue42core: {
-                    type: _this.messages.clientUnload.name,
-                    data: {
-                        clientId: _this.myClientId,
-                        ownWindowId: (_a = _this.identity) === null || _a === void 0 ? void 0 : _a.windowId
-                    }
-                }
-            };
-            if (_this.parent) {
-                _this.parent.postMessage(message, _this.defaultTargetString);
-            }
-            (_b = _this.port) === null || _b === void 0 ? void 0 : _b.postMessage(message);
-        });
-    };
-    WebPlatformTransport.prototype.handlePlatformReady = function (event) {
-        this.logger.debug("the web platform gave the ready signal");
-        this.parentReady = true;
-        if (this.parentPingResolve) {
-            this.parentPingResolve();
-            delete this.parentPingResolve;
-        }
-        if (this.parentPingInterval) {
-            clearInterval(this.parentPingInterval);
-            delete this.parentPingInterval;
-        }
-        this.parent = event.source;
-        this.parentType = window.name.includes("#wsp") ? "workspace" : "window";
-    };
-    WebPlatformTransport.prototype.handleConnectionAccepted = function (event) {
-        var _a;
-        var data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42core;
-        if (this.myClientId === data.clientId) {
-            return this.handleAcceptanceOfMyRequest(data);
-        }
-        return this.handleAcceptanceOfGrandChildRequest(data, event);
-    };
-    WebPlatformTransport.prototype.handleAcceptanceOfMyRequest = function (data) {
-        var _this = this;
-        this.logger.debug("handling a connection accepted signal targeted at me.");
-        this.isPreferredActivated = data.isPreferredActivated;
-        if (this.extContentConnecting) {
-            return this.processExtContentConnection(data);
-        }
-        if (!data.port) {
-            this.logger.error("cannot set up my connection, because I was not provided with a port");
-            return;
-        }
-        this.publicWindowId = this.getMyWindowId();
-        if (this.identity) {
-            this.identity.windowId = this.publicWindowId;
-            this.identity.instance = this.identity.instance ? this.identity.instance : this.publicWindowId || shortid();
-        }
-        if (this.identity && data.appName) {
-            this.identity.application = data.appName;
-            this.identity.applicationName = data.appName;
-        }
-        this._communicationId = data.communicationId;
-        this.port = data.port;
-        this.port.onmessage = function (e) { return _this.registry.execute("onMessage", e.data); };
-        if (this.connectionResolve) {
-            this.logger.debug("my connection is set up, calling the connection resolve.");
-            this.connectionResolve();
-            delete this.connectionResolve;
-            return;
-        }
-        this.logger.error("unable to call the connection resolve, because no connection promise was found");
-    };
-    WebPlatformTransport.prototype.processExtContentConnection = function (data) {
-        var _this = this;
-        this.logger.debug("handling a connection accepted signal targeted at me for extension content connection.");
-        this.extContentConnecting = false;
-        this.extContentConnected = true;
-        this.publicWindowId = this.parentWindowId || this.myClientId;
-        if (this.extContentConnecting && this.identity) {
-            this.identity.windowId = this.publicWindowId;
-        }
-        if (this.identity && data.appName) {
-            this.identity.application = data.appName;
-            this.identity.applicationName = data.appName;
-        }
-        window.addEventListener("message", function (event) {
-            var _a;
-            var extData = (_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42ExtInc;
-            if (!extData) {
-                return;
-            }
-            var allowedOrigins = _this.settings.allowedOrigins || [];
-            if (allowedOrigins.length && !allowedOrigins.includes(event.origin)) {
-                _this.logger.warn("received a message from an origin which is not in the allowed list: ".concat(event.origin));
-                return;
-            }
-            _this.registry.execute("onMessage", extData);
-        });
-        if (this.connectionResolve) {
-            this.logger.debug("my connection is set up, calling the connection resolve.");
-            this.connectionResolve();
-            delete this.connectionResolve;
-            return;
-        }
-    };
-    WebPlatformTransport.prototype.handleAcceptanceOfGrandChildRequest = function (data, event) {
-        if (this.extContentConnecting || this.extContentConnected) {
-            this.logger.debug("cannot process acceptance of a grandchild, because I am connected to a content script");
-            return;
-        }
-        this.logger.debug("handling a connection accepted signal targeted at a grandchild: ".concat(data.clientId));
-        var child = this.children.find(function (c) { return c.grandChildId === data.clientId; });
-        if (!child) {
-            this.logger.error("cannot handle connection accepted for grandchild: ".concat(data.clientId, ", because there is no grandchild with this id"));
-            return;
-        }
-        child.connected = true;
-        this.logger.debug("the grandchild connection for ".concat(data.clientId, " is set up, forwarding the success message and the gateway port"));
-        data.parentWindowId = this.publicWindowId;
-        child.source.postMessage(event.data, child.origin, [data.port]);
-        return;
-    };
-    WebPlatformTransport.prototype.handleConnectionRejected = function () {
-        this.logger.debug("handling a connection rejection. Most likely the reason is that this window was not created by a glue API call");
-        if (this.connectionReject) {
-            this.connectionReject("The platform connection was rejected. Most likely because this window was not created by a glue API call");
-            delete this.connectionReject;
-        }
-    };
-    WebPlatformTransport.prototype.handleConnectionRequest = function (event) {
-        if (this.extContentConnecting) {
-            this.logger.debug("This connection request event is targeted at the extension content");
-            return;
-        }
-        var source = event.source;
-        var data = event.data.glue42core;
-        if (!data.clientType || data.clientType !== "grandChild") {
-            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source was not opened by a glue API call");
-        }
-        if (!data.clientId) {
-            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source did not provide a valid id");
-        }
-        if (!this.parent) {
-            return this.rejectConnectionRequest(source, event.origin, "Cannot forward the connection request, because no direct connection to the platform was found");
-        }
-        this.logger.debug("handling a connection request for a grandchild: ".concat(data.clientId));
-        this.children.push({ grandChildId: data.clientId, source: source, connected: false, origin: event.origin });
-        this.logger.debug("grandchild: ".concat(data.clientId, " is prepared, forwarding connection request to the platform"));
-        this.parent.postMessage(event.data, this.defaultTargetString);
-    };
-    WebPlatformTransport.prototype.handleParentPing = function (event) {
-        if (!this.parentReady) {
-            this.logger.debug("my parent is not ready, I am ignoring the parent ping");
-            return;
-        }
-        if (!this.iAmConnected) {
-            this.logger.debug("i am not fully connected yet, I am ignoring the parent ping");
-            return;
-        }
-        var message = {
-            glue42core: {
-                type: this.messages.parentReady.name
-            }
-        };
-        if (this.extContentConnected) {
-            message.glue42core.extMode = { windowId: this.myClientId };
-        }
-        var source = event.source;
-        this.logger.debug("responding to a parent ping with a ready message");
-        source.postMessage(message, event.origin);
-    };
-    WebPlatformTransport.prototype.setupPlatformUnloadListener = function () {
-        var _this = this;
-        this.onMessage(function (msg) {
-            if (msg.type === "platformUnload") {
-                _this.logger.debug("detected a web platform unload");
-                _this.parentReady = false;
-                _this.notifyStatusChanged(false, "Gateway unloaded");
-            }
-        });
-    };
-    WebPlatformTransport.prototype.handleManualUnload = function () {
-        var _a, _b;
-        var message = {
-            glue42core: {
-                type: this.messages.clientUnload.name,
-                data: {
-                    clientId: this.myClientId,
-                    ownWindowId: (_a = this.identity) === null || _a === void 0 ? void 0 : _a.windowId
-                }
-            }
-        };
-        if (this.extContentConnected) {
-            return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);
-        }
-        (_b = this.port) === null || _b === void 0 ? void 0 : _b.postMessage(message);
-    };
-    WebPlatformTransport.prototype.handleClientUnload = function (event) {
-        var data = event.data.glue42core;
-        var clientId = data === null || data === void 0 ? void 0 : data.data.clientId;
-        if (!clientId) {
-            this.logger.warn("cannot process grand child unload, because the provided id was not valid");
-            return;
-        }
-        var foundChild = this.children.find(function (child) { return child.grandChildId === clientId; });
-        if (!foundChild) {
-            this.logger.warn("cannot process grand child unload, because this client is unaware of this grandchild");
-            return;
-        }
-        this.logger.debug("handling grandchild unload for id: ".concat(clientId));
-        this.children = this.children.filter(function (child) { return child.grandChildId !== clientId; });
-    };
-    WebPlatformTransport.prototype.handlePlatformPing = function () {
-        return;
-    };
-    WebPlatformTransport.prototype.notifyStatusChanged = function (status, reason) {
-        this.iAmConnected = status;
-        this.registry.execute("onConnectedChanged", status, reason);
-    };
-    WebPlatformTransport.prototype.checkMessageTypeValid = function (typeToValidate) {
-        return typeof typeToValidate === "string" && !!this.messages[typeToValidate];
-    };
-    WebPlatformTransport.prototype.rejectConnectionRequest = function (source, origin, reason) {
-        this.rejected = true;
-        this.logger.error(reason);
-        var rejection = {
-            glue42core: {
-                type: this.messages.connectionRejected.name
-            }
-        };
-        source.postMessage(rejection, origin);
-    };
-    WebPlatformTransport.prototype.requestConnectionPermissionFromExt = function () {
-        var _this = this;
-        return this.waitForContentScript()
-            .then(function () { return PromisePlus(function (resolve, reject) {
-            _this.extConnectionResolve = resolve;
-            _this.extConnectionReject = reject;
-            var message = {
-                glue42core: {
-                    type: "extSetupRequest"
-                }
-            };
-            _this.logger.debug("permission request to the extension content script was sent");
-            window.postMessage(message, _this.defaultTargetString);
-        }, _this.parentPingTimeout, "Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection timed out"); });
-    };
-    WebPlatformTransport.prototype.handleExtConnectionResponse = function (event) {
-        var _a;
-        var data = (_a = event.data) === null || _a === void 0 ? void 0 : _a.glue42core;
-        if (!data.approved) {
-            return this.extConnectionReject ? this.extConnectionReject("Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection was rejected") : undefined;
-        }
-        if (this.extConnectionResolve) {
-            this.extConnectionResolve();
-            delete this.extConnectionResolve;
-        }
-        this.extContentConnecting = true;
-        this.parentType = "extension";
-        this.logger.debug("The extension connection was approved, proceeding.");
-    };
-    WebPlatformTransport.prototype.handleExtSetupRequest = function () {
-        return;
-    };
-    WebPlatformTransport.prototype.handleGatewayDisconnect = function () {
-        return;
-    };
-    WebPlatformTransport.prototype.handleGatewayInternalConnect = function () {
-        return;
-    };
-    WebPlatformTransport.prototype.waitForContentScript = function () {
-        var _a;
-        var contentReady = !!((_a = window.glue42ext) === null || _a === void 0 ? void 0 : _a.content);
-        if (contentReady) {
-            return Promise.resolve();
-        }
-        return PromisePlus(function (resolve) {
-            window.addEventListener("Glue42EXTReady", function () {
-                resolve();
-            });
-        }, this.connectionRequestTimeout, "The content script was available, but was never heard to be ready");
-    };
-    WebPlatformTransport.prototype.connect = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this.settings.port) return [3, 2];
-                        return [4, this.initiateInternalConnection()];
-                    case 1:
-                        _a.sent();
-                        this.logger.debug("internal web platform connection completed");
-                        return [2];
-                    case 2:
-                        this.logger.debug("opening a client web platform connection");
-                        return [4, this.findParent()];
-                    case 3:
-                        _a.sent();
-                        return [4, this.initiateRemoteConnection(this.parent)];
-                    case 4:
-                        _a.sent();
-                        this.logger.debug("the client is connected");
-                        return [2];
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.findParent = function () {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var connectionNotPossibleMsg, myInsideParents, myOutsideParents, uniqueParents, defaultParentCheck;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
-                        myInsideParents = this.getPossibleParentsInWindow(window);
-                        myOutsideParents = this.getPossibleParentsOutsideWindow((_a = window.top) === null || _a === void 0 ? void 0 : _a.opener, window.top);
-                        uniqueParents = new Set(__spreadArray(__spreadArray([], myInsideParents, true), myOutsideParents, true));
-                        if (!uniqueParents.size && !this.extContentAvailable) {
-                            throw new Error(connectionNotPossibleMsg);
-                        }
-                        if (!(!uniqueParents.size && this.extContentAvailable)) return [3, 2];
-                        return [4, this.requestConnectionPermissionFromExt()];
-                    case 1:
-                        _b.sent();
-                        return [2];
-                    case 2: return [4, this.isParentCheckSuccess(this.confirmParent(Array.from(uniqueParents)))];
-                    case 3:
-                        defaultParentCheck = _b.sent();
-                        if (defaultParentCheck.success) {
-                            this.logger.debug("The default parent was found!");
-                            return [2];
-                        }
-                        if (!this.extContentAvailable) {
-                            throw new Error(connectionNotPossibleMsg);
-                        }
-                        return [4, this.requestConnectionPermissionFromExt()];
-                    case 4:
-                        _b.sent();
-                        return [2];
-                }
-            });
-        });
-    };
-    WebPlatformTransport.prototype.getPossibleParentsInWindow = function (currentWindow) {
-        return (!currentWindow || currentWindow === currentWindow.top) ? [] : __spreadArray([currentWindow.parent], this.getPossibleParentsInWindow(currentWindow.parent), true);
-    };
-    WebPlatformTransport.prototype.getPossibleParentsOutsideWindow = function (opener, current) {
-        return (!opener || !current || opener === current) ? [] : __spreadArray(__spreadArray([opener], this.getPossibleParentsInWindow(opener), true), this.getPossibleParentsOutsideWindow(opener.opener, opener), true);
-    };
-    WebPlatformTransport.prototype.confirmParent = function (targets) {
-        var _this = this;
-        var connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
-        var parentCheck = PromisePlus(function (resolve) {
-            _this.parentPingResolve = resolve;
-            var message = {
-                glue42core: {
-                    type: _this.messages.platformPing.name
-                }
-            };
-            _this.parentPingInterval = setInterval(function () {
-                targets.forEach(function (target) {
-                    target.postMessage(message, _this.defaultTargetString);
-                });
-            }, 1000);
-        }, this.parentPingTimeout, connectionNotPossibleMsg);
-        parentCheck.catch(function () {
-            if (_this.parentPingInterval) {
-                clearInterval(_this.parentPingInterval);
-                delete _this.parentPingInterval;
-            }
-        });
-        return parentCheck;
-    };
-    WebPlatformTransport.prototype.getMyWindowId = function () {
-        var _a;
-        if (this.parentType === "workspace") {
-            return window.name.substring(0, window.name.indexOf("#wsp"));
-        }
-        if (window !== window.top) {
-            return;
-        }
-        if ((_a = window.name) === null || _a === void 0 ? void 0 : _a.includes("g42")) {
-            return window.name;
-        }
-        this.selfAssignedWindowId = this.selfAssignedWindowId || "g42-".concat(shortid());
-        return this.selfAssignedWindowId;
-    };
-    return WebPlatformTransport;
-}());
-
-var waitForInvocations = function (invocations, callback) {
-    var left = invocations;
-    return function () {
-        left--;
-        if (left === 0) {
-            callback();
-        }
-    };
-};
-
-var AsyncSequelizer = (function () {
-    function AsyncSequelizer(minSequenceInterval) {
-        if (minSequenceInterval === void 0) { minSequenceInterval = 0; }
-        this.minSequenceInterval = minSequenceInterval;
-        this.queue = [];
-        this.isExecutingQueue = false;
-    }
-    AsyncSequelizer.prototype.enqueue = function (action) {
-        var _this = this;
-        return new Promise(function (resolve, reject) {
-            _this.queue.push({ action: action, resolve: resolve, reject: reject });
-            _this.executeQueue();
-        });
-    };
-    AsyncSequelizer.prototype.executeQueue = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            var operation, actionResult, error_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (this.isExecutingQueue) {
-                            return [2];
-                        }
-                        this.isExecutingQueue = true;
-                        _a.label = 1;
-                    case 1:
-                        if (!this.queue.length) return [3, 7];
-                        operation = this.queue.shift();
-                        if (!operation) {
-                            this.isExecutingQueue = false;
-                            return [2];
-                        }
-                        _a.label = 2;
-                    case 2:
-                        _a.trys.push([2, 4, , 5]);
-                        return [4, operation.action()];
-                    case 3:
-                        actionResult = _a.sent();
-                        operation.resolve(actionResult);
-                        return [3, 5];
-                    case 4:
-                        error_1 = _a.sent();
-                        operation.reject(error_1);
-                        return [3, 5];
-                    case 5: return [4, this.intervalBreak()];
-                    case 6:
-                        _a.sent();
-                        return [3, 1];
-                    case 7:
-                        this.isExecutingQueue = false;
-                        return [2];
-                }
-            });
-        });
-    };
-    AsyncSequelizer.prototype.intervalBreak = function () {
-        var _this = this;
-        return new Promise(function (res) { return setTimeout(res, _this.minSequenceInterval); });
-    };
-    return AsyncSequelizer;
-}());
-
-var Connection = (function () {
-    function Connection(settings, logger) {
-        this.settings = settings;
-        this.logger = logger;
-        this.messageHandlers = {};
-        this.ids = 1;
-        this.registry = lib$1();
-        this._connected = false;
-        this.isTrace = false;
-        this._swapTransport = false;
-        this._switchInProgress = false;
-        this._transportSubscriptions = [];
-        this._sequelizer = new AsyncSequelizer();
         settings = settings || {};
-        settings.reconnectAttempts = settings.reconnectAttempts || 10;
-        settings.reconnectInterval = settings.reconnectInterval || 1000;
+        settings.reconnectAttempts = settings.reconnectAttempts ?? 10;
+        settings.reconnectInterval = settings.reconnectInterval ?? 1000;
         if (settings.inproc) {
             this.transport = new InProcTransport(settings.inproc, logger.subLogger("inMemory"));
         }
@@ -9705,207 +8392,175 @@ var Connection = (function () {
             throw new Error("No connection information specified");
         }
         this.isTrace = logger.canPublish("trace");
-        logger.debug("starting with ".concat(this.transport.name(), " transport"));
-        this.protocol = new GW3ProtocolImpl(this, settings, logger.subLogger("protocol"));
-        var unsubConnectionChanged = this.transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
-        var unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
+        logger.debug(`starting with ${this.transport.name()} transport`);
+        const unsubConnectionChanged = this.transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
+        const unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
         this._transportSubscriptions.push(unsubConnectionChanged);
         this._transportSubscriptions.push(unsubOnMessage);
         this._defaultTransport = this.transport;
+        this.ping();
     }
-    Object.defineProperty(Connection.prototype, "protocolVersion", {
-        get: function () {
-            var _a;
-            return (_a = this.protocol) === null || _a === void 0 ? void 0 : _a.protocolVersion;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Connection.prototype.switchTransport = function (settings) {
-        return __awaiter(this, void 0, void 0, function () {
-            var _this = this;
-            return __generator(this, function (_a) {
-                return [2, this._sequelizer.enqueue(function () { return __awaiter(_this, void 0, void 0, function () {
-                        var switchTargetTransport, verifyPromise, isSwitchSuccess;
-                        return __generator(this, function (_a) {
-                            switch (_a.label) {
-                                case 0:
-                                    if (!settings || typeof settings !== "object") {
-                                        throw new Error("Cannot switch transports, because the settings are missing or invalid.");
-                                    }
-                                    if (typeof settings.type === "undefined") {
-                                        throw new Error("Cannot switch the transport, because the type is not defined");
-                                    }
-                                    this.logger.trace("Starting transport switch with settings: ".concat(JSON.stringify(settings)));
-                                    switchTargetTransport = settings.type === "secondary" ? this.getNewSecondaryTransport(settings) : this._defaultTransport;
-                                    this._targetTransport = switchTargetTransport;
-                                    this._targetAuth = settings.type === "secondary" ? this.getNewSecondaryAuth(settings) : this._defaultAuth;
-                                    verifyPromise = this.verifyConnection();
-                                    this._swapTransport = true;
-                                    this._switchInProgress = true;
-                                    this.logger.trace("The new transport has been set, closing the current transport");
-                                    return [4, this.transport.close()];
-                                case 1:
-                                    _a.sent();
-                                    _a.label = 2;
-                                case 2:
-                                    _a.trys.push([2, 4, , 5]);
-                                    return [4, verifyPromise];
-                                case 3:
-                                    _a.sent();
-                                    isSwitchSuccess = this.transport === switchTargetTransport;
-                                    this.logger.info("The reconnection after the switch was completed. Was the switch a success: ".concat(isSwitchSuccess));
-                                    this._switchInProgress = false;
-                                    return [2, { success: isSwitchSuccess }];
-                                case 4:
-                                    _a.sent();
-                                    this.logger.info("The reconnection after the switch timed out, reverting back to the default transport.");
-                                    this.switchTransport({ type: "default" });
-                                    this._switchInProgress = false;
-                                    return [2, { success: false }];
-                                case 5: return [2];
-                            }
-                        });
-                    }); })];
-            });
+    async switchTransport(settings) {
+        return this._sequelizer.enqueue(async () => {
+            if (!settings || typeof settings !== "object") {
+                throw new Error("Cannot switch transports, because the settings are missing or invalid.");
+            }
+            if (typeof settings.type === "undefined") {
+                throw new Error("Cannot switch the transport, because the type is not defined");
+            }
+            this.logger.trace(`Starting transport switch with settings: ${JSON.stringify(settings)}`);
+            const switchTargetTransport = settings.type === "secondary" ? this.getNewSecondaryTransport(settings) : this._defaultTransport;
+            this._targetTransport = switchTargetTransport;
+            this._targetAuth = settings.type === "secondary" ? this.getNewSecondaryAuth(settings) : this._defaultAuth;
+            const verifyPromise = this.verifyConnection();
+            this._swapTransport = true;
+            this._switchInProgress = true;
+            this.logger.trace("The new transport has been set, closing the current transport");
+            await this.transport.close();
+            try {
+                await verifyPromise;
+                const isSwitchSuccess = this.transport === switchTargetTransport;
+                this.logger.info(`The reconnection after the switch was completed. Was the switch a success: ${isSwitchSuccess}`);
+                this._switchInProgress = false;
+                return { success: isSwitchSuccess };
+            }
+            catch (error) {
+                this.logger.info("The reconnection after the switch timed out, reverting back to the default transport.");
+                this.switchTransport({ type: "default" });
+                this._switchInProgress = false;
+                return { success: false };
+            }
         });
-    };
-    Connection.prototype.onLibReAnnounced = function (callback) {
+    }
+    onLibReAnnounced(callback) {
         return this.registry.add("libReAnnounced", callback);
-    };
-    Connection.prototype.setLibReAnnounced = function (lib) {
+    }
+    setLibReAnnounced(lib) {
         this.registry.execute("libReAnnounced", lib);
-    };
-    Connection.prototype.send = function (message, options) {
+    }
+    send(message, options) {
         if (this.transport.sendObject &&
             this.transport.isObjectBasedTransport) {
-            var msg = this.protocol.createObjectMessage(message);
+            const msg = this.createObjectMessage(message);
             if (this.isTrace) {
-                this.logger.trace(">> ".concat(JSON.stringify(msg)));
+                this.logger.trace(`>> ${JSON.stringify(msg)}`);
             }
             return this.transport.sendObject(msg, options);
         }
         else {
-            var strMessage = this.protocol.createStringMessage(message);
+            const strMessage = this.createStringMessage(message);
             if (this.isTrace) {
-                this.logger.trace(">> ".concat(strMessage));
+                this.logger.trace(`>> ${strMessage}`);
             }
             return this.transport.send(strMessage, options);
         }
-    };
-    Connection.prototype.on = function (type, messageHandler) {
+    }
+    on(type, messageHandler) {
         type = type.toLowerCase();
         if (this.messageHandlers[type] === undefined) {
             this.messageHandlers[type] = {};
         }
-        var id = this.ids++;
+        const id = this.ids++;
         this.messageHandlers[type][id] = messageHandler;
         return {
-            type: type,
-            id: id,
+            type,
+            id,
         };
-    };
-    Connection.prototype.off = function (info) {
+    }
+    off(info) {
         delete this.messageHandlers[info.type.toLowerCase()][info.id];
-    };
-    Object.defineProperty(Connection.prototype, "isConnected", {
-        get: function () {
-            return this.protocol.isLoggedIn;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Connection.prototype.connected = function (callback) {
-        var _this = this;
-        return this.protocol.loggedIn(function () {
-            var currentServer = _this.transport.name();
+    }
+    get isConnected() {
+        return this._isLoggedIn;
+    }
+    connected(callback) {
+        return this.loggedIn(() => {
+            const currentServer = this.transport.name();
             callback(currentServer);
         });
-    };
-    Connection.prototype.disconnected = function (callback) {
+    }
+    disconnected(callback) {
         return this.registry.add("disconnected", callback);
-    };
-    Connection.prototype.login = function (authRequest, reconnect) {
-        return __awaiter(this, void 0, void 0, function () {
-            var newAuth, identity, error_2;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!this._defaultAuth) {
-                            this._defaultAuth = authRequest;
-                        }
-                        if (this._swapTransport) {
-                            this.logger.trace("Detected a transport swap, swapping transports");
-                            newAuth = this.transportSwap();
-                            authRequest = newAuth !== null && newAuth !== void 0 ? newAuth : authRequest;
-                        }
-                        this.logger.trace("Starting login for transport: ".concat(this.transport.name(), " and auth ").concat(JSON.stringify(authRequest)));
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 4, , 5]);
-                        return [4, this.transport.open()];
-                    case 2:
-                        _a.sent();
-                        this.logger.trace("Transport: ".concat(this.transport.name(), " opened, logging in"));
-                        timer("connection").mark("transport-opened");
-                        return [4, this.protocol.login(authRequest, reconnect)];
-                    case 3:
-                        identity = _a.sent();
-                        this.logger.trace("Logged in with identity: ".concat(JSON.stringify(identity)));
-                        timer("connection").mark("protocol-logged-in");
-                        return [2, identity];
-                    case 4:
-                        error_2 = _a.sent();
-                        if (this._switchInProgress) {
-                            this.logger.trace("An error while logging in after a transport swap, preparing a default swap.");
-                            this.prepareDefaultSwap();
-                        }
-                        throw new Error(error_2);
-                    case 5: return [2];
-                }
-            });
+    }
+    async login(authRequest, reconnect) {
+        if (!this._defaultAuth) {
+            this._defaultAuth = authRequest;
+        }
+        if (this._swapTransport) {
+            this.logger.trace("Detected a transport swap, swapping transports");
+            const newAuth = this.transportSwap();
+            authRequest = newAuth ?? authRequest;
+        }
+        this.logger.trace(`Starting login for transport: ${this.transport.name()} and auth ${JSON.stringify(authRequest)}`);
+        try {
+            await this.transport.open();
+            this.logger.trace(`Transport: ${this.transport.name()} opened, logging in`);
+            timer("connection").mark("transport-opened");
+            const identity = await this.loginCore(authRequest, reconnect);
+            this.logger.trace(`Logged in with identity: ${JSON.stringify(identity)}`);
+            timer("connection").mark("protocol-logged-in");
+            return identity;
+        }
+        catch (error) {
+            if (this._switchInProgress) {
+                this.logger.trace("An error while logging in after a transport swap, preparing a default swap.");
+                this.prepareDefaultSwap();
+            }
+            throw new Error(error);
+        }
+    }
+    async logout() {
+        await this.logoutCore();
+        await this.transport.close();
+    }
+    loggedIn(callback) {
+        if (this._isLoggedIn) {
+            callback();
+        }
+        return this.registry.add("onLoggedIn", callback);
+    }
+    domain(domain, successMessages, errorMessages) {
+        let session = this.sessions.find((s) => s.domain === domain);
+        if (!session) {
+            session = domainSession(domain, this, this.logger.subLogger(`domain=${domain}`), successMessages, errorMessages);
+            this.sessions.push(session);
+        }
+        return session;
+    }
+    authToken() {
+        const createTokenReq = {
+            domain: "global",
+            type: "create-token"
+        };
+        if (!this.globalDomain) {
+            return Promise.reject(new Error("no global domain session"));
+        }
+        return this.globalDomain.send(createTokenReq)
+            .then((res) => {
+            return res.token;
         });
-    };
-    Connection.prototype.logout = function () {
-        return __awaiter(this, void 0, void 0, function () {
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4, this.protocol.logout()];
-                    case 1:
-                        _a.sent();
-                        return [4, this.transport.close()];
-                    case 2:
-                        _a.sent();
-                        return [2];
-                }
-            });
-        });
-    };
-    Connection.prototype.loggedIn = function (callback) {
-        return this.protocol.loggedIn(callback);
-    };
-    Connection.prototype.domain = function (domain, successMessages, errorMessages) {
-        return this.protocol.domain(domain, this.logger.subLogger("domain=".concat(domain)), successMessages, errorMessages);
-    };
-    Connection.prototype.authToken = function () {
-        return this.protocol.authToken();
-    };
-    Connection.prototype.reconnect = function () {
+    }
+    reconnect() {
         return this.transport.reconnect();
-    };
-    Connection.prototype.distributeMessage = function (message, type) {
-        var _this = this;
-        var handlers = this.messageHandlers[type.toLowerCase()];
+    }
+    setLoggedIn(value) {
+        this._isLoggedIn = value;
+        if (this._isLoggedIn) {
+            this.registry.execute("onLoggedIn");
+        }
+    }
+    distributeMessage(message, type) {
+        const handlers = this.messageHandlers[type.toLowerCase()];
         if (handlers !== undefined) {
-            Object.keys(handlers).forEach(function (handlerId) {
-                var handler = handlers[handlerId];
+            Object.keys(handlers).forEach((handlerId) => {
+                const handler = handlers[handlerId];
                 if (handler !== undefined) {
                     try {
                         handler(message);
                     }
                     catch (error) {
                         try {
-                            _this.logger.error("Message handler failed with ".concat(error.stack), error);
+                            this.logger.error(`Message handler failed with ${error.stack}`, error);
                         }
                         catch (loggerError) {
                             console.log("Message handler failed", error);
@@ -9914,47 +8569,67 @@ var Connection = (function () {
                 }
             });
         }
-    };
-    Connection.prototype.handleConnectionChanged = function (connected) {
+    }
+    handleConnectionChanged(connected) {
         if (this._connected === connected) {
             return;
         }
         this._connected = connected;
         if (connected) {
-            if (this.settings.replaySpecs && this.settings.replaySpecs.length) {
+            if (this.settings?.replaySpecs?.length) {
                 this.replayer = new MessageReplayerImpl(this.settings.replaySpecs);
                 this.replayer.init(this);
             }
             this.registry.execute("connected");
         }
         else {
+            this.handleDisconnected();
             this.registry.execute("disconnected");
         }
-    };
-    Connection.prototype.handleTransportMessage = function (msg) {
-        var msgObj;
+    }
+    handleDisconnected() {
+        this.setLoggedIn(false);
+        const tryToLogin = this.shouldTryLogin;
+        if (tryToLogin && this.initialLogin) {
+            if (this.initialLoginAttempts <= 0) {
+                return;
+            }
+            this.initialLoginAttempts--;
+        }
+        this.logger.debug("disconnected - will try new login?" + this.shouldTryLogin);
+        if (this.shouldTryLogin) {
+            if (!this.loginConfig) {
+                throw new Error("no login info");
+            }
+            this.login(this.loginConfig, true)
+                .catch(() => {
+                setTimeout(this.handleDisconnected.bind(this), this.settings.reconnectInterval || 1000);
+            });
+        }
+    }
+    handleTransportMessage(msg) {
+        let msgObj;
         if (typeof msg === "string") {
-            msgObj = this.protocol.processStringMessage(msg);
+            msgObj = this.processStringMessage(msg);
         }
         else {
-            msgObj = this.protocol.processObjectMessage(msg);
+            msgObj = this.processObjectMessage(msg);
         }
         if (this.isTrace) {
-            this.logger.trace("<< ".concat(JSON.stringify(msgObj)));
+            this.logger.trace(`<< ${JSON.stringify(msgObj)}`);
         }
         this.distributeMessage(msgObj.msg, msgObj.msgType);
-    };
-    Connection.prototype.verifyConnection = function () {
-        var _this = this;
-        return PromisePlus(function (resolve) {
-            var unsub;
-            var ready = waitForInvocations(2, function () {
+    }
+    verifyConnection() {
+        return PromisePlus((resolve) => {
+            let unsub;
+            const ready = waitForInvocations(2, () => {
                 if (unsub) {
                     unsub();
                 }
                 resolve();
             });
-            unsub = _this.onLibReAnnounced(function (lib) {
+            unsub = this.onLibReAnnounced((lib) => {
                 if (lib.name === "interop") {
                     return ready();
                 }
@@ -9963,127 +8638,342 @@ var Connection = (function () {
                 }
             });
         }, 10000, "Transport switch timed out waiting for all libraries to be re-announced");
-    };
-    Connection.prototype.getNewSecondaryTransport = function (settings) {
-        var _a;
-        if (!((_a = settings.transportConfig) === null || _a === void 0 ? void 0 : _a.url)) {
+    }
+    getNewSecondaryTransport(settings) {
+        if (!settings.transportConfig?.url) {
             throw new Error("Missing secondary transport URL.");
         }
         return new WS(Object.assign({}, this.settings, { ws: settings.transportConfig.url, reconnectAttempts: 1 }), this.logger.subLogger("ws-secondary"));
-    };
-    Connection.prototype.getNewSecondaryAuth = function (settings) {
-        var _a;
-        if (!((_a = settings.transportConfig) === null || _a === void 0 ? void 0 : _a.auth)) {
+    }
+    getNewSecondaryAuth(settings) {
+        if (!settings.transportConfig?.auth) {
             throw new Error("Missing secondary transport auth information.");
         }
         return settings.transportConfig.auth;
-    };
-    Connection.prototype.transportSwap = function () {
+    }
+    transportSwap() {
         this._swapTransport = false;
         if (!this._targetTransport || !this._targetAuth) {
-            this.logger.warn("Error while switching transports - either the target transport or auth is not defined: transport defined -> ".concat(!!this._defaultTransport, ", auth defined -> ").concat(!!this._targetAuth, ". Staying on the current one."));
+            this.logger.warn(`Error while switching transports - either the target transport or auth is not defined: transport defined -> ${!!this._defaultTransport}, auth defined -> ${!!this._targetAuth}. Staying on the current one.`);
             return;
         }
-        this._transportSubscriptions.forEach(function (unsub) { return unsub(); });
+        this._transportSubscriptions.forEach((unsub) => unsub());
         this._transportSubscriptions = [];
         this.transport = this._targetTransport;
-        var unsubConnectionChanged = this.transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
-        var unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
+        const unsubConnectionChanged = this.transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
+        const unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
         this._transportSubscriptions.push(unsubConnectionChanged);
         this._transportSubscriptions.push(unsubOnMessage);
         return this._targetAuth;
-    };
-    Connection.prototype.prepareDefaultSwap = function () {
-        var _this = this;
-        this._transportSubscriptions.forEach(function (unsub) { return unsub(); });
+    }
+    prepareDefaultSwap() {
+        this._transportSubscriptions.forEach((unsub) => unsub());
         this._transportSubscriptions = [];
-        this.transport.close().catch(function (error) { return _this.logger.warn("Error closing the ".concat(_this.transport.name(), " transport after a failed connection attempt: ").concat(JSON.stringify(error))); });
+        this.transport.close().catch((error) => this.logger.warn(`Error closing the ${this.transport.name()} transport after a failed connection attempt: ${JSON.stringify(error)}`));
         this._targetTransport = this._defaultTransport;
         this._targetAuth = this._defaultAuth;
         this._swapTransport = true;
-    };
-    return Connection;
-}());
+    }
+    processStringMessage(message) {
+        const msg = JSON.parse(message, (key, value) => {
+            if (typeof value !== "string") {
+                return value;
+            }
+            if (value.length < this.dateMinLen) {
+                return value;
+            }
+            if (!value.startsWith(this.datePrefixFirstChar)) {
+                return value;
+            }
+            if (value.substring(0, this.datePrefixLen) !== this.datePrefix) {
+                return value;
+            }
+            try {
+                const milliseconds = parseInt(value.substring(this.datePrefixLen, value.length), 10);
+                if (isNaN(milliseconds)) {
+                    return value;
+                }
+                return new Date(milliseconds);
+            }
+            catch (ex) {
+                return value;
+            }
+        });
+        return {
+            msg,
+            msgType: msg.type,
+        };
+    }
+    createStringMessage(message) {
+        const oldToJson = Date.prototype.toJSON;
+        try {
+            const datePrefix = this.datePrefix;
+            Date.prototype.toJSON = function () {
+                return datePrefix + this.getTime();
+            };
+            const result = JSON.stringify(message);
+            return result;
+        }
+        finally {
+            Date.prototype.toJSON = oldToJson;
+        }
+    }
+    processObjectMessage(message) {
+        if (!message.type) {
+            throw new Error("Object should have type property");
+        }
+        return {
+            msg: message,
+            msgType: message.type,
+        };
+    }
+    createObjectMessage(message) {
+        return message;
+    }
+    async loginCore(config, reconnect) {
+        this.logger.info("logging in...");
+        this.loginConfig = config;
+        if (!this.loginConfig) {
+            this.loginConfig = { username: "", password: "" };
+        }
+        this.shouldTryLogin = true;
+        const authentication = await this.setupAuthConfig(config, reconnect);
+        const helloMsg = {
+            type: "hello",
+            identity: this.settings.identity,
+            authentication
+        };
+        if (config.sessionId) {
+            helloMsg.request_id = config.sessionId;
+        }
+        this.globalDomain = domainSession("global", this, this.logger.subLogger("global-domain"), [
+            "welcome",
+            "token",
+            "authentication-request"
+        ]);
+        const sendOptions = { skipPeerId: true };
+        if (this.initialLogin) {
+            sendOptions.retryInterval = this.settings.reconnectInterval;
+            sendOptions.maxRetries = this.settings.reconnectAttempts;
+        }
+        try {
+            const welcomeMsg = await this.tryAuthenticate(this.globalDomain, helloMsg, sendOptions, config);
+            this.initialLogin = false;
+            this.logger.info("login successful with peerId " + welcomeMsg.peer_id);
+            this.peerId = welcomeMsg.peer_id;
+            this.resolvedIdentity = welcomeMsg.resolved_identity;
+            this.availableDomains = welcomeMsg.available_domains;
+            if (welcomeMsg.options) {
+                this.token = welcomeMsg.options.access_token;
+                this.info = welcomeMsg.options.info;
+            }
+            this.setLoggedIn(true);
+            return welcomeMsg.resolved_identity;
+        }
+        catch (err) {
+            this.logger.error("error sending hello message - " + (err.message || err.msg || err.reason || err), err);
+            throw err;
+        }
+        finally {
+            if (config?.flowCallback && config.sessionId) {
+                config.flowCallback(config.sessionId, null);
+            }
+        }
+    }
+    async tryAuthenticate(globalDomain, helloMsg, sendOptions, config) {
+        let welcomeMsg;
+        while (true) {
+            const msg = await globalDomain.send(helloMsg, undefined, sendOptions);
+            if (msg.type === "authentication-request") {
+                const token = Buffer.from(msg.authentication.token, "base64");
+                if (config.flowCallback && config.sessionId) {
+                    helloMsg.authentication.token =
+                        (await config.flowCallback(config.sessionId, token))
+                            .data
+                            .toString("base64");
+                }
+                helloMsg.request_id = config.sessionId;
+            }
+            else if (msg.type === "welcome") {
+                welcomeMsg = msg;
+                break;
+            }
+            else if (msg.type === "error") {
+                throw new Error("Authentication failed: " + msg.reason);
+            }
+            else {
+                throw new Error("Unexpected message type during authentication: " + msg.type);
+            }
+        }
+        return welcomeMsg;
+    }
+    async setupAuthConfig(config, reconnect) {
+        const authentication = {};
+        this.gatewayToken = config.gatewayToken;
+        if (config.gatewayToken) {
+            if (reconnect) {
+                try {
+                    config.gatewayToken = await this.getNewGWToken();
+                }
+                catch (e) {
+                    this.logger.warn(`failed to get GW token when reconnecting ${e?.message || e}`);
+                }
+            }
+            authentication.method = "gateway-token";
+            authentication.token = config.gatewayToken;
+            this.gatewayToken = config.gatewayToken;
+        }
+        else if (config.flowName === "sspi") {
+            authentication.provider = "win";
+            authentication.method = "access-token";
+            if (config.flowCallback && config.sessionId) {
+                authentication.token =
+                    (await config.flowCallback(config.sessionId, null))
+                        .data
+                        .toString("base64");
+            }
+            else {
+                throw new Error("Invalid SSPI config");
+            }
+        }
+        else if (config.token) {
+            authentication.method = "access-token";
+            authentication.token = config.token;
+        }
+        else if (config.username) {
+            authentication.method = "secret";
+            authentication.login = config.username;
+            authentication.secret = config.password;
+        }
+        else if (config.provider) {
+            authentication.provider = config.provider;
+            authentication.providerContext = config.providerContext;
+        }
+        else {
+            throw new Error("invalid auth message" + JSON.stringify(config));
+        }
+        return authentication;
+    }
+    async logoutCore() {
+        this.logger.debug("logging out...");
+        this.shouldTryLogin = false;
+        if (this.pingTimer) {
+            clearTimeout(this.pingTimer);
+        }
+        const promises = this.sessions.map((session) => {
+            session.leave();
+        });
+        await Promise.all(promises);
+    }
+    getNewGWToken() {
+        if (typeof window !== "undefined") {
+            const glue42gd = window.glue42gd;
+            if (glue42gd) {
+                return glue42gd.getGWToken();
+            }
+        }
+        return Promise.reject(new Error("not running in GD"));
+    }
+    ping() {
+        if (!this.shouldTryLogin) {
+            return;
+        }
+        if (this._isLoggedIn) {
+            this.send({ type: "ping" });
+        }
+        this.pingTimer = setTimeout(() => {
+            this.ping();
+        }, 30 * 1000);
+    }
+}
 
-var order = ["trace", "debug", "info", "warn", "error", "off"];
-var Logger = (function () {
-    function Logger(name, parent, logFn) {
+const order = ["trace", "debug", "info", "warn", "error", "off"];
+class Logger {
+    name;
+    parent;
+    static Interop;
+    static InteropMethodName = "T42.AppLogger.Log";
+    static Instance;
+    path;
+    subLoggers = [];
+    _consoleLevel;
+    _publishLevel;
+    loggerFullName;
+    includeTimeAndLevel;
+    logFn = console;
+    customLogFn = false;
+    constructor(name, parent, logFn) {
         this.name = name;
         this.parent = parent;
-        this.subLoggers = [];
-        this.logFn = console;
-        this.customLogFn = false;
         this.name = name;
         if (parent) {
-            this.path = "".concat(parent.path, ".").concat(name);
+            this.path = `${parent.path}.${name}`;
         }
         else {
             this.path = name;
         }
-        this.loggerFullName = "[".concat(this.path, "]");
+        this.loggerFullName = `[${this.path}]`;
         this.includeTimeAndLevel = !logFn;
         if (logFn) {
             this.logFn = logFn;
             this.customLogFn = true;
         }
     }
-    Logger.prototype.subLogger = function (name) {
-        var existingSub = this.subLoggers.filter(function (subLogger) {
+    subLogger(name) {
+        const existingSub = this.subLoggers.filter((subLogger) => {
             return subLogger.name === name;
         })[0];
         if (existingSub !== undefined) {
             return existingSub;
         }
-        Object.keys(this).forEach(function (key) {
+        Object.keys(this).forEach((key) => {
             if (key === name) {
                 throw new Error("This sub logger name is not allowed.");
             }
         });
-        var sub = new Logger(name, this, this.customLogFn ? this.logFn : undefined);
+        const sub = new Logger(name, this, this.customLogFn ? this.logFn : undefined);
         this.subLoggers.push(sub);
         return sub;
-    };
-    Logger.prototype.publishLevel = function (level) {
-        var _a;
+    }
+    publishLevel(level) {
         if (level) {
             this._publishLevel = level;
         }
-        return this._publishLevel || ((_a = this.parent) === null || _a === void 0 ? void 0 : _a.publishLevel());
-    };
-    Logger.prototype.consoleLevel = function (level) {
-        var _a;
+        return this._publishLevel || this.parent?.publishLevel();
+    }
+    consoleLevel(level) {
         if (level) {
             this._consoleLevel = level;
         }
-        return this._consoleLevel || ((_a = this.parent) === null || _a === void 0 ? void 0 : _a.consoleLevel());
-    };
-    Logger.prototype.log = function (message, level, error) {
+        return this._consoleLevel || this.parent?.consoleLevel();
+    }
+    log(message, level, error) {
         this.publishMessage(level || "info", message, error);
-    };
-    Logger.prototype.trace = function (message) {
+    }
+    trace(message) {
         this.log(message, "trace");
-    };
-    Logger.prototype.debug = function (message) {
+    }
+    debug(message) {
         this.log(message, "debug");
-    };
-    Logger.prototype.info = function (message) {
+    }
+    info(message) {
         this.log(message, "info");
-    };
-    Logger.prototype.warn = function (message) {
+    }
+    warn(message) {
         this.log(message, "warn");
-    };
-    Logger.prototype.error = function (message, err) {
+    }
+    error(message, err) {
         this.log(message, "error");
-    };
-    Logger.prototype.canPublish = function (level, compareWith) {
-        var levelIdx = order.indexOf(level);
-        var restrictionIdx = order.indexOf(compareWith || this.consoleLevel() || "trace");
+    }
+    canPublish(level, compareWith) {
+        const levelIdx = order.indexOf(level);
+        const restrictionIdx = order.indexOf(compareWith || this.consoleLevel() || "trace");
         return levelIdx >= restrictionIdx;
-    };
-    Logger.prototype.publishMessage = function (level, message, error) {
-        var loggerName = this.loggerFullName;
+    }
+    publishMessage(level, message, error) {
+        const loggerName = this.loggerFullName;
         if (level === "error" && !error) {
-            var e = new Error();
+            const e = new Error();
             if (e.stack) {
                 message =
                     message +
@@ -10095,29 +8985,29 @@ var Logger = (function () {
             }
         }
         if (this.canPublish(level, this.publishLevel())) {
-            var interop = Logger.Interop;
+            const interop = Logger.Interop;
             if (interop) {
                 try {
                     if (interop.methods({ name: Logger.InteropMethodName }).length > 0) {
                         interop.invoke(Logger.InteropMethodName, {
-                            msg: "".concat(message),
+                            msg: `${message}`,
                             logger: loggerName,
-                            level: level
+                            level
                         });
                     }
                 }
-                catch (_a) {
+                catch {
                 }
             }
         }
         if (this.canPublish(level)) {
-            var prefix = "";
+            let prefix = "";
             if (this.includeTimeAndLevel) {
-                var date = new Date();
-                var time = "".concat(date.getHours(), ":").concat(date.getMinutes(), ":").concat(date.getSeconds(), ":").concat(date.getMilliseconds());
-                prefix = "[".concat(time, "] [").concat(level, "] ");
+                const date = new Date();
+                const time = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}`;
+                prefix = `[${time}] [${level}] `;
             }
-            var toPrint = "".concat(prefix).concat(loggerName, ": ").concat(message);
+            const toPrint = `${prefix}${loggerName}: ${message}`;
             switch (level) {
                 case "trace":
                     this.logFn.debug(toPrint);
@@ -10141,26 +9031,24 @@ var Logger = (function () {
                     break;
             }
         }
-    };
-    Logger.InteropMethodName = "T42.AppLogger.Log";
-    return Logger;
-}());
+    }
+}
 
-var GW_MESSAGE_CREATE_CONTEXT = "create-context";
-var GW_MESSAGE_ACTIVITY_CREATED = "created";
-var GW_MESSAGE_ACTIVITY_DESTROYED = "destroyed";
-var GW_MESSAGE_CONTEXT_CREATED = "context-created";
-var GW_MESSAGE_CONTEXT_ADDED = "context-added";
-var GW_MESSAGE_SUBSCRIBE_CONTEXT = "subscribe-context";
-var GW_MESSAGE_SUBSCRIBED_CONTEXT = "subscribed-context";
-var GW_MESSAGE_UNSUBSCRIBE_CONTEXT = "unsubscribe-context";
-var GW_MESSAGE_DESTROY_CONTEXT = "destroy-context";
-var GW_MESSAGE_CONTEXT_DESTROYED = "context-destroyed";
-var GW_MESSAGE_UPDATE_CONTEXT = "update-context";
-var GW_MESSAGE_CONTEXT_UPDATED = "context-updated";
-var GW_MESSAGE_JOINED_ACTIVITY = "joined";
+const GW_MESSAGE_CREATE_CONTEXT = "create-context";
+const GW_MESSAGE_ACTIVITY_CREATED = "created";
+const GW_MESSAGE_ACTIVITY_DESTROYED = "destroyed";
+const GW_MESSAGE_CONTEXT_CREATED = "context-created";
+const GW_MESSAGE_CONTEXT_ADDED = "context-added";
+const GW_MESSAGE_SUBSCRIBE_CONTEXT = "subscribe-context";
+const GW_MESSAGE_SUBSCRIBED_CONTEXT = "subscribed-context";
+const GW_MESSAGE_UNSUBSCRIBE_CONTEXT = "unsubscribe-context";
+const GW_MESSAGE_DESTROY_CONTEXT = "destroy-context";
+const GW_MESSAGE_CONTEXT_DESTROYED = "context-destroyed";
+const GW_MESSAGE_UPDATE_CONTEXT = "update-context";
+const GW_MESSAGE_CONTEXT_UPDATED = "context-updated";
+const GW_MESSAGE_JOINED_ACTIVITY = "joined";
 
-var ContextMessageReplaySpec = {
+const ContextMessageReplaySpec = {
     get name() {
         return "context";
     },
@@ -10183,32 +9071,30 @@ var ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.2.0";
+var version = "6.3.1";
 
 function prepareConfig (configuration, ext, glue42gd) {
-    var _a, _b, _c, _d;
-    var nodeStartingContext;
+    let nodeStartingContext;
     if (Utils.isNode()) {
-        var startingContextString = process.env._GD_STARTING_CONTEXT_;
+        const startingContextString = process.env._GD_STARTING_CONTEXT_;
         if (startingContextString) {
             try {
                 nodeStartingContext = JSON.parse(startingContextString);
             }
-            catch (_e) {
+            catch {
             }
         }
     }
     function getConnection() {
-        var _a, _b, _c, _d, _e, _f;
-        var gwConfig = configuration.gateway;
-        var protocolVersion = (_a = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.protocolVersion) !== null && _a !== void 0 ? _a : 3;
-        var reconnectInterval = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.reconnectInterval;
-        var reconnectAttempts = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.reconnectAttempts;
-        var defaultWs = "ws://localhost:8385";
-        var ws = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.ws;
-        var sharedWorker = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.sharedWorker;
-        var inproc = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.inproc;
-        var webPlatform = (_b = gwConfig === null || gwConfig === void 0 ? void 0 : gwConfig.webPlatform) !== null && _b !== void 0 ? _b : undefined;
+        const gwConfig = configuration.gateway;
+        const protocolVersion = gwConfig?.protocolVersion ?? 3;
+        const reconnectInterval = gwConfig?.reconnectInterval;
+        const reconnectAttempts = gwConfig?.reconnectAttempts;
+        const defaultWs = "ws://localhost:8385";
+        let ws = gwConfig?.ws;
+        const sharedWorker = gwConfig?.sharedWorker;
+        const inproc = gwConfig?.inproc;
+        const webPlatform = gwConfig?.webPlatform ?? undefined;
         if (glue42gd) {
             ws = glue42gd.gwURL;
         }
@@ -10218,13 +9104,13 @@ function prepareConfig (configuration, ext, glue42gd) {
         if (!ws && !sharedWorker && !inproc) {
             ws = defaultWs;
         }
-        var instanceId;
-        var windowId;
-        var pid;
-        var environment;
-        var region;
-        var appName = getApplication();
-        var uniqueAppName = appName;
+        let instanceId;
+        let windowId;
+        let pid;
+        let environment;
+        let region;
+        const appName = getApplication();
+        let uniqueAppName = appName;
         if (typeof glue42gd !== "undefined") {
             windowId = glue42gd.windowId;
             pid = glue42gd.pid;
@@ -10232,7 +9118,7 @@ function prepareConfig (configuration, ext, glue42gd) {
                 environment = glue42gd.env.env;
                 region = glue42gd.env.region;
             }
-            uniqueAppName = (_c = glue42gd.application) !== null && _c !== void 0 ? _c : "glue-app";
+            uniqueAppName = glue42gd.application ?? "glue-app";
             instanceId = glue42gd.appInstanceId;
         }
         else if (Utils.isNode()) {
@@ -10243,40 +9129,40 @@ function prepareConfig (configuration, ext, glue42gd) {
                 instanceId = nodeStartingContext.instanceId;
             }
         }
-        else if (typeof (window === null || window === void 0 ? void 0 : window.glue42electron) !== "undefined") {
-            windowId = window === null || window === void 0 ? void 0 : window.glue42electron.instanceId;
-            pid = window === null || window === void 0 ? void 0 : window.glue42electron.pid;
-            environment = window === null || window === void 0 ? void 0 : window.glue42electron.env;
-            region = window === null || window === void 0 ? void 0 : window.glue42electron.region;
-            uniqueAppName = (_d = window === null || window === void 0 ? void 0 : window.glue42electron.application) !== null && _d !== void 0 ? _d : "glue-app";
-            instanceId = window === null || window === void 0 ? void 0 : window.glue42electron.instanceId;
+        else if (typeof window?.glue42electron !== "undefined") {
+            windowId = window?.glue42electron.instanceId;
+            pid = window?.glue42electron.pid;
+            environment = window?.glue42electron.env;
+            region = window?.glue42electron.region;
+            uniqueAppName = window?.glue42electron.application ?? "glue-app";
+            instanceId = window?.glue42electron.instanceId;
         }
         else ;
-        var replaySpecs = (_f = (_e = configuration.gateway) === null || _e === void 0 ? void 0 : _e.replaySpecs) !== null && _f !== void 0 ? _f : [];
+        const replaySpecs = configuration.gateway?.replaySpecs ?? [];
         replaySpecs.push(ContextMessageReplaySpec);
-        var identity = {
+        let identity = {
             application: uniqueAppName,
             applicationName: appName,
-            windowId: windowId,
+            windowId,
             instance: instanceId,
             process: pid,
-            region: region,
-            environment: environment,
+            region,
+            environment,
             api: ext.version || version
         };
         if (configuration.identity) {
             identity = Object.assign(identity, configuration.identity);
         }
         return {
-            identity: identity,
-            reconnectInterval: reconnectInterval,
-            ws: ws,
-            sharedWorker: sharedWorker,
-            webPlatform: webPlatform,
-            inproc: inproc,
-            protocolVersion: protocolVersion,
-            reconnectAttempts: reconnectAttempts,
-            replaySpecs: replaySpecs,
+            identity,
+            reconnectInterval,
+            ws,
+            sharedWorker,
+            webPlatform,
+            inproc,
+            protocolVersion,
+            reconnectAttempts,
+            replaySpecs,
         };
     }
     function getContexts() {
@@ -10301,7 +9187,7 @@ function prepareConfig (configuration, ext, glue42gd) {
         if (typeof window !== "undefined" && typeof window.glue42electron !== "undefined") {
             return window.glue42electron.application;
         }
-        var uid = shortid();
+        const uid = nanoid(10);
         if (Utils.isNode()) {
             if (nodeStartingContext) {
                 return nodeStartingContext.applicationConfig.name;
@@ -10309,12 +9195,11 @@ function prepareConfig (configuration, ext, glue42gd) {
             return "NodeJS" + uid;
         }
         if (typeof window !== "undefined" && typeof document !== "undefined") {
-            return document.title + " (".concat(uid, ")");
+            return document.title + ` (${uid})`;
         }
         return uid;
     }
     function getAuth() {
-        var _a, _b, _c;
         if (typeof configuration.auth === "string") {
             return {
                 token: configuration.auth
@@ -10328,69 +9213,76 @@ function prepareConfig (configuration, ext, glue42gd) {
                 gatewayToken: nodeStartingContext.gwToken
             };
         }
-        if (((_a = configuration.gateway) === null || _a === void 0 ? void 0 : _a.webPlatform) || ((_b = configuration.gateway) === null || _b === void 0 ? void 0 : _b.inproc) || ((_c = configuration.gateway) === null || _c === void 0 ? void 0 : _c.sharedWorker)) {
+        if (configuration.gateway?.webPlatform || configuration.gateway?.inproc || configuration.gateway?.sharedWorker) {
             return {
                 username: "glue42", password: "glue42"
             };
         }
     }
     function getLogger() {
-        var _a, _b;
-        var config = configuration.logger;
-        var defaultLevel = "warn";
+        let config = configuration.logger;
+        const defaultLevel = "warn";
         if (!config) {
             config = defaultLevel;
         }
-        var gdConsoleLevel;
+        let gdConsoleLevel;
         if (glue42gd) {
             gdConsoleLevel = glue42gd.consoleLogLevel;
         }
         if (typeof config === "string") {
-            return { console: gdConsoleLevel !== null && gdConsoleLevel !== void 0 ? gdConsoleLevel : config, publish: defaultLevel };
+            return { console: gdConsoleLevel ?? config, publish: defaultLevel };
         }
         return {
-            console: (_a = gdConsoleLevel !== null && gdConsoleLevel !== void 0 ? gdConsoleLevel : config.console) !== null && _a !== void 0 ? _a : defaultLevel,
-            publish: (_b = config.publish) !== null && _b !== void 0 ? _b : defaultLevel
+            console: gdConsoleLevel ?? config.console ?? defaultLevel,
+            publish: config.publish ?? defaultLevel
         };
     }
-    var connection = getConnection();
-    var application = getApplication();
+    const connection = getConnection();
+    let application = getApplication();
     if (typeof window !== "undefined") {
-        var windowAsAny = window;
-        var containerApplication = windowAsAny.htmlContainer ?
-            "".concat(windowAsAny.htmlContainer.containerName, ".").concat(windowAsAny.htmlContainer.application) :
-            (_a = windowAsAny === null || windowAsAny === void 0 ? void 0 : windowAsAny.glue42gd) === null || _a === void 0 ? void 0 : _a.application;
+        const windowAsAny = window;
+        const containerApplication = windowAsAny.htmlContainer ?
+            `${windowAsAny.htmlContainer.containerName}.${windowAsAny.htmlContainer.application}` :
+            windowAsAny?.glue42gd?.application;
         if (containerApplication) {
             application = containerApplication;
         }
     }
     return {
-        bus: (_b = configuration.bus) !== null && _b !== void 0 ? _b : false,
-        application: application,
+        bus: configuration.bus ?? false,
+        application,
         auth: getAuth(),
         logger: getLogger(),
-        connection: connection,
-        metrics: (_c = configuration.metrics) !== null && _c !== void 0 ? _c : true,
+        connection,
+        metrics: configuration.metrics ?? true,
         contexts: getContexts(),
         version: ext.version || version,
-        libs: (_d = ext.libs) !== null && _d !== void 0 ? _d : [],
+        libs: ext.libs ?? [],
         customLogger: configuration.customLogger
     };
 }
 
-var GW3ContextData = (function () {
-    function GW3ContextData(contextId, name, isAnnounced, activityId) {
-        this.updateCallbacks = {};
+class GW3ContextData {
+    name;
+    contextId;
+    context;
+    isAnnounced;
+    joinedActivity;
+    updateCallbacks = {};
+    activityId;
+    sentExplicitSubscription;
+    hasReceivedSnapshot;
+    constructor(contextId, name, isAnnounced, activityId) {
         this.contextId = contextId;
         this.name = name;
         this.isAnnounced = isAnnounced;
         this.activityId = activityId;
         this.context = {};
     }
-    GW3ContextData.prototype.hasCallbacks = function () {
+    hasCallbacks() {
         return Object.keys(this.updateCallbacks).length > 0;
-    };
-    GW3ContextData.prototype.getState = function () {
+    }
+    getState() {
         if (this.isAnnounced && this.hasCallbacks()) {
             return 3;
         }
@@ -10401,15 +9293,10 @@ var GW3ContextData = (function () {
             return 1;
         }
         return 0;
-    };
-    return GW3ContextData;
-}());
+    }
+}
 
-var lodash_clonedeepExports = {};
-var lodash_clonedeep = {
-  get exports(){ return lodash_clonedeepExports; },
-  set exports(v){ lodash_clonedeepExports = v; },
-};
+var lodash_clonedeep = {exports: {}};
 
 /**
  * lodash (Custom Build) <https://lodash.com/>
@@ -10419,6 +9306,7 @@ var lodash_clonedeep = {
  * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
  * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
  */
+lodash_clonedeep.exports;
 
 (function (module, exports) {
 	/** Used as the size to enable large array optimizations. */
@@ -12159,27 +11047,27 @@ var lodash_clonedeep = {
 	  return false;
 	}
 
-	module.exports = cloneDeep;
-} (lodash_clonedeep, lodash_clonedeepExports));
+	module.exports = cloneDeep; 
+} (lodash_clonedeep, lodash_clonedeep.exports));
 
-var cloneDeep = lodash_clonedeepExports;
+var lodash_clonedeepExports = lodash_clonedeep.exports;
+var cloneDeep = /*@__PURE__*/getDefaultExportFromCjs(lodash_clonedeepExports);
 
 function applyContextDelta(context, delta, logger) {
     try {
-        if (logger === null || logger === void 0 ? void 0 : logger.canPublish("trace")) {
-            logger === null || logger === void 0 ? void 0 : logger.trace("applying context delta ".concat(JSON.stringify(delta), " on context ").concat(JSON.stringify(context)));
+        if (logger?.canPublish("trace")) {
+            logger?.trace(`applying context delta ${JSON.stringify(delta)} on context ${JSON.stringify(context)}`);
         }
         if (!delta) {
             return context;
         }
         if (delta.reset) {
-            context = __assign({}, delta.reset);
+            context = { ...delta.reset };
             return context;
         }
         context = deepClone(context, undefined);
         if (delta.commands) {
-            for (var _i = 0, _a = delta.commands; _i < _a.length; _i++) {
-                var command = _a[_i];
+            for (const command of delta.commands) {
                 if (command.type === "remove") {
                     deletePath(context, command.path);
                 }
@@ -12189,40 +11077,40 @@ function applyContextDelta(context, delta, logger) {
             }
             return context;
         }
-        var added_1 = delta.added;
-        var updated_1 = delta.updated;
-        var removed = delta.removed;
-        if (added_1) {
-            Object.keys(added_1).forEach(function (key) {
-                context[key] = added_1[key];
+        const added = delta.added;
+        const updated = delta.updated;
+        const removed = delta.removed;
+        if (added) {
+            Object.keys(added).forEach((key) => {
+                context[key] = added[key];
             });
         }
-        if (updated_1) {
-            Object.keys(updated_1).forEach(function (key) {
-                mergeObjectsProperties(key, context, updated_1);
+        if (updated) {
+            Object.keys(updated).forEach((key) => {
+                mergeObjectsProperties(key, context, updated);
             });
         }
         if (removed) {
-            removed.forEach(function (key) {
+            removed.forEach((key) => {
                 delete context[key];
             });
         }
         return context;
     }
     catch (e) {
-        logger === null || logger === void 0 ? void 0 : logger.error("error applying context delta ".concat(JSON.stringify(delta), " on context ").concat(JSON.stringify(context)), e);
+        logger?.error(`error applying context delta ${JSON.stringify(delta)} on context ${JSON.stringify(context)}`, e);
         return context;
     }
 }
 function deepClone(obj, hash) {
     return cloneDeep(obj);
 }
-var mergeObjectsProperties = function (key, what, withWhat) {
-    var right = withWhat[key];
+const mergeObjectsProperties = (key, what, withWhat) => {
+    const right = withWhat[key];
     if (right === undefined) {
         return what;
     }
-    var left = what[key];
+    const left = what[key];
     if (!left || !right) {
         what[key] = right;
         return what;
@@ -12251,7 +11139,7 @@ function deepEqual(x, y) {
     if (x.constructor !== y.constructor) {
         return false;
     }
-    for (var p in x) {
+    for (const p in x) {
         if (!x.hasOwnProperty(p)) {
             continue;
         }
@@ -12268,7 +11156,7 @@ function deepEqual(x, y) {
             return false;
         }
     }
-    for (var p in y) {
+    for (const p in y) {
         if (y.hasOwnProperty(p) && !x.hasOwnProperty(p)) {
             return false;
         }
@@ -12276,8 +11164,8 @@ function deepEqual(x, y) {
     return true;
 }
 function setValueToPath(obj, value, path) {
-    var pathArr = path.split(".");
-    var i;
+    const pathArr = path.split(".");
+    let i;
     for (i = 0; i < pathArr.length - 1; i++) {
         if (!obj[pathArr[i]]) {
             obj[pathArr[i]] = {};
@@ -12290,16 +11178,16 @@ function setValueToPath(obj, value, path) {
     obj[pathArr[i]] = value;
 }
 function isSubset(superObj, subObj) {
-    return Object.keys(subObj).every(function (ele) {
+    return Object.keys(subObj).every((ele) => {
         if (typeof subObj[ele] === "object") {
-            return isSubset((superObj === null || superObj === void 0 ? void 0 : superObj[ele]) || {}, subObj[ele] || {});
+            return isSubset(superObj?.[ele] || {}, subObj[ele] || {});
         }
-        return subObj[ele] === (superObj === null || superObj === void 0 ? void 0 : superObj[ele]);
+        return subObj[ele] === superObj?.[ele];
     });
 }
 function deletePath(obj, path) {
-    var pathArr = path.split(".");
-    var i;
+    const pathArr = path.split(".");
+    let i;
     for (i = 0; i < pathArr.length - 1; i++) {
         if (!obj[pathArr[i]]) {
             return;
@@ -12309,19 +11197,33 @@ function deletePath(obj, path) {
     delete obj[pathArr[i]];
 }
 
-var GW3Bridge = (function () {
-    function GW3Bridge(config) {
-        var _this = this;
-        var _a;
-        this._contextNameToData = {};
-        this._gw3Subscriptions = [];
-        this._nextCallbackSubscriptionNumber = 0;
-        this._creationPromises = {};
-        this._contextNameToId = {};
-        this._contextIdToName = {};
-        this._protocolVersion = undefined;
-        this._contextsTempCache = {};
-        this._contextsSubscriptionsCache = [];
+class GW3Bridge {
+    _logger;
+    _connection;
+    _trackAllContexts;
+    _reAnnounceKnownContexts;
+    _gw3Session;
+    _contextNameToData = {};
+    _gw3Subscriptions = [];
+    _nextCallbackSubscriptionNumber = 0;
+    _creationPromises = {};
+    _contextNameToId = {};
+    _contextIdToName = {};
+    _protocolVersion = undefined;
+    _contextsTempCache = {};
+    _contextsSubscriptionsCache = [];
+    _systemContextsSubKey;
+    get protocolVersion() {
+        if (!this._protocolVersion) {
+            const contextsDomainInfo = this._connection.availableDomains.find((d) => d.uri === "context");
+            this._protocolVersion = contextsDomainInfo?.version ?? 1;
+        }
+        return this._protocolVersion;
+    }
+    get setPathSupported() {
+        return this.protocolVersion >= 2;
+    }
+    constructor(config) {
         this._connection = config.connection;
         this._logger = config.logger;
         this._trackAllContexts = config.trackAllContexts;
@@ -12333,72 +11235,51 @@ var GW3Bridge = (function () {
             GW_MESSAGE_CONTEXT_UPDATED,
         ]);
         this._gw3Session.disconnected(this.resetState.bind(this));
-        this._gw3Session.onJoined(function (wasReconnect) {
+        this._gw3Session.onJoined((wasReconnect) => {
             if (!wasReconnect) {
                 return;
             }
-            if (!_this._reAnnounceKnownContexts) {
-                return _this._connection.setLibReAnnounced({ name: "contexts" });
+            if (!this._reAnnounceKnownContexts) {
+                return this._connection.setLibReAnnounced({ name: "contexts" });
             }
-            _this.reInitiateState().then(function () { return _this._connection.setLibReAnnounced({ name: "contexts" }); });
+            this.reInitiateState().then(() => this._connection.setLibReAnnounced({ name: "contexts" }));
         });
         this.subscribeToContextCreatedMessages();
         this.subscribeToContextUpdatedMessages();
         this.subscribeToContextDestroyedMessages();
-        (_a = this._connection.replayer) === null || _a === void 0 ? void 0 : _a.drain(ContextMessageReplaySpec.name, function (message) {
-            var type = message.type;
+        this._connection.replayer?.drain(ContextMessageReplaySpec.name, (message) => {
+            const type = message.type;
             if (!type) {
                 return;
             }
             if (type === GW_MESSAGE_CONTEXT_CREATED ||
                 type === GW_MESSAGE_CONTEXT_ADDED ||
                 type === GW_MESSAGE_ACTIVITY_CREATED) {
-                _this.handleContextCreatedMessage(message);
+                this.handleContextCreatedMessage(message);
             }
             else if (type === GW_MESSAGE_SUBSCRIBED_CONTEXT ||
                 type === GW_MESSAGE_CONTEXT_UPDATED ||
                 type === GW_MESSAGE_JOINED_ACTIVITY) {
-                _this.handleContextUpdatedMessage(message);
+                this.handleContextUpdatedMessage(message);
             }
             else if (type === GW_MESSAGE_CONTEXT_DESTROYED ||
                 type === GW_MESSAGE_ACTIVITY_DESTROYED) {
-                _this.handleContextDestroyedMessage(message);
+                this.handleContextDestroyedMessage(message);
             }
         });
     }
-    Object.defineProperty(GW3Bridge.prototype, "protocolVersion", {
-        get: function () {
-            var _a;
-            if (!this._protocolVersion) {
-                var contextsDomainInfo = this._connection.availableDomains.find(function (d) { return d.uri === "context"; });
-                this._protocolVersion = (_a = contextsDomainInfo === null || contextsDomainInfo === void 0 ? void 0 : contextsDomainInfo.version) !== null && _a !== void 0 ? _a : 1;
-            }
-            return this._protocolVersion;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(GW3Bridge.prototype, "setPathSupported", {
-        get: function () {
-            return this.protocolVersion >= 2;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    GW3Bridge.prototype.dispose = function () {
-        for (var _i = 0, _a = this._gw3Subscriptions; _i < _a.length; _i++) {
-            var sub = _a[_i];
+    dispose() {
+        for (const sub of this._gw3Subscriptions) {
             this._connection.off(sub);
         }
         this._gw3Subscriptions.length = 0;
-        for (var contextName in this._contextNameToData) {
+        for (const contextName in this._contextNameToData) {
             if (this._contextNameToId.hasOwnProperty(contextName)) {
                 delete this._contextNameToData[contextName];
             }
         }
-    };
-    GW3Bridge.prototype.createContext = function (name, data) {
-        var _this = this;
+    }
+    createContext(name, data) {
         if (name in this._creationPromises) {
             return this._creationPromises[name];
         }
@@ -12407,354 +11288,272 @@ var GW3Bridge = (function () {
                 .send({
                 type: GW_MESSAGE_CREATE_CONTEXT,
                 domain: "global",
-                name: name,
-                data: data,
+                name,
+                data,
                 lifetime: "retained",
             })
-                .then(function (createContextMsg) {
-                _this._contextNameToId[name] = createContextMsg.context_id;
-                _this._contextIdToName[createContextMsg.context_id] = name;
-                var contextData = _this._contextNameToData[name] || new GW3ContextData(createContextMsg.context_id, name, true, undefined);
+                .then((createContextMsg) => {
+                this._contextNameToId[name] = createContextMsg.context_id;
+                this._contextIdToName[createContextMsg.context_id] = name;
+                const contextData = this._contextNameToData[name] || new GW3ContextData(createContextMsg.context_id, name, true, undefined);
                 contextData.isAnnounced = true;
                 contextData.name = name;
                 contextData.contextId = createContextMsg.context_id;
                 contextData.context = createContextMsg.data || deepClone(data);
                 contextData.hasReceivedSnapshot = true;
-                _this._contextNameToData[name] = contextData;
-                delete _this._creationPromises[name];
+                this._contextNameToData[name] = contextData;
+                delete this._creationPromises[name];
                 return createContextMsg.context_id;
             });
         return this._creationPromises[name];
-    };
-    GW3Bridge.prototype.all = function () {
-        var _this = this;
+    }
+    all() {
         return Object.keys(this._contextNameToData)
-            .filter(function (name) { return _this._contextNameToData[name].isAnnounced; });
-    };
-    GW3Bridge.prototype.update = function (name, delta) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var contextData, currentContext, calculatedDelta;
-            var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (delta) {
-                            delta = deepClone(delta);
-                        }
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _b.sent();
-                        _b.label = 2;
-                    case 2:
-                        contextData = this._contextNameToData[name];
-                        if (!contextData || !contextData.isAnnounced) {
-                            return [2, this.createContext(name, delta)];
-                        }
-                        currentContext = contextData.context;
-                        if (!!contextData.hasCallbacks()) return [3, 4];
-                        return [4, this.get(contextData.name)];
-                    case 3:
-                        currentContext = _b.sent();
-                        _b.label = 4;
-                    case 4:
-                        calculatedDelta = this.setPathSupported ?
-                            this.calculateContextDeltaV2(currentContext, delta) :
-                            this.calculateContextDeltaV1(currentContext, delta);
-                        if (!Object.keys(calculatedDelta.added).length
-                            && !Object.keys(calculatedDelta.updated).length
-                            && !calculatedDelta.removed.length
-                            && !((_a = calculatedDelta.commands) === null || _a === void 0 ? void 0 : _a.length)) {
-                            return [2, Promise.resolve()];
-                        }
-                        return [2, this._gw3Session
-                                .send({
-                                type: GW_MESSAGE_UPDATE_CONTEXT,
-                                domain: "global",
-                                context_id: contextData.contextId,
-                                delta: calculatedDelta,
-                            }, {}, { skipPeerId: false })
-                                .then(function (gwResponse) {
-                                _this.handleUpdated(contextData, calculatedDelta, {
-                                    updaterId: gwResponse.peer_id
-                                });
-                            })];
-                }
+            .filter((name) => this._contextNameToData[name].isAnnounced);
+    }
+    async update(name, delta) {
+        if (delta) {
+            delta = deepClone(delta);
+        }
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const contextData = this._contextNameToData[name];
+        if (!contextData || !contextData.isAnnounced) {
+            return this.createContext(name, delta);
+        }
+        let currentContext = contextData.context;
+        if (!contextData.hasCallbacks()) {
+            currentContext = await this.get(contextData.name);
+        }
+        const calculatedDelta = this.setPathSupported ?
+            this.calculateContextDeltaV2(currentContext, delta) :
+            this.calculateContextDeltaV1(currentContext, delta);
+        if (!Object.keys(calculatedDelta.added).length
+            && !Object.keys(calculatedDelta.updated).length
+            && !calculatedDelta.removed.length
+            && !calculatedDelta.commands?.length) {
+            return Promise.resolve();
+        }
+        return this._gw3Session
+            .send({
+            type: GW_MESSAGE_UPDATE_CONTEXT,
+            domain: "global",
+            context_id: contextData.contextId,
+            delta: calculatedDelta,
+        }, {}, { skipPeerId: false })
+            .then((gwResponse) => {
+            this.handleUpdated(contextData, calculatedDelta, {
+                updaterId: gwResponse.peer_id
             });
         });
-    };
-    GW3Bridge.prototype.set = function (name, data) {
-        return __awaiter(this, void 0, void 0, function () {
-            var contextData;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (data) {
-                            data = deepClone(data);
-                        }
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2:
-                        contextData = this._contextNameToData[name];
-                        if (!contextData || !contextData.isAnnounced) {
-                            return [2, this.createContext(name, data)];
-                        }
-                        return [2, this._gw3Session
-                                .send({
-                                type: GW_MESSAGE_UPDATE_CONTEXT,
-                                domain: "global",
-                                context_id: contextData.contextId,
-                                delta: { reset: data },
-                            }, {}, { skipPeerId: false })
-                                .then(function (gwResponse) {
-                                _this.handleUpdated(contextData, {
-                                    reset: data,
-                                    added: {},
-                                    removed: [],
-                                    updated: {}
-                                }, {
-                                    updaterId: gwResponse.peer_id
-                                });
-                            })];
-                }
+    }
+    async set(name, data) {
+        if (data) {
+            data = deepClone(data);
+        }
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const contextData = this._contextNameToData[name];
+        if (!contextData || !contextData.isAnnounced) {
+            return this.createContext(name, data);
+        }
+        return this._gw3Session
+            .send({
+            type: GW_MESSAGE_UPDATE_CONTEXT,
+            domain: "global",
+            context_id: contextData.contextId,
+            delta: { reset: data },
+        }, {}, { skipPeerId: false })
+            .then((gwResponse) => {
+            this.handleUpdated(contextData, {
+                reset: data,
+                added: {},
+                removed: [],
+                updated: {}
+            }, {
+                updaterId: gwResponse.peer_id
             });
         });
-    };
-    GW3Bridge.prototype.setPath = function (name, path, value) {
+    }
+    setPath(name, path, value) {
         if (!this.setPathSupported) {
             return Promise.reject("glue.contexts.setPath operation is not supported, use Glue42 3.10 or later");
         }
-        return this.setPaths(name, [{ path: path, value: value }]);
-    };
-    GW3Bridge.prototype.setPaths = function (name, pathValues) {
-        return __awaiter(this, void 0, void 0, function () {
-            var contextData, obj, _i, pathValues_1, pathValue, commands, _a, pathValues_2, pathValue;
-            var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (!this.setPathSupported) {
-                            return [2, Promise.reject("glue.contexts.setPaths operation is not supported, use Glue42 3.10 or later")];
-                        }
-                        if (pathValues) {
-                            pathValues = deepClone(pathValues);
-                        }
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _b.sent();
-                        _b.label = 2;
-                    case 2:
-                        contextData = this._contextNameToData[name];
-                        if (!contextData || !contextData.isAnnounced) {
-                            obj = {};
-                            for (_i = 0, pathValues_1 = pathValues; _i < pathValues_1.length; _i++) {
-                                pathValue = pathValues_1[_i];
-                                setValueToPath(obj, pathValue.value, pathValue.path);
-                            }
-                            return [2, this.createContext(name, obj)];
-                        }
-                        commands = [];
-                        for (_a = 0, pathValues_2 = pathValues; _a < pathValues_2.length; _a++) {
-                            pathValue = pathValues_2[_a];
-                            if (pathValue.value === null) {
-                                commands.push({ type: "remove", path: pathValue.path });
-                            }
-                            else {
-                                commands.push({ type: "set", path: pathValue.path, value: pathValue.value });
-                            }
-                        }
-                        return [2, this._gw3Session
-                                .send({
-                                type: GW_MESSAGE_UPDATE_CONTEXT,
-                                domain: "global",
-                                context_id: contextData.contextId,
-                                delta: { commands: commands }
-                            }, {}, { skipPeerId: false })
-                                .then(function (gwResponse) {
-                                _this.handleUpdated(contextData, {
-                                    added: {},
-                                    removed: [],
-                                    updated: {},
-                                    commands: commands
-                                }, {
-                                    updaterId: gwResponse.peer_id
-                                });
-                            })];
-                }
+        return this.setPaths(name, [{ path, value }]);
+    }
+    async setPaths(name, pathValues) {
+        if (!this.setPathSupported) {
+            return Promise.reject("glue.contexts.setPaths operation is not supported, use Glue42 3.10 or later");
+        }
+        if (pathValues) {
+            pathValues = deepClone(pathValues);
+        }
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const contextData = this._contextNameToData[name];
+        if (!contextData || !contextData.isAnnounced) {
+            const obj = {};
+            for (const pathValue of pathValues) {
+                setValueToPath(obj, pathValue.value, pathValue.path);
+            }
+            return this.createContext(name, obj);
+        }
+        const commands = [];
+        for (const pathValue of pathValues) {
+            if (pathValue.value === null) {
+                commands.push({ type: "remove", path: pathValue.path });
+            }
+            else {
+                commands.push({ type: "set", path: pathValue.path, value: pathValue.value });
+            }
+        }
+        return this._gw3Session
+            .send({
+            type: GW_MESSAGE_UPDATE_CONTEXT,
+            domain: "global",
+            context_id: contextData.contextId,
+            delta: { commands }
+        }, {}, { skipPeerId: false })
+            .then((gwResponse) => {
+            this.handleUpdated(contextData, {
+                added: {},
+                removed: [],
+                updated: {},
+                commands
+            }, {
+                updaterId: gwResponse.peer_id
             });
         });
-    };
-    GW3Bridge.prototype.get = function (name) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var contextData, context;
-            var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _b.sent();
-                        _b.label = 2;
-                    case 2:
-                        contextData = this._contextNameToData[name];
-                        if (!contextData || !contextData.isAnnounced) {
-                            return [2, Promise.resolve({})];
-                        }
-                        if (contextData && (!contextData.hasCallbacks() || !contextData.hasReceivedSnapshot)) {
-                            return [2, new Promise(function (resolve) {
-                                    _this.subscribe(name, function (data, _d, _r, un) {
-                                        _this.unsubscribe(un);
-                                        resolve(data);
-                                    });
-                                })];
-                        }
-                        context = (_a = contextData === null || contextData === void 0 ? void 0 : contextData.context) !== null && _a !== void 0 ? _a : {};
-                        return [2, Promise.resolve(deepClone(context))];
-                }
+    }
+    async get(name) {
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const contextData = this._contextNameToData[name];
+        if (!contextData || !contextData.isAnnounced) {
+            return Promise.resolve({});
+        }
+        if (contextData && (!contextData.hasCallbacks() || !contextData.hasReceivedSnapshot)) {
+            return new Promise((resolve) => {
+                this.subscribe(name, (data, _d, _r, un) => {
+                    this.unsubscribe(un);
+                    resolve(data);
+                });
             });
-        });
-    };
-    GW3Bridge.prototype.subscribe = function (name, callback, subscriptionKey) {
-        return __awaiter(this, void 0, void 0, function () {
-            var thisCallbackSubscriptionNumber, contextData, hadCallbacks, clone, clone, clone;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2:
-                        thisCallbackSubscriptionNumber = typeof subscriptionKey === "undefined" ? this._nextCallbackSubscriptionNumber : subscriptionKey;
-                        if (typeof subscriptionKey === "undefined") {
-                            this._nextCallbackSubscriptionNumber += 1;
-                        }
-                        if (this._contextsSubscriptionsCache.every(function (subscription) { return subscription.subKey !== _this._nextCallbackSubscriptionNumber; })) {
-                            this._contextsSubscriptionsCache.push({ contextName: name, subKey: thisCallbackSubscriptionNumber, callback: callback });
-                        }
-                        contextData = this._contextNameToData[name];
-                        if (!contextData ||
-                            !contextData.isAnnounced) {
-                            contextData = contextData || new GW3ContextData(undefined, name, false, undefined);
-                            this._contextNameToData[name] = contextData;
-                            contextData.updateCallbacks[thisCallbackSubscriptionNumber] = callback;
-                            return [2, Promise.resolve(thisCallbackSubscriptionNumber)];
-                        }
-                        hadCallbacks = contextData.hasCallbacks();
-                        contextData.updateCallbacks[thisCallbackSubscriptionNumber] = callback;
-                        if (!hadCallbacks) {
-                            if (!contextData.joinedActivity) {
-                                if (contextData.context && contextData.sentExplicitSubscription) {
-                                    if (contextData.hasReceivedSnapshot) {
-                                        clone = deepClone(contextData.context);
-                                        callback(clone, clone, [], thisCallbackSubscriptionNumber);
-                                    }
-                                    return [2, Promise.resolve(thisCallbackSubscriptionNumber)];
-                                }
-                                return [2, this.sendSubscribe(contextData)
-                                        .then(function () { return thisCallbackSubscriptionNumber; })];
-                            }
-                            else {
-                                if (contextData.hasReceivedSnapshot) {
-                                    clone = deepClone(contextData.context);
-                                    callback(clone, clone, [], thisCallbackSubscriptionNumber);
-                                }
-                                return [2, Promise.resolve(thisCallbackSubscriptionNumber)];
-                            }
-                        }
-                        else {
-                            if (contextData.hasReceivedSnapshot) {
-                                clone = deepClone(contextData.context);
-                                callback(clone, clone, [], thisCallbackSubscriptionNumber);
-                            }
-                            return [2, Promise.resolve(thisCallbackSubscriptionNumber)];
-                        }
+        }
+        const context = contextData?.context ?? {};
+        return Promise.resolve(deepClone(context));
+    }
+    async subscribe(name, callback, subscriptionKey) {
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const thisCallbackSubscriptionNumber = typeof subscriptionKey === "undefined" ? this._nextCallbackSubscriptionNumber : subscriptionKey;
+        if (typeof subscriptionKey === "undefined") {
+            this._nextCallbackSubscriptionNumber += 1;
+        }
+        if (this._contextsSubscriptionsCache.every((subscription) => subscription.subKey !== this._nextCallbackSubscriptionNumber)) {
+            this._contextsSubscriptionsCache.push({ contextName: name, subKey: thisCallbackSubscriptionNumber, callback });
+        }
+        let contextData = this._contextNameToData[name];
+        if (!contextData ||
+            !contextData.isAnnounced) {
+            contextData = contextData || new GW3ContextData(undefined, name, false, undefined);
+            this._contextNameToData[name] = contextData;
+            contextData.updateCallbacks[thisCallbackSubscriptionNumber] = callback;
+            return Promise.resolve(thisCallbackSubscriptionNumber);
+        }
+        const hadCallbacks = contextData.hasCallbacks();
+        contextData.updateCallbacks[thisCallbackSubscriptionNumber] = callback;
+        if (!hadCallbacks) {
+            if (!contextData.joinedActivity) {
+                if (contextData.context && contextData.sentExplicitSubscription) {
+                    if (contextData.hasReceivedSnapshot) {
+                        const clone = deepClone(contextData.context);
+                        callback(clone, clone, [], thisCallbackSubscriptionNumber);
+                    }
+                    return Promise.resolve(thisCallbackSubscriptionNumber);
                 }
-            });
-        });
-    };
-    GW3Bridge.prototype.unsubscribe = function (subscriptionKey) {
-        this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter(function (subscription) { return subscription.subKey !== subscriptionKey; });
-        for (var _i = 0, _a = Object.keys(this._contextNameToData); _i < _a.length; _i++) {
-            var name_1 = _a[_i];
-            var contextData = this._contextNameToData[name_1];
+                return this.sendSubscribe(contextData)
+                    .then(() => thisCallbackSubscriptionNumber);
+            }
+            else {
+                if (contextData.hasReceivedSnapshot) {
+                    const clone = deepClone(contextData.context);
+                    callback(clone, clone, [], thisCallbackSubscriptionNumber);
+                }
+                return Promise.resolve(thisCallbackSubscriptionNumber);
+            }
+        }
+        else {
+            if (contextData.hasReceivedSnapshot) {
+                const clone = deepClone(contextData.context);
+                callback(clone, clone, [], thisCallbackSubscriptionNumber);
+            }
+            return Promise.resolve(thisCallbackSubscriptionNumber);
+        }
+    }
+    unsubscribe(subscriptionKey) {
+        this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter((subscription) => subscription.subKey !== subscriptionKey);
+        for (const name of Object.keys(this._contextNameToData)) {
+            const contextData = this._contextNameToData[name];
             if (!contextData) {
                 return;
             }
-            var hadCallbacks = contextData.hasCallbacks();
+            const hadCallbacks = contextData.hasCallbacks();
             delete contextData.updateCallbacks[subscriptionKey];
             if (contextData.isAnnounced &&
                 hadCallbacks &&
                 !contextData.hasCallbacks() &&
                 contextData.sentExplicitSubscription) {
-                this.sendUnsubscribe(contextData);
+                this.sendUnsubscribe(contextData).catch(() => { });
             }
             if (!contextData.isAnnounced &&
                 !contextData.hasCallbacks()) {
-                delete this._contextNameToData[name_1];
+                delete this._contextNameToData[name];
             }
         }
-    };
-    GW3Bridge.prototype.destroy = function (name) {
-        return __awaiter(this, void 0, void 0, function () {
-            var contextData;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (!(name in this._creationPromises)) return [3, 2];
-                        return [4, this._creationPromises[name]];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2:
-                        contextData = this._contextNameToData[name];
-                        if (!contextData) {
-                            return [2, Promise.reject("context with ".concat(name, " does not exist"))];
-                        }
-                        return [2, this._gw3Session
-                                .send({
-                                type: GW_MESSAGE_DESTROY_CONTEXT,
-                                domain: "global",
-                                context_id: contextData.contextId,
-                            }).then(function (_) { return undefined; })];
-                }
-            });
-        });
-    };
-    GW3Bridge.prototype.handleUpdated = function (contextData, delta, extraData) {
-        var oldContext = contextData.context;
+    }
+    async destroy(name) {
+        if (name in this._creationPromises) {
+            await this._creationPromises[name];
+        }
+        const contextData = this._contextNameToData[name];
+        if (!contextData) {
+            return Promise.reject(`context with ${name} does not exist`);
+        }
+        return this._gw3Session
+            .send({
+            type: GW_MESSAGE_DESTROY_CONTEXT,
+            domain: "global",
+            context_id: contextData.contextId,
+        }).then((_) => undefined);
+    }
+    handleUpdated(contextData, delta, extraData) {
+        const oldContext = contextData.context;
         contextData.context = applyContextDelta(contextData.context, delta, this._logger);
         contextData.hasReceivedSnapshot = true;
         if (this._contextNameToData[contextData.name] === contextData &&
             !deepEqual(oldContext, contextData.context)) {
             this.invokeUpdateCallbacks(contextData, delta, extraData);
         }
-    };
-    GW3Bridge.prototype.subscribeToContextCreatedMessages = function () {
-        var createdMessageTypes = [
+    }
+    subscribeToContextCreatedMessages() {
+        const createdMessageTypes = [
             GW_MESSAGE_CONTEXT_ADDED,
             GW_MESSAGE_CONTEXT_CREATED,
             GW_MESSAGE_ACTIVITY_CREATED,
         ];
-        for (var _i = 0, createdMessageTypes_1 = createdMessageTypes; _i < createdMessageTypes_1.length; _i++) {
-            var createdMessageType = createdMessageTypes_1[_i];
-            var sub = this._connection.on(createdMessageType, this.handleContextCreatedMessage.bind(this));
+        for (const createdMessageType of createdMessageTypes) {
+            const sub = this._connection.on(createdMessageType, this.handleContextCreatedMessage.bind(this));
             this._gw3Subscriptions.push(sub);
         }
-    };
-    GW3Bridge.prototype.handleContextCreatedMessage = function (contextCreatedMsg) {
-        var _this = this;
-        var createdMessageType = contextCreatedMsg.type;
+    }
+    handleContextCreatedMessage(contextCreatedMsg) {
+        const createdMessageType = contextCreatedMsg.type;
         if (createdMessageType === GW_MESSAGE_ACTIVITY_CREATED) {
             this._contextNameToId[contextCreatedMsg.activity_id] = contextCreatedMsg.context_id;
             this._contextIdToName[contextCreatedMsg.context_id] = contextCreatedMsg.activity_id;
@@ -12764,14 +11563,14 @@ var GW3Bridge = (function () {
             this._contextIdToName[contextCreatedMsg.context_id] = contextCreatedMsg.name;
         }
         else ;
-        var name = this._contextIdToName[contextCreatedMsg.context_id];
+        const name = this._contextIdToName[contextCreatedMsg.context_id];
         if (!name) {
             throw new Error("Received created event for context with unknown name: " + contextCreatedMsg.context_id);
         }
         if (!this._contextNameToId[name]) {
             throw new Error("Received created event for context with unknown id: " + contextCreatedMsg.context_id);
         }
-        var contextData = this._contextNameToData[name];
+        let contextData = this._contextNameToData[name];
         if (contextData) {
             if (contextData.isAnnounced) {
                 return;
@@ -12792,27 +11591,26 @@ var GW3Bridge = (function () {
             this._contextNameToData[name] = contextData =
                 new GW3ContextData(contextCreatedMsg.context_id, name, true, contextCreatedMsg.activity_id);
             if (this._trackAllContexts) {
-                this.subscribe(name, function () { }).then(function (subKey) { return _this._systemContextsSubKey = subKey; });
+                this.subscribe(name, () => { }).then((subKey) => this._systemContextsSubKey = subKey);
             }
         }
-    };
-    GW3Bridge.prototype.subscribeToContextUpdatedMessages = function () {
-        var updatedMessageTypes = [
+    }
+    subscribeToContextUpdatedMessages() {
+        const updatedMessageTypes = [
             GW_MESSAGE_CONTEXT_UPDATED,
             GW_MESSAGE_SUBSCRIBED_CONTEXT,
             GW_MESSAGE_JOINED_ACTIVITY,
         ];
-        for (var _i = 0, updatedMessageTypes_1 = updatedMessageTypes; _i < updatedMessageTypes_1.length; _i++) {
-            var updatedMessageType = updatedMessageTypes_1[_i];
-            var sub = this._connection.on(updatedMessageType, this.handleContextUpdatedMessage.bind(this));
+        for (const updatedMessageType of updatedMessageTypes) {
+            const sub = this._connection.on(updatedMessageType, this.handleContextUpdatedMessage.bind(this));
             this._gw3Subscriptions.push(sub);
         }
-    };
-    GW3Bridge.prototype.handleContextUpdatedMessage = function (contextUpdatedMsg) {
-        var updatedMessageType = contextUpdatedMsg.type;
-        var contextId = contextUpdatedMsg.context_id;
-        var contextData = this._contextNameToData[this._contextIdToName[contextId]];
-        var justSeen = !contextData || !contextData.isAnnounced;
+    }
+    handleContextUpdatedMessage(contextUpdatedMsg) {
+        const updatedMessageType = contextUpdatedMsg.type;
+        const contextId = contextUpdatedMsg.context_id;
+        let contextData = this._contextNameToData[this._contextIdToName[contextId]];
+        const justSeen = !contextData || !contextData.isAnnounced;
         if (updatedMessageType === GW_MESSAGE_JOINED_ACTIVITY) {
             if (!contextData) {
                 contextData =
@@ -12837,12 +11635,12 @@ var GW3Bridge = (function () {
                     this._contextNameToId[contextUpdatedMsg.name] = contextId;
                 }
                 else {
-                    this._logger.error("Received 'update' for unknown context: ".concat(contextId));
+                    this._logger.error(`Received 'update' for unknown context: ${contextId}`);
                 }
                 return;
             }
         }
-        var oldContext = contextData.context;
+        const oldContext = contextData.context;
         contextData.hasReceivedSnapshot = true;
         if (updatedMessageType === GW_MESSAGE_SUBSCRIBED_CONTEXT) {
             contextData.context = contextUpdatedMsg.data || {};
@@ -12861,14 +11659,13 @@ var GW3Bridge = (function () {
             updatedMessageType === GW_MESSAGE_SUBSCRIBED_CONTEXT) {
             this.invokeUpdateCallbacks(contextData, contextUpdatedMsg.delta, { updaterId: contextUpdatedMsg.updater_id });
         }
-    };
-    GW3Bridge.prototype.invokeUpdateCallbacks = function (contextData, delta, extraData) {
+    }
+    invokeUpdateCallbacks(contextData, delta, extraData) {
         delta = delta || { added: {}, updated: {}, reset: {}, removed: [] };
         if (delta.commands) {
             delta.added = delta.updated = delta.reset = {};
             delta.removed = [];
-            for (var _i = 0, _a = delta.commands; _i < _a.length; _i++) {
-                var command = _a[_i];
+            for (const command of delta.commands) {
                 if (command.type === "remove") {
                     if (command.path.indexOf(".") === -1) {
                         delta.removed.push(command.path);
@@ -12880,10 +11677,10 @@ var GW3Bridge = (function () {
                 }
             }
         }
-        for (var updateCallbackIndex in contextData.updateCallbacks) {
+        for (const updateCallbackIndex in contextData.updateCallbacks) {
             if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
                 try {
-                    var updateCallback = contextData.updateCallbacks[updateCallbackIndex];
+                    const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
                     updateCallback(deepClone(contextData.context), deepClone(Object.assign({}, delta.added || {}, delta.updated || {}, delta.reset || {})), delta.removed, parseInt(updateCallbackIndex, 10), extraData);
                 }
                 catch (err) {
@@ -12891,27 +11688,26 @@ var GW3Bridge = (function () {
                 }
             }
         }
-    };
-    GW3Bridge.prototype.subscribeToContextDestroyedMessages = function () {
-        var destroyedMessageTypes = [
+    }
+    subscribeToContextDestroyedMessages() {
+        const destroyedMessageTypes = [
             GW_MESSAGE_CONTEXT_DESTROYED,
             GW_MESSAGE_ACTIVITY_DESTROYED,
         ];
-        for (var _i = 0, destroyedMessageTypes_1 = destroyedMessageTypes; _i < destroyedMessageTypes_1.length; _i++) {
-            var destroyedMessageType = destroyedMessageTypes_1[_i];
-            var sub = this._connection.on(destroyedMessageType, this.handleContextDestroyedMessage.bind(this));
+        for (const destroyedMessageType of destroyedMessageTypes) {
+            const sub = this._connection.on(destroyedMessageType, this.handleContextDestroyedMessage.bind(this));
             this._gw3Subscriptions.push(sub);
         }
-    };
-    GW3Bridge.prototype.handleContextDestroyedMessage = function (destroyedMsg) {
-        var destroyedMessageType = destroyedMsg.type;
-        var contextId;
-        var name;
+    }
+    handleContextDestroyedMessage(destroyedMsg) {
+        const destroyedMessageType = destroyedMsg.type;
+        let contextId;
+        let name;
         if (destroyedMessageType === GW_MESSAGE_ACTIVITY_DESTROYED) {
             name = destroyedMsg.activity_id;
             contextId = this._contextNameToId[name];
             if (!contextId) {
-                this._logger.error("Received 'destroyed' for unknown activity: ".concat(destroyedMsg.activity_id));
+                this._logger.error(`Received 'destroyed' for unknown activity: ${destroyedMsg.activity_id}`);
                 return;
             }
         }
@@ -12919,42 +11715,41 @@ var GW3Bridge = (function () {
             contextId = destroyedMsg.context_id;
             name = this._contextIdToName[contextId];
             if (!name) {
-                this._logger.error("Received 'destroyed' for unknown context: ".concat(destroyedMsg.context_id));
+                this._logger.error(`Received 'destroyed' for unknown context: ${destroyedMsg.context_id}`);
                 return;
             }
         }
         delete this._contextIdToName[contextId];
         delete this._contextNameToId[name];
-        var contextData = this._contextNameToData[name];
+        const contextData = this._contextNameToData[name];
         delete this._contextNameToData[name];
         if (!contextData || !contextData.isAnnounced) {
-            this._logger.error("Received 'destroyed' for unknown context: ".concat(contextId));
+            this._logger.error(`Received 'destroyed' for unknown context: ${contextId}`);
             return;
         }
-    };
-    GW3Bridge.prototype.sendSubscribe = function (contextData) {
+    }
+    sendSubscribe(contextData) {
         contextData.sentExplicitSubscription = true;
         return this._gw3Session
             .send({
             type: GW_MESSAGE_SUBSCRIBE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
-        }).then(function (_) { return undefined; });
-    };
-    GW3Bridge.prototype.sendUnsubscribe = function (contextData) {
+        }).then((_) => undefined);
+    }
+    sendUnsubscribe(contextData) {
         contextData.sentExplicitSubscription = false;
         return this._gw3Session
             .send({
             type: GW_MESSAGE_UNSUBSCRIBE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
-        }).then(function (_) { return undefined; });
-    };
-    GW3Bridge.prototype.calculateContextDeltaV1 = function (from, to) {
-        var delta = { added: {}, updated: {}, removed: [], reset: undefined };
+        }).then((_) => undefined);
+    }
+    calculateContextDeltaV1(from, to) {
+        const delta = { added: {}, updated: {}, removed: [], reset: undefined };
         if (from) {
-            for (var _i = 0, _a = Object.keys(from); _i < _a.length; _i++) {
-                var x = _a[_i];
+            for (const x of Object.keys(from)) {
                 if (Object.keys(to).indexOf(x) !== -1
                     && to[x] !== null
                     && !deepEqual(from[x], to[x])) {
@@ -12962,8 +11757,7 @@ var GW3Bridge = (function () {
                 }
             }
         }
-        for (var _b = 0, _c = Object.keys(to); _b < _c.length; _b++) {
-            var x = _c[_b];
+        for (const x of Object.keys(to)) {
             if (!from || (Object.keys(from).indexOf(x) === -1)) {
                 if (to[x] !== null) {
                     delta.added[x] = to[x];
@@ -12974,28 +11768,24 @@ var GW3Bridge = (function () {
             }
         }
         return delta;
-    };
-    GW3Bridge.prototype.calculateContextDeltaV2 = function (from, to) {
-        var _a, _b;
-        var delta = { added: {}, updated: {}, removed: [], reset: undefined, commands: [] };
-        for (var _i = 0, _c = Object.keys(to); _i < _c.length; _i++) {
-            var x = _c[_i];
+    }
+    calculateContextDeltaV2(from, to) {
+        const delta = { added: {}, updated: {}, removed: [], reset: undefined, commands: [] };
+        for (const x of Object.keys(to)) {
             if (to[x] !== null) {
-                var fromX = from ? from[x] : null;
+                const fromX = from ? from[x] : null;
                 if (!deepEqual(fromX, to[x])) {
-                    (_a = delta.commands) === null || _a === void 0 ? void 0 : _a.push({ type: "set", path: x, value: to[x] });
+                    delta.commands?.push({ type: "set", path: x, value: to[x] });
                 }
             }
             else {
-                (_b = delta.commands) === null || _b === void 0 ? void 0 : _b.push({ type: "remove", path: x });
+                delta.commands?.push({ type: "remove", path: x });
             }
         }
         return delta;
-    };
-    GW3Bridge.prototype.resetState = function () {
-        var _this = this;
-        for (var _i = 0, _a = this._gw3Subscriptions; _i < _a.length; _i++) {
-            var sub = _a[_i];
+    }
+    resetState() {
+        for (const sub of this._gw3Subscriptions) {
             this._connection.off(sub);
         }
         if (this._systemContextsSubKey) {
@@ -13006,211 +11796,171 @@ var GW3Bridge = (function () {
         this._contextNameToId = {};
         this._contextIdToName = {};
         delete this._protocolVersion;
-        this._contextsTempCache = Object.keys(this._contextNameToData).reduce(function (cacheSoFar, ctxName) {
-            cacheSoFar[ctxName] = _this._contextNameToData[ctxName].context;
+        this._contextsTempCache = Object.keys(this._contextNameToData).reduce((cacheSoFar, ctxName) => {
+            cacheSoFar[ctxName] = this._contextNameToData[ctxName].context;
             return cacheSoFar;
         }, {});
         this._contextNameToData = {};
-    };
-    GW3Bridge.prototype.reInitiateState = function () {
-        var _a;
-        return __awaiter(this, void 0, void 0, function () {
-            var _b, _c, _e, _i, ctxName, lastKnownData;
-            var _this = this;
-            return __generator(this, function (_f) {
-                switch (_f.label) {
-                    case 0:
-                        this.subscribeToContextCreatedMessages();
-                        this.subscribeToContextUpdatedMessages();
-                        this.subscribeToContextDestroyedMessages();
-                        (_a = this._connection.replayer) === null || _a === void 0 ? void 0 : _a.drain(ContextMessageReplaySpec.name, function (message) {
-                            var type = message.type;
-                            if (!type) {
-                                return;
-                            }
-                            if (type === GW_MESSAGE_CONTEXT_CREATED ||
-                                type === GW_MESSAGE_CONTEXT_ADDED ||
-                                type === GW_MESSAGE_ACTIVITY_CREATED) {
-                                _this.handleContextCreatedMessage(message);
-                            }
-                            else if (type === GW_MESSAGE_SUBSCRIBED_CONTEXT ||
-                                type === GW_MESSAGE_CONTEXT_UPDATED ||
-                                type === GW_MESSAGE_JOINED_ACTIVITY) {
-                                _this.handleContextUpdatedMessage(message);
-                            }
-                            else if (type === GW_MESSAGE_CONTEXT_DESTROYED ||
-                                type === GW_MESSAGE_ACTIVITY_DESTROYED) {
-                                _this.handleContextDestroyedMessage(message);
-                            }
-                        });
-                        return [4, Promise.all(this._contextsSubscriptionsCache.map(function (subscription) { return _this.subscribe(subscription.contextName, subscription.callback, subscription.subKey); }))];
-                    case 1:
-                        _f.sent();
-                        return [4, this.flushQueue()];
-                    case 2:
-                        _f.sent();
-                        _b = this._contextsTempCache;
-                        _c = [];
-                        for (_e in _b)
-                            _c.push(_e);
-                        _i = 0;
-                        _f.label = 3;
-                    case 3:
-                        if (!(_i < _c.length)) return [3, 7];
-                        _e = _c[_i];
-                        if (!(_e in _b)) return [3, 6];
-                        ctxName = _e;
-                        if (typeof this._contextsTempCache[ctxName] !== "object" || Object.keys(this._contextsTempCache[ctxName]).length === 0) {
-                            return [3, 6];
-                        }
-                        lastKnownData = this._contextsTempCache[ctxName];
-                        this._logger.info("Re-announcing known context: ".concat(ctxName));
-                        return [4, this.flushQueue()];
-                    case 4:
-                        _f.sent();
-                        return [4, this.update(ctxName, lastKnownData)];
-                    case 5:
-                        _f.sent();
-                        _f.label = 6;
-                    case 6:
-                        _i++;
-                        return [3, 3];
-                    case 7:
-                        this._contextsTempCache = {};
-                        this._logger.info("Contexts are re-announced");
-                        return [2];
-                }
-            });
+    }
+    async reInitiateState() {
+        this.subscribeToContextCreatedMessages();
+        this.subscribeToContextUpdatedMessages();
+        this.subscribeToContextDestroyedMessages();
+        this._connection.replayer?.drain(ContextMessageReplaySpec.name, (message) => {
+            const type = message.type;
+            if (!type) {
+                return;
+            }
+            if (type === GW_MESSAGE_CONTEXT_CREATED ||
+                type === GW_MESSAGE_CONTEXT_ADDED ||
+                type === GW_MESSAGE_ACTIVITY_CREATED) {
+                this.handleContextCreatedMessage(message);
+            }
+            else if (type === GW_MESSAGE_SUBSCRIBED_CONTEXT ||
+                type === GW_MESSAGE_CONTEXT_UPDATED ||
+                type === GW_MESSAGE_JOINED_ACTIVITY) {
+                this.handleContextUpdatedMessage(message);
+            }
+            else if (type === GW_MESSAGE_CONTEXT_DESTROYED ||
+                type === GW_MESSAGE_ACTIVITY_DESTROYED) {
+                this.handleContextDestroyedMessage(message);
+            }
         });
-    };
-    GW3Bridge.prototype.flushQueue = function () {
-        return new Promise(function (resolve) { return setTimeout(function () { return resolve(); }, 0); });
-    };
-    return GW3Bridge;
-}());
+        await Promise.all(this._contextsSubscriptionsCache.map((subscription) => this.subscribe(subscription.contextName, subscription.callback, subscription.subKey)));
+        await this.flushQueue();
+        for (const ctxName in this._contextsTempCache) {
+            if (typeof this._contextsTempCache[ctxName] !== "object" || Object.keys(this._contextsTempCache[ctxName]).length === 0) {
+                continue;
+            }
+            const lastKnownData = this._contextsTempCache[ctxName];
+            this._logger.info(`Re-announcing known context: ${ctxName}`);
+            await this.flushQueue();
+            await this.update(ctxName, lastKnownData);
+        }
+        this._contextsTempCache = {};
+        this._logger.info("Contexts are re-announced");
+    }
+    flushQueue() {
+        return new Promise((resolve) => setTimeout(() => resolve(), 0));
+    }
+}
 
-var ContextsModule = (function () {
-    function ContextsModule(config) {
+class ContextsModule {
+    initTime;
+    initStartTime;
+    initEndTime;
+    _bridge;
+    constructor(config) {
         this._bridge = new GW3Bridge(config);
     }
-    ContextsModule.prototype.all = function () {
+    all() {
         return this._bridge.all();
-    };
-    ContextsModule.prototype.update = function (name, data) {
+    }
+    update(name, data) {
         this.checkName(name);
         this.checkData(data);
         return this._bridge.update(name, data);
-    };
-    ContextsModule.prototype.set = function (name, data) {
+    }
+    set(name, data) {
         this.checkName(name);
         this.checkData(data);
         return this._bridge.set(name, data);
-    };
-    ContextsModule.prototype.setPath = function (name, path, data) {
+    }
+    setPath(name, path, data) {
         this.checkName(name);
         this.checkPath(path);
-        var isTopLevelPath = path === "";
+        const isTopLevelPath = path === "";
         if (isTopLevelPath) {
             this.checkData(data);
             return this.set(name, data);
         }
         return this._bridge.setPath(name, path, data);
-    };
-    ContextsModule.prototype.setPaths = function (name, paths) {
+    }
+    setPaths(name, paths) {
         this.checkName(name);
         if (!Array.isArray(paths)) {
             throw new Error("Please provide the paths as an array of PathValues!");
         }
-        for (var _i = 0, paths_1 = paths; _i < paths_1.length; _i++) {
-            var _a = paths_1[_i], path = _a.path, value = _a.value;
+        for (const { path, value } of paths) {
             this.checkPath(path);
-            var isTopLevelPath = path === "";
+            const isTopLevelPath = path === "";
             if (isTopLevelPath) {
                 this.checkData(value);
             }
         }
         return this._bridge.setPaths(name, paths);
-    };
-    ContextsModule.prototype.subscribe = function (name, callback) {
-        var _this = this;
+    }
+    subscribe(name, callback) {
         this.checkName(name);
         if (typeof callback !== "function") {
             throw new Error("Please provide the callback as a function!");
         }
         return this._bridge
-            .subscribe(name, function (data, delta, removed, key, extraData) { return callback(data, delta, removed, function () { return _this._bridge.unsubscribe(key); }, extraData); })
-            .then(function (key) {
-            return function () {
-                _this._bridge.unsubscribe(key);
-            };
+            .subscribe(name, (data, delta, removed, key, extraData) => callback(data, delta, removed, () => this._bridge.unsubscribe(key), extraData))
+            .then((key) => () => {
+            this._bridge.unsubscribe(key);
         });
-    };
-    ContextsModule.prototype.get = function (name) {
+    }
+    get(name) {
         this.checkName(name);
         return this._bridge.get(name);
-    };
-    ContextsModule.prototype.ready = function () {
+    }
+    ready() {
         return Promise.resolve(this);
-    };
-    ContextsModule.prototype.destroy = function (name) {
+    }
+    destroy(name) {
         this.checkName(name);
         return this._bridge.destroy(name);
-    };
-    Object.defineProperty(ContextsModule.prototype, "setPathSupported", {
-        get: function () {
-            return this._bridge.setPathSupported;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    ContextsModule.prototype.checkName = function (name) {
+    }
+    get setPathSupported() {
+        return this._bridge.setPathSupported;
+    }
+    checkName(name) {
         if (typeof name !== "string" || name === "") {
             throw new Error("Please provide the name as a non-empty string!");
         }
-    };
-    ContextsModule.prototype.checkPath = function (path) {
+    }
+    checkPath(path) {
         if (typeof path !== "string") {
             throw new Error("Please provide the path as a dot delimited string!");
         }
-    };
-    ContextsModule.prototype.checkData = function (data) {
+    }
+    checkData(data) {
         if (typeof data !== "object") {
             throw new Error("Please provide the data as an object!");
         }
-    };
-    return ContextsModule;
-}());
+    }
+}
 
 function promisify (promise, successCallback, errorCallback) {
     if (typeof successCallback !== "function" && typeof errorCallback !== "function") {
         return promise;
     }
     if (typeof successCallback !== "function") {
-        successCallback = function () { };
+        successCallback = () => { };
     }
     else if (typeof errorCallback !== "function") {
-        errorCallback = function () { };
+        errorCallback = () => { };
     }
     return promise.then(successCallback, errorCallback);
 }
 
-function rejectAfter(ms, promise, error) {
-    if (ms === void 0) { ms = 0; }
-    var timeout;
-    var clearTimeoutIfThere = function () {
+function rejectAfter(ms = 0, promise, error) {
+    let timeout;
+    const clearTimeoutIfThere = () => {
         if (timeout) {
             clearTimeout(timeout);
         }
     };
     promise
-        .then(function () {
+        .then(() => {
         clearTimeoutIfThere();
     })
-        .catch(function () {
+        .catch(() => {
         clearTimeoutIfThere();
     });
-    return new Promise(function (resolve, reject) {
-        timeout = setTimeout(function () { return reject(error); }, ms);
+    return new Promise((resolve, reject) => {
+        timeout = setTimeout(() => reject(error), ms);
     });
 }
 
@@ -13219,32 +11969,34 @@ var InvokeStatus;
     InvokeStatus[InvokeStatus["Success"] = 0] = "Success";
     InvokeStatus[InvokeStatus["Error"] = 1] = "Error";
 })(InvokeStatus || (InvokeStatus = {}));
-var Client = (function () {
-    function Client(protocol, repo, instance, configuration) {
+class Client {
+    protocol;
+    repo;
+    instance;
+    configuration;
+    constructor(protocol, repo, instance, configuration) {
         this.protocol = protocol;
         this.repo = repo;
         this.instance = instance;
         this.configuration = configuration;
     }
-    Client.prototype.subscribe = function (method, options, successCallback, errorCallback, existingSub) {
-        var _this = this;
-        var callProtocolSubscribe = function (targetServers, stream, successProxy, errorProxy) {
-            var _a;
-            options.methodResponseTimeout = (_a = options.methodResponseTimeout) !== null && _a !== void 0 ? _a : options.waitTimeoutMs;
-            _this.protocol.client.subscribe(stream, options, targetServers, successProxy, errorProxy, existingSub);
+    subscribe(method, options, successCallback, errorCallback, existingSub) {
+        const callProtocolSubscribe = (targetServers, stream, successProxy, errorProxy) => {
+            options.methodResponseTimeout = options.methodResponseTimeout ?? options.waitTimeoutMs;
+            this.protocol.client.subscribe(stream, options, targetServers, successProxy, errorProxy, existingSub);
         };
-        var promise = new Promise(function (resolve, reject) {
-            var successProxy = function (sub) {
+        const promise = new Promise((resolve, reject) => {
+            const successProxy = (sub) => {
                 resolve(sub);
             };
-            var errorProxy = function (err) {
+            const errorProxy = (err) => {
                 reject(err);
             };
             if (!method) {
-                reject("Method definition is required. Please, provide either a unique string for a method name or a \u201CmethodDefinition\u201D object with a required \u201Cname\u201D property.");
+                reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
                 return;
             }
-            var methodDef;
+            let methodDef;
             if (typeof method === "string") {
                 methodDef = { name: method };
             }
@@ -13252,265 +12004,253 @@ var Client = (function () {
                 methodDef = method;
             }
             if (!methodDef.name) {
-                reject("Method definition is required. Please, provide either a unique string for a method name or a \u201CmethodDefinition\u201D object with a required \u201Cname\u201D property.");
+                reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
                 return;
             }
             if (options === undefined) {
                 options = {};
             }
-            var target = options.target;
+            let target = options.target;
             if (target === undefined) {
                 target = "best";
             }
             if (typeof target === "string" && target !== "all" && target !== "best") {
-                reject(new Error("\"".concat(target, "\" is not a valid target. Valid targets are \"all\", \"best\", or an instance.")));
+                reject(new Error(`"${target}" is not a valid target. Valid targets are "all", "best", or an instance.`));
                 return;
             }
             if (options.methodResponseTimeout === undefined) {
                 options.methodResponseTimeout = options.method_response_timeout;
                 if (options.methodResponseTimeout === undefined) {
-                    options.methodResponseTimeout = _this.configuration.methodResponseTimeout;
+                    options.methodResponseTimeout = this.configuration.methodResponseTimeout;
                 }
             }
             if (options.waitTimeoutMs === undefined) {
                 options.waitTimeoutMs = options.wait_for_method_timeout;
                 if (options.waitTimeoutMs === undefined) {
-                    options.waitTimeoutMs = _this.configuration.waitTimeoutMs;
+                    options.waitTimeoutMs = this.configuration.waitTimeoutMs;
                 }
             }
-            var delayStep = 500;
-            var delayTillNow = 0;
-            var currentServers = _this.getServerMethodsByFilterAndTarget(methodDef, target);
+            const delayStep = 500;
+            let delayTillNow = 0;
+            let currentServers = this.getServerMethodsByFilterAndTarget(methodDef, target);
             if (currentServers.length > 0) {
                 callProtocolSubscribe(currentServers, currentServers[0].methods[0], successProxy, errorProxy);
             }
             else {
-                var retry_1 = function () {
+                const retry = () => {
                     if (!target || !(options.waitTimeoutMs)) {
                         return;
                     }
                     delayTillNow += delayStep;
-                    currentServers = _this.getServerMethodsByFilterAndTarget(methodDef, target);
+                    currentServers = this.getServerMethodsByFilterAndTarget(methodDef, target);
                     if (currentServers.length > 0) {
-                        var streamInfo = currentServers[0].methods[0];
+                        const streamInfo = currentServers[0].methods[0];
                         callProtocolSubscribe(currentServers, streamInfo, successProxy, errorProxy);
                     }
                     else if (delayTillNow >= options.waitTimeoutMs) {
-                        var def = typeof method === "string" ? { name: method } : method;
+                        const def = typeof method === "string" ? { name: method } : method;
                         callProtocolSubscribe(currentServers, def, successProxy, errorProxy);
                     }
                     else {
-                        setTimeout(retry_1, delayStep);
+                        setTimeout(retry, delayStep);
                     }
                 };
-                setTimeout(retry_1, delayStep);
+                setTimeout(retry, delayStep);
             }
         });
         return promisify(promise, successCallback, errorCallback);
-    };
-    Client.prototype.servers = function (methodFilter) {
-        var filterCopy = methodFilter === undefined
+    }
+    servers(methodFilter) {
+        const filterCopy = methodFilter === undefined
             ? undefined
-            : __assign({}, methodFilter);
-        return this.getServers(filterCopy).map(function (serverMethodMap) {
+            : { ...methodFilter };
+        return this.getServers(filterCopy).map((serverMethodMap) => {
             return serverMethodMap.server.instance;
         });
-    };
-    Client.prototype.methods = function (methodFilter) {
+    }
+    methods(methodFilter) {
         if (typeof methodFilter === "string") {
             methodFilter = { name: methodFilter };
         }
         else {
-            methodFilter = __assign({}, methodFilter);
+            methodFilter = { ...methodFilter };
         }
         return this.getMethods(methodFilter);
-    };
-    Client.prototype.methodsForInstance = function (instance) {
+    }
+    methodsForInstance(instance) {
         return this.getMethodsForInstance(instance);
-    };
-    Client.prototype.methodAdded = function (callback) {
+    }
+    methodAdded(callback) {
         return this.repo.onMethodAdded(callback);
-    };
-    Client.prototype.methodRemoved = function (callback) {
+    }
+    methodRemoved(callback) {
         return this.repo.onMethodRemoved(callback);
-    };
-    Client.prototype.serverAdded = function (callback) {
+    }
+    serverAdded(callback) {
         return this.repo.onServerAdded(callback);
-    };
-    Client.prototype.serverRemoved = function (callback) {
-        return this.repo.onServerRemoved(function (server, reason) {
+    }
+    serverRemoved(callback) {
+        return this.repo.onServerRemoved((server, reason) => {
             callback(server, reason);
         });
-    };
-    Client.prototype.serverMethodAdded = function (callback) {
-        return this.repo.onServerMethodAdded(function (server, method) {
-            callback({ server: server, method: method });
+    }
+    serverMethodAdded(callback) {
+        return this.repo.onServerMethodAdded((server, method) => {
+            callback({ server, method });
         });
-    };
-    Client.prototype.serverMethodRemoved = function (callback) {
-        return this.repo.onServerMethodRemoved(function (server, method) {
-            callback({ server: server, method: method });
+    }
+    serverMethodRemoved(callback) {
+        return this.repo.onServerMethodRemoved((server, method) => {
+            callback({ server, method });
         });
-    };
-    Client.prototype.invoke = function (methodFilter, argumentObj, target, additionalOptions, success, error) {
-        return __awaiter(this, void 0, void 0, function () {
-            var getInvokePromise;
-            var _this = this;
-            return __generator(this, function (_a) {
-                getInvokePromise = function () { return __awaiter(_this, void 0, void 0, function () {
-                    var methodDefinition, serversMethodMap, method, errorObj, timeout, additionalOptionsCopy, invokePromises, invocationMessages, results, allRejected;
-                    var _this = this;
-                    var _a, _b, _c;
-                    return __generator(this, function (_d) {
-                        switch (_d.label) {
-                            case 0:
-                                if (typeof methodFilter === "string") {
-                                    methodDefinition = { name: methodFilter };
-                                }
-                                else {
-                                    methodDefinition = __assign({}, methodFilter);
-                                }
-                                if (!methodDefinition.name) {
-                                    return [2, Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a \u201CmethodDefinition\u201D object with a required \u201Cname\u201D property.")];
-                                }
-                                if (!argumentObj) {
-                                    argumentObj = {};
-                                }
-                                if (!target) {
-                                    target = "best";
-                                }
-                                if (typeof target === "string" && target !== "all" && target !== "best" && target !== "skipMine") {
-                                    return [2, Promise.reject(new Error("\"".concat(target, "\" is not a valid target. Valid targets are \"all\" and \"best\".")))];
-                                }
-                                if (!additionalOptions) {
-                                    additionalOptions = {};
-                                }
-                                if (additionalOptions.methodResponseTimeoutMs === undefined) {
-                                    additionalOptions.methodResponseTimeoutMs = additionalOptions.method_response_timeout;
-                                    if (additionalOptions.methodResponseTimeoutMs === undefined) {
-                                        additionalOptions.methodResponseTimeoutMs = this.configuration.methodResponseTimeout;
-                                    }
-                                }
-                                if (additionalOptions.waitTimeoutMs === undefined) {
-                                    additionalOptions.waitTimeoutMs = additionalOptions.wait_for_method_timeout;
-                                    if (additionalOptions.waitTimeoutMs === undefined) {
-                                        additionalOptions.waitTimeoutMs = this.configuration.waitTimeoutMs;
-                                    }
-                                }
-                                if (additionalOptions.waitTimeoutMs !== undefined && typeof additionalOptions.waitTimeoutMs !== "number") {
-                                    return [2, Promise.reject(new Error("\"".concat(additionalOptions.waitTimeoutMs, "\" is not a valid number for \"waitTimeoutMs\" ")))];
-                                }
-                                if (typeof argumentObj !== "object") {
-                                    return [2, Promise.reject(new Error("The method arguments must be an object. method: ".concat(methodDefinition.name)))];
-                                }
-                                serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
-                                if (!(serversMethodMap.length === 0)) return [3, 4];
-                                _d.label = 1;
-                            case 1:
-                                _d.trys.push([1, 3, , 4]);
-                                return [4, this.tryToAwaitForMethods(methodDefinition, target, additionalOptions)];
-                            case 2:
-                                serversMethodMap = _d.sent();
-                                return [3, 4];
-                            case 3:
-                                _d.sent();
-                                method = __assign(__assign({}, methodDefinition), { getServers: function () { return []; }, supportsStreaming: false, objectTypes: (_a = methodDefinition.objectTypes) !== null && _a !== void 0 ? _a : [], flags: (_c = (_b = methodDefinition.flags) === null || _b === void 0 ? void 0 : _b.metadata) !== null && _c !== void 0 ? _c : {} });
-                                errorObj = {
-                                    method: method,
-                                    called_with: argumentObj,
-                                    message: "Can not find a method matching ".concat(JSON.stringify(methodFilter), " with server filter ").concat(JSON.stringify(target)),
-                                    executed_by: undefined,
-                                    returned: undefined,
-                                    status: undefined,
-                                };
-                                return [2, Promise.reject(errorObj)];
-                            case 4:
-                                timeout = additionalOptions.methodResponseTimeoutMs;
-                                additionalOptionsCopy = additionalOptions;
-                                invokePromises = serversMethodMap.map(function (serversMethodPair) {
-                                    var invId = shortid();
-                                    var method = serversMethodPair.methods[0];
-                                    var server = serversMethodPair.server;
-                                    var invokePromise = _this.protocol.client.invoke(invId, method, argumentObj, server, additionalOptionsCopy);
-                                    return Promise.race([
-                                        invokePromise,
-                                        rejectAfter(timeout, invokePromise, {
-                                            invocationId: invId,
-                                            message: "Invocation timeout (".concat(timeout, " ms) reached for method name: ").concat(method === null || method === void 0 ? void 0 : method.name, ", target instance: ").concat(JSON.stringify(server.instance), ", options: ").concat(JSON.stringify(additionalOptionsCopy)),
-                                            status: InvokeStatus.Error,
-                                        })
-                                    ]);
-                                });
-                                return [4, Promise.all(invokePromises)];
-                            case 5:
-                                invocationMessages = _d.sent();
-                                results = this.getInvocationResultObj(invocationMessages, methodDefinition, argumentObj);
-                                allRejected = invocationMessages.every(function (result) { return result.status === InvokeStatus.Error; });
-                                if (allRejected) {
-                                    return [2, Promise.reject(results)];
-                                }
-                                return [2, results];
-                        }
-                    });
-                }); };
-                return [2, promisify(getInvokePromise(), success, error)];
+    }
+    async invoke(methodFilter, argumentObj, target, additionalOptions, success, error) {
+        const getInvokePromise = async () => {
+            let methodDefinition;
+            if (typeof methodFilter === "string") {
+                methodDefinition = { name: methodFilter };
+            }
+            else {
+                methodDefinition = { ...methodFilter };
+            }
+            if (!methodDefinition.name) {
+                return Promise.reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
+            }
+            if (!argumentObj) {
+                argumentObj = {};
+            }
+            if (!target) {
+                target = "best";
+            }
+            if (typeof target === "string" && target !== "all" && target !== "best" && target !== "skipMine") {
+                return Promise.reject(new Error(`"${target}" is not a valid target. Valid targets are "all" and "best".`));
+            }
+            if (!additionalOptions) {
+                additionalOptions = {};
+            }
+            if (additionalOptions.methodResponseTimeoutMs === undefined) {
+                additionalOptions.methodResponseTimeoutMs = additionalOptions.method_response_timeout;
+                if (additionalOptions.methodResponseTimeoutMs === undefined) {
+                    additionalOptions.methodResponseTimeoutMs = this.configuration.methodResponseTimeout;
+                }
+            }
+            if (additionalOptions.waitTimeoutMs === undefined) {
+                additionalOptions.waitTimeoutMs = additionalOptions.wait_for_method_timeout;
+                if (additionalOptions.waitTimeoutMs === undefined) {
+                    additionalOptions.waitTimeoutMs = this.configuration.waitTimeoutMs;
+                }
+            }
+            if (additionalOptions.waitTimeoutMs !== undefined && typeof additionalOptions.waitTimeoutMs !== "number") {
+                return Promise.reject(new Error(`"${additionalOptions.waitTimeoutMs}" is not a valid number for "waitTimeoutMs" `));
+            }
+            if (typeof argumentObj !== "object") {
+                return Promise.reject(new Error(`The method arguments must be an object. method: ${methodDefinition.name}`));
+            }
+            let serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
+            if (serversMethodMap.length === 0) {
+                try {
+                    serversMethodMap = await this.tryToAwaitForMethods(methodDefinition, target, additionalOptions);
+                }
+                catch (err) {
+                    const method = {
+                        ...methodDefinition,
+                        getServers: () => [],
+                        supportsStreaming: false,
+                        objectTypes: methodDefinition.objectTypes ?? [],
+                        flags: methodDefinition.flags?.metadata ?? {}
+                    };
+                    const errorObj = {
+                        method,
+                        called_with: argumentObj,
+                        message: `Can not find a method matching ${JSON.stringify(methodFilter)} with server filter ${JSON.stringify(target)}`,
+                        executed_by: undefined,
+                        returned: undefined,
+                        status: undefined,
+                    };
+                    return Promise.reject(errorObj);
+                }
+            }
+            const timeout = additionalOptions.methodResponseTimeoutMs;
+            const additionalOptionsCopy = additionalOptions;
+            const invokePromises = serversMethodMap.map((serversMethodPair) => {
+                const invId = nanoid(10);
+                const method = serversMethodPair.methods[0];
+                const server = serversMethodPair.server;
+                const invokePromise = this.protocol.client.invoke(invId, method, argumentObj, server, additionalOptionsCopy);
+                return Promise.race([
+                    invokePromise,
+                    rejectAfter(timeout, invokePromise, {
+                        invocationId: invId,
+                        message: `Invocation timeout (${timeout} ms) reached for method name: ${method?.name}, target instance: ${JSON.stringify(server.instance)}, options: ${JSON.stringify(additionalOptionsCopy)}`,
+                        status: InvokeStatus.Error,
+                    })
+                ]);
             });
-        });
-    };
-    Client.prototype.getInvocationResultObj = function (invocationResults, method, calledWith) {
-        var all_return_values = invocationResults
-            .filter(function (invokeMessage) { return invokeMessage.status === InvokeStatus.Success; })
-            .reduce(function (allValues, currentValue) {
-            allValues = __spreadArray(__spreadArray([], allValues, true), [
+            const invocationMessages = await Promise.all(invokePromises);
+            const results = this.getInvocationResultObj(invocationMessages, methodDefinition, argumentObj);
+            const allRejected = invocationMessages.every((result) => result.status === InvokeStatus.Error);
+            if (allRejected) {
+                return Promise.reject(results);
+            }
+            return results;
+        };
+        return promisify(getInvokePromise(), success, error);
+    }
+    getInvocationResultObj(invocationResults, method, calledWith) {
+        const all_return_values = invocationResults
+            .filter((invokeMessage) => invokeMessage.status === InvokeStatus.Success)
+            .reduce((allValues, currentValue) => {
+            allValues = [
+                ...allValues,
                 {
                     executed_by: currentValue.instance,
                     returned: currentValue.result,
                     called_with: calledWith,
-                    method: method,
+                    method,
                     message: currentValue.message,
                     status: currentValue.status,
                 }
-            ], false);
+            ];
             return allValues;
         }, []);
-        var all_errors = invocationResults
-            .filter(function (invokeMessage) { return invokeMessage.status === InvokeStatus.Error; })
-            .reduce(function (allErrors, currError) {
-            allErrors = __spreadArray(__spreadArray([], allErrors, true), [
+        const all_errors = invocationResults
+            .filter((invokeMessage) => invokeMessage.status === InvokeStatus.Error)
+            .reduce((allErrors, currError) => {
+            allErrors = [
+                ...allErrors,
                 {
                     executed_by: currError.instance,
                     called_with: calledWith,
                     name: method.name,
                     message: currError.message,
                 }
-            ], false);
+            ];
             return allErrors;
         }, []);
-        var invResult = invocationResults[0];
-        var result = {
-            method: method,
+        const invResult = invocationResults[0];
+        const result = {
+            method,
             called_with: calledWith,
             returned: invResult.result,
             executed_by: invResult.instance,
-            all_return_values: all_return_values,
-            all_errors: all_errors,
+            all_return_values,
+            all_errors,
             message: invResult.message,
             status: invResult.status
         };
         return result;
-    };
-    Client.prototype.tryToAwaitForMethods = function (methodDefinition, target, additionalOptions) {
-        var _this = this;
-        return new Promise(function (resolve, reject) {
+    }
+    tryToAwaitForMethods(methodDefinition, target, additionalOptions) {
+        return new Promise((resolve, reject) => {
             if (additionalOptions.waitTimeoutMs === 0) {
                 reject();
                 return;
             }
-            var delayStep = 500;
-            var delayTillNow = 0;
-            var retry = function () {
+            const delayStep = 500;
+            let delayTillNow = 0;
+            const retry = () => {
                 delayTillNow += delayStep;
-                var serversMethodMap = _this.getServerMethodsByFilterAndTarget(methodDefinition, target);
+                const serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
                 if (serversMethodMap.length > 0) {
                     clearInterval(interval);
                     resolve(serversMethodMap);
@@ -13521,18 +12261,17 @@ var Client = (function () {
                     return;
                 }
             };
-            var interval = setInterval(retry, delayStep);
+            const interval = setInterval(retry, delayStep);
         });
-    };
-    Client.prototype.filterByTarget = function (target, serverMethodMap) {
-        var _this = this;
+    }
+    filterByTarget(target, serverMethodMap) {
         if (typeof target === "string") {
             if (target === "all") {
-                return __spreadArray([], serverMethodMap, true);
+                return [...serverMethodMap];
             }
             else if (target === "best") {
-                var localMachine = serverMethodMap
-                    .find(function (s) { return s.server.instance.isLocal; });
+                const localMachine = serverMethodMap
+                    .find((s) => s.server.instance.isLocal);
                 if (localMachine) {
                     return [localMachine];
                 }
@@ -13541,39 +12280,36 @@ var Client = (function () {
                 }
             }
             else if (target === "skipMine") {
-                return serverMethodMap.filter(function (_a) {
-                    var server = _a.server;
-                    return server.instance.peerId !== _this.instance.peerId;
-                });
+                return serverMethodMap.filter(({ server }) => server.instance.peerId !== this.instance.peerId);
             }
         }
         else {
-            var targetArray = void 0;
+            let targetArray;
             if (!Array.isArray(target)) {
                 targetArray = [target];
             }
             else {
                 targetArray = target;
             }
-            var allServersMatching = targetArray.reduce(function (matches, filter) {
-                var myMatches = serverMethodMap.filter(function (serverMethodPair) {
-                    return _this.instanceMatch(filter, serverMethodPair.server.instance);
+            const allServersMatching = targetArray.reduce((matches, filter) => {
+                const myMatches = serverMethodMap.filter((serverMethodPair) => {
+                    return this.instanceMatch(filter, serverMethodPair.server.instance);
                 });
                 return matches.concat(myMatches);
             }, []);
             return allServersMatching;
         }
         return [];
-    };
-    Client.prototype.instanceMatch = function (instanceFilter, instanceDefinition) {
+    }
+    instanceMatch(instanceFilter, instanceDefinition) {
         return this.containsProps(instanceFilter, instanceDefinition);
-    };
-    Client.prototype.methodMatch = function (methodFilter, methodDefinition) {
+    }
+    methodMatch(methodFilter, methodDefinition) {
         return this.containsProps(methodFilter, methodDefinition);
-    };
-    Client.prototype.containsProps = function (filter, repoMethod) {
-        var filterProps = Object.keys(filter)
-            .filter(function (prop) {
+    }
+    containsProps(filter, repoMethod) {
+        const filterProps = Object.keys(filter)
+            .filter((prop) => {
             return filter[prop] !== undefined
                 && filter[prop] !== null
                 && typeof filter[prop] !== "function"
@@ -13584,13 +12320,13 @@ var Client = (function () {
                 && prop !== "identifier"
                 && prop[0] !== "_";
         });
-        return filterProps.every(function (prop) {
-            var isMatch;
-            var filterValue = filter[prop];
-            var repoMethodValue = repoMethod[prop];
+        return filterProps.every((prop) => {
+            let isMatch;
+            const filterValue = filter[prop];
+            const repoMethodValue = repoMethod[prop];
             switch (prop) {
                 case "objectTypes":
-                    isMatch = (filterValue || []).every(function (filterValueEl) {
+                    isMatch = (filterValue || []).every((filterValueEl) => {
                         return (repoMethodValue || []).includes(filterValueEl);
                     });
                     break;
@@ -13602,205 +12338,195 @@ var Client = (function () {
             }
             return isMatch;
         });
-    };
-    Client.prototype.getMethods = function (methodFilter) {
-        var _this = this;
+    }
+    getMethods(methodFilter) {
         if (methodFilter === undefined) {
             return this.repo.getMethods();
         }
-        var methods = this.repo.getMethods().filter(function (method) {
-            return _this.methodMatch(methodFilter, method);
+        const methods = this.repo.getMethods().filter((method) => {
+            return this.methodMatch(methodFilter, method);
         });
         return methods;
-    };
-    Client.prototype.getMethodsForInstance = function (instanceFilter) {
-        var _this = this;
-        var allServers = this.repo.getServers();
-        var matchingServers = allServers.filter(function (server) {
-            return _this.instanceMatch(instanceFilter, server.instance);
+    }
+    getMethodsForInstance(instanceFilter) {
+        const allServers = this.repo.getServers();
+        const matchingServers = allServers.filter((server) => {
+            return this.instanceMatch(instanceFilter, server.instance);
         });
         if (matchingServers.length === 0) {
             return [];
         }
-        var resultMethodsObject = {};
+        let resultMethodsObject = {};
         if (matchingServers.length === 1) {
             resultMethodsObject = matchingServers[0].methods;
         }
         else {
-            matchingServers.forEach(function (server) {
-                Object.keys(server.methods).forEach(function (methodKey) {
-                    var method = server.methods[methodKey];
+            matchingServers.forEach((server) => {
+                Object.keys(server.methods).forEach((methodKey) => {
+                    const method = server.methods[methodKey];
                     resultMethodsObject[method.identifier] = method;
                 });
             });
         }
         return Object.keys(resultMethodsObject)
-            .map(function (key) {
+            .map((key) => {
             return resultMethodsObject[key];
         });
-    };
-    Client.prototype.getServers = function (methodFilter) {
-        var _this = this;
-        var servers = this.repo.getServers();
+    }
+    getServers(methodFilter) {
+        const servers = this.repo.getServers();
         if (methodFilter === undefined) {
-            return servers.map(function (server) {
-                return { server: server, methods: [] };
+            return servers.map((server) => {
+                return { server, methods: [] };
             });
         }
-        return servers.reduce(function (prev, current) {
-            var methodsForServer = Object.values(current.methods);
-            var matchingMethods = methodsForServer.filter(function (method) {
-                return _this.methodMatch(methodFilter, method);
+        return servers.reduce((prev, current) => {
+            const methodsForServer = Object.values(current.methods);
+            const matchingMethods = methodsForServer.filter((method) => {
+                return this.methodMatch(methodFilter, method);
             });
             if (matchingMethods.length > 0) {
                 prev.push({ server: current, methods: matchingMethods });
             }
             return prev;
         }, []);
-    };
-    Client.prototype.getServerMethodsByFilterAndTarget = function (methodFilter, target) {
-        var serversMethodMap = this.getServers(methodFilter);
+    }
+    getServerMethodsByFilterAndTarget(methodFilter, target) {
+        const serversMethodMap = this.getServers(methodFilter);
         return this.filterByTarget(target, serversMethodMap);
-    };
-    return Client;
-}());
+    }
+}
 
-var ServerSubscription = (function () {
-    function ServerSubscription(protocol, repoMethod, subscription) {
+class ServerSubscription {
+    protocol;
+    repoMethod;
+    subscription;
+    constructor(protocol, repoMethod, subscription) {
         this.protocol = protocol;
         this.repoMethod = repoMethod;
         this.subscription = subscription;
     }
-    Object.defineProperty(ServerSubscription.prototype, "stream", {
-        get: function () {
-            if (!this.repoMethod.stream) {
-                throw new Error("no stream");
-            }
-            return this.repoMethod.stream;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(ServerSubscription.prototype, "arguments", {
-        get: function () { return this.subscription.arguments || {}; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(ServerSubscription.prototype, "branchKey", {
-        get: function () { return this.subscription.branchKey; },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(ServerSubscription.prototype, "instance", {
-        get: function () {
-            if (!this.subscription.instance) {
-                throw new Error("no instance");
-            }
-            return this.subscription.instance;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    ServerSubscription.prototype.close = function () {
+    get stream() {
+        if (!this.repoMethod.stream) {
+            throw new Error("no stream");
+        }
+        return this.repoMethod.stream;
+    }
+    get arguments() { return this.subscription.arguments || {}; }
+    get branchKey() { return this.subscription.branchKey; }
+    get instance() {
+        if (!this.subscription.instance) {
+            throw new Error("no instance");
+        }
+        return this.subscription.instance;
+    }
+    close() {
         this.protocol.server.closeSingleSubscription(this.repoMethod, this.subscription);
-    };
-    ServerSubscription.prototype.push = function (data) {
+    }
+    push(data) {
         this.protocol.server.pushDataToSingle(this.repoMethod, this.subscription, data);
-    };
-    return ServerSubscription;
-}());
+    }
+}
 
-var Request = (function () {
-    function Request(protocol, repoMethod, requestContext) {
+class Request {
+    protocol;
+    repoMethod;
+    requestContext;
+    arguments;
+    instance;
+    constructor(protocol, repoMethod, requestContext) {
         this.protocol = protocol;
         this.repoMethod = repoMethod;
         this.requestContext = requestContext;
         this.arguments = requestContext.arguments;
         this.instance = requestContext.instance;
     }
-    Request.prototype.accept = function () {
+    accept() {
         this.protocol.server.acceptRequestOnBranch(this.requestContext, this.repoMethod, "");
-    };
-    Request.prototype.acceptOnBranch = function (branch) {
+    }
+    acceptOnBranch(branch) {
         this.protocol.server.acceptRequestOnBranch(this.requestContext, this.repoMethod, branch);
-    };
-    Request.prototype.reject = function (reason) {
+    }
+    reject(reason) {
         this.protocol.server.rejectRequest(this.requestContext, this.repoMethod, reason);
-    };
-    return Request;
-}());
+    }
+}
 
-var ServerStreaming$1 = (function () {
-    function ServerStreaming(protocol, server) {
-        var _this = this;
+let ServerStreaming$1 = class ServerStreaming {
+    protocol;
+    server;
+    constructor(protocol, server) {
         this.protocol = protocol;
         this.server = server;
-        protocol.server.onSubRequest(function (rc, rm) { return _this.handleSubRequest(rc, rm); });
-        protocol.server.onSubAdded(function (sub, rm) { return _this.handleSubAdded(sub, rm); });
-        protocol.server.onSubRemoved(function (sub, rm) { return _this.handleSubRemoved(sub, rm); });
+        protocol.server.onSubRequest((rc, rm) => this.handleSubRequest(rc, rm));
+        protocol.server.onSubAdded((sub, rm) => this.handleSubAdded(sub, rm));
+        protocol.server.onSubRemoved((sub, rm) => this.handleSubRemoved(sub, rm));
     }
-    ServerStreaming.prototype.handleSubRequest = function (requestContext, repoMethod) {
+    handleSubRequest(requestContext, repoMethod) {
         if (!(repoMethod &&
             repoMethod.streamCallbacks &&
             typeof repoMethod.streamCallbacks.subscriptionRequestHandler === "function")) {
             return;
         }
-        var request = new Request(this.protocol, repoMethod, requestContext);
+        const request = new Request(this.protocol, repoMethod, requestContext);
         repoMethod.streamCallbacks.subscriptionRequestHandler(request);
-    };
-    ServerStreaming.prototype.handleSubAdded = function (subscription, repoMethod) {
+    }
+    handleSubAdded(subscription, repoMethod) {
         if (!(repoMethod &&
             repoMethod.streamCallbacks &&
             typeof repoMethod.streamCallbacks.subscriptionAddedHandler === "function")) {
             return;
         }
-        var sub = new ServerSubscription(this.protocol, repoMethod, subscription);
+        const sub = new ServerSubscription(this.protocol, repoMethod, subscription);
         repoMethod.streamCallbacks.subscriptionAddedHandler(sub);
-    };
-    ServerStreaming.prototype.handleSubRemoved = function (subscription, repoMethod) {
+    }
+    handleSubRemoved(subscription, repoMethod) {
         if (!(repoMethod &&
             repoMethod.streamCallbacks &&
             typeof repoMethod.streamCallbacks.subscriptionRemovedHandler === "function")) {
             return;
         }
-        var sub = new ServerSubscription(this.protocol, repoMethod, subscription);
+        const sub = new ServerSubscription(this.protocol, repoMethod, subscription);
         repoMethod.streamCallbacks.subscriptionRemovedHandler(sub);
-    };
-    return ServerStreaming;
-}());
+    }
+};
 
-var ServerBranch = (function () {
-    function ServerBranch(key, protocol, repoMethod) {
+class ServerBranch {
+    key;
+    protocol;
+    repoMethod;
+    constructor(key, protocol, repoMethod) {
         this.key = key;
         this.protocol = protocol;
         this.repoMethod = repoMethod;
     }
-    ServerBranch.prototype.subscriptions = function () {
-        var _this = this;
-        var subList = this.protocol.server.getSubscriptionList(this.repoMethod, this.key);
-        return subList.map(function (sub) {
-            return new ServerSubscription(_this.protocol, _this.repoMethod, sub);
+    subscriptions() {
+        const subList = this.protocol.server.getSubscriptionList(this.repoMethod, this.key);
+        return subList.map((sub) => {
+            return new ServerSubscription(this.protocol, this.repoMethod, sub);
         });
-    };
-    ServerBranch.prototype.close = function () {
+    }
+    close() {
         this.protocol.server.closeAllSubscriptions(this.repoMethod, this.key);
-    };
-    ServerBranch.prototype.push = function (data) {
+    }
+    push(data) {
         this.protocol.server.pushData(this.repoMethod, data, [this.key]);
-    };
-    return ServerBranch;
-}());
+    }
+}
 
-var ServerStream = (function () {
-    function ServerStream(_protocol, _repoMethod, _server) {
+class ServerStream {
+    _protocol;
+    _repoMethod;
+    _server;
+    name;
+    constructor(_protocol, _repoMethod, _server) {
         this._protocol = _protocol;
         this._repoMethod = _repoMethod;
         this._server = _server;
         this.name = this._repoMethod.definition.name;
     }
-    ServerStream.prototype.branches = function (key) {
-        var _this = this;
-        var bList = this._protocol.server.getBranchList(this._repoMethod);
+    branches(key) {
+        const bList = this._protocol.server.getBranchList(this._repoMethod);
         if (key) {
             if (bList.indexOf(key) > -1) {
                 return new ServerBranch(key, this._protocol, this._repoMethod);
@@ -13808,44 +12534,38 @@ var ServerStream = (function () {
             return undefined;
         }
         else {
-            return bList.map(function (branchKey) {
-                return new ServerBranch(branchKey, _this._protocol, _this._repoMethod);
+            return bList.map((branchKey) => {
+                return new ServerBranch(branchKey, this._protocol, this._repoMethod);
             });
         }
-    };
-    ServerStream.prototype.branch = function (key) {
+    }
+    branch(key) {
         return this.branches(key);
-    };
-    ServerStream.prototype.subscriptions = function () {
-        var _this = this;
-        var subList = this._protocol.server.getSubscriptionList(this._repoMethod);
-        return subList.map(function (sub) {
-            return new ServerSubscription(_this._protocol, _this._repoMethod, sub);
+    }
+    subscriptions() {
+        const subList = this._protocol.server.getSubscriptionList(this._repoMethod);
+        return subList.map((sub) => {
+            return new ServerSubscription(this._protocol, this._repoMethod, sub);
         });
-    };
-    Object.defineProperty(ServerStream.prototype, "definition", {
-        get: function () {
-            var _a;
-            var def2 = this._repoMethod.definition;
-            return {
-                accepts: def2.accepts,
-                description: def2.description,
-                displayName: def2.displayName,
-                name: def2.name,
-                objectTypes: def2.objectTypes,
-                returns: def2.returns,
-                supportsStreaming: def2.supportsStreaming,
-                flags: (_a = def2.flags) === null || _a === void 0 ? void 0 : _a.metadata,
-            };
-        },
-        enumerable: false,
-        configurable: true
-    });
-    ServerStream.prototype.close = function () {
+    }
+    get definition() {
+        const def2 = this._repoMethod.definition;
+        return {
+            accepts: def2.accepts,
+            description: def2.description,
+            displayName: def2.displayName,
+            name: def2.name,
+            objectTypes: def2.objectTypes,
+            returns: def2.returns,
+            supportsStreaming: def2.supportsStreaming,
+            flags: def2.flags?.metadata,
+        };
+    }
+    close() {
         this._protocol.server.closeAllSubscriptions(this._repoMethod);
         this._server.unregister(this._repoMethod.definition, true);
-    };
-    ServerStream.prototype.push = function (data, branches) {
+    }
+    push(data, branches) {
         if (typeof branches !== "string" && !Array.isArray(branches) && branches !== undefined) {
             throw new Error("invalid branches should be string or string array");
         }
@@ -13853,303 +12573,242 @@ var ServerStream = (function () {
             throw new Error("Invalid arguments. Data must be an object.");
         }
         this._protocol.server.pushData(this._repoMethod, data, branches);
-    };
-    ServerStream.prototype.updateRepoMethod = function (repoMethod) {
+    }
+    updateRepoMethod(repoMethod) {
         this._repoMethod = repoMethod;
-    };
-    return ServerStream;
-}());
+    }
+}
 
-var Server = (function () {
-    function Server(protocol, serverRepository) {
+class Server {
+    protocol;
+    serverRepository;
+    streaming;
+    invocations = 0;
+    currentlyUnregistering = {};
+    constructor(protocol, serverRepository) {
         this.protocol = protocol;
         this.serverRepository = serverRepository;
-        this.invocations = 0;
-        this.currentlyUnregistering = {};
         this.streaming = new ServerStreaming$1(protocol, this);
         this.protocol.server.onInvoked(this.onMethodInvoked.bind(this));
     }
-    Server.prototype.createStream = function (streamDef, callbacks, successCallback, errorCallback, existingStream) {
-        var _this = this;
-        var promise = new Promise(function (resolve, reject) {
+    createStream(streamDef, callbacks, successCallback, errorCallback, existingStream) {
+        const promise = new Promise((resolve, reject) => {
             if (!streamDef) {
                 reject("The stream name must be unique! Please, provide either a unique string for a stream name to “glue.interop.createStream()” or a “methodDefinition” object with a unique “name” property for the stream.");
                 return;
             }
-            var streamMethodDefinition;
+            let streamMethodDefinition;
             if (typeof streamDef === "string") {
                 streamMethodDefinition = { name: "" + streamDef };
             }
             else {
-                streamMethodDefinition = __assign({}, streamDef);
+                streamMethodDefinition = { ...streamDef };
             }
             if (!streamMethodDefinition.name) {
-                return reject("The \u201Cname\u201D property is required for the \u201CstreamDefinition\u201D object and must be unique. Stream definition: ".concat(JSON.stringify(streamMethodDefinition)));
+                return reject(`The “name” property is required for the “streamDefinition” object and must be unique. Stream definition: ${JSON.stringify(streamMethodDefinition)}`);
             }
-            var nameAlreadyExists = _this.serverRepository.getList()
-                .some(function (serverMethod) { return serverMethod.definition.name === streamMethodDefinition.name; });
+            const nameAlreadyExists = this.serverRepository.getList()
+                .some((serverMethod) => serverMethod.definition.name === streamMethodDefinition.name);
             if (nameAlreadyExists) {
-                return reject("A stream with the name \"".concat(streamMethodDefinition.name, "\" already exists! Please, provide a unique name for the stream."));
+                return reject(`A stream with the name "${streamMethodDefinition.name}" already exists! Please, provide a unique name for the stream.`);
             }
             streamMethodDefinition.supportsStreaming = true;
             if (!callbacks) {
                 callbacks = {};
             }
             if (typeof callbacks.subscriptionRequestHandler !== "function") {
-                callbacks.subscriptionRequestHandler = function (request) {
+                callbacks.subscriptionRequestHandler = (request) => {
                     request.accept();
                 };
             }
-            var repoMethod = _this.serverRepository.add({
+            const repoMethod = this.serverRepository.add({
                 definition: streamMethodDefinition,
                 streamCallbacks: callbacks,
                 protocolState: {},
             });
-            _this.protocol.server.createStream(repoMethod)
-                .then(function () {
-                var streamUserObject;
+            this.protocol.server.createStream(repoMethod)
+                .then(() => {
+                let streamUserObject;
                 if (existingStream) {
                     streamUserObject = existingStream;
                     existingStream.updateRepoMethod(repoMethod);
                 }
                 else {
-                    streamUserObject = new ServerStream(_this.protocol, repoMethod, _this);
+                    streamUserObject = new ServerStream(this.protocol, repoMethod, this);
                 }
                 repoMethod.stream = streamUserObject;
                 resolve(streamUserObject);
             })
-                .catch(function (err) {
+                .catch((err) => {
                 if (repoMethod.repoId) {
-                    _this.serverRepository.remove(repoMethod.repoId);
+                    this.serverRepository.remove(repoMethod.repoId);
                 }
                 reject(err);
             });
         });
         return promisify(promise, successCallback, errorCallback);
-    };
-    Server.prototype.register = function (methodDefinition, callback) {
-        var _this = this;
+    }
+    register(methodDefinition, callback) {
         if (!methodDefinition) {
             return Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
         }
         if (typeof callback !== "function") {
-            return Promise.reject("The second parameter must be a callback function. Method: ".concat(typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name));
+            return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
         }
-        var wrappedCallbackFunction = function (context, resultCallback) { return __awaiter(_this, void 0, void 0, function () {
-            var result, resultValue, e_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        _a.trys.push([0, 4, , 5]);
-                        result = callback(context.args, context.instance);
-                        if (!(result && typeof result.then === "function")) return [3, 2];
-                        return [4, result];
-                    case 1:
-                        resultValue = _a.sent();
-                        resultCallback(undefined, resultValue);
-                        return [3, 3];
-                    case 2:
-                        resultCallback(undefined, result);
-                        _a.label = 3;
-                    case 3: return [3, 5];
-                    case 4:
-                        e_1 = _a.sent();
-                        resultCallback(e_1 !== null && e_1 !== void 0 ? e_1 : "", e_1 !== null && e_1 !== void 0 ? e_1 : "");
-                        return [3, 5];
-                    case 5: return [2];
+        const wrappedCallbackFunction = async (context, resultCallback) => {
+            try {
+                const result = callback(context.args, context.instance);
+                if (result && typeof result.then === "function") {
+                    const resultValue = await result;
+                    resultCallback(undefined, resultValue);
                 }
-            });
-        }); };
+                else {
+                    resultCallback(undefined, result);
+                }
+            }
+            catch (e) {
+                resultCallback(e ?? "", e ?? "");
+            }
+        };
         wrappedCallbackFunction.userCallback = callback;
         return this.registerCore(methodDefinition, wrappedCallbackFunction);
-    };
-    Server.prototype.registerAsync = function (methodDefinition, callback) {
-        var _this = this;
+    }
+    registerAsync(methodDefinition, callback) {
         if (!methodDefinition) {
             return Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
         }
         if (typeof callback !== "function") {
-            return Promise.reject("The second parameter must be a callback function. Method: ".concat(typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name));
+            return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
         }
-        var wrappedCallback = function (context, resultCallback) { return __awaiter(_this, void 0, void 0, function () {
-            var resultCalled_1, success, error, methodResult;
-            return __generator(this, function (_a) {
-                try {
-                    resultCalled_1 = false;
-                    success = function (result) {
-                        if (!resultCalled_1) {
-                            resultCallback(undefined, result);
-                        }
-                        resultCalled_1 = true;
-                    };
-                    error = function (e) {
-                        if (!resultCalled_1) {
-                            if (!e) {
-                                e = "";
-                            }
-                            resultCallback(e, e);
-                        }
-                        resultCalled_1 = true;
-                    };
-                    methodResult = callback(context.args, context.instance, success, error);
-                    if (methodResult && typeof methodResult.then === "function") {
-                        methodResult
-                            .then(success)
-                            .catch(error);
+        const wrappedCallback = async (context, resultCallback) => {
+            try {
+                let resultCalled = false;
+                const success = (result) => {
+                    if (!resultCalled) {
+                        resultCallback(undefined, result);
                     }
+                    resultCalled = true;
+                };
+                const error = (e) => {
+                    if (!resultCalled) {
+                        if (!e) {
+                            e = "";
+                        }
+                        resultCallback(e, e);
+                    }
+                    resultCalled = true;
+                };
+                const methodResult = callback(context.args, context.instance, success, error);
+                if (methodResult && typeof methodResult.then === "function") {
+                    methodResult
+                        .then(success)
+                        .catch(error);
                 }
-                catch (e) {
-                    resultCallback(e, undefined);
-                }
-                return [2];
-            });
-        }); };
+            }
+            catch (e) {
+                resultCallback(e, undefined);
+            }
+        };
         wrappedCallback.userCallbackAsync = callback;
         return this.registerCore(methodDefinition, wrappedCallback);
-    };
-    Server.prototype.unregister = function (methodFilter, forStream) {
-        if (forStream === void 0) { forStream = false; }
-        return __awaiter(this, void 0, void 0, function () {
-            var methodDefinition, methodToBeRemoved;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (methodFilter === undefined) {
-                            return [2, Promise.reject("Please, provide either a unique string for a name or an object containing a “name” property.")];
-                        }
-                        if (!(typeof methodFilter === "function")) return [3, 2];
-                        return [4, this.unregisterWithPredicate(methodFilter, forStream)];
-                    case 1:
-                        _a.sent();
-                        return [2];
-                    case 2:
-                        if (typeof methodFilter === "string") {
-                            methodDefinition = { name: methodFilter };
-                        }
-                        else {
-                            methodDefinition = methodFilter;
-                        }
-                        if (methodDefinition.name === undefined) {
-                            return [2, Promise.reject("Method name is required. Cannot find a method if the method name is undefined!")];
-                        }
-                        methodToBeRemoved = this.serverRepository.getList().find(function (serverMethod) {
-                            return serverMethod.definition.name === methodDefinition.name
-                                && (serverMethod.definition.supportsStreaming || false) === forStream;
-                        });
-                        if (!methodToBeRemoved) {
-                            return [2, Promise.reject("Method with a name \"".concat(methodDefinition.name, "\" does not exist or is not registered by your application!"))];
-                        }
-                        return [4, this.removeMethodsOrStreams([methodToBeRemoved])];
-                    case 3:
-                        _a.sent();
-                        return [2];
-                }
-            });
+    }
+    async unregister(methodFilter, forStream = false) {
+        if (methodFilter === undefined) {
+            return Promise.reject("Please, provide either a unique string for a name or an object containing a “name” property.");
+        }
+        if (typeof methodFilter === "function") {
+            await this.unregisterWithPredicate(methodFilter, forStream);
+            return;
+        }
+        let methodDefinition;
+        if (typeof methodFilter === "string") {
+            methodDefinition = { name: methodFilter };
+        }
+        else {
+            methodDefinition = methodFilter;
+        }
+        if (methodDefinition.name === undefined) {
+            return Promise.reject("Method name is required. Cannot find a method if the method name is undefined!");
+        }
+        const methodToBeRemoved = this.serverRepository.getList().find((serverMethod) => {
+            return serverMethod.definition.name === methodDefinition.name
+                && (serverMethod.definition.supportsStreaming || false) === forStream;
         });
-    };
-    Server.prototype.unregisterWithPredicate = function (filterPredicate, forStream) {
-        return __awaiter(this, void 0, void 0, function () {
-            var methodsOrStreamsToRemove;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        methodsOrStreamsToRemove = this.serverRepository.getList()
-                            .filter(function (sm) { return filterPredicate(sm.definition); })
-                            .filter(function (serverMethod) {
-                            return (serverMethod.definition.supportsStreaming || false) === forStream;
-                        });
-                        if (!methodsOrStreamsToRemove || methodsOrStreamsToRemove.length === 0) {
-                            return [2, Promise.reject("Could not find a ".concat(forStream ? "stream" : "method", " matching the specified condition!"))];
-                        }
-                        return [4, this.removeMethodsOrStreams(methodsOrStreamsToRemove)];
-                    case 1:
-                        _a.sent();
-                        return [2];
-                }
-            });
-        });
-    };
-    Server.prototype.removeMethodsOrStreams = function (methodsToRemove) {
-        var _this = this;
-        var methodUnregPromises = [];
-        methodsToRemove.forEach(function (method) {
-            var promise = _this.protocol.server.unregister(method)
-                .then(function () {
+        if (!methodToBeRemoved) {
+            return Promise.reject(`Method with a name "${methodDefinition.name}" does not exist or is not registered by your application!`);
+        }
+        await this.removeMethodsOrStreams([methodToBeRemoved]);
+    }
+    async unregisterWithPredicate(filterPredicate, forStream) {
+        const methodsOrStreamsToRemove = this.serverRepository.getList()
+            .filter((sm) => filterPredicate(sm.definition))
+            .filter((serverMethod) => (serverMethod.definition.supportsStreaming || false) === forStream);
+        if (!methodsOrStreamsToRemove || methodsOrStreamsToRemove.length === 0) {
+            return Promise.reject(`Could not find a ${forStream ? "stream" : "method"} matching the specified condition!`);
+        }
+        await this.removeMethodsOrStreams(methodsOrStreamsToRemove);
+    }
+    removeMethodsOrStreams(methodsToRemove) {
+        const methodUnregPromises = [];
+        methodsToRemove.forEach((method) => {
+            const promise = this.protocol.server.unregister(method)
+                .then(() => {
                 if (method.repoId) {
-                    _this.serverRepository.remove(method.repoId);
+                    this.serverRepository.remove(method.repoId);
                 }
             });
             methodUnregPromises.push(promise);
-            _this.addAsCurrentlyUnregistering(method.definition.name, promise);
+            this.addAsCurrentlyUnregistering(method.definition.name, promise);
         });
         return Promise.all(methodUnregPromises);
-    };
-    Server.prototype.addAsCurrentlyUnregistering = function (methodName, promise) {
-        return __awaiter(this, void 0, void 0, function () {
-            var timeout;
-            var _this = this;
-            return __generator(this, function (_a) {
-                timeout = new Promise(function (resolve) { return setTimeout(resolve, 5000); });
-                this.currentlyUnregistering[methodName] = Promise.race([promise, timeout]).then(function () {
-                    delete _this.currentlyUnregistering[methodName];
-                });
-                return [2];
-            });
+    }
+    async addAsCurrentlyUnregistering(methodName, promise) {
+        const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
+        this.currentlyUnregistering[methodName] = Promise.race([promise, timeout]).then(() => {
+            delete this.currentlyUnregistering[methodName];
         });
-    };
-    Server.prototype.registerCore = function (method, theFunction) {
-        return __awaiter(this, void 0, void 0, function () {
-            var methodDefinition, unregisterInProgress, nameAlreadyExists, repoMethod;
-            var _this = this;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        if (typeof method === "string") {
-                            methodDefinition = { name: "" + method };
-                        }
-                        else {
-                            methodDefinition = __assign({}, method);
-                        }
-                        if (!methodDefinition.name) {
-                            return [2, Promise.reject("Please, provide a (unique) string value for the \u201Cname\u201D property in the \u201CmethodDefinition\u201D object: ".concat(JSON.stringify(method)))];
-                        }
-                        unregisterInProgress = this.currentlyUnregistering[methodDefinition.name];
-                        if (!(typeof unregisterInProgress !== "undefined")) return [3, 2];
-                        return [4, unregisterInProgress];
-                    case 1:
-                        _a.sent();
-                        _a.label = 2;
-                    case 2:
-                        nameAlreadyExists = this.serverRepository.getList()
-                            .some(function (serverMethod) { return serverMethod.definition.name === methodDefinition.name; });
-                        if (nameAlreadyExists) {
-                            return [2, Promise.reject("A method with the name \"".concat(methodDefinition.name, "\" already exists! Please, provide a unique name for the method."))];
-                        }
-                        if (methodDefinition.supportsStreaming) {
-                            return [2, Promise.reject("When you create methods with \u201Cglue.interop.register()\u201D or \u201Cglue.interop.registerAsync()\u201D the property \u201CsupportsStreaming\u201D cannot be \u201Ctrue\u201D. If you want \u201C".concat(methodDefinition.name, "\u201D to be a stream, please use the \u201Cglue.interop.createStream()\u201D method."))];
-                        }
-                        repoMethod = this.serverRepository.add({
-                            definition: methodDefinition,
-                            theFunction: theFunction,
-                            protocolState: {},
-                        });
-                        return [2, this.protocol.server.register(repoMethod)
-                                .catch(function (err) {
-                                if (repoMethod === null || repoMethod === void 0 ? void 0 : repoMethod.repoId) {
-                                    _this.serverRepository.remove(repoMethod.repoId);
-                                }
-                                throw err;
-                            })];
-                }
-            });
+    }
+    async registerCore(method, theFunction) {
+        let methodDefinition;
+        if (typeof method === "string") {
+            methodDefinition = { name: "" + method };
+        }
+        else {
+            methodDefinition = { ...method };
+        }
+        if (!methodDefinition.name) {
+            return Promise.reject(`Please, provide a (unique) string value for the “name” property in the “methodDefinition” object: ${JSON.stringify(method)}`);
+        }
+        const unregisterInProgress = this.currentlyUnregistering[methodDefinition.name];
+        if (typeof unregisterInProgress !== "undefined") {
+            await unregisterInProgress;
+        }
+        const nameAlreadyExists = this.serverRepository.getList()
+            .some((serverMethod) => serverMethod.definition.name === methodDefinition.name);
+        if (nameAlreadyExists) {
+            return Promise.reject(`A method with the name "${methodDefinition.name}" already exists! Please, provide a unique name for the method.`);
+        }
+        if (methodDefinition.supportsStreaming) {
+            return Promise.reject(`When you create methods with “glue.interop.register()” or “glue.interop.registerAsync()” the property “supportsStreaming” cannot be “true”. If you want “${methodDefinition.name}” to be a stream, please use the “glue.interop.createStream()” method.`);
+        }
+        const repoMethod = this.serverRepository.add({
+            definition: methodDefinition,
+            theFunction,
+            protocolState: {},
         });
-    };
-    Server.prototype.onMethodInvoked = function (methodToExecute, invocationId, invocationArgs) {
-        var _this = this;
+        return this.protocol.server.register(repoMethod)
+            .catch((err) => {
+            if (repoMethod?.repoId) {
+                this.serverRepository.remove(repoMethod.repoId);
+            }
+            throw err;
+        });
+    }
+    onMethodInvoked(methodToExecute, invocationId, invocationArgs) {
         if (!methodToExecute || !methodToExecute.theFunction) {
             return;
         }
-        methodToExecute.theFunction(invocationArgs, function (err, result) {
+        methodToExecute.theFunction(invocationArgs, (err, result) => {
             if (err !== undefined && err !== null) {
                 if (err.message && typeof err.message === "string") {
                     err = err.message;
@@ -14159,7 +12818,7 @@ var Server = (function () {
                         err = JSON.stringify(err);
                     }
                     catch (unStrException) {
-                        err = "un-stringifyable error in onMethodInvoked! Top level prop names: ".concat(Object.keys(err));
+                        err = `un-stringifyable error in onMethodInvoked! Top level prop names: ${Object.keys(err)}`;
                     }
                 }
             }
@@ -14169,77 +12828,78 @@ var Server = (function () {
             else if (typeof result !== "object" || Array.isArray(result)) {
                 result = { _value: result };
             }
-            _this.protocol.server.methodInvocationResult(methodToExecute, invocationId, err, result);
+            this.protocol.server.methodInvocationResult(methodToExecute, invocationId, err, result);
         });
-    };
-    return Server;
-}());
+    }
+}
 
-var InstanceWrapper = (function () {
-    function InstanceWrapper(API, instance, connection) {
-        var _this = this;
-        this.wrapped = {};
+class InstanceWrapper {
+    wrapped = {};
+    constructor(API, instance, connection) {
         this.wrapped.getMethods = function () {
             return API.methodsForInstance(this);
         };
         this.wrapped.getStreams = function () {
-            return API.methodsForInstance(this).filter(function (m) { return m.supportsStreaming; });
+            return API.methodsForInstance(this).filter((m) => m.supportsStreaming);
         };
         if (instance) {
             this.refreshWrappedObject(instance);
         }
         if (connection) {
-            connection.loggedIn(function () {
-                _this.refresh(connection);
+            connection.loggedIn(() => {
+                this.refresh(connection);
             });
             this.refresh(connection);
         }
     }
-    InstanceWrapper.prototype.unwrap = function () {
+    unwrap() {
         return this.wrapped;
-    };
-    InstanceWrapper.prototype.refresh = function (connection) {
+    }
+    refresh(connection) {
         if (!connection) {
             return;
         }
-        var resolvedIdentity = connection === null || connection === void 0 ? void 0 : connection.resolvedIdentity;
-        var instance = Object.assign({}, resolvedIdentity !== null && resolvedIdentity !== void 0 ? resolvedIdentity : {}, { peerId: connection === null || connection === void 0 ? void 0 : connection.peerId });
+        const resolvedIdentity = connection?.resolvedIdentity;
+        const instance = Object.assign({}, resolvedIdentity ?? {}, { peerId: connection?.peerId });
         this.refreshWrappedObject(instance);
-    };
-    InstanceWrapper.prototype.refreshWrappedObject = function (resolvedIdentity) {
-        var _this = this;
-        var _a, _b, _c, _d;
-        Object.keys(resolvedIdentity).forEach(function (key) {
-            _this.wrapped[key] = resolvedIdentity[key];
+    }
+    refreshWrappedObject(resolvedIdentity) {
+        Object.keys(resolvedIdentity).forEach((key) => {
+            this.wrapped[key] = resolvedIdentity[key];
         });
         this.wrapped.user = resolvedIdentity.user;
         this.wrapped.instance = resolvedIdentity.instance;
-        this.wrapped.application = (_a = resolvedIdentity.application) !== null && _a !== void 0 ? _a : shortid();
+        this.wrapped.application = resolvedIdentity.application ?? nanoid(10);
         this.wrapped.applicationName = resolvedIdentity.applicationName;
-        this.wrapped.pid = (_c = (_b = resolvedIdentity.pid) !== null && _b !== void 0 ? _b : resolvedIdentity.process) !== null && _c !== void 0 ? _c : Math.floor(Math.random() * 10000000000);
+        this.wrapped.pid = resolvedIdentity.pid ?? resolvedIdentity.process ?? Math.floor(Math.random() * 10000000000);
         this.wrapped.machine = resolvedIdentity.machine;
         this.wrapped.environment = resolvedIdentity.environment;
         this.wrapped.region = resolvedIdentity.region;
         this.wrapped.windowId = resolvedIdentity.windowId;
-        this.wrapped.isLocal = (_d = resolvedIdentity.isLocal) !== null && _d !== void 0 ? _d : true;
+        this.wrapped.isLocal = resolvedIdentity.isLocal ?? true;
         this.wrapped.api = resolvedIdentity.api;
         this.wrapped.service = resolvedIdentity.service;
         this.wrapped.peerId = resolvedIdentity.peerId;
-    };
-    return InstanceWrapper;
-}());
+    }
+}
 
-var hideMethodSystemFlags = function (method) {
-    return __assign(__assign({}, method), { flags: method.flags.metadata || {} });
+const hideMethodSystemFlags = (method) => {
+    return {
+        ...method,
+        flags: method.flags.metadata || {}
+    };
 };
-var ClientRepository = (function () {
-    function ClientRepository(logger, API) {
+class ClientRepository {
+    logger;
+    API;
+    servers = {};
+    myServer;
+    methodsCount = {};
+    callbacks = CallbackRegistryFactory();
+    constructor(logger, API) {
         this.logger = logger;
         this.API = API;
-        this.servers = {};
-        this.methodsCount = {};
-        this.callbacks = lib$1();
-        var peerId = this.API.instance.peerId;
+        const peerId = this.API.instance.peerId;
         this.myServer = {
             id: peerId,
             methods: {},
@@ -14248,52 +12908,50 @@ var ClientRepository = (function () {
         };
         this.servers[peerId] = this.myServer;
     }
-    ClientRepository.prototype.addServer = function (info, serverId) {
-        this.logger.debug("adding server ".concat(serverId));
-        var current = this.servers[serverId];
+    addServer(info, serverId) {
+        this.logger.debug(`adding server ${serverId}`);
+        const current = this.servers[serverId];
         if (current) {
             return current.id;
         }
-        var wrapper = new InstanceWrapper(this.API, info);
-        var serverEntry = {
+        const wrapper = new InstanceWrapper(this.API, info);
+        const serverEntry = {
             id: serverId,
             methods: {},
             instance: wrapper.unwrap(),
-            wrapper: wrapper,
+            wrapper,
         };
         this.servers[serverId] = serverEntry;
         this.callbacks.execute("onServerAdded", serverEntry.instance);
         return serverId;
-    };
-    ClientRepository.prototype.removeServerById = function (id, reason) {
-        var _this = this;
-        var server = this.servers[id];
+    }
+    removeServerById(id, reason) {
+        const server = this.servers[id];
         if (!server) {
-            this.logger.warn("not aware of server ".concat(id, ", my state ").concat(JSON.stringify(Object.keys(this.servers))));
+            this.logger.warn(`not aware of server ${id}, my state ${JSON.stringify(Object.keys(this.servers))}`);
             return;
         }
         else {
-            this.logger.debug("removing server ".concat(id));
+            this.logger.debug(`removing server ${id}`);
         }
-        Object.keys(server.methods).forEach(function (methodId) {
-            _this.removeServerMethod(id, methodId);
+        Object.keys(server.methods).forEach((methodId) => {
+            this.removeServerMethod(id, methodId);
         });
         delete this.servers[id];
         this.callbacks.execute("onServerRemoved", server.instance, reason);
-    };
-    ClientRepository.prototype.addServerMethod = function (serverId, method) {
-        var _a;
-        var server = this.servers[serverId];
+    }
+    addServerMethod(serverId, method) {
+        const server = this.servers[serverId];
         if (!server) {
             throw new Error("server does not exists");
         }
         if (server.methods[method.id]) {
             return;
         }
-        var identifier = this.createMethodIdentifier(method);
-        var that = this;
-        var methodDefinition = {
-            identifier: identifier,
+        const identifier = this.createMethodIdentifier(method);
+        const that = this;
+        const methodDefinition = {
+            identifier,
             gatewayId: method.id,
             name: method.name,
             displayName: method.display_name,
@@ -14303,8 +12961,8 @@ var ClientRepository = (function () {
             accepts: method.input_signature,
             returns: method.result_signature,
             supportsStreaming: typeof method.flags !== "undefined" ? method.flags.streaming : false,
-            flags: (_a = method.flags) !== null && _a !== void 0 ? _a : {},
-            getServers: function () {
+            flags: method.flags ?? {},
+            getServers: () => {
                 return that.getServersByMethod(identifier);
             }
         };
@@ -14312,7 +12970,7 @@ var ClientRepository = (function () {
         methodDefinition.display_name = methodDefinition.displayName;
         methodDefinition.version = methodDefinition.version;
         server.methods[method.id] = methodDefinition;
-        var clientMethodDefinition = hideMethodSystemFlags(methodDefinition);
+        const clientMethodDefinition = hideMethodSystemFlags(methodDefinition);
         if (!this.methodsCount[identifier]) {
             this.methodsCount[identifier] = 0;
             this.callbacks.execute("onMethodAdded", clientMethodDefinition);
@@ -14320,189 +12978,186 @@ var ClientRepository = (function () {
         this.methodsCount[identifier] = this.methodsCount[identifier] + 1;
         this.callbacks.execute("onServerMethodAdded", server.instance, clientMethodDefinition);
         return methodDefinition;
-    };
-    ClientRepository.prototype.removeServerMethod = function (serverId, methodId) {
-        var server = this.servers[serverId];
+    }
+    removeServerMethod(serverId, methodId) {
+        const server = this.servers[serverId];
         if (!server) {
             throw new Error("server does not exists");
         }
-        var method = server.methods[methodId];
+        const method = server.methods[methodId];
         delete server.methods[methodId];
-        var clientMethodDefinition = hideMethodSystemFlags(method);
+        const clientMethodDefinition = hideMethodSystemFlags(method);
         this.methodsCount[method.identifier] = this.methodsCount[method.identifier] - 1;
         if (this.methodsCount[method.identifier] === 0) {
             this.callbacks.execute("onMethodRemoved", clientMethodDefinition);
         }
         this.callbacks.execute("onServerMethodRemoved", server.instance, clientMethodDefinition);
-    };
-    ClientRepository.prototype.getMethods = function () {
+    }
+    getMethods() {
         return this.extractMethodsFromServers(Object.values(this.servers)).map(hideMethodSystemFlags);
-    };
-    ClientRepository.prototype.getServers = function () {
+    }
+    getServers() {
         return Object.values(this.servers).map(this.hideServerMethodSystemFlags);
-    };
-    ClientRepository.prototype.onServerAdded = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onServerAdded", callback);
-        var serversWithMethodsToReplay = this.getServers().map(function (s) { return s.instance; });
+    }
+    onServerAdded(callback) {
+        const unsubscribeFunc = this.callbacks.add("onServerAdded", callback);
+        const serversWithMethodsToReplay = this.getServers().map((s) => s.instance);
         return this.returnUnsubWithDelayedReplay(unsubscribeFunc, serversWithMethodsToReplay, callback);
-    };
-    ClientRepository.prototype.onMethodAdded = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onMethodAdded", callback);
-        var methodsToReplay = this.getMethods();
+    }
+    onMethodAdded(callback) {
+        const unsubscribeFunc = this.callbacks.add("onMethodAdded", callback);
+        const methodsToReplay = this.getMethods();
         return this.returnUnsubWithDelayedReplay(unsubscribeFunc, methodsToReplay, callback);
-    };
-    ClientRepository.prototype.onServerMethodAdded = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onServerMethodAdded", callback);
-        var unsubCalled = false;
-        var servers = this.getServers();
-        setTimeout(function () {
-            servers.forEach(function (server) {
-                var methods = server.methods;
-                Object.keys(methods).forEach(function (methodId) {
+    }
+    onServerMethodAdded(callback) {
+        const unsubscribeFunc = this.callbacks.add("onServerMethodAdded", callback);
+        let unsubCalled = false;
+        const servers = this.getServers();
+        setTimeout(() => {
+            servers.forEach((server) => {
+                const methods = server.methods;
+                Object.keys(methods).forEach((methodId) => {
                     if (!unsubCalled) {
                         callback(server.instance, methods[methodId]);
                     }
                 });
             });
         }, 0);
-        return function () {
+        return () => {
             unsubCalled = true;
             unsubscribeFunc();
         };
-    };
-    ClientRepository.prototype.onMethodRemoved = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onMethodRemoved", callback);
+    }
+    onMethodRemoved(callback) {
+        const unsubscribeFunc = this.callbacks.add("onMethodRemoved", callback);
         return unsubscribeFunc;
-    };
-    ClientRepository.prototype.onServerRemoved = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onServerRemoved", callback);
+    }
+    onServerRemoved(callback) {
+        const unsubscribeFunc = this.callbacks.add("onServerRemoved", callback);
         return unsubscribeFunc;
-    };
-    ClientRepository.prototype.onServerMethodRemoved = function (callback) {
-        var unsubscribeFunc = this.callbacks.add("onServerMethodRemoved", callback);
+    }
+    onServerMethodRemoved(callback) {
+        const unsubscribeFunc = this.callbacks.add("onServerMethodRemoved", callback);
         return unsubscribeFunc;
-    };
-    ClientRepository.prototype.getServerById = function (id) {
+    }
+    getServerById(id) {
         return this.hideServerMethodSystemFlags(this.servers[id]);
-    };
-    ClientRepository.prototype.reset = function () {
-        var _a;
-        var _this = this;
-        Object.keys(this.servers).forEach(function (key) {
-            _this.removeServerById(key, "reset");
+    }
+    reset() {
+        Object.keys(this.servers).forEach((key) => {
+            this.removeServerById(key, "reset");
         });
-        this.servers = (_a = {},
-            _a[this.myServer.id] = this.myServer,
-            _a);
+        this.servers = {
+            [this.myServer.id]: this.myServer
+        };
         this.methodsCount = {};
-    };
-    ClientRepository.prototype.createMethodIdentifier = function (methodInfo) {
-        var _a, _b;
-        var accepts = (_a = methodInfo.input_signature) !== null && _a !== void 0 ? _a : "";
-        var returns = (_b = methodInfo.result_signature) !== null && _b !== void 0 ? _b : "";
+    }
+    createMethodIdentifier(methodInfo) {
+        const accepts = methodInfo.input_signature ?? "";
+        const returns = methodInfo.result_signature ?? "";
         return (methodInfo.name + accepts + returns).toLowerCase();
-    };
-    ClientRepository.prototype.getServersByMethod = function (identifier) {
-        var allServers = [];
-        Object.values(this.servers).forEach(function (server) {
-            Object.values(server.methods).forEach(function (method) {
+    }
+    getServersByMethod(identifier) {
+        const allServers = [];
+        Object.values(this.servers).forEach((server) => {
+            Object.values(server.methods).forEach((method) => {
                 if (method.identifier === identifier) {
                     allServers.push(server.instance);
                 }
             });
         });
         return allServers;
-    };
-    ClientRepository.prototype.returnUnsubWithDelayedReplay = function (unsubscribeFunc, collectionToReplay, callback) {
-        var unsubCalled = false;
-        setTimeout(function () {
-            collectionToReplay.forEach(function (item) {
+    }
+    returnUnsubWithDelayedReplay(unsubscribeFunc, collectionToReplay, callback) {
+        let unsubCalled = false;
+        setTimeout(() => {
+            collectionToReplay.forEach((item) => {
                 if (!unsubCalled) {
                     callback(item);
                 }
             });
         }, 0);
-        return function () {
+        return () => {
             unsubCalled = true;
             unsubscribeFunc();
         };
-    };
-    ClientRepository.prototype.hideServerMethodSystemFlags = function (server) {
-        var clientMethods = {};
-        Object.entries(server.methods).forEach(function (_a) {
-            var name = _a[0], method = _a[1];
+    }
+    hideServerMethodSystemFlags(server) {
+        const clientMethods = {};
+        Object.entries(server.methods).forEach(([name, method]) => {
             clientMethods[name] = hideMethodSystemFlags(method);
         });
-        return __assign(__assign({}, server), { methods: clientMethods });
-    };
-    ClientRepository.prototype.extractMethodsFromServers = function (servers) {
-        var methods = Object.values(servers).reduce(function (clientMethods, server) {
-            return __spreadArray(__spreadArray([], clientMethods, true), Object.values(server.methods), true);
+        return {
+            ...server,
+            methods: clientMethods
+        };
+    }
+    extractMethodsFromServers(servers) {
+        const methods = Object.values(servers).reduce((clientMethods, server) => {
+            return [...clientMethods, ...Object.values(server.methods)];
         }, []);
         return methods;
-    };
-    return ClientRepository;
-}());
-
-var ServerRepository = (function () {
-    function ServerRepository() {
-        this.nextId = 0;
-        this.methods = [];
     }
-    ServerRepository.prototype.add = function (method) {
+}
+
+class ServerRepository {
+    nextId = 0;
+    methods = [];
+    add(method) {
         method.repoId = String(this.nextId);
         this.nextId += 1;
         this.methods.push(method);
         return method;
-    };
-    ServerRepository.prototype.remove = function (repoId) {
+    }
+    remove(repoId) {
         if (typeof repoId !== "string") {
             return new TypeError("Expecting a string");
         }
-        this.methods = this.methods.filter(function (m) {
+        this.methods = this.methods.filter((m) => {
             return m.repoId !== repoId;
         });
-    };
-    ServerRepository.prototype.getById = function (id) {
+    }
+    getById(id) {
         if (typeof id !== "string") {
             return undefined;
         }
-        return this.methods.find(function (m) {
+        return this.methods.find((m) => {
             return m.repoId === id;
         });
-    };
-    ServerRepository.prototype.getList = function () {
-        return this.methods.map(function (m) { return m; });
-    };
-    ServerRepository.prototype.length = function () {
+    }
+    getList() {
+        return this.methods.map((m) => m);
+    }
+    length() {
         return this.methods.length;
-    };
-    ServerRepository.prototype.reset = function () {
+    }
+    reset() {
         this.methods = [];
-    };
-    return ServerRepository;
-}());
+    }
+}
 
-var SUBSCRIPTION_REQUEST = "onSubscriptionRequest";
-var SUBSCRIPTION_ADDED = "onSubscriptionAdded";
-var SUBSCRIPTION_REMOVED = "onSubscriptionRemoved";
-var ServerStreaming = (function () {
-    function ServerStreaming(session, repository, serverRepository) {
-        var _this = this;
+const SUBSCRIPTION_REQUEST = "onSubscriptionRequest";
+const SUBSCRIPTION_ADDED = "onSubscriptionAdded";
+const SUBSCRIPTION_REMOVED = "onSubscriptionRemoved";
+class ServerStreaming {
+    session;
+    repository;
+    serverRepository;
+    ERR_URI_SUBSCRIPTION_FAILED = "com.tick42.agm.errors.subscription.failure";
+    callbacks = CallbackRegistryFactory();
+    nextStreamId = 0;
+    constructor(session, repository, serverRepository) {
         this.session = session;
         this.repository = repository;
         this.serverRepository = serverRepository;
-        this.ERR_URI_SUBSCRIPTION_FAILED = "com.tick42.agm.errors.subscription.failure";
-        this.callbacks = lib$1();
-        this.nextStreamId = 0;
-        session.on("add-interest", function (msg) {
-            _this.handleAddInterest(msg);
+        session.on("add-interest", (msg) => {
+            this.handleAddInterest(msg);
         });
-        session.on("remove-interest", function (msg) {
-            _this.handleRemoveInterest(msg);
+        session.on("remove-interest", (msg) => {
+            this.handleRemoveInterest(msg);
         });
     }
-    ServerStreaming.prototype.acceptRequestOnBranch = function (requestContext, streamingMethod, branch) {
+    acceptRequestOnBranch(requestContext, streamingMethod, branch) {
         if (typeof branch !== "string") {
             branch = "";
         }
@@ -14512,14 +13167,14 @@ var ServerStreaming = (function () {
         if (!Array.isArray(streamingMethod.protocolState.branchKeyToStreamIdMap)) {
             throw new TypeError("The streaming method is missing its branches.");
         }
-        var streamId = this.getStreamId(streamingMethod, branch);
-        var key = requestContext.msg.subscription_id;
-        var subscription = {
+        const streamId = this.getStreamId(streamingMethod, branch);
+        const key = requestContext.msg.subscription_id;
+        const subscription = {
             id: key,
             arguments: requestContext.arguments,
             instance: requestContext.instance,
             branchKey: branch,
-            streamId: streamId,
+            streamId,
             subscribeMsg: requestContext.msg,
         };
         streamingMethod.protocolState.subscriptionsMap[key] = subscription;
@@ -14529,15 +13184,14 @@ var ServerStreaming = (function () {
             stream_id: streamId,
         });
         this.callbacks.execute(SUBSCRIPTION_ADDED, subscription, streamingMethod);
-    };
-    ServerStreaming.prototype.rejectRequest = function (requestContext, streamingMethod, reason) {
+    }
+    rejectRequest(requestContext, streamingMethod, reason) {
         if (typeof reason !== "string") {
             reason = "";
         }
         this.sendSubscriptionFailed("Subscription rejected by user. " + reason, requestContext.msg.subscription_id);
-    };
-    ServerStreaming.prototype.pushData = function (streamingMethod, data, branches) {
-        var _this = this;
+    }
+    pushData(streamingMethod, data, branches) {
         if (typeof streamingMethod !== "object" || !Array.isArray(streamingMethod.protocolState.branchKeyToStreamIdMap)) {
             return;
         }
@@ -14550,40 +13204,40 @@ var ServerStreaming = (function () {
         else if (!Array.isArray(branches) || branches.length <= 0) {
             branches = [];
         }
-        var streamIdList = streamingMethod.protocolState.branchKeyToStreamIdMap
-            .filter(function (br) {
+        const streamIdList = streamingMethod.protocolState.branchKeyToStreamIdMap
+            .filter((br) => {
             if (!branches || branches.length === 0) {
                 return true;
             }
             return branches.indexOf(br.key) >= 0;
-        }).map(function (br) {
+        }).map((br) => {
             return br.streamId;
         });
-        streamIdList.forEach(function (streamId) {
-            var publishMessage = {
+        streamIdList.forEach((streamId) => {
+            const publishMessage = {
                 type: "publish",
                 stream_id: streamId,
-                data: data,
+                data,
             };
-            _this.session.sendFireAndForget(publishMessage);
+            this.session.sendFireAndForget(publishMessage);
         });
-    };
-    ServerStreaming.prototype.pushDataToSingle = function (method, subscription, data) {
+    }
+    pushDataToSingle(method, subscription, data) {
         if (typeof data !== "object") {
             throw new Error("Invalid arguments. Data must be an object.");
         }
-        var postMessage = {
+        const postMessage = {
             type: "post",
             subscription_id: subscription.id,
-            data: data,
+            data,
         };
         this.session.sendFireAndForget(postMessage);
-    };
-    ServerStreaming.prototype.closeSingleSubscription = function (streamingMethod, subscription) {
+    }
+    closeSingleSubscription(streamingMethod, subscription) {
         if (streamingMethod.protocolState.subscriptionsMap) {
             delete streamingMethod.protocolState.subscriptionsMap[subscription.id];
         }
-        var dropSubscriptionMessage = {
+        const dropSubscriptionMessage = {
             type: "drop-subscription",
             subscription_id: subscription.id,
             reason: "Server dropping a single subscription",
@@ -14591,73 +13245,72 @@ var ServerStreaming = (function () {
         this.session.sendFireAndForget(dropSubscriptionMessage);
         subscription.instance;
         this.callbacks.execute(SUBSCRIPTION_REMOVED, subscription, streamingMethod);
-    };
-    ServerStreaming.prototype.closeMultipleSubscriptions = function (streamingMethod, branchKey) {
-        var _this = this;
+    }
+    closeMultipleSubscriptions(streamingMethod, branchKey) {
         if (typeof streamingMethod !== "object" || typeof streamingMethod.protocolState.subscriptionsMap !== "object") {
             return;
         }
         if (!streamingMethod.protocolState.subscriptionsMap) {
             return;
         }
-        var subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
-        var subscriptionsToClose = Object.keys(subscriptionsMap)
-            .map(function (key) {
+        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
+        let subscriptionsToClose = Object.keys(subscriptionsMap)
+            .map((key) => {
             return subscriptionsMap[key];
         });
         if (typeof branchKey === "string") {
-            subscriptionsToClose = subscriptionsToClose.filter(function (sub) {
+            subscriptionsToClose = subscriptionsToClose.filter((sub) => {
                 return sub.branchKey === branchKey;
             });
         }
-        subscriptionsToClose.forEach(function (subscription) {
+        subscriptionsToClose.forEach((subscription) => {
             delete subscriptionsMap[subscription.id];
-            var drop = {
+            const drop = {
                 type: "drop-subscription",
                 subscription_id: subscription.id,
                 reason: "Server dropping all subscriptions on stream_id: " + subscription.streamId,
             };
-            _this.session.sendFireAndForget(drop);
+            this.session.sendFireAndForget(drop);
         });
-    };
-    ServerStreaming.prototype.getSubscriptionList = function (streamingMethod, branchKey) {
+    }
+    getSubscriptionList(streamingMethod, branchKey) {
         if (typeof streamingMethod !== "object") {
             return [];
         }
-        var subscriptions = [];
+        let subscriptions = [];
         if (!streamingMethod.protocolState.subscriptionsMap) {
             return [];
         }
-        var subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
-        var allSubscriptions = Object.keys(subscriptionsMap)
-            .map(function (key) {
+        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
+        const allSubscriptions = Object.keys(subscriptionsMap)
+            .map((key) => {
             return subscriptionsMap[key];
         });
         if (typeof branchKey !== "string") {
             subscriptions = allSubscriptions;
         }
         else {
-            subscriptions = allSubscriptions.filter(function (sub) {
+            subscriptions = allSubscriptions.filter((sub) => {
                 return sub.branchKey === branchKey;
             });
         }
         return subscriptions;
-    };
-    ServerStreaming.prototype.getBranchList = function (streamingMethod) {
+    }
+    getBranchList(streamingMethod) {
         if (typeof streamingMethod !== "object") {
             return [];
         }
         if (!streamingMethod.protocolState.subscriptionsMap) {
             return [];
         }
-        var subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
-        var allSubscriptions = Object.keys(subscriptionsMap)
-            .map(function (key) {
+        const subscriptionsMap = streamingMethod.protocolState.subscriptionsMap;
+        const allSubscriptions = Object.keys(subscriptionsMap)
+            .map((key) => {
             return subscriptionsMap[key];
         });
-        var result = [];
-        allSubscriptions.forEach(function (sub) {
-            var branch = "";
+        const result = [];
+        allSubscriptions.forEach((sub) => {
+            let branch = "";
             if (typeof sub === "object" && typeof sub.branchKey === "string") {
                 branch = sub.branchKey;
             }
@@ -14666,18 +13319,18 @@ var ServerStreaming = (function () {
             }
         });
         return result;
-    };
-    ServerStreaming.prototype.onSubAdded = function (callback) {
+    }
+    onSubAdded(callback) {
         this.onSubscriptionLifetimeEvent(SUBSCRIPTION_ADDED, callback);
-    };
-    ServerStreaming.prototype.onSubRequest = function (callback) {
+    }
+    onSubRequest(callback) {
         this.onSubscriptionLifetimeEvent(SUBSCRIPTION_REQUEST, callback);
-    };
-    ServerStreaming.prototype.onSubRemoved = function (callback) {
+    }
+    onSubRemoved(callback) {
         this.onSubscriptionLifetimeEvent(SUBSCRIPTION_REMOVED, callback);
-    };
-    ServerStreaming.prototype.handleRemoveInterest = function (msg) {
-        var streamingMethod = this.serverRepository.getById(msg.method_id);
+    }
+    handleRemoveInterest(msg) {
+        const streamingMethod = this.serverRepository.getById(msg.method_id);
         if (typeof msg.subscription_id !== "string" ||
             typeof streamingMethod !== "object") {
             return;
@@ -14688,27 +13341,27 @@ var ServerStreaming = (function () {
         if (typeof streamingMethod.protocolState.subscriptionsMap[msg.subscription_id] !== "object") {
             return;
         }
-        var subscription = streamingMethod.protocolState.subscriptionsMap[msg.subscription_id];
+        const subscription = streamingMethod.protocolState.subscriptionsMap[msg.subscription_id];
         delete streamingMethod.protocolState.subscriptionsMap[msg.subscription_id];
         this.callbacks.execute(SUBSCRIPTION_REMOVED, subscription, streamingMethod);
-    };
-    ServerStreaming.prototype.onSubscriptionLifetimeEvent = function (eventName, handlerFunc) {
+    }
+    onSubscriptionLifetimeEvent(eventName, handlerFunc) {
         this.callbacks.add(eventName, handlerFunc);
-    };
-    ServerStreaming.prototype.getNextStreamId = function () {
+    }
+    getNextStreamId() {
         return this.nextStreamId++ + "";
-    };
-    ServerStreaming.prototype.handleAddInterest = function (msg) {
-        var caller = this.repository.getServerById(msg.caller_id);
-        var instance = caller.instance;
-        var requestContext = {
-            msg: msg,
+    }
+    handleAddInterest(msg) {
+        const caller = this.repository.getServerById(msg.caller_id);
+        const instance = caller.instance;
+        const requestContext = {
+            msg,
             arguments: msg.arguments_kv || {},
-            instance: instance,
+            instance,
         };
-        var streamingMethod = this.serverRepository.getById(msg.method_id);
+        const streamingMethod = this.serverRepository.getById(msg.method_id);
         if (streamingMethod === undefined) {
-            var errorMsg = "No method with id " + msg.method_id + " on this server.";
+            const errorMsg = "No method with id " + msg.method_id + " on this server.";
             this.sendSubscriptionFailed(errorMsg, msg.subscription_id);
             return;
         }
@@ -14718,58 +13371,59 @@ var ServerStreaming = (function () {
             return;
         }
         this.callbacks.execute(SUBSCRIPTION_REQUEST, requestContext, streamingMethod);
-    };
-    ServerStreaming.prototype.sendSubscriptionFailed = function (reason, subscriptionId) {
-        var errorMessage = {
+    }
+    sendSubscriptionFailed(reason, subscriptionId) {
+        const errorMessage = {
             type: "error",
             reason_uri: this.ERR_URI_SUBSCRIPTION_FAILED,
-            reason: reason,
+            reason,
             request_id: subscriptionId,
         };
         this.session.sendFireAndForget(errorMessage);
-    };
-    ServerStreaming.prototype.getStreamId = function (streamingMethod, branchKey) {
+    }
+    getStreamId(streamingMethod, branchKey) {
         if (typeof branchKey !== "string") {
             branchKey = "";
         }
         if (!streamingMethod.protocolState.branchKeyToStreamIdMap) {
-            throw new Error("streaming ".concat(streamingMethod.definition.name, " method without protocol state"));
+            throw new Error(`streaming ${streamingMethod.definition.name} method without protocol state`);
         }
-        var needleBranch = streamingMethod.protocolState.branchKeyToStreamIdMap.filter(function (branch) {
+        const needleBranch = streamingMethod.protocolState.branchKeyToStreamIdMap.filter((branch) => {
             return branch.key === branchKey;
         })[0];
-        var streamId = (needleBranch ? needleBranch.streamId : undefined);
+        let streamId = (needleBranch ? needleBranch.streamId : undefined);
         if (typeof streamId !== "string" || streamId === "") {
             streamId = this.getNextStreamId();
-            streamingMethod.protocolState.branchKeyToStreamIdMap.push({ key: branchKey, streamId: streamId });
+            streamingMethod.protocolState.branchKeyToStreamIdMap.push({ key: branchKey, streamId });
         }
         return streamId;
-    };
-    return ServerStreaming;
-}());
+    }
+}
 
-var ServerProtocol = (function () {
-    function ServerProtocol(session, clientRepository, serverRepository, logger) {
-        var _this = this;
+class ServerProtocol {
+    session;
+    clientRepository;
+    serverRepository;
+    logger;
+    callbacks = CallbackRegistryFactory();
+    streaming;
+    constructor(session, clientRepository, serverRepository, logger) {
         this.session = session;
         this.clientRepository = clientRepository;
         this.serverRepository = serverRepository;
         this.logger = logger;
-        this.callbacks = lib$1();
         this.streaming = new ServerStreaming(session, clientRepository, serverRepository);
-        this.session.on("invoke", function (msg) { return _this.handleInvokeMessage(msg); });
+        this.session.on("invoke", (msg) => this.handleInvokeMessage(msg));
     }
-    ServerProtocol.prototype.createStream = function (repoMethod) {
+    createStream(repoMethod) {
         repoMethod.protocolState.subscriptionsMap = {};
         repoMethod.protocolState.branchKeyToStreamIdMap = [];
         return this.register(repoMethod, true);
-    };
-    ServerProtocol.prototype.register = function (repoMethod, isStreaming) {
-        var _this = this;
-        var _a;
-        var methodDef = repoMethod.definition;
-        var flags = Object.assign({}, { metadata: (_a = methodDef.flags) !== null && _a !== void 0 ? _a : {} }, { streaming: isStreaming || false });
-        var registerMsg = {
+    }
+    register(repoMethod, isStreaming) {
+        const methodDef = repoMethod.definition;
+        const flags = Object.assign({}, { metadata: methodDef.flags ?? {} }, { streaming: isStreaming || false });
+        const registerMsg = {
             type: "register",
             methods: [{
                     id: repoMethod.repoId,
@@ -14777,7 +13431,7 @@ var ServerProtocol = (function () {
                     display_name: methodDef.displayName,
                     description: methodDef.description,
                     version: methodDef.version,
-                    flags: flags,
+                    flags,
                     object_types: methodDef.objectTypes || methodDef.object_types,
                     input_signature: methodDef.accepts,
                     result_signature: methodDef.returns,
@@ -14785,19 +13439,19 @@ var ServerProtocol = (function () {
                 }],
         };
         return this.session.send(registerMsg, { methodId: repoMethod.repoId })
-            .then(function () {
-            _this.logger.debug("registered method " + repoMethod.definition.name + " with id " + repoMethod.repoId);
+            .then(() => {
+            this.logger.debug("registered method " + repoMethod.definition.name + " with id " + repoMethod.repoId);
         })
-            .catch(function (msg) {
-            _this.logger.warn("failed to register method ".concat(repoMethod.definition.name, " with id ").concat(repoMethod.repoId, " - ").concat(JSON.stringify(msg)));
+            .catch((msg) => {
+            this.logger.warn(`failed to register method ${repoMethod.definition.name} with id ${repoMethod.repoId} - ${JSON.stringify(msg)}`);
             throw msg;
         });
-    };
-    ServerProtocol.prototype.onInvoked = function (callback) {
+    }
+    onInvoked(callback) {
         this.callbacks.add("onInvoked", callback);
-    };
-    ServerProtocol.prototype.methodInvocationResult = function (method, invocationId, err, result) {
-        var msg;
+    }
+    methodInvocationResult(method, invocationId, err, result) {
+        let msg;
         if (err || err === "") {
             msg = {
                 type: "error",
@@ -14813,344 +13467,175 @@ var ServerProtocol = (function () {
                 type: "yield",
                 invocation_id: invocationId,
                 peer_id: this.session.peerId,
-                result: result,
+                result,
                 request_id: undefined,
             };
         }
         this.session.sendFireAndForget(msg);
-    };
-    ServerProtocol.prototype.unregister = function (method) {
-        return __awaiter(this, void 0, void 0, function () {
-            var msg;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        msg = {
-                            type: "unregister",
-                            methods: [method.repoId],
-                        };
-                        return [4, this.session.send(msg)];
-                    case 1:
-                        _a.sent();
-                        return [2];
-                }
-            });
-        });
-    };
-    ServerProtocol.prototype.getBranchList = function (method) {
+    }
+    async unregister(method) {
+        const msg = {
+            type: "unregister",
+            methods: [method.repoId],
+        };
+        await this.session.send(msg);
+    }
+    getBranchList(method) {
         return this.streaming.getBranchList(method);
-    };
-    ServerProtocol.prototype.getSubscriptionList = function (method, branchKey) {
+    }
+    getSubscriptionList(method, branchKey) {
         return this.streaming.getSubscriptionList(method, branchKey);
-    };
-    ServerProtocol.prototype.closeAllSubscriptions = function (method, branchKey) {
+    }
+    closeAllSubscriptions(method, branchKey) {
         this.streaming.closeMultipleSubscriptions(method, branchKey);
-    };
-    ServerProtocol.prototype.pushData = function (method, data, branches) {
+    }
+    pushData(method, data, branches) {
         this.streaming.pushData(method, data, branches);
-    };
-    ServerProtocol.prototype.pushDataToSingle = function (method, subscription, data) {
+    }
+    pushDataToSingle(method, subscription, data) {
         this.streaming.pushDataToSingle(method, subscription, data);
-    };
-    ServerProtocol.prototype.closeSingleSubscription = function (method, subscription) {
+    }
+    closeSingleSubscription(method, subscription) {
         this.streaming.closeSingleSubscription(method, subscription);
-    };
-    ServerProtocol.prototype.acceptRequestOnBranch = function (requestContext, method, branch) {
+    }
+    acceptRequestOnBranch(requestContext, method, branch) {
         this.streaming.acceptRequestOnBranch(requestContext, method, branch);
-    };
-    ServerProtocol.prototype.rejectRequest = function (requestContext, method, reason) {
+    }
+    rejectRequest(requestContext, method, reason) {
         this.streaming.rejectRequest(requestContext, method, reason);
-    };
-    ServerProtocol.prototype.onSubRequest = function (callback) {
+    }
+    onSubRequest(callback) {
         this.streaming.onSubRequest(callback);
-    };
-    ServerProtocol.prototype.onSubAdded = function (callback) {
+    }
+    onSubAdded(callback) {
         this.streaming.onSubAdded(callback);
-    };
-    ServerProtocol.prototype.onSubRemoved = function (callback) {
+    }
+    onSubRemoved(callback) {
         this.streaming.onSubRemoved(callback);
-    };
-    ServerProtocol.prototype.handleInvokeMessage = function (msg) {
-        var invocationId = msg.invocation_id;
-        var callerId = msg.caller_id;
-        var methodId = msg.method_id;
-        var args = msg.arguments_kv;
-        var methodList = this.serverRepository.getList();
-        var method = methodList.filter(function (m) {
+    }
+    handleInvokeMessage(msg) {
+        const invocationId = msg.invocation_id;
+        const callerId = msg.caller_id;
+        const methodId = msg.method_id;
+        const args = msg.arguments_kv;
+        const methodList = this.serverRepository.getList();
+        const method = methodList.filter((m) => {
             return m.repoId === methodId;
         })[0];
         if (method === undefined) {
             return;
         }
-        var client = this.clientRepository.getServerById(callerId).instance;
-        var invocationArgs = { args: args, instance: client };
+        const client = this.clientRepository.getServerById(callerId).instance;
+        const invocationArgs = { args, instance: client };
         this.callbacks.execute("onInvoked", method, invocationId, invocationArgs);
-    };
-    return ServerProtocol;
-}());
+    }
+}
 
-var UserSubscription = (function () {
-    function UserSubscription(repository, subscriptionData) {
+class UserSubscription {
+    repository;
+    subscriptionData;
+    get requestArguments() {
+        return this.subscriptionData.params.arguments || {};
+    }
+    get servers() {
+        return this.subscriptionData.trackedServers
+            .filter((pair) => pair.subscriptionId)
+            .map((pair) => this.repository.getServerById(pair.serverId).instance);
+    }
+    get serverInstance() {
+        return this.servers[0];
+    }
+    get stream() {
+        return this.subscriptionData.method;
+    }
+    constructor(repository, subscriptionData) {
         this.repository = repository;
         this.subscriptionData = subscriptionData;
     }
-    Object.defineProperty(UserSubscription.prototype, "requestArguments", {
-        get: function () {
-            return this.subscriptionData.params.arguments || {};
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(UserSubscription.prototype, "servers", {
-        get: function () {
-            var _this = this;
-            return this.subscriptionData.trackedServers
-                .filter(function (pair) { return pair.subscriptionId; })
-                .map(function (pair) { return _this.repository.getServerById(pair.serverId).instance; });
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(UserSubscription.prototype, "serverInstance", {
-        get: function () {
-            return this.servers[0];
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(UserSubscription.prototype, "stream", {
-        get: function () {
-            return this.subscriptionData.method;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    UserSubscription.prototype.onData = function (dataCallback) {
+    onData(dataCallback) {
         if (typeof dataCallback !== "function") {
             throw new TypeError("The data callback must be a function.");
         }
         this.subscriptionData.handlers.onData.push(dataCallback);
         if (this.subscriptionData.handlers.onData.length === 1 && this.subscriptionData.queued.data.length > 0) {
-            this.subscriptionData.queued.data.forEach(function (dataItem) {
+            this.subscriptionData.queued.data.forEach((dataItem) => {
                 dataCallback(dataItem);
             });
         }
-    };
-    UserSubscription.prototype.onClosed = function (closedCallback) {
+    }
+    onClosed(closedCallback) {
         if (typeof closedCallback !== "function") {
             throw new TypeError("The callback must be a function.");
         }
         this.subscriptionData.handlers.onClosed.push(closedCallback);
-    };
-    UserSubscription.prototype.onFailed = function (callback) {
-    };
-    UserSubscription.prototype.onConnected = function (callback) {
+    }
+    onFailed(callback) {
+    }
+    onConnected(callback) {
         if (typeof callback !== "function") {
             throw new TypeError("The callback must be a function.");
         }
         this.subscriptionData.handlers.onConnected.push(callback);
-    };
-    UserSubscription.prototype.close = function () {
-        this.subscriptionData.close();
-    };
-    UserSubscription.prototype.setNewSubscription = function (newSub) {
-        this.subscriptionData = newSub;
-    };
-    return UserSubscription;
-}());
-
-var TimedCache = (function () {
-    function TimedCache(config) {
-        this.config = config;
-        this.cache = [];
-        this.timeoutIds = [];
     }
-    TimedCache.prototype.add = function (element) {
-        var _this = this;
-        var id = shortid();
-        this.cache.push({ id: id, element: element });
-        var timeoutId = setTimeout(function () {
-            var elementIdx = _this.cache.findIndex(function (entry) { return entry.id === id; });
+    close() {
+        this.subscriptionData.close();
+    }
+    setNewSubscription(newSub) {
+        this.subscriptionData = newSub;
+    }
+}
+
+class TimedCache {
+    config;
+    cache = [];
+    timeoutIds = [];
+    constructor(config) {
+        this.config = config;
+    }
+    add(element) {
+        const id = nanoid(10);
+        this.cache.push({ id, element });
+        const timeoutId = setTimeout(() => {
+            const elementIdx = this.cache.findIndex((entry) => entry.id === id);
             if (elementIdx < 0) {
                 return;
             }
-            _this.cache.splice(elementIdx, 1);
+            this.cache.splice(elementIdx, 1);
         }, this.config.ELEMENT_TTL_MS);
         this.timeoutIds.push(timeoutId);
-    };
-    TimedCache.prototype.flush = function () {
-        var elements = this.cache.map(function (entry) { return entry.element; });
-        this.timeoutIds.forEach(function (id) { return clearInterval(id); });
+    }
+    flush() {
+        const elements = this.cache.map((entry) => entry.element);
+        this.timeoutIds.forEach((id) => clearInterval(id));
         this.cache = [];
         this.timeoutIds = [];
         return elements;
-    };
-    return TimedCache;
-}());
+    }
+}
 
-var STATUS_AWAITING_ACCEPT = "awaitingAccept";
-var STATUS_SUBSCRIBED = "subscribed";
-var ERR_MSG_SUB_FAILED = "Subscription failed.";
-var ERR_MSG_SUB_REJECTED = "Subscription rejected.";
-var ON_CLOSE_MSG_SERVER_INIT = "ServerInitiated";
-var ON_CLOSE_MSG_CLIENT_INIT = "ClientInitiated";
-var ClientStreaming = (function () {
-    function ClientStreaming(session, repository, logger) {
-        var _this = this;
+const STATUS_AWAITING_ACCEPT = "awaitingAccept";
+const STATUS_SUBSCRIBED = "subscribed";
+const ERR_MSG_SUB_FAILED = "Subscription failed.";
+const ERR_MSG_SUB_REJECTED = "Subscription rejected.";
+const ON_CLOSE_MSG_SERVER_INIT = "ServerInitiated";
+const ON_CLOSE_MSG_CLIENT_INIT = "ClientInitiated";
+class ClientStreaming {
+    session;
+    repository;
+    logger;
+    subscriptionsList = {};
+    timedCache = new TimedCache({ ELEMENT_TTL_MS: 10000 });
+    subscriptionIdToLocalKeyMap = {};
+    nextSubLocalKey = 0;
+    constructor(session, repository, logger) {
         this.session = session;
         this.repository = repository;
         this.logger = logger;
-        this.subscriptionsList = {};
-        this.timedCache = new TimedCache({ ELEMENT_TTL_MS: 10000 });
-        this.subscriptionIdToLocalKeyMap = {};
-        this.nextSubLocalKey = 0;
-        this.handleErrorSubscribing = function (errorResponse) {
-            var tag = errorResponse._tag;
-            var subLocalKey = tag.subLocalKey;
-            var pendingSub = _this.subscriptionsList[subLocalKey];
-            if (typeof pendingSub !== "object") {
-                return;
-            }
-            pendingSub.trackedServers = pendingSub.trackedServers.filter(function (server) {
-                return server.serverId !== tag.serverId;
-            });
-            if (pendingSub.trackedServers.length <= 0) {
-                clearTimeout(pendingSub.timeoutId);
-                if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
-                    var reason = (typeof errorResponse.reason === "string" && errorResponse.reason !== "") ?
-                        ' Publisher said "' + errorResponse.reason + '".' :
-                        " No reason given.";
-                    var callArgs = typeof pendingSub.params.arguments === "object" ?
-                        JSON.stringify(pendingSub.params.arguments) :
-                        "{}";
-                    pendingSub.error({
-                        message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
-                        called_with: pendingSub.params.arguments,
-                        method: pendingSub.method,
-                    });
-                }
-                else if (pendingSub.status === STATUS_SUBSCRIBED) {
-                    _this.callOnClosedHandlers(pendingSub);
-                }
-                delete _this.subscriptionsList[subLocalKey];
-            }
-        };
-        this.handleSubscribed = function (msg) {
-            var subLocalKey = msg._tag.subLocalKey;
-            var pendingSub = _this.subscriptionsList[subLocalKey];
-            if (typeof pendingSub !== "object") {
-                return;
-            }
-            var serverId = msg._tag.serverId;
-            var acceptingServer = pendingSub.trackedServers
-                .filter(function (server) {
-                return server.serverId === serverId;
-            })[0];
-            if (typeof acceptingServer !== "object") {
-                return;
-            }
-            acceptingServer.subscriptionId = msg.subscription_id;
-            _this.subscriptionIdToLocalKeyMap[msg.subscription_id] = subLocalKey;
-            var isFirstResponse = (pendingSub.status === STATUS_AWAITING_ACCEPT);
-            pendingSub.status = STATUS_SUBSCRIBED;
-            if (isFirstResponse) {
-                var reconnect = false;
-                var sub = pendingSub.subscription;
-                if (sub) {
-                    sub.setNewSubscription(pendingSub);
-                    pendingSub.success(sub);
-                    reconnect = true;
-                }
-                else {
-                    sub = new UserSubscription(_this.repository, pendingSub);
-                    pendingSub.subscription = sub;
-                    pendingSub.success(sub);
-                }
-                for (var _i = 0, _a = pendingSub.handlers.onConnected; _i < _a.length; _i++) {
-                    var handler = _a[_i];
-                    try {
-                        handler(sub.serverInstance, reconnect);
-                    }
-                    catch (e) {
-                    }
-                }
-            }
-        };
-        this.handleEventData = function (msg) {
-            var subLocalKey = _this.subscriptionIdToLocalKeyMap[msg.subscription_id];
-            if (typeof subLocalKey === "undefined") {
-                return;
-            }
-            var subscription = _this.subscriptionsList[subLocalKey];
-            if (typeof subscription !== "object") {
-                return;
-            }
-            var trackedServersFound = subscription.trackedServers.filter(function (server) {
-                return server.subscriptionId === msg.subscription_id;
-            });
-            if (trackedServersFound.length !== 1) {
-                return;
-            }
-            var isPrivateData = msg.oob;
-            var sendingServerId = trackedServersFound[0].serverId;
-            var receivedStreamData = function () {
-                return {
-                    data: msg.data,
-                    server: _this.repository.getServerById(sendingServerId).instance,
-                    requestArguments: subscription.params.arguments,
-                    message: undefined,
-                    private: isPrivateData,
-                };
-            };
-            var onDataHandlers = subscription.handlers.onData;
-            var queuedData = subscription.queued.data;
-            if (onDataHandlers.length > 0) {
-                onDataHandlers.forEach(function (callback) {
-                    if (typeof callback === "function") {
-                        callback(receivedStreamData());
-                    }
-                });
-            }
-            else {
-                queuedData.push(receivedStreamData());
-            }
-        };
-        this.handleSubscriptionCancelled = function (msg) {
-            var subLocalKey = _this.subscriptionIdToLocalKeyMap[msg.subscription_id];
-            if (typeof subLocalKey === "undefined") {
-                return;
-            }
-            var subscription = _this.subscriptionsList[subLocalKey];
-            if (typeof subscription !== "object") {
-                return;
-            }
-            var expectedNewLength = subscription.trackedServers.length - 1;
-            subscription.trackedServers = subscription.trackedServers.filter(function (server) {
-                if (server.subscriptionId === msg.subscription_id) {
-                    subscription.queued.closers.push(server.serverId);
-                    return false;
-                }
-                else {
-                    return true;
-                }
-            });
-            if (subscription.trackedServers.length !== expectedNewLength) {
-                return;
-            }
-            if (subscription.trackedServers.length <= 0) {
-                _this.timedCache.add(subscription);
-                clearTimeout(subscription.timeoutId);
-                _this.callOnClosedHandlers(subscription);
-                delete _this.subscriptionsList[subLocalKey];
-            }
-            delete _this.subscriptionIdToLocalKeyMap[msg.subscription_id];
-        };
         session.on("subscribed", this.handleSubscribed);
         session.on("event", this.handleEventData);
         session.on("subscription-cancelled", this.handleSubscriptionCancelled);
     }
-    ClientStreaming.prototype.subscribe = function (streamingMethod, params, targetServers, success, error, existingSub) {
-        var _this = this;
+    subscribe(streamingMethod, params, targetServers, success, error, existingSub) {
         if (targetServers.length === 0) {
             error({
                 method: streamingMethod,
@@ -15159,8 +13644,8 @@ var ClientStreaming = (function () {
             });
             return;
         }
-        var subLocalKey = this.getNextSubscriptionLocalKey();
-        var pendingSub = this.registerSubscription(subLocalKey, streamingMethod, params, success, error, params.methodResponseTimeout || 10000, existingSub);
+        const subLocalKey = this.getNextSubscriptionLocalKey();
+        const pendingSub = this.registerSubscription(subLocalKey, streamingMethod, params, success, error, params.methodResponseTimeout || 10000, existingSub);
         if (typeof pendingSub !== "object") {
             error({
                 method: streamingMethod,
@@ -15169,64 +13654,63 @@ var ClientStreaming = (function () {
             });
             return;
         }
-        targetServers.forEach(function (target) {
-            var serverId = target.server.id;
-            var method = target.methods.find(function (m) { return m.name === streamingMethod.name; });
+        targetServers.forEach((target) => {
+            const serverId = target.server.id;
+            const method = target.methods.find((m) => m.name === streamingMethod.name);
             if (!method) {
-                _this.logger.error("can not find method ".concat(streamingMethod.name, " for target ").concat(target.server.id));
+                this.logger.error(`can not find method ${streamingMethod.name} for target ${target.server.id}`);
                 return;
             }
             pendingSub.trackedServers.push({
-                serverId: serverId,
+                serverId,
                 subscriptionId: undefined,
             });
-            var msg = {
+            const msg = {
                 type: "subscribe",
                 server_id: serverId,
                 method_id: method.gatewayId,
                 arguments_kv: params.arguments,
             };
-            _this.session.send(msg, { serverId: serverId, subLocalKey: subLocalKey })
-                .then(function (m) { return _this.handleSubscribed(m); })
-                .catch(function (err) { return _this.handleErrorSubscribing(err); });
+            this.session.send(msg, { serverId, subLocalKey })
+                .then((m) => this.handleSubscribed(m))
+                .catch((err) => this.handleErrorSubscribing(err));
         });
-    };
-    ClientStreaming.prototype.drainSubscriptions = function () {
-        var existing = Object.values(this.subscriptionsList);
+    }
+    drainSubscriptions() {
+        const existing = Object.values(this.subscriptionsList);
         this.subscriptionsList = {};
         this.subscriptionIdToLocalKeyMap = {};
         return existing;
-    };
-    ClientStreaming.prototype.drainSubscriptionsCache = function () {
+    }
+    drainSubscriptionsCache() {
         return this.timedCache.flush();
-    };
-    ClientStreaming.prototype.getNextSubscriptionLocalKey = function () {
-        var current = this.nextSubLocalKey;
+    }
+    getNextSubscriptionLocalKey() {
+        const current = this.nextSubLocalKey;
         this.nextSubLocalKey += 1;
         return current;
-    };
-    ClientStreaming.prototype.registerSubscription = function (subLocalKey, method, params, success, error, timeout, existingSub) {
-        var _this = this;
-        var subsInfo = {
+    }
+    registerSubscription(subLocalKey, method, params, success, error, timeout, existingSub) {
+        const subsInfo = {
             localKey: subLocalKey,
             status: STATUS_AWAITING_ACCEPT,
-            method: method,
-            params: params,
-            success: success,
-            error: error,
+            method,
+            params,
+            success,
+            error,
             trackedServers: [],
             handlers: {
-                onData: (existingSub === null || existingSub === void 0 ? void 0 : existingSub.handlers.onData) || [],
-                onClosed: (existingSub === null || existingSub === void 0 ? void 0 : existingSub.handlers.onClosed) || [],
-                onConnected: (existingSub === null || existingSub === void 0 ? void 0 : existingSub.handlers.onConnected) || [],
+                onData: existingSub?.handlers.onData || [],
+                onClosed: existingSub?.handlers.onClosed || [],
+                onConnected: existingSub?.handlers.onConnected || [],
             },
             queued: {
                 data: [],
                 closers: [],
             },
             timeoutId: undefined,
-            close: function () { return _this.closeSubscription(subLocalKey); },
-            subscription: existingSub === null || existingSub === void 0 ? void 0 : existingSub.subscription
+            close: () => this.closeSubscription(subLocalKey),
+            subscription: existingSub?.subscription
         };
         if (!existingSub) {
             if (params.onData) {
@@ -15240,40 +13724,180 @@ var ClientStreaming = (function () {
             }
         }
         this.subscriptionsList[subLocalKey] = subsInfo;
-        subsInfo.timeoutId = setTimeout(function () {
-            if (_this.subscriptionsList[subLocalKey] === undefined) {
+        subsInfo.timeoutId = setTimeout(() => {
+            if (this.subscriptionsList[subLocalKey] === undefined) {
                 return;
             }
-            var pendingSub = _this.subscriptionsList[subLocalKey];
+            const pendingSub = this.subscriptionsList[subLocalKey];
             if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
                 error({
-                    method: method,
+                    method,
                     called_with: params.arguments,
                     message: ERR_MSG_SUB_FAILED + " Subscription attempt timed out after " + timeout + " ms.",
                 });
-                delete _this.subscriptionsList[subLocalKey];
+                delete this.subscriptionsList[subLocalKey];
             }
             else if (pendingSub.status === STATUS_SUBSCRIBED && pendingSub.trackedServers.length > 0) {
-                pendingSub.trackedServers = pendingSub.trackedServers.filter(function (server) {
+                pendingSub.trackedServers = pendingSub.trackedServers.filter((server) => {
                     return (typeof server.subscriptionId !== "undefined");
                 });
                 delete pendingSub.timeoutId;
                 if (pendingSub.trackedServers.length <= 0) {
-                    _this.callOnClosedHandlers(pendingSub);
-                    delete _this.subscriptionsList[subLocalKey];
+                    this.callOnClosedHandlers(pendingSub);
+                    delete this.subscriptionsList[subLocalKey];
                 }
             }
         }, timeout);
         return subsInfo;
+    }
+    handleErrorSubscribing = (errorResponse) => {
+        const tag = errorResponse._tag;
+        const subLocalKey = tag.subLocalKey;
+        const pendingSub = this.subscriptionsList[subLocalKey];
+        if (typeof pendingSub !== "object") {
+            return;
+        }
+        pendingSub.trackedServers = pendingSub.trackedServers.filter((server) => {
+            return server.serverId !== tag.serverId;
+        });
+        if (pendingSub.trackedServers.length <= 0) {
+            clearTimeout(pendingSub.timeoutId);
+            if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
+                const reason = (typeof errorResponse.reason === "string" && errorResponse.reason !== "") ?
+                    ' Publisher said "' + errorResponse.reason + '".' :
+                    " No reason given.";
+                const callArgs = typeof pendingSub.params.arguments === "object" ?
+                    JSON.stringify(pendingSub.params.arguments) :
+                    "{}";
+                pendingSub.error({
+                    message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
+                    called_with: pendingSub.params.arguments,
+                    method: pendingSub.method,
+                });
+            }
+            else if (pendingSub.status === STATUS_SUBSCRIBED) {
+                this.callOnClosedHandlers(pendingSub);
+            }
+            delete this.subscriptionsList[subLocalKey];
+        }
     };
-    ClientStreaming.prototype.callOnClosedHandlers = function (subscription, reason) {
-        var closersCount = subscription.queued.closers.length;
-        var closingServerId = (closersCount > 0) ? subscription.queued.closers[closersCount - 1] : null;
-        var closingServer;
+    handleSubscribed = (msg) => {
+        const subLocalKey = msg._tag.subLocalKey;
+        const pendingSub = this.subscriptionsList[subLocalKey];
+        if (typeof pendingSub !== "object") {
+            return;
+        }
+        const serverId = msg._tag.serverId;
+        const acceptingServer = pendingSub.trackedServers
+            .filter((server) => {
+            return server.serverId === serverId;
+        })[0];
+        if (typeof acceptingServer !== "object") {
+            return;
+        }
+        acceptingServer.subscriptionId = msg.subscription_id;
+        this.subscriptionIdToLocalKeyMap[msg.subscription_id] = subLocalKey;
+        const isFirstResponse = (pendingSub.status === STATUS_AWAITING_ACCEPT);
+        pendingSub.status = STATUS_SUBSCRIBED;
+        if (isFirstResponse) {
+            let reconnect = false;
+            let sub = pendingSub.subscription;
+            if (sub) {
+                sub.setNewSubscription(pendingSub);
+                pendingSub.success(sub);
+                reconnect = true;
+            }
+            else {
+                sub = new UserSubscription(this.repository, pendingSub);
+                pendingSub.subscription = sub;
+                pendingSub.success(sub);
+            }
+            for (const handler of pendingSub.handlers.onConnected) {
+                try {
+                    handler(sub.serverInstance, reconnect);
+                }
+                catch (e) {
+                }
+            }
+        }
+    };
+    handleEventData = (msg) => {
+        const subLocalKey = this.subscriptionIdToLocalKeyMap[msg.subscription_id];
+        if (typeof subLocalKey === "undefined") {
+            return;
+        }
+        const subscription = this.subscriptionsList[subLocalKey];
+        if (typeof subscription !== "object") {
+            return;
+        }
+        const trackedServersFound = subscription.trackedServers.filter((server) => {
+            return server.subscriptionId === msg.subscription_id;
+        });
+        if (trackedServersFound.length !== 1) {
+            return;
+        }
+        const isPrivateData = msg.oob;
+        const sendingServerId = trackedServersFound[0].serverId;
+        const receivedStreamData = () => {
+            return {
+                data: msg.data,
+                server: this.repository.getServerById(sendingServerId).instance,
+                requestArguments: subscription.params.arguments,
+                message: undefined,
+                private: isPrivateData,
+            };
+        };
+        const onDataHandlers = subscription.handlers.onData;
+        const queuedData = subscription.queued.data;
+        if (onDataHandlers.length > 0) {
+            onDataHandlers.forEach((callback) => {
+                if (typeof callback === "function") {
+                    callback(receivedStreamData());
+                }
+            });
+        }
+        else {
+            queuedData.push(receivedStreamData());
+        }
+    };
+    handleSubscriptionCancelled = (msg) => {
+        const subLocalKey = this.subscriptionIdToLocalKeyMap[msg.subscription_id];
+        if (typeof subLocalKey === "undefined") {
+            return;
+        }
+        const subscription = this.subscriptionsList[subLocalKey];
+        if (typeof subscription !== "object") {
+            return;
+        }
+        const expectedNewLength = subscription.trackedServers.length - 1;
+        subscription.trackedServers = subscription.trackedServers.filter((server) => {
+            if (server.subscriptionId === msg.subscription_id) {
+                subscription.queued.closers.push(server.serverId);
+                return false;
+            }
+            else {
+                return true;
+            }
+        });
+        if (subscription.trackedServers.length !== expectedNewLength) {
+            return;
+        }
+        if (subscription.trackedServers.length <= 0) {
+            this.timedCache.add(subscription);
+            clearTimeout(subscription.timeoutId);
+            this.callOnClosedHandlers(subscription);
+            delete this.subscriptionsList[subLocalKey];
+        }
+        delete this.subscriptionIdToLocalKeyMap[msg.subscription_id];
+    };
+    callOnClosedHandlers(subscription, reason) {
+        const closersCount = subscription.queued.closers.length;
+        const closingServerId = (closersCount > 0) ? subscription.queued.closers[closersCount - 1] : null;
+        let closingServer;
         if (closingServerId !== undefined && typeof closingServerId === "string") {
             closingServer = this.repository.getServerById(closingServerId).instance;
         }
-        subscription.handlers.onClosed.forEach(function (callback) {
+        subscription.handlers.onClosed.forEach((callback) => {
             if (typeof callback !== "function") {
                 return;
             }
@@ -15284,74 +13908,74 @@ var ClientStreaming = (function () {
                 stream: subscription.method,
             });
         });
-    };
-    ClientStreaming.prototype.closeSubscription = function (subLocalKey) {
-        var _this = this;
-        var subscription = this.subscriptionsList[subLocalKey];
+    }
+    closeSubscription(subLocalKey) {
+        const subscription = this.subscriptionsList[subLocalKey];
         if (typeof subscription !== "object") {
             return;
         }
-        subscription.trackedServers.forEach(function (server) {
+        subscription.trackedServers.forEach((server) => {
             if (typeof server.subscriptionId === "undefined") {
                 return;
             }
             subscription.queued.closers.push(server.serverId);
-            _this.session.sendFireAndForget({
+            this.session.sendFireAndForget({
                 type: "unsubscribe",
                 subscription_id: server.subscriptionId,
                 reason_uri: "",
                 reason: ON_CLOSE_MSG_CLIENT_INIT,
             });
-            delete _this.subscriptionIdToLocalKeyMap[server.subscriptionId];
+            delete this.subscriptionIdToLocalKeyMap[server.subscriptionId];
         });
         subscription.trackedServers = [];
         this.callOnClosedHandlers(subscription, ON_CLOSE_MSG_CLIENT_INIT);
         delete this.subscriptionsList[subLocalKey];
-    };
-    return ClientStreaming;
-}());
+    }
+}
 
-var ClientProtocol = (function () {
-    function ClientProtocol(session, repository, logger) {
-        var _this = this;
+class ClientProtocol {
+    session;
+    repository;
+    logger;
+    streaming;
+    constructor(session, repository, logger) {
         this.session = session;
         this.repository = repository;
         this.logger = logger;
-        session.on("peer-added", function (msg) { return _this.handlePeerAdded(msg); });
-        session.on("peer-removed", function (msg) { return _this.handlePeerRemoved(msg); });
-        session.on("methods-added", function (msg) { return _this.handleMethodsAddedMessage(msg); });
-        session.on("methods-removed", function (msg) { return _this.handleMethodsRemovedMessage(msg); });
+        session.on("peer-added", (msg) => this.handlePeerAdded(msg));
+        session.on("peer-removed", (msg) => this.handlePeerRemoved(msg));
+        session.on("methods-added", (msg) => this.handleMethodsAddedMessage(msg));
+        session.on("methods-removed", (msg) => this.handleMethodsRemovedMessage(msg));
         this.streaming = new ClientStreaming(session, repository, logger);
     }
-    ClientProtocol.prototype.subscribe = function (stream, options, targetServers, success, error, existingSub) {
+    subscribe(stream, options, targetServers, success, error, existingSub) {
         this.streaming.subscribe(stream, options, targetServers, success, error, existingSub);
-    };
-    ClientProtocol.prototype.invoke = function (id, method, args, target) {
-        var _this = this;
-        var serverId = target.id;
-        var methodId = method.gatewayId;
-        var msg = {
+    }
+    invoke(id, method, args, target) {
+        const serverId = target.id;
+        const methodId = method.gatewayId;
+        const msg = {
             type: "call",
             server_id: serverId,
             method_id: methodId,
             arguments_kv: args,
         };
-        return this.session.send(msg, { invocationId: id, serverId: serverId })
-            .then(function (m) { return _this.handleResultMessage(m); })
-            .catch(function (err) { return _this.handleInvocationError(err); });
-    };
-    ClientProtocol.prototype.drainSubscriptions = function () {
+        return this.session.send(msg, { invocationId: id, serverId })
+            .then((m) => this.handleResultMessage(m))
+            .catch((err) => this.handleInvocationError(err));
+    }
+    drainSubscriptions() {
         return this.streaming.drainSubscriptions();
-    };
-    ClientProtocol.prototype.drainSubscriptionsCache = function () {
+    }
+    drainSubscriptionsCache() {
         return this.streaming.drainSubscriptionsCache();
-    };
-    ClientProtocol.prototype.handlePeerAdded = function (msg) {
-        var newPeerId = msg.new_peer_id;
-        var remoteId = msg.identity;
-        var isLocal = msg.meta ? msg.meta.local : true;
-        var pid = Number(remoteId.process);
-        var serverInfo = {
+    }
+    handlePeerAdded(msg) {
+        const newPeerId = msg.new_peer_id;
+        const remoteId = msg.identity;
+        const isLocal = msg.meta ? msg.meta.local : true;
+        const pid = Number(remoteId.process);
+        const serverInfo = {
             machine: remoteId.machine,
             pid: isNaN(pid) ? remoteId.process : pid,
             instance: remoteId.instance,
@@ -15363,63 +13987,61 @@ var ClientProtocol = (function () {
             windowId: remoteId.windowId,
             peerId: newPeerId,
             api: remoteId.api,
-            isLocal: isLocal
+            isLocal
         };
         this.repository.addServer(serverInfo, newPeerId);
-    };
-    ClientProtocol.prototype.handlePeerRemoved = function (msg) {
-        var removedPeerId = msg.removed_id;
-        var reason = msg.reason;
+    }
+    handlePeerRemoved(msg) {
+        const removedPeerId = msg.removed_id;
+        const reason = msg.reason;
         this.repository.removeServerById(removedPeerId, reason);
-    };
-    ClientProtocol.prototype.handleMethodsAddedMessage = function (msg) {
-        var _this = this;
-        var serverId = msg.server_id;
-        var methods = msg.methods;
-        methods.forEach(function (method) {
-            _this.repository.addServerMethod(serverId, method);
+    }
+    handleMethodsAddedMessage(msg) {
+        const serverId = msg.server_id;
+        const methods = msg.methods;
+        methods.forEach((method) => {
+            this.repository.addServerMethod(serverId, method);
         });
-    };
-    ClientProtocol.prototype.handleMethodsRemovedMessage = function (msg) {
-        var _this = this;
-        var serverId = msg.server_id;
-        var methodIdList = msg.methods;
-        var server = this.repository.getServerById(serverId);
-        var serverMethodKeys = Object.keys(server.methods);
-        serverMethodKeys.forEach(function (methodKey) {
-            var method = server.methods[methodKey];
+    }
+    handleMethodsRemovedMessage(msg) {
+        const serverId = msg.server_id;
+        const methodIdList = msg.methods;
+        const server = this.repository.getServerById(serverId);
+        const serverMethodKeys = Object.keys(server.methods);
+        serverMethodKeys.forEach((methodKey) => {
+            const method = server.methods[methodKey];
             if (methodIdList.indexOf(method.gatewayId) > -1) {
-                _this.repository.removeServerMethod(serverId, methodKey);
+                this.repository.removeServerMethod(serverId, methodKey);
             }
         });
-    };
-    ClientProtocol.prototype.handleResultMessage = function (msg) {
-        var invocationId = msg._tag.invocationId;
-        var result = msg.result;
-        var serverId = msg._tag.serverId;
-        var server = this.repository.getServerById(serverId);
+    }
+    handleResultMessage(msg) {
+        const invocationId = msg._tag.invocationId;
+        const result = msg.result;
+        const serverId = msg._tag.serverId;
+        const server = this.repository.getServerById(serverId);
         return {
-            invocationId: invocationId,
-            result: result,
+            invocationId,
+            result,
             instance: server.instance,
             status: InvokeStatus.Success,
             message: ""
         };
-    };
-    ClientProtocol.prototype.handleInvocationError = function (msg) {
-        this.logger.debug("handle invocation error ".concat(JSON.stringify(msg)));
+    }
+    handleInvocationError(msg) {
+        this.logger.debug(`handle invocation error ${JSON.stringify(msg)}`);
         if ("_tag" in msg) {
-            var invocationId = msg._tag.invocationId;
-            var serverId = msg._tag.serverId;
-            var server = this.repository.getServerById(serverId);
-            var message = msg.reason;
-            var context_1 = msg.context;
+            const invocationId = msg._tag.invocationId;
+            const serverId = msg._tag.serverId;
+            const server = this.repository.getServerById(serverId);
+            const message = msg.reason;
+            const context = msg.context;
             return {
-                invocationId: invocationId,
-                result: context_1,
+                invocationId,
+                result: context,
                 instance: server.instance,
                 status: InvokeStatus.Error,
-                message: message
+                message
             };
         }
         else {
@@ -15430,108 +14052,99 @@ var ClientProtocol = (function () {
                 error: msg
             };
         }
-    };
-    return ClientProtocol;
-}());
+    }
+}
 
 function gW3ProtocolFactory (instance, connection, clientRepository, serverRepository, libConfig, interop) {
-    var logger = libConfig.logger.subLogger("gw3-protocol");
-    var resolveReadyPromise;
-    var readyPromise = new Promise(function (resolve) {
+    const logger = libConfig.logger.subLogger("gw3-protocol");
+    let resolveReadyPromise;
+    const readyPromise = new Promise((resolve) => {
         resolveReadyPromise = resolve;
     });
-    var session = connection.domain("agm", ["subscribed"]);
-    var server = new ServerProtocol(session, clientRepository, serverRepository, logger.subLogger("server"));
-    var client = new ClientProtocol(session, clientRepository, logger.subLogger("client"));
-    function handleReconnect() {
-        return __awaiter(this, void 0, void 0, function () {
-            var reconnectionPromises, existingSubscriptions, _loop_1, _i, existingSubscriptions_1, sub, registeredMethods, _loop_2, _a, registeredMethods_1, method;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        logger.info("reconnected - will replay registered methods and subscriptions");
-                        client.drainSubscriptionsCache().forEach(function (sub) {
-                            var methodInfo = sub.method;
-                            var params = Object.assign({}, sub.params);
-                            logger.info("trying to soft-re-subscribe to method ".concat(methodInfo.name, ", with params: ").concat(JSON.stringify(params)));
-                            interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(function () { return logger.info("soft-subscribing to method ".concat(methodInfo.name, " DONE")); }).catch(function (error) { return logger.warn("subscribing to method ".concat(methodInfo.name, " failed: ").concat(JSON.stringify(error), "}")); });
-                        });
-                        reconnectionPromises = [];
-                        existingSubscriptions = client.drainSubscriptions();
-                        _loop_1 = function (sub) {
-                            var methodInfo = sub.method;
-                            var params = Object.assign({}, sub.params);
-                            logger.info("trying to re-subscribe to method ".concat(methodInfo.name, ", with params: ").concat(JSON.stringify(params)));
-                            reconnectionPromises.push(interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(function () { return logger.info("subscribing to method ".concat(methodInfo.name, " DONE")); }));
-                        };
-                        for (_i = 0, existingSubscriptions_1 = existingSubscriptions; _i < existingSubscriptions_1.length; _i++) {
-                            sub = existingSubscriptions_1[_i];
-                            _loop_1(sub);
-                        }
-                        registeredMethods = serverRepository.getList();
-                        serverRepository.reset();
-                        _loop_2 = function (method) {
-                            var def = method.definition;
-                            logger.info("re-publishing method ".concat(def.name));
-                            if (method.stream) {
-                                reconnectionPromises.push(interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream).then(function () { return logger.info("subscribing to method ".concat(def.name, " DONE")); }));
-                            }
-                            else if (method.theFunction && method.theFunction.userCallback) {
-                                reconnectionPromises.push(interop.register(def, method.theFunction.userCallback).then(function () { return logger.info("subscribing to method ".concat(def.name, " DONE")); }));
-                            }
-                            else if (method.theFunction && method.theFunction.userCallbackAsync) {
-                                reconnectionPromises.push(interop.registerAsync(def, method.theFunction.userCallbackAsync).then(function () { return logger.info("subscribing to method ".concat(def.name, " DONE")); }));
-                            }
-                            logger.info("re-publishing method ".concat(def.name, " DONE"));
-                        };
-                        for (_a = 0, registeredMethods_1 = registeredMethods; _a < registeredMethods_1.length; _a++) {
-                            method = registeredMethods_1[_a];
-                            _loop_2(method);
-                        }
-                        return [4, Promise.all(reconnectionPromises)];
-                    case 1:
-                        _b.sent();
-                        logger.info("Interop is re-announced");
-                        return [2];
-                }
-            });
+    const session = connection.domain("agm", ["subscribed"]);
+    const server = new ServerProtocol(session, clientRepository, serverRepository, logger.subLogger("server"));
+    const client = new ClientProtocol(session, clientRepository, logger.subLogger("client"));
+    async function handleReconnect() {
+        logger.info("reconnected - will replay registered methods and subscriptions");
+        client.drainSubscriptionsCache().forEach((sub) => {
+            const methodInfo = sub.method;
+            const params = Object.assign({}, sub.params);
+            logger.info(`trying to soft-re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
+            interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`soft-subscribing to method ${methodInfo.name} DONE`)).catch((error) => logger.warn(`subscribing to method ${methodInfo.name} failed: ${JSON.stringify(error)}}`));
         });
+        const reconnectionPromises = [];
+        const existingSubscriptions = client.drainSubscriptions();
+        for (const sub of existingSubscriptions) {
+            const methodInfo = sub.method;
+            const params = Object.assign({}, sub.params);
+            logger.info(`trying to re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
+            reconnectionPromises.push(interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`subscribing to method ${methodInfo.name} DONE`)));
+        }
+        const registeredMethods = serverRepository.getList();
+        serverRepository.reset();
+        for (const method of registeredMethods) {
+            const def = method.definition;
+            if (method.stream) {
+                reconnectionPromises.push(interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream)
+                    .then(() => logger.info(`subscribing to method ${def.name} DONE`))
+                    .catch(() => logger.warn(`subscribing to method ${def.name} FAILED`)));
+            }
+            else if (method?.theFunction?.userCallback) {
+                reconnectionPromises.push(interop.register(def, method.theFunction.userCallback)
+                    .then(() => logger.info(`registering method ${def.name} DONE`))
+                    .catch(() => logger.warn(`registering method ${def.name} FAILED`)));
+            }
+            else if (method?.theFunction?.userCallbackAsync) {
+                reconnectionPromises.push(interop.registerAsync(def, method.theFunction.userCallbackAsync)
+                    .then(() => logger.info(`registering method ${def.name} DONE`))
+                    .catch(() => logger.warn(`registering method ${def.name} FAILED`)));
+            }
+        }
+        await Promise.all(reconnectionPromises);
+        logger.info("Interop is re-announced");
     }
     function handleInitialJoin() {
         if (resolveReadyPromise) {
             resolveReadyPromise({
-                client: client,
-                server: server,
+                client,
+                server,
             });
             resolveReadyPromise = undefined;
         }
     }
-    session.onJoined(function (reconnect) {
+    session.onJoined((reconnect) => {
         clientRepository.addServer(instance, connection.peerId);
         if (reconnect) {
-            handleReconnect().then(function () { return connection.setLibReAnnounced({ name: "interop" }); }).catch(function (error) { return logger.warn("Error while re-announcing interop: ".concat(JSON.stringify(error))); });
+            handleReconnect().then(() => connection.setLibReAnnounced({ name: "interop" })).catch((error) => logger.warn(`Error while re-announcing interop: ${JSON.stringify(error)}`));
         }
         else {
             handleInitialJoin();
         }
     });
-    session.onLeft(function () {
+    session.onLeft(() => {
         clientRepository.reset();
     });
     session.join();
     return readyPromise;
 }
 
-var Interop = (function () {
-    function Interop(configuration) {
-        var _this = this;
+class Interop {
+    instance;
+    readyPromise;
+    client;
+    server;
+    unwrappedInstance;
+    protocol;
+    clientRepository;
+    serverRepository;
+    constructor(configuration) {
         if (typeof configuration === "undefined") {
             throw new Error("configuration is required");
         }
         if (typeof configuration.connection === "undefined") {
             throw new Error("configuration.connections is required");
         }
-        var connection = configuration.connection;
+        const connection = configuration.connection;
         if (typeof configuration.methodResponseTimeout !== "number") {
             configuration.methodResponseTimeout = 30 * 1000;
         }
@@ -15542,206 +14155,208 @@ var Interop = (function () {
         this.instance = this.unwrappedInstance.unwrap();
         this.clientRepository = new ClientRepository(configuration.logger.subLogger("cRep"), this);
         this.serverRepository = new ServerRepository();
-        var protocolPromise;
+        let protocolPromise;
         if (connection.protocolVersion === 3) {
             protocolPromise = gW3ProtocolFactory(this.instance, connection, this.clientRepository, this.serverRepository, configuration, this);
         }
         else {
-            throw new Error("protocol ".concat(connection.protocolVersion, " not supported"));
+            throw new Error(`protocol ${connection.protocolVersion} not supported`);
         }
-        this.readyPromise = protocolPromise.then(function (protocol) {
-            _this.protocol = protocol;
-            _this.client = new Client(_this.protocol, _this.clientRepository, _this.instance, configuration);
-            _this.server = new Server(_this.protocol, _this.serverRepository);
-            return _this;
+        this.readyPromise = protocolPromise.then((protocol) => {
+            this.protocol = protocol;
+            this.client = new Client(this.protocol, this.clientRepository, this.instance, configuration);
+            this.server = new Server(this.protocol, this.serverRepository);
+            return this;
         });
     }
-    Interop.prototype.ready = function () {
+    ready() {
         return this.readyPromise;
-    };
-    Interop.prototype.serverRemoved = function (callback) {
+    }
+    serverRemoved(callback) {
         return this.client.serverRemoved(callback);
-    };
-    Interop.prototype.serverAdded = function (callback) {
+    }
+    serverAdded(callback) {
         return this.client.serverAdded(callback);
-    };
-    Interop.prototype.serverMethodRemoved = function (callback) {
+    }
+    serverMethodRemoved(callback) {
         return this.client.serverMethodRemoved(callback);
-    };
-    Interop.prototype.serverMethodAdded = function (callback) {
+    }
+    serverMethodAdded(callback) {
         return this.client.serverMethodAdded(callback);
-    };
-    Interop.prototype.methodRemoved = function (callback) {
+    }
+    methodRemoved(callback) {
         return this.client.methodRemoved(callback);
-    };
-    Interop.prototype.methodAdded = function (callback) {
+    }
+    methodAdded(callback) {
         return this.client.methodAdded(callback);
-    };
-    Interop.prototype.methodsForInstance = function (instance) {
+    }
+    methodsForInstance(instance) {
         return this.client.methodsForInstance(instance);
-    };
-    Interop.prototype.methods = function (methodFilter) {
+    }
+    methods(methodFilter) {
         return this.client.methods(methodFilter);
-    };
-    Interop.prototype.servers = function (methodFilter) {
+    }
+    servers(methodFilter) {
         return this.client.servers(methodFilter);
-    };
-    Interop.prototype.subscribe = function (method, options, successCallback, errorCallback) {
+    }
+    subscribe(method, options, successCallback, errorCallback) {
         return this.client.subscribe(method, options, successCallback, errorCallback);
-    };
-    Interop.prototype.createStream = function (streamDef, callbacks, successCallback, errorCallback) {
+    }
+    createStream(streamDef, callbacks, successCallback, errorCallback) {
         return this.server.createStream(streamDef, callbacks, successCallback, errorCallback);
-    };
-    Interop.prototype.unregister = function (methodFilter) {
+    }
+    unregister(methodFilter) {
         return this.server.unregister(methodFilter);
-    };
-    Interop.prototype.registerAsync = function (methodDefinition, callback) {
+    }
+    registerAsync(methodDefinition, callback) {
         return this.server.registerAsync(methodDefinition, callback);
-    };
-    Interop.prototype.register = function (methodDefinition, callback) {
+    }
+    register(methodDefinition, callback) {
         return this.server.register(methodDefinition, callback);
-    };
-    Interop.prototype.invoke = function (methodFilter, argumentObj, target, additionalOptions, success, error) {
+    }
+    invoke(methodFilter, argumentObj, target, additionalOptions, success, error) {
         return this.client.invoke(methodFilter, argumentObj, target, additionalOptions, success, error);
-    };
-    Interop.prototype.waitForMethod = function (name) {
-        var pw = new PromiseWrapper();
-        var unsubscribe = this.client.methodAdded(function (m) {
+    }
+    waitForMethod(name) {
+        const pw = new PromiseWrapper();
+        const unsubscribe = this.client.methodAdded((m) => {
             if (m.name === name) {
                 unsubscribe();
                 pw.resolve(m);
             }
         });
         return pw.promise;
-    };
-    return Interop;
-}());
+    }
+}
 
-var successMessages = ["subscribed", "success"];
-var MessageBus = (function () {
-    function MessageBus(connection, logger) {
-        var _this = this;
-        this.publish = function (topic, data, options) {
-            var _a = options || {}, routingKey = _a.routingKey, target = _a.target;
-            var args = _this.removeEmptyValues({
-                type: "publish",
-                topic: topic,
-                data: data,
-                peer_id: _this.peerId,
-                routing_key: routingKey,
-                target_identity: target
-            });
-            _this.session.send(args);
-        };
-        this.subscribe = function (topic, callback, options) {
-            return new Promise(function (resolve, reject) {
-                var _a = options || {}, routingKey = _a.routingKey, target = _a.target;
-                var args = _this.removeEmptyValues({
-                    type: "subscribe",
-                    topic: topic,
-                    peer_id: _this.peerId,
-                    routing_key: routingKey,
-                    source: target
-                });
-                _this.session.send(args)
-                    .then(function (response) {
-                    var subscription_id = response.subscription_id;
-                    _this.subscriptions.push({ subscription_id: subscription_id, topic: topic, callback: callback, source: target });
-                    resolve({
-                        unsubscribe: function () {
-                            _this.session.send({ type: "unsubscribe", subscription_id: subscription_id, peer_id: _this.peerId });
-                            _this.subscriptions = _this.subscriptions.filter(function (s) { return s.subscription_id !== subscription_id; });
-                            return Promise.resolve();
-                        }
-                    });
-                })
-                    .catch(function (error) { return reject(error); });
-            });
-        };
-        this.watchOnEvent = function () {
-            _this.session.on("event", function (args) {
-                var data = args.data, subscription_id = args.subscription_id;
-                var source = args["publisher-identity"];
-                var subscription = _this.subscriptions.find(function (s) { return s.subscription_id === subscription_id; });
-                if (subscription) {
-                    if (!subscription.source) {
-                        subscription.callback(data, subscription.topic, source);
-                    }
-                    else {
-                        if (_this.keysMatch(subscription.source, source)) {
-                            subscription.callback(data, subscription.topic, source);
-                        }
-                    }
-                }
-            });
-        };
+const successMessages = ["subscribed", "success"];
+class MessageBus {
+    connection;
+    logger;
+    peerId;
+    session;
+    subscriptions;
+    readyPromise;
+    constructor(connection, logger) {
         this.connection = connection;
         this.logger = logger;
         this.peerId = connection.peerId;
         this.subscriptions = [];
         this.session = connection.domain("bus", successMessages);
         this.readyPromise = this.session.join();
-        this.readyPromise.then(function () {
-            _this.watchOnEvent();
+        this.readyPromise.then(() => {
+            this.watchOnEvent();
         });
     }
-    MessageBus.prototype.ready = function () {
+    ready() {
         return this.readyPromise;
+    }
+    publish = (topic, data, options) => {
+        const { routingKey, target } = options || {};
+        const args = this.removeEmptyValues({
+            type: "publish",
+            topic,
+            data,
+            peer_id: this.peerId,
+            routing_key: routingKey,
+            target_identity: target
+        });
+        this.session.send(args);
     };
-    MessageBus.prototype.removeEmptyValues = function (obj) {
-        var cleaned = {};
-        Object.keys(obj).forEach(function (key) {
+    subscribe = (topic, callback, options) => {
+        return new Promise((resolve, reject) => {
+            const { routingKey, target } = options || {};
+            const args = this.removeEmptyValues({
+                type: "subscribe",
+                topic,
+                peer_id: this.peerId,
+                routing_key: routingKey,
+                source: target
+            });
+            this.session.send(args)
+                .then((response) => {
+                const { subscription_id } = response;
+                this.subscriptions.push({ subscription_id, topic, callback, source: target });
+                resolve({
+                    unsubscribe: () => {
+                        this.session.send({ type: "unsubscribe", subscription_id, peer_id: this.peerId });
+                        this.subscriptions = this.subscriptions.filter((s) => s.subscription_id !== subscription_id);
+                        return Promise.resolve();
+                    }
+                });
+            })
+                .catch((error) => reject(error));
+        });
+    };
+    watchOnEvent = () => {
+        this.session.on("event", (args) => {
+            const { data, subscription_id } = args;
+            const source = args["publisher-identity"];
+            const subscription = this.subscriptions.find((s) => s.subscription_id === subscription_id);
+            if (subscription) {
+                if (!subscription.source) {
+                    subscription.callback(data, subscription.topic, source);
+                }
+                else {
+                    if (this.keysMatch(subscription.source, source)) {
+                        subscription.callback(data, subscription.topic, source);
+                    }
+                }
+            }
+        });
+    };
+    removeEmptyValues(obj) {
+        const cleaned = {};
+        Object.keys(obj).forEach((key) => {
             if (obj[key] !== undefined && obj[key] !== null) {
                 cleaned[key] = obj[key];
             }
         });
         return cleaned;
-    };
-    MessageBus.prototype.keysMatch = function (obj1, obj2) {
-        var keysObj1 = Object.keys(obj1);
-        var allMatch = true;
-        keysObj1.forEach(function (key) {
+    }
+    keysMatch(obj1, obj2) {
+        const keysObj1 = Object.keys(obj1);
+        let allMatch = true;
+        keysObj1.forEach((key) => {
             if (obj1[key] !== obj2[key]) {
                 allMatch = false;
             }
         });
         return allMatch;
-    };
-    return MessageBus;
-}());
+    }
+}
 
-var IOConnectCoreFactory = function (userConfig, ext) {
-    var _a, _b;
-    var iodesktop = typeof window === "object" ? ((_a = window.iodesktop) !== null && _a !== void 0 ? _a : window.glue42gd) : undefined;
-    var preloadPromise = typeof window === "object" ? ((_b = window.gdPreloadPromise) !== null && _b !== void 0 ? _b : Promise.resolve()) : Promise.resolve();
-    var glueInitTimer = timer("glue");
+const IOConnectCoreFactory = (userConfig, ext) => {
+    const iodesktop = typeof window === "object" ? (window.iodesktop ?? window.glue42gd) : undefined;
+    const preloadPromise = typeof window === "object" ? (window.gdPreloadPromise ?? Promise.resolve()) : Promise.resolve();
+    const glueInitTimer = timer("glue");
     userConfig = userConfig || {};
     ext = ext || {};
-    var internalConfig = prepareConfig(userConfig, ext, iodesktop);
-    var _connection;
-    var _interop;
-    var _logger;
-    var _metrics;
-    var _contexts;
-    var _bus;
-    var _allowTrace;
-    var libs = {};
+    const internalConfig = prepareConfig(userConfig, ext, iodesktop);
+    let _connection;
+    let _interop;
+    let _logger;
+    let _metrics;
+    let _contexts;
+    let _bus;
+    let _allowTrace;
+    const libs = {};
     function registerLib(name, inner, t) {
         _allowTrace = _logger.canPublish("trace");
         if (_allowTrace) {
-            _logger.trace("registering ".concat(name, " module"));
+            _logger.trace(`registering ${name} module`);
         }
-        var done = function () {
+        const done = () => {
             inner.initTime = t.stop();
             inner.initEndTime = t.endTime;
             inner.marks = t.marks;
             if (_allowTrace) {
-                _logger.trace("".concat(name, " is ready - ").concat(t.endTime - t.startTime));
+                _logger.trace(`${name} is ready - ${t.endTime - t.startTime}`);
             }
         };
         inner.initStartTime = t.startTime;
         if (inner.ready) {
-            inner.ready().then(function () {
+            inner.ready().then(() => {
                 done();
             });
         }
@@ -15751,25 +14366,25 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         if (!Array.isArray(name)) {
             name = [name];
         }
-        name.forEach(function (n) {
+        name.forEach((n) => {
             libs[n] = inner;
             IOConnectCoreFactory[n] = inner;
         });
     }
     function setupConnection() {
-        var initTimer = timer("connection");
+        const initTimer = timer("connection");
         _connection = new Connection(internalConfig.connection, _logger.subLogger("connection"));
-        var authPromise = Promise.resolve(internalConfig.auth);
+        let authPromise = Promise.resolve(internalConfig.auth);
         if (internalConfig.connection && !internalConfig.auth) {
             if (iodesktop) {
                 authPromise = iodesktop.getGWToken()
-                    .then(function (token) {
+                    .then((token) => {
                     return {
                         gatewayToken: token
                     };
                 });
             }
-            else if (typeof window !== "undefined" && (window === null || window === void 0 ? void 0 : window.glue42electron)) {
+            else if (typeof window !== "undefined" && window?.glue42electron) {
                 if (typeof window.glue42electron.gwToken === "string") {
                     authPromise = Promise.resolve({
                         gatewayToken: window.glue42electron.gwToken
@@ -15781,9 +14396,9 @@ var IOConnectCoreFactory = function (userConfig, ext) {
             }
         }
         return authPromise
-            .then(function (authConfig) {
+            .then((authConfig) => {
             initTimer.mark("auth-promise-resolved");
-            var authRequest;
+            let authRequest;
             if (Object.prototype.toString.call(authConfig) === "[object Object]") {
                 authRequest = authConfig;
             }
@@ -15792,11 +14407,11 @@ var IOConnectCoreFactory = function (userConfig, ext) {
             }
             return _connection.login(authRequest);
         })
-            .then(function () {
+            .then(() => {
             registerLib("connection", _connection, initTimer);
             return internalConfig;
         })
-            .catch(function (e) {
+            .catch((e) => {
             if (_connection) {
                 _connection.logout();
             }
@@ -15804,9 +14419,8 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         });
     }
     function setupLogger() {
-        var _a;
-        var initTimer = timer("logger");
-        _logger = new Logger("".concat((_a = internalConfig.connection.identity) === null || _a === void 0 ? void 0 : _a.application), undefined, internalConfig.customLogger);
+        const initTimer = timer("logger");
+        _logger = new Logger(`${internalConfig.connection.identity?.application}`, undefined, internalConfig.customLogger);
         _logger.consoleLevel(internalConfig.logger.console);
         _logger.publishLevel(internalConfig.logger.publish);
         if (_logger.canPublish("debug")) {
@@ -15816,29 +14430,28 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         return Promise.resolve(undefined);
     }
     function setupMetrics() {
-        var _a, _b, _c, _d, _e;
-        var initTimer = timer("metrics");
-        var config = internalConfig.metrics;
-        var metricsPublishingEnabledFunc = iodesktop === null || iodesktop === void 0 ? void 0 : iodesktop.getMetricsPublishingEnabled;
-        var identity = internalConfig.connection.identity;
-        var canUpdateMetric = metricsPublishingEnabledFunc ? metricsPublishingEnabledFunc : function () { return true; };
-        var disableAutoAppSystem = (_a = (typeof config !== "boolean" && config.disableAutoAppSystem)) !== null && _a !== void 0 ? _a : false;
+        const initTimer = timer("metrics");
+        const config = internalConfig.metrics;
+        const metricsPublishingEnabledFunc = iodesktop?.getMetricsPublishingEnabled;
+        const identity = internalConfig.connection.identity;
+        const canUpdateMetric = metricsPublishingEnabledFunc ? metricsPublishingEnabledFunc : () => true;
+        const disableAutoAppSystem = (typeof config !== "boolean" && config.disableAutoAppSystem) ?? false;
         _metrics = metrics({
             connection: config ? _connection : undefined,
             logger: _logger.subLogger("metrics"),
-            canUpdateMetric: canUpdateMetric,
+            canUpdateMetric,
             system: "Glue42",
-            service: (_c = (_b = identity === null || identity === void 0 ? void 0 : identity.service) !== null && _b !== void 0 ? _b : iodesktop === null || iodesktop === void 0 ? void 0 : iodesktop.applicationName) !== null && _c !== void 0 ? _c : internalConfig.application,
-            instance: (_e = (_d = identity === null || identity === void 0 ? void 0 : identity.instance) !== null && _d !== void 0 ? _d : identity === null || identity === void 0 ? void 0 : identity.windowId) !== null && _e !== void 0 ? _e : shortid(),
-            disableAutoAppSystem: disableAutoAppSystem,
-            pagePerformanceMetrics: typeof config !== "boolean" ? config === null || config === void 0 ? void 0 : config.pagePerformanceMetrics : undefined
+            service: identity?.service ?? iodesktop?.applicationName ?? internalConfig.application,
+            instance: identity?.instance ?? identity?.windowId ?? nanoid(10),
+            disableAutoAppSystem,
+            pagePerformanceMetrics: typeof config !== "boolean" ? config?.pagePerformanceMetrics : undefined
         });
         registerLib("metrics", _metrics, initTimer);
         return Promise.resolve();
     }
     function setupInterop() {
-        var initTimer = timer("interop");
-        var agmConfig = {
+        const initTimer = timer("interop");
+        const agmConfig = {
             connection: _connection,
             logger: _logger.subLogger("interop"),
         };
@@ -15848,10 +14461,10 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         return Promise.resolve();
     }
     function setupContexts() {
-        var hasActivities = (internalConfig.activities && _connection.protocolVersion === 3);
-        var needsContexts = internalConfig.contexts || hasActivities;
+        const hasActivities = (internalConfig.activities && _connection.protocolVersion === 3);
+        const needsContexts = internalConfig.contexts || hasActivities;
         if (needsContexts) {
-            var initTimer = timer("contexts");
+            const initTimer = timer("contexts");
             _contexts = new ContextsModule({
                 connection: _connection,
                 logger: _logger.subLogger("contexts"),
@@ -15862,29 +14475,24 @@ var IOConnectCoreFactory = function (userConfig, ext) {
             return _contexts;
         }
         else {
-            var replayer = _connection.replayer;
+            const replayer = _connection.replayer;
             if (replayer) {
                 replayer.drain(ContextMessageReplaySpec.name);
             }
         }
     }
-    function setupBus() {
-        return __awaiter(this, void 0, void 0, function () {
-            var initTimer;
-            return __generator(this, function (_a) {
-                if (!internalConfig.bus) {
-                    return [2, Promise.resolve()];
-                }
-                initTimer = timer("bus");
-                _bus = new MessageBus(_connection, _logger.subLogger("bus"));
-                registerLib("bus", _bus, initTimer);
-                return [2, Promise.resolve()];
-            });
-        });
+    async function setupBus() {
+        if (!internalConfig.bus) {
+            return Promise.resolve();
+        }
+        const initTimer = timer("bus");
+        _bus = new MessageBus(_connection, _logger.subLogger("bus"));
+        registerLib("bus", _bus, initTimer);
+        return Promise.resolve();
     }
     function setupExternalLibs(externalLibs) {
         try {
-            externalLibs.forEach(function (lib) {
+            externalLibs.forEach((lib) => {
                 setupExternalLib(lib.name, lib.create);
             });
             return Promise.resolve();
@@ -15894,35 +14502,35 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         }
     }
     function setupExternalLib(name, createCallback) {
-        var initTimer = timer(name);
-        var lib = createCallback(libs);
+        const initTimer = timer(name);
+        const lib = createCallback(libs);
         if (lib) {
             registerLib(name, lib, initTimer);
         }
     }
     function waitForLibs() {
-        var libsReadyPromises = Object.keys(libs).map(function (key) {
-            var lib = libs[key];
+        const libsReadyPromises = Object.keys(libs).map((key) => {
+            const lib = libs[key];
             return lib.ready ?
                 lib.ready() : Promise.resolve();
         });
         return Promise.all(libsReadyPromises);
     }
     function constructGlueObject() {
-        var feedbackFunc = function (feedbackInfo) {
+        const feedbackFunc = (feedbackInfo) => {
             if (!_interop) {
                 return;
             }
             _interop.invoke("T42.ACS.Feedback", feedbackInfo, "best");
         };
-        var info = {
+        const info = {
             coreVersion: version,
             version: internalConfig.version
         };
         glueInitTimer.stop();
-        var glue = {
+        const glue = {
             feedback: feedbackFunc,
-            info: info,
+            info,
             logger: _logger,
             interop: _interop,
             agm: _interop,
@@ -15931,9 +14539,9 @@ var IOConnectCoreFactory = function (userConfig, ext) {
             contexts: _contexts,
             bus: _bus,
             version: internalConfig.version,
-            userConfig: userConfig,
-            done: function () {
-                _logger === null || _logger === void 0 ? void 0 : _logger.info("done called by user...");
+            userConfig,
+            done: () => {
+                _logger?.info("done called by user...");
                 return _connection.logout();
             }
         };
@@ -15951,9 +14559,9 @@ var IOConnectCoreFactory = function (userConfig, ext) {
                 return window.performance.memory;
             },
             get initTimes() {
-                var all = getAllTimers();
-                return Object.keys(all).map(function (key) {
-                    var t = all[key];
+                const all = getAllTimers();
+                return Object.keys(all).map((key) => {
+                    const t = all[key];
                     return {
                         name: key,
                         duration: t.endTime - t.startTime,
@@ -15964,33 +14572,33 @@ var IOConnectCoreFactory = function (userConfig, ext) {
                 });
             }
         };
-        Object.keys(libs).forEach(function (key) {
-            var lib = libs[key];
+        Object.keys(libs).forEach((key) => {
+            const lib = libs[key];
             glue[key] = lib;
         });
         glue.config = {};
-        Object.keys(internalConfig).forEach(function (k) {
+        Object.keys(internalConfig).forEach((k) => {
             glue.config[k] = internalConfig[k];
         });
         if (ext && ext.extOptions) {
-            Object.keys(ext.extOptions).forEach(function (k) {
-                glue.config[k] = ext === null || ext === void 0 ? void 0 : ext.extOptions[k];
+            Object.keys(ext.extOptions).forEach((k) => {
+                glue.config[k] = ext?.extOptions[k];
             });
         }
-        if (ext === null || ext === void 0 ? void 0 : ext.enrichGlue) {
+        if (ext?.enrichGlue) {
             ext.enrichGlue(glue);
         }
         if (iodesktop && iodesktop.updatePerfData) {
             iodesktop.updatePerfData(glue.performance);
         }
         if (glue.agm) {
-            var deprecatedDecorator = function (fn, wrong, proper) {
+            const deprecatedDecorator = (fn, wrong, proper) => {
                 return function () {
-                    glue.logger.warn("glue.js - 'glue.agm.".concat(wrong, "' method is deprecated, use 'glue.interop.").concat(proper, "' instead."));
+                    glue.logger.warn(`glue.js - 'glue.agm.${wrong}' method is deprecated, use 'glue.interop.${proper}' instead.`);
                     return fn.apply(glue.agm, arguments);
                 };
             };
-            var agmAny = glue.agm;
+            const agmAny = glue.agm;
             agmAny.method_added = deprecatedDecorator(glue.agm.methodAdded, "method_added", "methodAdded");
             agmAny.method_removed = deprecatedDecorator(glue.agm.methodRemoved, "method_removed", "methodRemoved");
             agmAny.server_added = deprecatedDecorator(glue.agm.serverAdded, "server_added", "serverAdded");
@@ -15999,48 +14607,36 @@ var IOConnectCoreFactory = function (userConfig, ext) {
         }
         return glue;
     }
-    function registerInstanceIfNeeded() {
-        return __awaiter(this, void 0, void 0, function () {
-            var RegisterInstanceMethodName, isMethodAvailable, error_1, typedError;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        RegisterInstanceMethodName = "T42.ACS.RegisterInstance";
-                        if (!(Utils.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof (userConfig === null || userConfig === void 0 ? void 0 : userConfig.application) !== "undefined")) return [3, 4];
-                        isMethodAvailable = _interop.methods({ name: RegisterInstanceMethodName }).length > 0;
-                        if (!isMethodAvailable) return [3, 4];
-                        _a.label = 1;
-                    case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4, _interop.invoke(RegisterInstanceMethodName, { appName: userConfig === null || userConfig === void 0 ? void 0 : userConfig.application, pid: process.pid })];
-                    case 2:
-                        _a.sent();
-                        return [3, 4];
-                    case 3:
-                        error_1 = _a.sent();
-                        typedError = error_1;
-                        _logger.error("Cannot register as an instance: ".concat(JSON.stringify(typedError.message)));
-                        return [3, 4];
-                    case 4: return [2];
+    async function registerInstanceIfNeeded() {
+        const RegisterInstanceMethodName = "T42.ACS.RegisterInstance";
+        if (Utils.isNode() && typeof process.env._GD_STARTING_CONTEXT_ === "undefined" && typeof userConfig?.application !== "undefined") {
+            const isMethodAvailable = _interop.methods({ name: RegisterInstanceMethodName }).length > 0;
+            if (isMethodAvailable) {
+                try {
+                    await _interop.invoke(RegisterInstanceMethodName, { appName: userConfig?.application, pid: process.pid });
                 }
-            });
-        });
+                catch (error) {
+                    const typedError = error;
+                    _logger.error(`Cannot register as an instance: ${JSON.stringify(typedError.message)}`);
+                }
+            }
+        }
     }
     return preloadPromise
         .then(setupLogger)
         .then(setupConnection)
-        .then(function () { return Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]); })
-        .then(function () { return _interop.readyPromise; })
-        .then(function () { return registerInstanceIfNeeded(); })
-        .then(function () {
+        .then(() => Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]))
+        .then(() => _interop.readyPromise)
+        .then(() => registerInstanceIfNeeded())
+        .then(() => {
         return setupExternalLibs(internalConfig.libs || []);
     })
         .then(waitForLibs)
         .then(constructGlueObject)
-        .catch(function (err) {
+        .catch((err) => {
         return Promise.reject({
-            err: err,
-            libs: libs
+            err,
+            libs
         });
     });
 };
@@ -16062,7 +14658,7 @@ const ioGlobal = window.iodesktop || window.iobrowser;
 if (!legacyGlobal && !ioGlobal) {
     window.iobrowser = { webStarted: false };
 }
-iOConnectBrowserFactory.version = version$2;
+iOConnectBrowserFactory.version = version$1;
 
 export { iOConnectBrowserFactory as default };
 //# sourceMappingURL=browser.es.js.map
