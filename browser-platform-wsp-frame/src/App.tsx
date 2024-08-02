@@ -1,7 +1,6 @@
 import Workspaces from "@interopio/workspaces-ui-react";
 import { useIOConnect } from '@interopio/react-hooks';
-import "@interopio/workspaces-ui-react/dist/styles/workspaces.css"
-import './App.css'
+import "@interopio/workspaces-ui-react/dist/styles/workspaces.css";
 
 function App() {
   useIOConnect(async (io) => {
