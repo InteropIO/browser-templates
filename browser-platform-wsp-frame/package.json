@@ -1,5 +1,5 @@
 {
-  "name": "browser-platform-wsp-frame",
+  "name": "wsp-frame",
   "private": true,
   "version": "3.4.0",
   "scripts": {
