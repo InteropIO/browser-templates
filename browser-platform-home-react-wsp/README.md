@@ -81,22 +81,20 @@ import { IOConnectHome, IOConnectHomeConfig } from "@interopio/home-ui-react";
 import { getIoConfig } from "../common/getIoConfig";
 import MyCustomUserPanel from "../MyCustomUserPanel";
 
-const ioConnectHomeConfig: IOConnectHomeConfig = {
-    getIOConnectConfig: getConfig,
-    // Customizing the Launchpad.
-    launchpad: {
-        components: {
-            // Removing the Notification Panel.
-            NotificationsPanel: null,
-            // Providing a custom User Panel.
-            UserPanel: MyCustomUserPanel
-        }
-    }
-};
-
 export const NoAuthMain = () => {
+    const ioConnectHomeConfig: IOConnectHomeConfig = {
+        getIOConnectConfig: getConfig,
+        // Customizing the Launchpad.
+        launchpad: {
+            components: {
+                // Removing the Notification Panel.
+                NotificationsPanel: null,
+                // Providing a custom User Panel.
+                UserPanel: MyCustomUserPanel
+            }
+        }
+    };
+
     return <IOConnectHome config={ioConnectHomeConfig} />
 };
-
-export default NoAuthMain;
 ```
