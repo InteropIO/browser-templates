@@ -83,7 +83,7 @@ import MyCustomUserPanel from "../MyCustomUserPanel";
 
 export const NoAuthMain = () => {
     const ioConnectHomeConfig: IOConnectHomeConfig = {
-        getIOConnectConfig: getConfig,
+        getIOConnectConfig: getIoConfig,
         // Customizing the Launchpad.
         launchpad: {
             components: {
