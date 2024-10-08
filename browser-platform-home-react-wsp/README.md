@@ -1,46 +1,102 @@
-# Getting Started with Create React App
+# io.Connect Home App Template
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a React template for creating an io.Connect [Home App](https://docs.interop.io/browser/capabilities/home-app/overview/index.html) that's also a [Workspace App](https://docs.interop.io/browser/capabilities/windows/workspaces/enabling-workspaces/index.html#main_app-using_the_main_app_as_a_workspaces_app). The template is configured as a fully-featured Progressive Web App (PWA).
 
-## Available Scripts
+## Creating the Template
 
-In the project directory, you can run:
+To create this template, use the io.Connect [CLI](https://docs.interop.io/browser/developers/cli/index.html). Execute the `iop new browser-platform` command with the `--template home-react-wsp` flag. Optionally, provide a name for your Home App project:
 
-### `npm start`
+```cmd
+iop new browser-platform --template home-react-wsp --name my-home-app
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Go to the project directory, install the necessary dependencies, and start the Home App:
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+```cmd
+cd my-home-app
+npm install
+```
 
-### `npm test`
+Go to the `config.json` file in the `/src` directory and provide your valid license key for using the **io.Connect Browser** platform:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```json
+{
+    "licenseKey": "my-license-key"
+}
+```
 
-### `npm run build`
+To start the Home App, execute the following command:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```cmd
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+By default, the Home App will be hosted at `http://localhost:4242`. You can change the port from the `.env` file in the root directory of the project. You can now start modifying the template to build your custom Home App.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Template Structure
 
-### `npm run eject`
+In addition to the standard package files, the created template contains the following directories and files:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+| Directory/File | Description |
+|----------------|-------------|
+| `/public` | Contains all files necessary for a PWA - the main `index.html` file of the app, a favicon, logos, a `manifest.json` file, a Service Worker, and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. Use these files in this directory to modify the configuration for your PWA. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary for when using the Home App as a PWA in order to provide settings for handling [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). |
+| `/src` | Contains standard React app files and additional source files for the Home App template. |
+| `.env` | Contains React environment variables for the localhost port at which to start the Home App and the necessary authentication details if using [Auth0 authentication](https://docs.interop.io/browser/capabilities/home-app/library-features/index.html#using_the_components-authentication-auth0_login). |
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+In addition to the standard files for a React app, the `/src` directory contains the following directories and files:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+| Directory/File | Description |
+|----------------|-------------|
+| `/common` | Contains a function passed to the `config` prop of the [`<IOConnectHome />`](https://docs.interop.io/browser/capabilities/home-app/library-features/index.html#using_the_components-home_component) component. Used for retrieving the configuration for [initializing the Main app](https://docs.interop.io/browser/developers/browser-platform/setup/index.html#initialization-react). |
+| `/main` | Contains two main components for creating a Home App - `<Auth0Main />` and `<NoAuthMain />`. By default, the app uses the `<Auth0Main />` component for [Auth0 authentication](https://docs.interop.io/browser/capabilities/home-app/library-features/index.html#using_the_components-authentication-auth0_login). To remove the authentication procedure, use the `<NoAuthMain />` component instead. |
+| `config.example.json` | Example [configuration for initializing the Main app](https://docs.interop.io/browser/developers/browser-platform/setup/index.html#configuration). |
+| `config.json` | Contains the actual configuration that will be used for initializing the Main app. You must provide a valid license key. Use this file to customize the configuration for the Main app. |
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Modifying the Template
 
-## Learn More
+To modify the [configuration for initializing the Main app](https://docs.interop.io/browser/developers/browser-platform/setup/index.html#configuration), use the `config.json` file in the `/src` directory. There you can define apps, Layouts, Channels, and more:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```json
+{
+    "licenseKey": "my-license-key",
+    "applications": {
+        "local": [
+            {
+                "name": "my-app",
+                "type": "window",
+                "title": "My App",
+                "details": {
+                    "url": "https://my-domain.com/my-app"
+                }
+            }
+        ]
+    }
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+To modify the [`<IOConnectHome />`](https://docs.interop.io/browser/capabilities/home-app/library-features/index.html#using_the_components-home_component) component, use the `<Auth0Main />` or `<NoAuthMain />` components in the `/src/main` directory:
+
+```javascript
+import { IOConnectHome, IOConnectHomeConfig } from "@interopio/home-ui-react";
+import { getIoConfig } from "../common/getIoConfig";
+import MyCustomUserPanel from "../MyCustomUserPanel";
+
+const ioConnectHomeConfig: IOConnectHomeConfig = {
+    getIOConnectConfig: getConfig,
+    // Customizing the Launchpad.
+    launchpad: {
+        components: {
+            // Removing the Notification Panel.
+            NotificationsPanel: null,
+            // Providing a custom User Panel.
+            UserPanel: MyCustomUserPanel
+        }
+    }
+};
+
+export const NoAuthMain = () => {
+    return <IOConnectHome config={ioConnectHomeConfig} />
+};
+
+export default NoAuthMain;
+```
