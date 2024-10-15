@@ -1,25 +1,27 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import { IOConnectProvider } from '@interopio/react-hooks';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import { IOConnectProvider } from "@interopio/react-hooks";
 import IOBrowser from "@interopio/browser";
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
-root.render(
-  <React.StrictMode>
-    <IOConnectProvider settings={{
-      browser: {
+const settings = {
+    browser: {
         config: {},
         factory: IOBrowser
-      }
-    }}>
-      <App />
-    </IOConnectProvider>
-  </React.StrictMode>
+    }
+};
+
+const container = document.getElementById("root") as HTMLElement;
+const root = createRoot(container);
+
+root.render(
+    <React.StrictMode>
+        <IOConnectProvider settings={settings}>
+            <App />
+        </IOConnectProvider>
+    </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
