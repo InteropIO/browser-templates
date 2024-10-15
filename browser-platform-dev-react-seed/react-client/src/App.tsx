@@ -1,10 +1,9 @@
-import React, { useContext } from 'react';
-import './App.css';
-import logo from './connect-browser.svg';
-import { IOConnectContext } from '@interopio/react-hooks';
+import { useContext } from "react";
+import "./App.css";
+import logo from "./connect-browser.svg";
+import { IOConnectContext } from "@interopio/react-hooks";
 
-function App() {
-
+const App = () => {
     const io = useContext(IOConnectContext);
 
     (window as any).io = io;
@@ -27,6 +26,6 @@ function App() {
             </header>
         </div>
     );
-}
+};
 
 export default App;

@@ -1,30 +1,34 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { IOConnectProvider } from "@interopio/react-hooks";
-import IODesktop from "@interopio/desktop";
+import IODesktop, { IOConnectDesktop } from "@interopio/desktop";
 import IOBrowserPlatform, { IOConnectBrowserPlatform } from "@interopio/browser-platform";
 import IOWorkspaces from "@interopio/workspaces-api";
 import config from "./config.json";
 
-ReactDOM.render(
-  <React.StrictMode>
-    <IOConnectProvider settings={{
-      browserPlatform: {
+const settings = {
+    browserPlatform: {
         config: Object.assign({}, config.browserPlatform, { browser: { libraries: [IOWorkspaces] }, serviceWorker: { url: "/service-worker.js" } }) as IOConnectBrowserPlatform.Config,
         factory: IOBrowserPlatform
-      },
-      desktop: {
-        config: { libraries: [IOWorkspaces], appManager: "skipIcons" },
+    },
+    desktop: {
+        config: { libraries: [IOWorkspaces], appManager: "skipIcons" as IOConnectDesktop.AppManager.Mode },
         factory: IODesktop
-      }
-    }}>
-      <App />
-    </IOConnectProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
+    }
+};
+
+const container = document.getElementById("root") as HTMLElement;;
+const root = createRoot(container);
+
+root.render(
+    <React.StrictMode>
+        <IOConnectProvider settings={settings}>
+            <App />
+        </IOConnectProvider>
+    </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function
