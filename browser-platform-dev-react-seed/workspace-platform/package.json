@@ -1,14 +1,14 @@
 {
   "name": "workspaces-react-template",
-  "version": "0.1.0",
+  "version": "3.5.0",
   "private": true,
   "homepage": "./",
   "dependencies": {
-    "@interopio/browser-platform": "^3.4.0",
-    "@interopio/desktop": "^6.7.0",
-    "@interopio/react-hooks": "^3.4.0",
-    "@interopio/workspaces-api": "^3.4.0",
-    "@interopio/workspaces-ui-react": "^3.4.0",
+    "@interopio/browser-platform": "^3.5.0",
+    "@interopio/desktop": "^6.9.2",
+    "@interopio/react-hooks": "^3.5.0",
+    "@interopio/workspaces-api": "^3.5.0",
+    "@interopio/workspaces-ui-react": "^3.5.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
