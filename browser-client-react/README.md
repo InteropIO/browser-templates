@@ -16,7 +16,7 @@ To start the Browser Client app, execute the following command:
 npm start
 ```
 
-By default, the Browser Client app will be hosted at `http://localhost:4244`. You can change the port from the `"start"` script in the `package.json` file in the root directory of the project, or by creating a `.env` file. You can now start modifying the template to build your custom Browser Client app.
+By default, the Browser Client app will be hosted at `http://localhost:3000`. You can change the port from the `"start"` script in the `package.json` file in the root directory of the project, or by creating a `.env` file. You can now start modifying the template to build your custom Browser Client app.
 
 ## Template Structure
 
