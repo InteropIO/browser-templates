@@ -1,23 +1,25 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-import { IOConnectProvider } from '@interopio/react-hooks';
+import React from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
+import reportWebVitals from "./reportWebVitals";
+import { IOConnectProvider } from "@interopio/react-hooks";
 import IOBrowser from "@interopio/browser";
-import IOWorkspaces from '@interopio/workspaces-api';
+import IOWorkspaces from "@interopio/workspaces-api";
 
-const root = ReactDOM.createRoot(
-    document.getElementById('root') as HTMLElement
-);
+const settings = {
+    browser: {
+        config: { libraries: [IOWorkspaces] },
+        factory: IOBrowser
+    }
+};
+
+const container = document.getElementById("root") as HTMLElement;
+const root = createRoot(container);
+
 root.render(
     <React.StrictMode>
-        <IOConnectProvider settings={{
-            browser: {
-                config: { libraries: [IOWorkspaces] },
-                factory: IOBrowser
-            }
-        }}>
+        <IOConnectProvider settings={settings}>
             <App />
         </IOConnectProvider>
     </React.StrictMode>

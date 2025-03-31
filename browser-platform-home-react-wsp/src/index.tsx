@@ -1,17 +1,17 @@
-import ReactDOM from 'react-dom/client';
-import reportWebVitals from './reportWebVitals';
+import { createRoot } from "react-dom/client";
+import reportWebVitals from "./reportWebVitals";
 import { Auth0Main } from "./main";
 
-import './index.css';
+import "./index.css";
 import "@interopio/home-ui-react/index.css";
 import "@interopio/workspaces-ui-react/dist/styles/workspaces.css";
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root') as HTMLElement
-);
+
+const container = document.getElementById("root") as HTMLElement;
+const root = createRoot(container);
 
 root.render(
-  <Auth0Main />
+    <Auth0Main />
 );
 
 // If you want to start measuring performance in your app, pass a function

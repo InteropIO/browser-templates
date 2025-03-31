@@ -1,2 +1,3 @@
-# Workspaces in React
-This project provides a starter for React based Workspaces applications in io.Connect Desktop and io.Connect Browser.
+# Browser Platform App
+
+Browser Platform app (Main app) for an **io.Connect Browser** project that also acts as a Workspaces App.

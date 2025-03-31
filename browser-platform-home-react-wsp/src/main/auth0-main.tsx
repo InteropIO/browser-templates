@@ -1,11 +1,11 @@
 import { IOConnectHome, IOConnectHomeConfig } from "@interopio/home-ui-react";
-import { getIoConfig } from "../common/getIoConfig";
+import { getIOConfig } from "../common/getIOConfig";
 import { useMemo } from "react";
 
 export const Auth0Main = () => {
     const ioConnectHomeConfig: IOConnectHomeConfig = useMemo(
         () => ({
-            getIOConnectConfig: getIoConfig,
+            getIOConnectConfig: getIOConfig,
             login: {
                 type: 'auth0',
                 providerOptions: {

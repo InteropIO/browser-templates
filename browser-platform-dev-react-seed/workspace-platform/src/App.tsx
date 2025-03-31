@@ -1,4 +1,3 @@
-import React from "react";
 import Workspaces, { getFrameId } from "@interopio/workspaces-ui-react";
 import "@interopio/workspaces-ui-react/dist/styles/popups.css";
 import "@interopio/workspaces-ui-react/dist/styles/goldenlayout-base.css";
