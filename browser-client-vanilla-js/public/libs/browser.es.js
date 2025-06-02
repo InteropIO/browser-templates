@@ -2228,21 +2228,6 @@ const appHelloSuccessDecoder = object$1({
 const basicInstanceDataDecoder = object$1({
     id: nonEmptyStringDecoder
 });
-const applicationStartConfigDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    waitForAGMReady: boolean$1(),
-    id: optional$1(nonEmptyStringDecoder),
-    context: optional$1(anyJson$1()),
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    relativeTo: optional$1(nonEmptyStringDecoder),
-    relativeDirection: optional$1(windowRelativeDirectionDecoder),
-    forceChromeTab: optional$1(boolean$1()),
-    layoutComponentId: optional$1(nonEmptyStringDecoder),
-    channelId: optional$1(nonEmptyStringDecoder)
-});
 const layoutTypeDecoder = oneOf$1(constant$1("Global"), constant$1("Activity"), constant$1("ApplicationDefault"), constant$1("Swimlane"), constant$1("Workspace"));
 const componentTypeDecoder = oneOf$1(constant$1("application"), constant$1("activity"));
 const windowComponentStateDecoder = object$1({
@@ -2324,6 +2309,7 @@ const workspaceFrameComponentDecoder = object$1({
 const glueLayoutDecoder = object$1({
     name: nonEmptyStringDecoder,
     type: layoutTypeDecoder,
+    token: optional$1(nonEmptyStringDecoder),
     components: array$1(oneOf$1(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
     context: optional$1(anyJson$1()),
     metadata: optional$1(anyJson$1()),
@@ -2449,6 +2435,30 @@ const intentRequestDecoder = object$1({
     timeout: optional$1(nonNegativeNumberDecoder),
     waitUserResponseIndefinitely: optional$1(boolean$1()),
     clearSavedHandler: optional$1(boolean$1())
+});
+const originAppDecoder = object$1({
+    interopInstance: nonEmptyStringDecoder,
+    name: optional$1(nonEmptyStringDecoder)
+});
+const startReasonDecoder = object$1({
+    originApp: originAppDecoder,
+    intentRequest: optional$1(intentRequestDecoder)
+});
+const applicationStartConfigDecoder = object$1({
+    name: nonEmptyStringDecoder,
+    waitForAGMReady: boolean$1(),
+    id: optional$1(nonEmptyStringDecoder),
+    context: optional$1(anyJson$1()),
+    top: optional$1(number$1()),
+    left: optional$1(number$1()),
+    width: optional$1(nonNegativeNumberDecoder),
+    height: optional$1(nonNegativeNumberDecoder),
+    relativeTo: optional$1(nonEmptyStringDecoder),
+    relativeDirection: optional$1(windowRelativeDirectionDecoder),
+    forceChromeTab: optional$1(boolean$1()),
+    layoutComponentId: optional$1(nonEmptyStringDecoder),
+    channelId: optional$1(nonEmptyStringDecoder),
+    startReason: startReasonDecoder
 });
 const raiseRequestDecoder = oneOf$1(nonEmptyStringDecoder, intentRequestDecoder);
 const resolverConfigDecoder = object$1({
@@ -2776,6 +2786,7 @@ const startApplicationOptionsDecoder = optional$1(object$1({
     waitForAGMReady: optional$1(boolean$1()),
     channelId: optional$1(nonEmptyStringDecoder),
     reuseId: optional$1(nonEmptyStringDecoder),
+    originIntentRequest: optional$1(intentRequestDecoder)
 }));
 const joinChannelDataDecoder = object$1({
     channel: nonEmptyStringDecoder,
@@ -2806,6 +2817,9 @@ const getPrefsResultDecoder = object$1({
 });
 const getAllPrefsResultDecoder = object$1({
     all: array$1(appPreferencesDecoder),
+});
+const subscriberRegisterConfigDecoder = object$1({
+    interopId: nonEmptyStringDecoder,
 });
 const changePrefsDataDecoder = object$1({
     app: nonEmptyStringDecoder,
@@ -3669,6 +3683,7 @@ class AppManagerController {
     logger;
     channelsController;
     sessionController;
+    interop;
     handlePlatformShutdown() {
         this.registry.clear();
         this.applications = [];
@@ -3684,6 +3699,7 @@ class AppManagerController {
         this.bridge = ioc.bridge;
         this.channelsController = ioc.channelsController;
         this.sessionController = ioc.sessionController;
+        this.interop = coreGlue.interop;
         this.platformRegistration = this.registerWithPlatform();
         await this.platformRegistration;
         this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
@@ -3733,8 +3749,17 @@ class AppManagerController {
             id: options?.reuseId,
             forceChromeTab: options?.forceTab,
             layoutComponentId: options?.layoutComponentId,
-            channelId: options?.channelId
+            channelId: options?.channelId,
+            startReason: {
+                originApp: {
+                    name: this.me?.application.name,
+                    interopInstance: this.interop.instance.instance
+                }
+            }
         };
+        if (options?.originIntentRequest) {
+            startOptions.startReason.intentRequest = options.originIntentRequest;
+        }
         const openResult = await this.bridge.send("appManager", operations$9.applicationStart, startOptions);
         const app = this.applications.find((a) => a.name === openResult.applicationName);
         return this.ioc.buildInstance(openResult, app);
@@ -4965,6 +4990,7 @@ class ChannelsController {
     registry = CallbackRegistryFactory$1();
     logger;
     contexts;
+    interop;
     bridge;
     windowsController;
     sessionController;
@@ -4986,6 +5012,7 @@ class ChannelsController {
         this.logger = coreGlue.logger.subLogger("channels.controller.web");
         this.logger.trace("starting the web channels controller");
         this.contexts = coreGlue.contexts;
+        this.interop = coreGlue.interop;
         this.addOperationsExecutors();
         this.bridge = ioc.bridge;
         this.windowsController = ioc.windowsController;
@@ -5031,7 +5058,7 @@ class ChannelsController {
         const channelNames = this.getAllChannelNames();
         runDecoderWithIOError(channelNameDecoder(channelNames), name);
         runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
-        const forAnotherClient = windowId && windowId !== this.windowsController.my().id;
+        const forAnotherClient = windowId && windowId !== this.interop.instance.instance;
         if (forAnotherClient) {
             return await this.bridge.send("channels", operations$5.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
         }
@@ -5052,7 +5079,8 @@ class ChannelsController {
             const channelNames = this.getAllChannelNames();
             runDecoderWithIOError(channelNameDecoder(channelNames), config.channel);
         }
-        if (config.windowId && config.windowId !== this.windowsController.my().id) {
+        const forAnotherClient = config.windowId && config.windowId !== this.interop.instance.instance;
+        if (config.windowId && forAnotherClient) {
             const leaveData = { windowId: config.windowId, channelName: config.channel };
             await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
             return;
@@ -5392,7 +5420,7 @@ class ChannelsController {
         runDecoderWithIOError(channelRestrictionsDecoder, config);
         const channelNames = this.getAllChannelNames();
         runDecoderWithIOError(channelNameDecoder(channelNames), config.name);
-        const forAnotherClient = config.windowId && config.windowId !== this.windowsController.my().id;
+        const forAnotherClient = config.windowId && config.windowId !== this.interop.instance.instance;
         if (forAnotherClient) {
             return this.bridge.send("channels", operations$5.restrict, { config }, undefined, { includeOperationCheck: true });
         }
@@ -5408,15 +5436,16 @@ class ChannelsController {
     }
     async getRestrictions(windowId) {
         runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
-        if (!windowId || windowId === this.windowsController.my().id) {
-            return this.getMyRestrictions();
+        const forAnotherClient = windowId && windowId !== this.interop.instance.instance;
+        if (windowId && forAnotherClient) {
+            return this.bridge.send("channels", operations$5.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
         }
-        return this.bridge.send("channels", operations$5.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
+        return this.getMyRestrictions();
     }
     async restrictAll(restrictions) {
         runDecoderWithIOError(restrictionsConfigDecoder, restrictions);
         const allChannelNames = this.getAllChannelNames();
-        const forAnotherClient = restrictions.windowId && restrictions.windowId !== this.windowsController.my().id;
+        const forAnotherClient = restrictions.windowId && restrictions.windowId !== this.interop.instance.instance;
         if (forAnotherClient) {
             return this.bridge.send("channels", operations$5.restrictAll, { restrictions }, undefined, { includeOperationCheck: true });
         }
@@ -6402,6 +6431,7 @@ const operations$1 = {
     update: { name: "update", dataDecoder: changePrefsDataDecoder },
     prefsChanged: { name: "prefsChanged", dataDecoder: getPrefsResultDecoder },
     prefsHello: { name: "prefsHello", resultDecoder: prefsHelloSuccessDecoder },
+    registerSubscriber: { name: "registerSubscriber", dataDecoder: subscriberRegisterConfigDecoder },
 };
 
 class PrefsController {
@@ -6412,6 +6442,8 @@ class PrefsController {
     platformAppName;
     registry = CallbackRegistryFactory$1();
     validNonExistentApps;
+    signaledSubscription = false;
+    interopId;
     handlePlatformShutdown() {
         this.registry.clear();
     }
@@ -6419,6 +6451,7 @@ class PrefsController {
         this.logger = coreGlue.logger.subLogger("prefs.controller.web");
         this.logger.trace("starting the web prefs controller");
         this.addOperationsExecutors();
+        this.interopId = coreGlue.interop.instance.instance;
         this.bridge = ioc.bridge;
         this.config = ioc.config;
         this.appManagerController = ioc.appManagerController;
@@ -6514,6 +6547,14 @@ class PrefsController {
         }
         if (typeof callback !== "function") {
             return ioError.raiseError("Cannot subscribe to prefs, because the provided callback is not a function!");
+        }
+        if (!this.signaledSubscription) {
+            this.bridge.send("prefs", operations$1.registerSubscriber, { interopId: this.interopId }, undefined, { includeOperationCheck: true })
+                .catch((error) => {
+                this.logger.warn("Failed to register subscriber for prefs");
+                this.logger.error(error);
+            });
+            this.signaledSubscription = true;
         }
         const subscriptionKey = this.getSubscriptionKey(verifiedApp);
         this.get(verifiedApp).then(callback);
@@ -6807,7 +6848,7 @@ class UIController {
     async invokeWidgetFactory(io) {
         const timeout = this.config?.widget?.timeout || defaultWidgetTimeout;
         await this.ioc.eventsDispatcher.widgetReady(timeout);
-        const config = deepmerge$1({ ...this.resources?.widget?.config, enable: true }, this.config?.widget || {});
+        const config = deepmerge$1({ ...this.resources?.widget?.config, enable: this.displayWidget }, this.config?.widget || {});
         this.logger.trace(`IOBrowserWidget factory is available. Invoking it with config: ${JSON.stringify(config)}`);
         await window.IOBrowserWidget(io, config);
     }
@@ -7012,7 +7053,7 @@ class IoC {
     }
 }
 
-var version$1 = "3.5.0";
+var version$1 = "3.5.10";
 
 const createFactoryFunction = (coreFactoryFunction) => {
     let cachedApiPromise;
@@ -9999,7 +10040,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.5.0";
+var version = "6.5.2";
 
 function prepareConfig (configuration, ext, glue42gd) {
     let nodeStartingContext;
@@ -15285,18 +15326,27 @@ const IOConnectCoreFactory = (userConfig, ext) => {
         if (_allowTrace) {
             _logger.trace(`registering ${name} module`);
         }
-        const done = () => {
+        const done = (e) => {
             inner.initTime = t.stop();
             inner.initEndTime = t.endTime;
             inner.marks = t.marks;
-            if (_allowTrace) {
-                _logger.trace(`${name} is ready - ${t.endTime - t.startTime}`);
+            if (!_allowTrace) {
+                return;
             }
+            const traceMessage = e ?
+                `${name} failed - ${e.message}` :
+                `${name} is ready - ${t.endTime - t.startTime}`;
+            _logger.trace(traceMessage);
         };
         inner.initStartTime = t.startTime;
         if (inner.ready) {
-            inner.ready().then(() => {
+            inner.ready()
+                .then(() => {
                 done();
+            })
+                .catch((e) => {
+                const error = typeof e === "string" ? new Error(e) : e;
+                done(error);
             });
         }
         else {
@@ -15585,6 +15635,26 @@ if (typeof window !== "undefined") {
 IOConnectCoreFactory.version = version;
 IOConnectCoreFactory.default = IOConnectCoreFactory;
 
+const setupGlobalSystem = () => {
+    return {
+        getContainerInfo: async () => {
+            if (window === window.parent) {
+                return;
+            }
+            if (window.name.includes("#wsp")) {
+                return {
+                    workspaceFrame: {
+                        id: "N/A"
+                    }
+                };
+            }
+            return window.parent === window.top ?
+                { top: {} } :
+                { parent: {} };
+        }
+    };
+};
+
 const iOConnectBrowserFactory = createFactoryFunction(IOConnectCoreFactory);
 if (typeof window !== "undefined") {
     const windowAny = window;
@@ -15596,6 +15666,9 @@ const legacyGlobal = window.glue42gd || window.glue42core;
 const ioGlobal = window.iodesktop || window.iobrowser;
 if (!legacyGlobal && !ioGlobal) {
     window.iobrowser = { webStarted: false };
+}
+if (!window.iodesktop && !window.iobrowser.system) {
+    window.iobrowser.system = setupGlobalSystem();
 }
 iOConnectBrowserFactory.version = version$1;
 
