@@ -9,10 +9,10 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@interopio/browser-platform": "^3.5.0",
-        "@interopio/react-hooks": "^3.5.0",
-        "@interopio/workspaces-api": "^3.5.0",
-        "@interopio/workspaces-ui-react": "^3.5.0",
+        "@interopio/browser-platform": "^3.5.12",
+        "@interopio/react-hooks": "^3.5.12",
+        "@interopio/workspaces-api": "^3.5.7",
+        "@interopio/workspaces-ui-react": "^3.5.12",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
