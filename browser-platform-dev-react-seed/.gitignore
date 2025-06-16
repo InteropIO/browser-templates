@@ -24,5 +24,6 @@ react-client/node_modules/*
 react-client/build/*
 workspace-platform/node_modules/*
 workspace-platform/build/*
+workspace-platform/src/config.json
 
 workspace-platform/src/config.json
