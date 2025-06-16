@@ -6,10 +6,24 @@ import reportWebVitals from "./reportWebVitals";
 import { IOConnectProvider } from "@interopio/react-hooks";
 import IOBrowser from "@interopio/browser";
 import IOWorkspaces from "@interopio/workspaces-api";
+import IOModals from "@interopio/modals-api";
 
 const settings = {
     browser: {
-        config: { libraries: [IOWorkspaces] },
+        config: {
+            libraries: [IOWorkspaces, IOModals],
+            modals: {
+                alerts: {
+                    enabled: true,
+                },
+                dialogs: {
+                    enabled: true,
+                }
+            },
+            intentResolver: {
+                enable: true
+            }
+        },
         factory: IOBrowser
     }
 };

@@ -1,8 +1,5 @@
 import Workspaces, { getFrameId } from "@interopio/workspaces-ui-react";
-import "@interopio/workspaces-ui-react/dist/styles/popups.css";
-import "@interopio/workspaces-ui-react/dist/styles/goldenlayout-base.css";
-import "@interopio/workspaces-ui-react/dist/styles/glue42-theme.css";
-import "@interopio/workspaces-ui-react/dist/styles/workspaceTabV2.css";
+import "@interopio/workspaces-ui-react/dist/styles/workspaces.css";
 import "./index.css";
 import { IOConnectBrowser } from "@interopio/browser";
 import { IOConnectDesktop } from "@interopio/desktop";

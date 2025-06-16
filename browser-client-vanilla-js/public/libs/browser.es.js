@@ -1,25 +1,946 @@
-const defaultWidgetTimeout = 5 * 1000;
+function getDefaultExportFromCjs$1 (x) {
+	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
+}
+
+var isMergeableObject = function isMergeableObject(value) {
+	return isNonNullObject(value)
+		&& !isSpecial(value)
+};
+
+function isNonNullObject(value) {
+	return !!value && typeof value === 'object'
+}
+
+function isSpecial(value) {
+	var stringValue = Object.prototype.toString.call(value);
+
+	return stringValue === '[object RegExp]'
+		|| stringValue === '[object Date]'
+		|| isReactElement(value)
+}
+
+// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
+var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+
+function isReactElement(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE
+}
+
+function emptyTarget(val) {
+	return Array.isArray(val) ? [] : {}
+}
+
+function cloneUnlessOtherwiseSpecified(value, options) {
+	return (options.clone !== false && options.isMergeableObject(value))
+		? deepmerge(emptyTarget(value), value, options)
+		: value
+}
+
+function defaultArrayMerge(target, source, options) {
+	return target.concat(source).map(function(element) {
+		return cloneUnlessOtherwiseSpecified(element, options)
+	})
+}
+
+function getMergeFunction(key, options) {
+	if (!options.customMerge) {
+		return deepmerge
+	}
+	var customMerge = options.customMerge(key);
+	return typeof customMerge === 'function' ? customMerge : deepmerge
+}
+
+function getEnumerableOwnPropertySymbols(target) {
+	return Object.getOwnPropertySymbols
+		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
+			return Object.propertyIsEnumerable.call(target, symbol)
+		})
+		: []
+}
+
+function getKeys(target) {
+	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
+}
+
+function propertyIsOnObject(object, property) {
+	try {
+		return property in object
+	} catch(_) {
+		return false
+	}
+}
+
+// Protects from prototype poisoning and unexpected merging up the prototype chain.
+function propertyIsUnsafe(target, key) {
+	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
+			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
+}
+
+function mergeObject(target, source, options) {
+	var destination = {};
+	if (options.isMergeableObject(target)) {
+		getKeys(target).forEach(function(key) {
+			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+		});
+	}
+	getKeys(source).forEach(function(key) {
+		if (propertyIsUnsafe(target, key)) {
+			return
+		}
+
+		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
+			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+		} else {
+			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+		}
+	});
+	return destination
+}
+
+function deepmerge(target, source, options) {
+	options = options || {};
+	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
+	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
+	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
+	// implementations can use it. The caller may not replace it.
+	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
+
+	var sourceIsArray = Array.isArray(source);
+	var targetIsArray = Array.isArray(target);
+	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
+
+	if (!sourceAndTargetTypesMatch) {
+		return cloneUnlessOtherwiseSpecified(source, options)
+	} else if (sourceIsArray) {
+		return options.arrayMerge(target, source, options)
+	} else {
+		return mergeObject(target, source, options)
+	}
+}
+
+deepmerge.all = function deepmergeAll(array, options) {
+	if (!Array.isArray(array)) {
+		throw new Error('first argument should be an array')
+	}
+
+	return array.reduce(function(prev, next) {
+		return deepmerge(prev, next, options)
+	}, {})
+};
+
+var deepmerge_1 = deepmerge;
+
+var cjs = deepmerge_1;
+
+var deepmerge$1 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs);
+
+/**
+ * Wraps values in an `Ok` type.
+ *
+ * Example: `ok(5) // => {ok: true, result: 5}`
+ */
+var ok$2 = function (result) { return ({ ok: true, result: result }); };
+/**
+ * Wraps errors in an `Err` type.
+ *
+ * Example: `err('on fire') // => {ok: false, error: 'on fire'}`
+ */
+var err$2 = function (error) { return ({ ok: false, error: error }); };
+/**
+ * Create a `Promise` that either resolves with the result of `Ok` or rejects
+ * with the error of `Err`.
+ */
+var asPromise$2 = function (r) {
+    return r.ok === true ? Promise.resolve(r.result) : Promise.reject(r.error);
+};
+/**
+ * Unwraps a `Result` and returns either the result of an `Ok`, or
+ * `defaultValue`.
+ *
+ * Example:
+ * ```
+ * Result.withDefault(5, number().run(json))
+ * ```
+ *
+ * It would be nice if `Decoder` had an instance method that mirrored this
+ * function. Such a method would look something like this:
+ * ```
+ * class Decoder<A> {
+ *   runWithDefault = (defaultValue: A, json: any): A =>
+ *     Result.withDefault(defaultValue, this.run(json));
+ * }
+ *
+ * number().runWithDefault(5, json)
+ * ```
+ * Unfortunately, the type of `defaultValue: A` on the method causes issues
+ * with type inference on  the `object` decoder in some situations. While these
+ * inference issues can be solved by providing the optional type argument for
+ * `object`s, the extra trouble and confusion doesn't seem worth it.
+ */
+var withDefault$2 = function (defaultValue, r) {
+    return r.ok === true ? r.result : defaultValue;
+};
+/**
+ * Return the successful result, or throw an error.
+ */
+var withException$2 = function (r) {
+    if (r.ok === true) {
+        return r.result;
+    }
+    else {
+        throw r.error;
+    }
+};
+/**
+ * Apply `f` to the result of an `Ok`, or pass the error through.
+ */
+var map$2 = function (f, r) {
+    return r.ok === true ? ok$2(f(r.result)) : r;
+};
+/**
+ * Apply `f` to the result of two `Ok`s, or pass an error through. If both
+ * `Result`s are errors then the first one is returned.
+ */
+var map2$2 = function (f, ar, br) {
+    return ar.ok === false ? ar :
+        br.ok === false ? br :
+            ok$2(f(ar.result, br.result));
+};
+/**
+ * Apply `f` to the error of an `Err`, or pass the success through.
+ */
+var mapError$2 = function (f, r) {
+    return r.ok === true ? r : err$2(f(r.error));
+};
+/**
+ * Chain together a sequence of computations that may fail, similar to a
+ * `Promise`. If the first computation fails then the error will propagate
+ * through. If it succeeds, then `f` will be applied to the value, returning a
+ * new `Result`.
+ */
+var andThen$2 = function (f, r) {
+    return r.ok === true ? f(r.result) : r;
+};
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+
+
+var __assign$2 = function() {
+    __assign$2 = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign$2.apply(this, arguments);
+};
+
+function __rest$2(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+function isEqual$2(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (a === null && b === null) {
+        return true;
+    }
+    if (typeof (a) !== typeof (b)) {
+        return false;
+    }
+    if (typeof (a) === 'object') {
+        // Array
+        if (Array.isArray(a)) {
+            if (!Array.isArray(b)) {
+                return false;
+            }
+            if (a.length !== b.length) {
+                return false;
+            }
+            for (var i = 0; i < a.length; i++) {
+                if (!isEqual$2(a[i], b[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        // Hash table
+        var keys = Object.keys(a);
+        if (keys.length !== Object.keys(b).length) {
+            return false;
+        }
+        for (var i = 0; i < keys.length; i++) {
+            if (!b.hasOwnProperty(keys[i])) {
+                return false;
+            }
+            if (!isEqual$2(a[keys[i]], b[keys[i]])) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+/*
+ * Helpers
+ */
+var isJsonArray$2 = function (json) { return Array.isArray(json); };
+var isJsonObject$2 = function (json) {
+    return typeof json === 'object' && json !== null && !isJsonArray$2(json);
+};
+var typeString$2 = function (json) {
+    switch (typeof json) {
+        case 'string':
+            return 'a string';
+        case 'number':
+            return 'a number';
+        case 'boolean':
+            return 'a boolean';
+        case 'undefined':
+            return 'undefined';
+        case 'object':
+            if (json instanceof Array) {
+                return 'an array';
+            }
+            else if (json === null) {
+                return 'null';
+            }
+            else {
+                return 'an object';
+            }
+        default:
+            return JSON.stringify(json);
+    }
+};
+var expectedGot$2 = function (expected, got) {
+    return "expected " + expected + ", got " + typeString$2(got);
+};
+var printPath$2 = function (paths) {
+    return paths.map(function (path) { return (typeof path === 'string' ? "." + path : "[" + path + "]"); }).join('');
+};
+var prependAt$2 = function (newAt, _a) {
+    var at = _a.at, rest = __rest$2(_a, ["at"]);
+    return (__assign$2({ at: newAt + (at || '') }, rest));
+};
+/**
+ * Decoders transform json objects with unknown structure into known and
+ * verified forms. You can create objects of type `Decoder<A>` with either the
+ * primitive decoder functions, such as `boolean()` and `string()`, or by
+ * applying higher-order decoders to the primitives, such as `array(boolean())`
+ * or `dict(string())`.
+ *
+ * Each of the decoder functions are available both as a static method on
+ * `Decoder` and as a function alias -- for example the string decoder is
+ * defined at `Decoder.string()`, but is also aliased to `string()`. Using the
+ * function aliases exported with the library is recommended.
+ *
+ * `Decoder` exposes a number of 'run' methods, which all decode json in the
+ * same way, but communicate success and failure in different ways. The `map`
+ * and `andThen` methods modify decoders without having to call a 'run' method.
+ *
+ * Alternatively, the main decoder `run()` method returns an object of type
+ * `Result<A, DecoderError>`. This library provides a number of helper
+ * functions for dealing with the `Result` type, so you can do all the same
+ * things with a `Result` as with the decoder methods.
+ */
+var Decoder$2 = /** @class */ (function () {
+    /**
+     * The Decoder class constructor is kept private to separate the internal
+     * `decode` function from the external `run` function. The distinction
+     * between the two functions is that `decode` returns a
+     * `Partial<DecoderError>` on failure, which contains an unfinished error
+     * report. When `run` is called on a decoder, the relevant series of `decode`
+     * calls is made, and then on failure the resulting `Partial<DecoderError>`
+     * is turned into a `DecoderError` by filling in the missing information.
+     *
+     * While hiding the constructor may seem restrictive, leveraging the
+     * provided decoder combinators and helper functions such as
+     * `andThen` and `map` should be enough to build specialized decoders as
+     * needed.
+     */
+    function Decoder(decode) {
+        var _this = this;
+        this.decode = decode;
+        /**
+         * Run the decoder and return a `Result` with either the decoded value or a
+         * `DecoderError` containing the json input, the location of the error, and
+         * the error message.
+         *
+         * Examples:
+         * ```
+         * number().run(12)
+         * // => {ok: true, result: 12}
+         *
+         * string().run(9001)
+         * // =>
+         * // {
+         * //   ok: false,
+         * //   error: {
+         * //     kind: 'DecoderError',
+         * //     input: 9001,
+         * //     at: 'input',
+         * //     message: 'expected a string, got 9001'
+         * //   }
+         * // }
+         * ```
+         */
+        this.run = function (json) {
+            return mapError$2(function (error) { return ({
+                kind: 'DecoderError',
+                input: json,
+                at: 'input' + (error.at || ''),
+                message: error.message || ''
+            }); }, _this.decode(json));
+        };
+        /**
+         * Run the decoder as a `Promise`.
+         */
+        this.runPromise = function (json) { return asPromise$2(_this.run(json)); };
+        /**
+         * Run the decoder and return the value on success, or throw an exception
+         * with a formatted error string.
+         */
+        this.runWithException = function (json) { return withException$2(_this.run(json)); };
+        /**
+         * Construct a new decoder that applies a transformation to the decoded
+         * result. If the decoder succeeds then `f` will be applied to the value. If
+         * it fails the error will propagated through.
+         *
+         * Example:
+         * ```
+         * number().map(x => x * 5).run(10)
+         * // => {ok: true, result: 50}
+         * ```
+         */
+        this.map = function (f) {
+            return new Decoder(function (json) { return map$2(f, _this.decode(json)); });
+        };
+        /**
+         * Chain together a sequence of decoders. The first decoder will run, and
+         * then the function will determine what decoder to run second. If the result
+         * of the first decoder succeeds then `f` will be applied to the decoded
+         * value. If it fails the error will propagate through.
+         *
+         * This is a very powerful method -- it can act as both the `map` and `where`
+         * methods, can improve error messages for edge cases, and can be used to
+         * make a decoder for custom types.
+         *
+         * Example of adding an error message:
+         * ```
+         * const versionDecoder = valueAt(['version'], number());
+         * const infoDecoder3 = object({a: boolean()});
+         *
+         * const decoder = versionDecoder.andThen(version => {
+         *   switch (version) {
+         *     case 3:
+         *       return infoDecoder3;
+         *     default:
+         *       return fail(`Unable to decode info, version ${version} is not supported.`);
+         *   }
+         * });
+         *
+         * decoder.run({version: 3, a: true})
+         * // => {ok: true, result: {a: true}}
+         *
+         * decoder.run({version: 5, x: 'abc'})
+         * // =>
+         * // {
+         * //   ok: false,
+         * //   error: {... message: 'Unable to decode info, version 5 is not supported.'}
+         * // }
+         * ```
+         *
+         * Example of decoding a custom type:
+         * ```
+         * // nominal type for arrays with a length of at least one
+         * type NonEmptyArray<T> = T[] & { __nonEmptyArrayBrand__: void };
+         *
+         * const nonEmptyArrayDecoder = <T>(values: Decoder<T>): Decoder<NonEmptyArray<T>> =>
+         *   array(values).andThen(arr =>
+         *     arr.length > 0
+         *       ? succeed(createNonEmptyArray(arr))
+         *       : fail(`expected a non-empty array, got an empty array`)
+         *   );
+         * ```
+         */
+        this.andThen = function (f) {
+            return new Decoder(function (json) {
+                return andThen$2(function (value) { return f(value).decode(json); }, _this.decode(json));
+            });
+        };
+        /**
+         * Add constraints to a decoder _without_ changing the resulting type. The
+         * `test` argument is a predicate function which returns true for valid
+         * inputs. When `test` fails on an input, the decoder fails with the given
+         * `errorMessage`.
+         *
+         * ```
+         * const chars = (length: number): Decoder<string> =>
+         *   string().where(
+         *     (s: string) => s.length === length,
+         *     `expected a string of length ${length}`
+         *   );
+         *
+         * chars(5).run('12345')
+         * // => {ok: true, result: '12345'}
+         *
+         * chars(2).run('HELLO')
+         * // => {ok: false, error: {... message: 'expected a string of length 2'}}
+         *
+         * chars(12).run(true)
+         * // => {ok: false, error: {... message: 'expected a string, got a boolean'}}
+         * ```
+         */
+        this.where = function (test, errorMessage) {
+            return _this.andThen(function (value) { return (test(value) ? Decoder.succeed(value) : Decoder.fail(errorMessage)); });
+        };
+    }
+    /**
+     * Decoder primitive that validates strings, and fails on all other input.
+     */
+    Decoder.string = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'string'
+                ? ok$2(json)
+                : err$2({ message: expectedGot$2('a string', json) });
+        });
+    };
+    /**
+     * Decoder primitive that validates numbers, and fails on all other input.
+     */
+    Decoder.number = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'number'
+                ? ok$2(json)
+                : err$2({ message: expectedGot$2('a number', json) });
+        });
+    };
+    /**
+     * Decoder primitive that validates booleans, and fails on all other input.
+     */
+    Decoder.boolean = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'boolean'
+                ? ok$2(json)
+                : err$2({ message: expectedGot$2('a boolean', json) });
+        });
+    };
+    Decoder.constant = function (value) {
+        return new Decoder(function (json) {
+            return isEqual$2(json, value)
+                ? ok$2(value)
+                : err$2({ message: "expected " + JSON.stringify(value) + ", got " + JSON.stringify(json) });
+        });
+    };
+    Decoder.object = function (decoders) {
+        return new Decoder(function (json) {
+            if (isJsonObject$2(json) && decoders) {
+                var obj = {};
+                for (var key in decoders) {
+                    if (decoders.hasOwnProperty(key)) {
+                        var r = decoders[key].decode(json[key]);
+                        if (r.ok === true) {
+                            // tslint:disable-next-line:strict-type-predicates
+                            if (r.result !== undefined) {
+                                obj[key] = r.result;
+                            }
+                        }
+                        else if (json[key] === undefined) {
+                            return err$2({ message: "the key '" + key + "' is required but was not present" });
+                        }
+                        else {
+                            return err$2(prependAt$2("." + key, r.error));
+                        }
+                    }
+                }
+                return ok$2(obj);
+            }
+            else if (isJsonObject$2(json)) {
+                return ok$2(json);
+            }
+            else {
+                return err$2({ message: expectedGot$2('an object', json) });
+            }
+        });
+    };
+    Decoder.array = function (decoder) {
+        return new Decoder(function (json) {
+            if (isJsonArray$2(json) && decoder) {
+                var decodeValue_1 = function (v, i) {
+                    return mapError$2(function (err$$1) { return prependAt$2("[" + i + "]", err$$1); }, decoder.decode(v));
+                };
+                return json.reduce(function (acc, v, i) {
+                    return map2$2(function (arr, result) { return arr.concat([result]); }, acc, decodeValue_1(v, i));
+                }, ok$2([]));
+            }
+            else if (isJsonArray$2(json)) {
+                return ok$2(json);
+            }
+            else {
+                return err$2({ message: expectedGot$2('an array', json) });
+            }
+        });
+    };
+    Decoder.tuple = function (decoders) {
+        return new Decoder(function (json) {
+            if (isJsonArray$2(json)) {
+                if (json.length !== decoders.length) {
+                    return err$2({
+                        message: "expected a tuple of length " + decoders.length + ", got one of length " + json.length
+                    });
+                }
+                var result = [];
+                for (var i = 0; i < decoders.length; i++) {
+                    var nth = decoders[i].decode(json[i]);
+                    if (nth.ok) {
+                        result[i] = nth.result;
+                    }
+                    else {
+                        return err$2(prependAt$2("[" + i + "]", nth.error));
+                    }
+                }
+                return ok$2(result);
+            }
+            else {
+                return err$2({ message: expectedGot$2("a tuple of length " + decoders.length, json) });
+            }
+        });
+    };
+    Decoder.union = function (ad, bd) {
+        var decoders = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            decoders[_i - 2] = arguments[_i];
+        }
+        return Decoder.oneOf.apply(Decoder, [ad, bd].concat(decoders));
+    };
+    Decoder.intersection = function (ad, bd) {
+        var ds = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            ds[_i - 2] = arguments[_i];
+        }
+        return new Decoder(function (json) {
+            return [ad, bd].concat(ds).reduce(function (acc, decoder) { return map2$2(Object.assign, acc, decoder.decode(json)); }, ok$2({}));
+        });
+    };
+    /**
+     * Escape hatch to bypass validation. Always succeeds and types the result as
+     * `any`. Useful for defining decoders incrementally, particularly for
+     * complex objects.
+     *
+     * Example:
+     * ```
+     * interface User {
+     *   name: string;
+     *   complexUserData: ComplexType;
+     * }
+     *
+     * const userDecoder: Decoder<User> = object({
+     *   name: string(),
+     *   complexUserData: anyJson()
+     * });
+     * ```
+     */
+    Decoder.anyJson = function () { return new Decoder(function (json) { return ok$2(json); }); };
+    /**
+     * Decoder identity function which always succeeds and types the result as
+     * `unknown`.
+     */
+    Decoder.unknownJson = function () {
+        return new Decoder(function (json) { return ok$2(json); });
+    };
+    /**
+     * Decoder for json objects where the keys are unknown strings, but the values
+     * should all be of the same type.
+     *
+     * Example:
+     * ```
+     * dict(number()).run({chocolate: 12, vanilla: 10, mint: 37});
+     * // => {ok: true, result: {chocolate: 12, vanilla: 10, mint: 37}}
+     * ```
+     */
+    Decoder.dict = function (decoder) {
+        return new Decoder(function (json) {
+            if (isJsonObject$2(json)) {
+                var obj = {};
+                for (var key in json) {
+                    if (json.hasOwnProperty(key)) {
+                        var r = decoder.decode(json[key]);
+                        if (r.ok === true) {
+                            obj[key] = r.result;
+                        }
+                        else {
+                            return err$2(prependAt$2("." + key, r.error));
+                        }
+                    }
+                }
+                return ok$2(obj);
+            }
+            else {
+                return err$2({ message: expectedGot$2('an object', json) });
+            }
+        });
+    };
+    /**
+     * Decoder for values that may be `undefined`. This is primarily helpful for
+     * decoding interfaces with optional fields.
+     *
+     * Example:
+     * ```
+     * interface User {
+     *   id: number;
+     *   isOwner?: boolean;
+     * }
+     *
+     * const decoder: Decoder<User> = object({
+     *   id: number(),
+     *   isOwner: optional(boolean())
+     * });
+     * ```
+     */
+    Decoder.optional = function (decoder) {
+        return new Decoder(function (json) { return (json === undefined || json === null ? ok$2(undefined) : decoder.decode(json)); });
+    };
+    /**
+     * Decoder that attempts to run each decoder in `decoders` and either succeeds
+     * with the first successful decoder, or fails after all decoders have failed.
+     *
+     * Note that `oneOf` expects the decoders to all have the same return type,
+     * while `union` creates a decoder for the union type of all the input
+     * decoders.
+     *
+     * Examples:
+     * ```
+     * oneOf(string(), number().map(String))
+     * oneOf(constant('start'), constant('stop'), succeed('unknown'))
+     * ```
+     */
+    Decoder.oneOf = function () {
+        var decoders = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            decoders[_i] = arguments[_i];
+        }
+        return new Decoder(function (json) {
+            var errors = [];
+            for (var i = 0; i < decoders.length; i++) {
+                var r = decoders[i].decode(json);
+                if (r.ok === true) {
+                    return r;
+                }
+                else {
+                    errors[i] = r.error;
+                }
+            }
+            var errorsList = errors
+                .map(function (error) { return "at error" + (error.at || '') + ": " + error.message; })
+                .join('", "');
+            return err$2({
+                message: "expected a value matching one of the decoders, got the errors [\"" + errorsList + "\"]"
+            });
+        });
+    };
+    /**
+     * Decoder that always succeeds with either the decoded value, or a fallback
+     * default value.
+     */
+    Decoder.withDefault = function (defaultValue, decoder) {
+        return new Decoder(function (json) {
+            return ok$2(withDefault$2(defaultValue, decoder.decode(json)));
+        });
+    };
+    /**
+     * Decoder that pulls a specific field out of a json structure, instead of
+     * decoding and returning the full structure. The `paths` array describes the
+     * object keys and array indices to traverse, so that values can be pulled out
+     * of a nested structure.
+     *
+     * Example:
+     * ```
+     * const decoder = valueAt(['a', 'b', 0], string());
+     *
+     * decoder.run({a: {b: ['surprise!']}})
+     * // => {ok: true, result: 'surprise!'}
+     *
+     * decoder.run({a: {x: 'cats'}})
+     * // => {ok: false, error: {... at: 'input.a.b[0]' message: 'path does not exist'}}
+     * ```
+     *
+     * Note that the `decoder` is ran on the value found at the last key in the
+     * path, even if the last key is not found. This allows the `optional`
+     * decoder to succeed when appropriate.
+     * ```
+     * const optionalDecoder = valueAt(['a', 'b', 'c'], optional(string()));
+     *
+     * optionalDecoder.run({a: {b: {c: 'surprise!'}}})
+     * // => {ok: true, result: 'surprise!'}
+     *
+     * optionalDecoder.run({a: {b: 'cats'}})
+     * // => {ok: false, error: {... at: 'input.a.b.c' message: 'expected an object, got "cats"'}
+     *
+     * optionalDecoder.run({a: {b: {z: 1}}})
+     * // => {ok: true, result: undefined}
+     * ```
+     */
+    Decoder.valueAt = function (paths, decoder) {
+        return new Decoder(function (json) {
+            var jsonAtPath = json;
+            for (var i = 0; i < paths.length; i++) {
+                if (jsonAtPath === undefined) {
+                    return err$2({
+                        at: printPath$2(paths.slice(0, i + 1)),
+                        message: 'path does not exist'
+                    });
+                }
+                else if (typeof paths[i] === 'string' && !isJsonObject$2(jsonAtPath)) {
+                    return err$2({
+                        at: printPath$2(paths.slice(0, i + 1)),
+                        message: expectedGot$2('an object', jsonAtPath)
+                    });
+                }
+                else if (typeof paths[i] === 'number' && !isJsonArray$2(jsonAtPath)) {
+                    return err$2({
+                        at: printPath$2(paths.slice(0, i + 1)),
+                        message: expectedGot$2('an array', jsonAtPath)
+                    });
+                }
+                else {
+                    jsonAtPath = jsonAtPath[paths[i]];
+                }
+            }
+            return mapError$2(function (error) {
+                return jsonAtPath === undefined
+                    ? { at: printPath$2(paths), message: 'path does not exist' }
+                    : prependAt$2(printPath$2(paths), error);
+            }, decoder.decode(jsonAtPath));
+        });
+    };
+    /**
+     * Decoder that ignores the input json and always succeeds with `fixedValue`.
+     */
+    Decoder.succeed = function (fixedValue) {
+        return new Decoder(function (json) { return ok$2(fixedValue); });
+    };
+    /**
+     * Decoder that ignores the input json and always fails with `errorMessage`.
+     */
+    Decoder.fail = function (errorMessage) {
+        return new Decoder(function (json) { return err$2({ message: errorMessage }); });
+    };
+    /**
+     * Decoder that allows for validating recursive data structures. Unlike with
+     * functions, decoders assigned to variables can't reference themselves
+     * before they are fully defined. We can avoid prematurely referencing the
+     * decoder by wrapping it in a function that won't be called until use, at
+     * which point the decoder has been defined.
+     *
+     * Example:
+     * ```
+     * interface Comment {
+     *   msg: string;
+     *   replies: Comment[];
+     * }
+     *
+     * const decoder: Decoder<Comment> = object({
+     *   msg: string(),
+     *   replies: lazy(() => array(decoder))
+     * });
+     * ```
+     */
+    Decoder.lazy = function (mkDecoder) {
+        return new Decoder(function (json) { return mkDecoder().decode(json); });
+    };
+    return Decoder;
+}());
+
+/* tslint:disable:variable-name */
+/** See `Decoder.string` */
+var string$2 = Decoder$2.string;
+/** See `Decoder.number` */
+var number$2 = Decoder$2.number;
+/** See `Decoder.boolean` */
+var boolean$2 = Decoder$2.boolean;
+/** See `Decoder.anyJson` */
+var anyJson$2 = Decoder$2.anyJson;
+/** See `Decoder.unknownJson` */
+Decoder$2.unknownJson;
+/** See `Decoder.constant` */
+var constant$2 = Decoder$2.constant;
+/** See `Decoder.object` */
+var object$2 = Decoder$2.object;
+/** See `Decoder.array` */
+var array$2 = Decoder$2.array;
+/** See `Decoder.tuple` */
+Decoder$2.tuple;
+/** See `Decoder.dict` */
+Decoder$2.dict;
+/** See `Decoder.optional` */
+var optional$2 = Decoder$2.optional;
+/** See `Decoder.oneOf` */
+var oneOf$1 = Decoder$2.oneOf;
+/** See `Decoder.union` */
+var union$1 = Decoder$2.union;
+/** See `Decoder.intersection` */
+var intersection = Decoder$2.intersection;
+/** See `Decoder.withDefault` */
+Decoder$2.withDefault;
+/** See `Decoder.valueAt` */
+Decoder$2.valueAt;
+/** See `Decoder.succeed` */
+Decoder$2.succeed;
+/** See `Decoder.fail` */
+Decoder$2.fail;
+/** See `Decoder.lazy` */
+var lazy = Decoder$2.lazy;
 
 const defaultConfig = {
-    logger: "info",
     gateway: { webPlatform: {} },
     libraries: [],
-    exposeAPI: true
+    exposeAPI: true,
 };
 const defaultWidgetConfig = {
     awaitFactory: true,
-    timeout: defaultWidgetTimeout
+    enable: false,
+    timeout: 5 * 1000,
 };
-const parseConfig = (config) => {
-    const isPlatformInternal = !!config?.gateway?.webPlatform?.port;
-    const combined = Object.assign({}, defaultConfig, config, { isPlatformInternal });
-    if (combined.systemLogger) {
-        combined.logger = combined.systemLogger.level ?? "info";
-    }
-    if (combined.widget) {
-        combined.widget = { ...defaultWidgetConfig, ...combined.widget };
-    }
-    return combined;
+const defaultModalsConfig = {
+    alerts: {
+        enabled: false
+    },
+    dialogs: {
+        enabled: false
+    },
+    awaitFactory: true,
+    timeout: 5 * 1000,
+};
+const defaultIntentResolverConfig = {
+    enable: false,
+    timeout: 5 * 1000,
+    awaitFactory: true,
 };
 
 const Glue42CoreMessageTypes = {
@@ -37,6 +958,9 @@ const webPlatformTransportName = "web-platform";
 const latestFDC3Type = "latest_fdc3_type";
 const errorChannel = new MessageChannel();
 const REQUEST_WIDGET_READY = "requestWidgetFactoryReady";
+const REQUEST_MODALS_UI_FACTORY_READY = "requestModalsUIFactoryReady";
+const MAX_SET_TIMEOUT_DELAY = 2147483647;
+const REQUEST_INTENT_RESOLVER_UI_FACTORY_READY = "requestIntentResolverUIFactoryReady";
 
 const extractErrorMsg = (error) => {
     if (typeof error === "string") {
@@ -56,6 +980,25 @@ const runDecoderWithIOError = (decoder, json) => {
         return ioError.raiseError(error, true);
     }
 };
+const getSupportedOperationsNames = (operations) => {
+    return Object.keys(operations).filter((operation) => (operations)[operation].execute);
+};
+const handleOperationCheck = (supportedOperations, operationName) => {
+    const isSupported = supportedOperations.some((operation) => operation.toLowerCase() === operationName.toLowerCase());
+    return { isSupported };
+};
+const getSafeTimeoutDelay = (delay) => {
+    return Math.min(delay, MAX_SET_TIMEOUT_DELAY);
+};
+const wrapPromise = () => {
+    let wrapperResolve;
+    let wrapperReject;
+    const promise = new Promise((resolve, reject) => {
+        wrapperResolve = resolve;
+        wrapperReject = reject;
+    });
+    return { promise, resolve: wrapperResolve, reject: wrapperReject };
+};
 
 class IOError {
     raiseError(error, shouldThrowOriginalError) {
@@ -69,30 +1012,8 @@ class IOError {
 }
 const ioError = new IOError();
 
-const checkSingleton = () => {
-    const ioConnectBrowserNamespace = window.glue42core || window.iobrowser;
-    if (ioConnectBrowserNamespace && ioConnectBrowserNamespace.webStarted) {
-        return ioError.raiseError("IoConnect Browser has already been started for this application.");
-    }
-    if (!ioConnectBrowserNamespace) {
-        window.iobrowser = { webStarted: true };
-        return;
-    }
-    ioConnectBrowserNamespace.webStarted = true;
-};
-
-const enterprise = (config) => {
-    const enterpriseConfig = {
-        windows: true,
-        layouts: "full",
-        appManager: "full",
-        channels: true,
-        libraries: config?.libraries ?? [],
-        logger: config?.systemLogger?.level ?? "warn"
-    };
-    const injectedFactory = window.IODesktop || window.Glue;
-    return injectedFactory(enterpriseConfig);
-};
+const connectBrowserAppProps = ["name", "title", "version", "customProperties", "icon", "caption", "type"];
+const fdc3v2AppProps = ["appId", "name", "type", "details", "version", "title", "tooltip", "lang", "description", "categories", "icons", "screenshots", "contactEmail", "moreInfo", "publisher", "customConfig", "hostManifests", "interop", "localizedVersions"];
 
 /**
  * Wraps values in an `Ok` type.
@@ -855,11 +1776,11 @@ var array$1 = Decoder$1.array;
 /** See `Decoder.tuple` */
 Decoder$1.tuple;
 /** See `Decoder.dict` */
-Decoder$1.dict;
+var dict = Decoder$1.dict;
 /** See `Decoder.optional` */
 var optional$1 = Decoder$1.optional;
 /** See `Decoder.oneOf` */
-var oneOf$1 = Decoder$1.oneOf;
+var oneOf = Decoder$1.oneOf;
 /** See `Decoder.union` */
 Decoder$1.union;
 /** See `Decoder.intersection` */
@@ -873,918 +1794,134 @@ Decoder$1.succeed;
 /** See `Decoder.fail` */
 Decoder$1.fail;
 /** See `Decoder.lazy` */
-var lazy = Decoder$1.lazy;
+Decoder$1.lazy;
 
-const connectBrowserAppProps = ["name", "title", "version", "customProperties", "icon", "caption", "type"];
-const fdc3v2AppProps = ["appId", "name", "type", "details", "version", "title", "tooltip", "lang", "description", "categories", "icons", "screenshots", "contactEmail", "moreInfo", "publisher", "customConfig", "hostManifests", "interop", "localizedVersions"];
+const nonEmptyStringDecoder$3 = string$1().where((s) => s.length > 0, "Expected a non-empty string");
+const nonNegativeNumberDecoder$3 = number$1().where((num) => num >= 0, "Expected a non-negative number");
 
-/**
- * Wraps values in an `Ok` type.
- *
- * Example: `ok(5) // => {ok: true, result: 5}`
- */
-var ok = function (result) { return ({ ok: true, result: result }); };
-/**
- * Wraps errors in an `Err` type.
- *
- * Example: `err('on fire') // => {ok: false, error: 'on fire'}`
- */
-var err = function (error) { return ({ ok: false, error: error }); };
-/**
- * Create a `Promise` that either resolves with the result of `Ok` or rejects
- * with the error of `Err`.
- */
-var asPromise = function (r) {
-    return r.ok === true ? Promise.resolve(r.result) : Promise.reject(r.error);
-};
-/**
- * Unwraps a `Result` and returns either the result of an `Ok`, or
- * `defaultValue`.
- *
- * Example:
- * ```
- * Result.withDefault(5, number().run(json))
- * ```
- *
- * It would be nice if `Decoder` had an instance method that mirrored this
- * function. Such a method would look something like this:
- * ```
- * class Decoder<A> {
- *   runWithDefault = (defaultValue: A, json: any): A =>
- *     Result.withDefault(defaultValue, this.run(json));
- * }
- *
- * number().runWithDefault(5, json)
- * ```
- * Unfortunately, the type of `defaultValue: A` on the method causes issues
- * with type inference on  the `object` decoder in some situations. While these
- * inference issues can be solved by providing the optional type argument for
- * `object`s, the extra trouble and confusion doesn't seem worth it.
- */
-var withDefault = function (defaultValue, r) {
-    return r.ok === true ? r.result : defaultValue;
-};
-/**
- * Return the successful result, or throw an error.
- */
-var withException = function (r) {
-    if (r.ok === true) {
-        return r.result;
-    }
-    else {
-        throw r.error;
-    }
-};
-/**
- * Apply `f` to the result of an `Ok`, or pass the error through.
- */
-var map = function (f, r) {
-    return r.ok === true ? ok(f(r.result)) : r;
-};
-/**
- * Apply `f` to the result of two `Ok`s, or pass an error through. If both
- * `Result`s are errors then the first one is returned.
- */
-var map2 = function (f, ar, br) {
-    return ar.ok === false ? ar :
-        br.ok === false ? br :
-            ok(f(ar.result, br.result));
-};
-/**
- * Apply `f` to the error of an `Err`, or pass the success through.
- */
-var mapError = function (f, r) {
-    return r.ok === true ? r : err(f(r.error));
-};
-/**
- * Chain together a sequence of computations that may fail, similar to a
- * `Promise`. If the first computation fails then the error will propagate
- * through. If it succeeds, then `f` will be applied to the value, returning a
- * new `Result`.
- */
-var andThen = function (f, r) {
-    return r.ok === true ? f(r.result) : r;
-};
-
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation.
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-***************************************************************************** */
-/* global Reflect, Promise */
-
-
-
-var __assign = function() {
-    __assign = Object.assign || function __assign(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-
-function __rest(s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-}
-
-function isEqual(a, b) {
-    if (a === b) {
-        return true;
-    }
-    if (a === null && b === null) {
-        return true;
-    }
-    if (typeof (a) !== typeof (b)) {
-        return false;
-    }
-    if (typeof (a) === 'object') {
-        // Array
-        if (Array.isArray(a)) {
-            if (!Array.isArray(b)) {
-                return false;
-            }
-            if (a.length !== b.length) {
-                return false;
-            }
-            for (var i = 0; i < a.length; i++) {
-                if (!isEqual(a[i], b[i])) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        // Hash table
-        var keys = Object.keys(a);
-        if (keys.length !== Object.keys(b).length) {
-            return false;
-        }
-        for (var i = 0; i < keys.length; i++) {
-            if (!b.hasOwnProperty(keys[i])) {
-                return false;
-            }
-            if (!isEqual(a[keys[i]], b[keys[i]])) {
-                return false;
-            }
-        }
-        return true;
-    }
-}
-/*
- * Helpers
- */
-var isJsonArray = function (json) { return Array.isArray(json); };
-var isJsonObject = function (json) {
-    return typeof json === 'object' && json !== null && !isJsonArray(json);
-};
-var typeString = function (json) {
-    switch (typeof json) {
-        case 'string':
-            return 'a string';
-        case 'number':
-            return 'a number';
-        case 'boolean':
-            return 'a boolean';
-        case 'undefined':
-            return 'undefined';
-        case 'object':
-            if (json instanceof Array) {
-                return 'an array';
-            }
-            else if (json === null) {
-                return 'null';
-            }
-            else {
-                return 'an object';
-            }
-        default:
-            return JSON.stringify(json);
-    }
-};
-var expectedGot = function (expected, got) {
-    return "expected " + expected + ", got " + typeString(got);
-};
-var printPath = function (paths) {
-    return paths.map(function (path) { return (typeof path === 'string' ? "." + path : "[" + path + "]"); }).join('');
-};
-var prependAt = function (newAt, _a) {
-    var at = _a.at, rest = __rest(_a, ["at"]);
-    return (__assign({ at: newAt + (at || '') }, rest));
-};
-/**
- * Decoders transform json objects with unknown structure into known and
- * verified forms. You can create objects of type `Decoder<A>` with either the
- * primitive decoder functions, such as `boolean()` and `string()`, or by
- * applying higher-order decoders to the primitives, such as `array(boolean())`
- * or `dict(string())`.
- *
- * Each of the decoder functions are available both as a static method on
- * `Decoder` and as a function alias -- for example the string decoder is
- * defined at `Decoder.string()`, but is also aliased to `string()`. Using the
- * function aliases exported with the library is recommended.
- *
- * `Decoder` exposes a number of 'run' methods, which all decode json in the
- * same way, but communicate success and failure in different ways. The `map`
- * and `andThen` methods modify decoders without having to call a 'run' method.
- *
- * Alternatively, the main decoder `run()` method returns an object of type
- * `Result<A, DecoderError>`. This library provides a number of helper
- * functions for dealing with the `Result` type, so you can do all the same
- * things with a `Result` as with the decoder methods.
- */
-var Decoder = /** @class */ (function () {
-    /**
-     * The Decoder class constructor is kept private to separate the internal
-     * `decode` function from the external `run` function. The distinction
-     * between the two functions is that `decode` returns a
-     * `Partial<DecoderError>` on failure, which contains an unfinished error
-     * report. When `run` is called on a decoder, the relevant series of `decode`
-     * calls is made, and then on failure the resulting `Partial<DecoderError>`
-     * is turned into a `DecoderError` by filling in the missing information.
-     *
-     * While hiding the constructor may seem restrictive, leveraging the
-     * provided decoder combinators and helper functions such as
-     * `andThen` and `map` should be enough to build specialized decoders as
-     * needed.
-     */
-    function Decoder(decode) {
-        var _this = this;
-        this.decode = decode;
-        /**
-         * Run the decoder and return a `Result` with either the decoded value or a
-         * `DecoderError` containing the json input, the location of the error, and
-         * the error message.
-         *
-         * Examples:
-         * ```
-         * number().run(12)
-         * // => {ok: true, result: 12}
-         *
-         * string().run(9001)
-         * // =>
-         * // {
-         * //   ok: false,
-         * //   error: {
-         * //     kind: 'DecoderError',
-         * //     input: 9001,
-         * //     at: 'input',
-         * //     message: 'expected a string, got 9001'
-         * //   }
-         * // }
-         * ```
-         */
-        this.run = function (json) {
-            return mapError(function (error) { return ({
-                kind: 'DecoderError',
-                input: json,
-                at: 'input' + (error.at || ''),
-                message: error.message || ''
-            }); }, _this.decode(json));
-        };
-        /**
-         * Run the decoder as a `Promise`.
-         */
-        this.runPromise = function (json) { return asPromise(_this.run(json)); };
-        /**
-         * Run the decoder and return the value on success, or throw an exception
-         * with a formatted error string.
-         */
-        this.runWithException = function (json) { return withException(_this.run(json)); };
-        /**
-         * Construct a new decoder that applies a transformation to the decoded
-         * result. If the decoder succeeds then `f` will be applied to the value. If
-         * it fails the error will propagated through.
-         *
-         * Example:
-         * ```
-         * number().map(x => x * 5).run(10)
-         * // => {ok: true, result: 50}
-         * ```
-         */
-        this.map = function (f) {
-            return new Decoder(function (json) { return map(f, _this.decode(json)); });
-        };
-        /**
-         * Chain together a sequence of decoders. The first decoder will run, and
-         * then the function will determine what decoder to run second. If the result
-         * of the first decoder succeeds then `f` will be applied to the decoded
-         * value. If it fails the error will propagate through.
-         *
-         * This is a very powerful method -- it can act as both the `map` and `where`
-         * methods, can improve error messages for edge cases, and can be used to
-         * make a decoder for custom types.
-         *
-         * Example of adding an error message:
-         * ```
-         * const versionDecoder = valueAt(['version'], number());
-         * const infoDecoder3 = object({a: boolean()});
-         *
-         * const decoder = versionDecoder.andThen(version => {
-         *   switch (version) {
-         *     case 3:
-         *       return infoDecoder3;
-         *     default:
-         *       return fail(`Unable to decode info, version ${version} is not supported.`);
-         *   }
-         * });
-         *
-         * decoder.run({version: 3, a: true})
-         * // => {ok: true, result: {a: true}}
-         *
-         * decoder.run({version: 5, x: 'abc'})
-         * // =>
-         * // {
-         * //   ok: false,
-         * //   error: {... message: 'Unable to decode info, version 5 is not supported.'}
-         * // }
-         * ```
-         *
-         * Example of decoding a custom type:
-         * ```
-         * // nominal type for arrays with a length of at least one
-         * type NonEmptyArray<T> = T[] & { __nonEmptyArrayBrand__: void };
-         *
-         * const nonEmptyArrayDecoder = <T>(values: Decoder<T>): Decoder<NonEmptyArray<T>> =>
-         *   array(values).andThen(arr =>
-         *     arr.length > 0
-         *       ? succeed(createNonEmptyArray(arr))
-         *       : fail(`expected a non-empty array, got an empty array`)
-         *   );
-         * ```
-         */
-        this.andThen = function (f) {
-            return new Decoder(function (json) {
-                return andThen(function (value) { return f(value).decode(json); }, _this.decode(json));
-            });
-        };
-        /**
-         * Add constraints to a decoder _without_ changing the resulting type. The
-         * `test` argument is a predicate function which returns true for valid
-         * inputs. When `test` fails on an input, the decoder fails with the given
-         * `errorMessage`.
-         *
-         * ```
-         * const chars = (length: number): Decoder<string> =>
-         *   string().where(
-         *     (s: string) => s.length === length,
-         *     `expected a string of length ${length}`
-         *   );
-         *
-         * chars(5).run('12345')
-         * // => {ok: true, result: '12345'}
-         *
-         * chars(2).run('HELLO')
-         * // => {ok: false, error: {... message: 'expected a string of length 2'}}
-         *
-         * chars(12).run(true)
-         * // => {ok: false, error: {... message: 'expected a string, got a boolean'}}
-         * ```
-         */
-        this.where = function (test, errorMessage) {
-            return _this.andThen(function (value) { return (test(value) ? Decoder.succeed(value) : Decoder.fail(errorMessage)); });
-        };
-    }
-    /**
-     * Decoder primitive that validates strings, and fails on all other input.
-     */
-    Decoder.string = function () {
-        return new Decoder(function (json) {
-            return typeof json === 'string'
-                ? ok(json)
-                : err({ message: expectedGot('a string', json) });
-        });
-    };
-    /**
-     * Decoder primitive that validates numbers, and fails on all other input.
-     */
-    Decoder.number = function () {
-        return new Decoder(function (json) {
-            return typeof json === 'number'
-                ? ok(json)
-                : err({ message: expectedGot('a number', json) });
-        });
-    };
-    /**
-     * Decoder primitive that validates booleans, and fails on all other input.
-     */
-    Decoder.boolean = function () {
-        return new Decoder(function (json) {
-            return typeof json === 'boolean'
-                ? ok(json)
-                : err({ message: expectedGot('a boolean', json) });
-        });
-    };
-    Decoder.constant = function (value) {
-        return new Decoder(function (json) {
-            return isEqual(json, value)
-                ? ok(value)
-                : err({ message: "expected " + JSON.stringify(value) + ", got " + JSON.stringify(json) });
-        });
-    };
-    Decoder.object = function (decoders) {
-        return new Decoder(function (json) {
-            if (isJsonObject(json) && decoders) {
-                var obj = {};
-                for (var key in decoders) {
-                    if (decoders.hasOwnProperty(key)) {
-                        var r = decoders[key].decode(json[key]);
-                        if (r.ok === true) {
-                            // tslint:disable-next-line:strict-type-predicates
-                            if (r.result !== undefined) {
-                                obj[key] = r.result;
-                            }
-                        }
-                        else if (json[key] === undefined) {
-                            return err({ message: "the key '" + key + "' is required but was not present" });
-                        }
-                        else {
-                            return err(prependAt("." + key, r.error));
-                        }
-                    }
-                }
-                return ok(obj);
-            }
-            else if (isJsonObject(json)) {
-                return ok(json);
-            }
-            else {
-                return err({ message: expectedGot('an object', json) });
-            }
-        });
-    };
-    Decoder.array = function (decoder) {
-        return new Decoder(function (json) {
-            if (isJsonArray(json) && decoder) {
-                var decodeValue_1 = function (v, i) {
-                    return mapError(function (err$$1) { return prependAt("[" + i + "]", err$$1); }, decoder.decode(v));
-                };
-                return json.reduce(function (acc, v, i) {
-                    return map2(function (arr, result) { return arr.concat([result]); }, acc, decodeValue_1(v, i));
-                }, ok([]));
-            }
-            else if (isJsonArray(json)) {
-                return ok(json);
-            }
-            else {
-                return err({ message: expectedGot('an array', json) });
-            }
-        });
-    };
-    Decoder.tuple = function (decoders) {
-        return new Decoder(function (json) {
-            if (isJsonArray(json)) {
-                if (json.length !== decoders.length) {
-                    return err({
-                        message: "expected a tuple of length " + decoders.length + ", got one of length " + json.length
-                    });
-                }
-                var result = [];
-                for (var i = 0; i < decoders.length; i++) {
-                    var nth = decoders[i].decode(json[i]);
-                    if (nth.ok) {
-                        result[i] = nth.result;
-                    }
-                    else {
-                        return err(prependAt("[" + i + "]", nth.error));
-                    }
-                }
-                return ok(result);
-            }
-            else {
-                return err({ message: expectedGot("a tuple of length " + decoders.length, json) });
-            }
-        });
-    };
-    Decoder.union = function (ad, bd) {
-        var decoders = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            decoders[_i - 2] = arguments[_i];
-        }
-        return Decoder.oneOf.apply(Decoder, [ad, bd].concat(decoders));
-    };
-    Decoder.intersection = function (ad, bd) {
-        var ds = [];
-        for (var _i = 2; _i < arguments.length; _i++) {
-            ds[_i - 2] = arguments[_i];
-        }
-        return new Decoder(function (json) {
-            return [ad, bd].concat(ds).reduce(function (acc, decoder) { return map2(Object.assign, acc, decoder.decode(json)); }, ok({}));
-        });
-    };
-    /**
-     * Escape hatch to bypass validation. Always succeeds and types the result as
-     * `any`. Useful for defining decoders incrementally, particularly for
-     * complex objects.
-     *
-     * Example:
-     * ```
-     * interface User {
-     *   name: string;
-     *   complexUserData: ComplexType;
-     * }
-     *
-     * const userDecoder: Decoder<User> = object({
-     *   name: string(),
-     *   complexUserData: anyJson()
-     * });
-     * ```
-     */
-    Decoder.anyJson = function () { return new Decoder(function (json) { return ok(json); }); };
-    /**
-     * Decoder identity function which always succeeds and types the result as
-     * `unknown`.
-     */
-    Decoder.unknownJson = function () {
-        return new Decoder(function (json) { return ok(json); });
-    };
-    /**
-     * Decoder for json objects where the keys are unknown strings, but the values
-     * should all be of the same type.
-     *
-     * Example:
-     * ```
-     * dict(number()).run({chocolate: 12, vanilla: 10, mint: 37});
-     * // => {ok: true, result: {chocolate: 12, vanilla: 10, mint: 37}}
-     * ```
-     */
-    Decoder.dict = function (decoder) {
-        return new Decoder(function (json) {
-            if (isJsonObject(json)) {
-                var obj = {};
-                for (var key in json) {
-                    if (json.hasOwnProperty(key)) {
-                        var r = decoder.decode(json[key]);
-                        if (r.ok === true) {
-                            obj[key] = r.result;
-                        }
-                        else {
-                            return err(prependAt("." + key, r.error));
-                        }
-                    }
-                }
-                return ok(obj);
-            }
-            else {
-                return err({ message: expectedGot('an object', json) });
-            }
-        });
-    };
-    /**
-     * Decoder for values that may be `undefined`. This is primarily helpful for
-     * decoding interfaces with optional fields.
-     *
-     * Example:
-     * ```
-     * interface User {
-     *   id: number;
-     *   isOwner?: boolean;
-     * }
-     *
-     * const decoder: Decoder<User> = object({
-     *   id: number(),
-     *   isOwner: optional(boolean())
-     * });
-     * ```
-     */
-    Decoder.optional = function (decoder) {
-        return new Decoder(function (json) { return (json === undefined || json === null ? ok(undefined) : decoder.decode(json)); });
-    };
-    /**
-     * Decoder that attempts to run each decoder in `decoders` and either succeeds
-     * with the first successful decoder, or fails after all decoders have failed.
-     *
-     * Note that `oneOf` expects the decoders to all have the same return type,
-     * while `union` creates a decoder for the union type of all the input
-     * decoders.
-     *
-     * Examples:
-     * ```
-     * oneOf(string(), number().map(String))
-     * oneOf(constant('start'), constant('stop'), succeed('unknown'))
-     * ```
-     */
-    Decoder.oneOf = function () {
-        var decoders = [];
-        for (var _i = 0; _i < arguments.length; _i++) {
-            decoders[_i] = arguments[_i];
-        }
-        return new Decoder(function (json) {
-            var errors = [];
-            for (var i = 0; i < decoders.length; i++) {
-                var r = decoders[i].decode(json);
-                if (r.ok === true) {
-                    return r;
-                }
-                else {
-                    errors[i] = r.error;
-                }
-            }
-            var errorsList = errors
-                .map(function (error) { return "at error" + (error.at || '') + ": " + error.message; })
-                .join('", "');
-            return err({
-                message: "expected a value matching one of the decoders, got the errors [\"" + errorsList + "\"]"
-            });
-        });
-    };
-    /**
-     * Decoder that always succeeds with either the decoded value, or a fallback
-     * default value.
-     */
-    Decoder.withDefault = function (defaultValue, decoder) {
-        return new Decoder(function (json) {
-            return ok(withDefault(defaultValue, decoder.decode(json)));
-        });
-    };
-    /**
-     * Decoder that pulls a specific field out of a json structure, instead of
-     * decoding and returning the full structure. The `paths` array describes the
-     * object keys and array indices to traverse, so that values can be pulled out
-     * of a nested structure.
-     *
-     * Example:
-     * ```
-     * const decoder = valueAt(['a', 'b', 0], string());
-     *
-     * decoder.run({a: {b: ['surprise!']}})
-     * // => {ok: true, result: 'surprise!'}
-     *
-     * decoder.run({a: {x: 'cats'}})
-     * // => {ok: false, error: {... at: 'input.a.b[0]' message: 'path does not exist'}}
-     * ```
-     *
-     * Note that the `decoder` is ran on the value found at the last key in the
-     * path, even if the last key is not found. This allows the `optional`
-     * decoder to succeed when appropriate.
-     * ```
-     * const optionalDecoder = valueAt(['a', 'b', 'c'], optional(string()));
-     *
-     * optionalDecoder.run({a: {b: {c: 'surprise!'}}})
-     * // => {ok: true, result: 'surprise!'}
-     *
-     * optionalDecoder.run({a: {b: 'cats'}})
-     * // => {ok: false, error: {... at: 'input.a.b.c' message: 'expected an object, got "cats"'}
-     *
-     * optionalDecoder.run({a: {b: {z: 1}}})
-     * // => {ok: true, result: undefined}
-     * ```
-     */
-    Decoder.valueAt = function (paths, decoder) {
-        return new Decoder(function (json) {
-            var jsonAtPath = json;
-            for (var i = 0; i < paths.length; i++) {
-                if (jsonAtPath === undefined) {
-                    return err({
-                        at: printPath(paths.slice(0, i + 1)),
-                        message: 'path does not exist'
-                    });
-                }
-                else if (typeof paths[i] === 'string' && !isJsonObject(jsonAtPath)) {
-                    return err({
-                        at: printPath(paths.slice(0, i + 1)),
-                        message: expectedGot('an object', jsonAtPath)
-                    });
-                }
-                else if (typeof paths[i] === 'number' && !isJsonArray(jsonAtPath)) {
-                    return err({
-                        at: printPath(paths.slice(0, i + 1)),
-                        message: expectedGot('an array', jsonAtPath)
-                    });
-                }
-                else {
-                    jsonAtPath = jsonAtPath[paths[i]];
-                }
-            }
-            return mapError(function (error) {
-                return jsonAtPath === undefined
-                    ? { at: printPath(paths), message: 'path does not exist' }
-                    : prependAt(printPath(paths), error);
-            }, decoder.decode(jsonAtPath));
-        });
-    };
-    /**
-     * Decoder that ignores the input json and always succeeds with `fixedValue`.
-     */
-    Decoder.succeed = function (fixedValue) {
-        return new Decoder(function (json) { return ok(fixedValue); });
-    };
-    /**
-     * Decoder that ignores the input json and always fails with `errorMessage`.
-     */
-    Decoder.fail = function (errorMessage) {
-        return new Decoder(function (json) { return err({ message: errorMessage }); });
-    };
-    /**
-     * Decoder that allows for validating recursive data structures. Unlike with
-     * functions, decoders assigned to variables can't reference themselves
-     * before they are fully defined. We can avoid prematurely referencing the
-     * decoder by wrapping it in a function that won't be called until use, at
-     * which point the decoder has been defined.
-     *
-     * Example:
-     * ```
-     * interface Comment {
-     *   msg: string;
-     *   replies: Comment[];
-     * }
-     *
-     * const decoder: Decoder<Comment> = object({
-     *   msg: string(),
-     *   replies: lazy(() => array(decoder))
-     * });
-     * ```
-     */
-    Decoder.lazy = function (mkDecoder) {
-        return new Decoder(function (json) { return mkDecoder().decode(json); });
-    };
-    return Decoder;
-}());
-
-/* tslint:disable:variable-name */
-/** See `Decoder.string` */
-var string = Decoder.string;
-/** See `Decoder.number` */
-var number = Decoder.number;
-/** See `Decoder.boolean` */
-var boolean = Decoder.boolean;
-/** See `Decoder.anyJson` */
-var anyJson = Decoder.anyJson;
-/** See `Decoder.unknownJson` */
-Decoder.unknownJson;
-/** See `Decoder.constant` */
-var constant = Decoder.constant;
-/** See `Decoder.object` */
-var object = Decoder.object;
-/** See `Decoder.array` */
-var array = Decoder.array;
-/** See `Decoder.tuple` */
-Decoder.tuple;
-/** See `Decoder.dict` */
-var dict = Decoder.dict;
-/** See `Decoder.optional` */
-var optional = Decoder.optional;
-/** See `Decoder.oneOf` */
-var oneOf = Decoder.oneOf;
-/** See `Decoder.union` */
-Decoder.union;
-/** See `Decoder.intersection` */
-Decoder.intersection;
-/** See `Decoder.withDefault` */
-Decoder.withDefault;
-/** See `Decoder.valueAt` */
-Decoder.valueAt;
-/** See `Decoder.succeed` */
-Decoder.succeed;
-/** See `Decoder.fail` */
-Decoder.fail;
-/** See `Decoder.lazy` */
-Decoder.lazy;
-
-const nonEmptyStringDecoder$1 = string().where((s) => s.length > 0, "Expected a non-empty string");
-const nonNegativeNumberDecoder$1 = number().where((num) => num >= 0, "Expected a non-negative number");
-
-const intentDefinitionDecoder$1 = object({
-    name: nonEmptyStringDecoder$1,
-    displayName: optional(string()),
-    contexts: optional(array(string())),
-    customConfig: optional(object())
+const intentDefinitionDecoder$1 = object$1({
+    name: nonEmptyStringDecoder$3,
+    displayName: optional$1(string$1()),
+    contexts: optional$1(array$1(string$1())),
+    customConfig: optional$1(object$1())
 });
-const v2TypeDecoder = oneOf(constant("web"), constant("native"), constant("citrix"), constant("onlineNative"), constant("other"));
-const v2DetailsDecoder = object({
-    url: nonEmptyStringDecoder$1
+const v2TypeDecoder = oneOf(constant$1("web"), constant$1("native"), constant$1("citrix"), constant$1("onlineNative"), constant$1("other"));
+const v2DetailsDecoder = object$1({
+    url: nonEmptyStringDecoder$3
 });
-const v2IconDecoder = object({
-    src: nonEmptyStringDecoder$1,
-    size: optional(nonEmptyStringDecoder$1),
-    type: optional(nonEmptyStringDecoder$1)
+const v2IconDecoder = object$1({
+    src: nonEmptyStringDecoder$3,
+    size: optional$1(nonEmptyStringDecoder$3),
+    type: optional$1(nonEmptyStringDecoder$3)
 });
-const v2ScreenshotDecoder = object({
-    src: nonEmptyStringDecoder$1,
-    size: optional(nonEmptyStringDecoder$1),
-    type: optional(nonEmptyStringDecoder$1),
-    label: optional(nonEmptyStringDecoder$1)
+const v2ScreenshotDecoder = object$1({
+    src: nonEmptyStringDecoder$3,
+    size: optional$1(nonEmptyStringDecoder$3),
+    type: optional$1(nonEmptyStringDecoder$3),
+    label: optional$1(nonEmptyStringDecoder$3)
 });
-const v2ListensForIntentDecoder = object({
-    contexts: array(nonEmptyStringDecoder$1),
-    displayName: optional(nonEmptyStringDecoder$1),
-    resultType: optional(nonEmptyStringDecoder$1),
-    customConfig: optional(anyJson())
+const v2ListensForIntentDecoder = object$1({
+    contexts: array$1(nonEmptyStringDecoder$3),
+    displayName: optional$1(nonEmptyStringDecoder$3),
+    resultType: optional$1(nonEmptyStringDecoder$3),
+    customConfig: optional$1(anyJson$1())
 });
-const v2IntentsDecoder = object({
-    listensFor: optional(dict(v2ListensForIntentDecoder)),
-    raises: optional(dict(array(nonEmptyStringDecoder$1)))
+const v2IntentsDecoder = object$1({
+    listensFor: optional$1(dict(v2ListensForIntentDecoder)),
+    raises: optional$1(dict(array$1(nonEmptyStringDecoder$3)))
 });
-const v2UserChannelDecoder = object({
-    broadcasts: optional(array(nonEmptyStringDecoder$1)),
-    listensFor: optional(array(nonEmptyStringDecoder$1))
+const v2UserChannelDecoder = object$1({
+    broadcasts: optional$1(array$1(nonEmptyStringDecoder$3)),
+    listensFor: optional$1(array$1(nonEmptyStringDecoder$3))
 });
-const v2AppChannelDecoder = object({
-    name: nonEmptyStringDecoder$1,
-    description: optional(nonEmptyStringDecoder$1),
-    broadcasts: optional(array(nonEmptyStringDecoder$1)),
-    listensFor: optional(array(nonEmptyStringDecoder$1))
+const v2AppChannelDecoder = object$1({
+    name: nonEmptyStringDecoder$3,
+    description: optional$1(nonEmptyStringDecoder$3),
+    broadcasts: optional$1(array$1(nonEmptyStringDecoder$3)),
+    listensFor: optional$1(array$1(nonEmptyStringDecoder$3))
 });
-const v2InteropDecoder = object({
-    intents: optional(v2IntentsDecoder),
-    userChannels: optional(v2UserChannelDecoder),
-    appChannels: optional(array(v2AppChannelDecoder))
+const v2InteropDecoder = object$1({
+    intents: optional$1(v2IntentsDecoder),
+    userChannels: optional$1(v2UserChannelDecoder),
+    appChannels: optional$1(array$1(v2AppChannelDecoder))
 });
-const glue42ApplicationDetailsDecoder = object({
-    url: optional(nonEmptyStringDecoder$1),
-    top: optional(number()),
-    left: optional(number()),
-    width: optional(nonNegativeNumberDecoder$1),
-    height: optional(nonNegativeNumberDecoder$1)
+const glue42ApplicationDetailsDecoder = object$1({
+    url: optional$1(nonEmptyStringDecoder$3),
+    top: optional$1(number$1()),
+    left: optional$1(number$1()),
+    width: optional$1(nonNegativeNumberDecoder$3),
+    height: optional$1(nonNegativeNumberDecoder$3)
 });
-const glue42HostManifestsBrowserDecoder = object({
-    name: optional(nonEmptyStringDecoder$1),
-    type: optional(nonEmptyStringDecoder$1.where((s) => s === "window", "Expected a value of window")),
-    title: optional(nonEmptyStringDecoder$1),
-    version: optional(nonEmptyStringDecoder$1),
-    customProperties: optional(anyJson()),
-    icon: optional(string()),
-    caption: optional(string()),
-    details: optional(glue42ApplicationDetailsDecoder),
-    intents: optional(array(intentDefinitionDecoder$1)),
-    hidden: optional(boolean())
+const glue42HostManifestsBrowserDecoder = object$1({
+    name: optional$1(nonEmptyStringDecoder$3),
+    type: optional$1(nonEmptyStringDecoder$3.where((s) => s === "window", "Expected a value of window")),
+    title: optional$1(nonEmptyStringDecoder$3),
+    version: optional$1(nonEmptyStringDecoder$3),
+    customProperties: optional$1(anyJson$1()),
+    icon: optional$1(string$1()),
+    caption: optional$1(string$1()),
+    details: optional$1(glue42ApplicationDetailsDecoder),
+    intents: optional$1(array$1(intentDefinitionDecoder$1)),
+    hidden: optional$1(boolean$1())
 });
-const v1DefinitionDecoder = object({
-    name: nonEmptyStringDecoder$1,
-    appId: nonEmptyStringDecoder$1,
-    title: optional(nonEmptyStringDecoder$1),
-    version: optional(nonEmptyStringDecoder$1),
-    manifest: nonEmptyStringDecoder$1,
-    manifestType: nonEmptyStringDecoder$1,
-    tooltip: optional(nonEmptyStringDecoder$1),
-    description: optional(nonEmptyStringDecoder$1),
-    contactEmail: optional(nonEmptyStringDecoder$1),
-    supportEmail: optional(nonEmptyStringDecoder$1),
-    publisher: optional(nonEmptyStringDecoder$1),
-    images: optional(array(object({ url: optional(nonEmptyStringDecoder$1) }))),
-    icons: optional(array(object({ icon: optional(nonEmptyStringDecoder$1) }))),
-    customConfig: anyJson(),
-    intents: optional(array(intentDefinitionDecoder$1))
+const v1DefinitionDecoder = object$1({
+    name: nonEmptyStringDecoder$3,
+    appId: nonEmptyStringDecoder$3,
+    title: optional$1(nonEmptyStringDecoder$3),
+    version: optional$1(nonEmptyStringDecoder$3),
+    manifest: nonEmptyStringDecoder$3,
+    manifestType: nonEmptyStringDecoder$3,
+    tooltip: optional$1(nonEmptyStringDecoder$3),
+    description: optional$1(nonEmptyStringDecoder$3),
+    contactEmail: optional$1(nonEmptyStringDecoder$3),
+    supportEmail: optional$1(nonEmptyStringDecoder$3),
+    publisher: optional$1(nonEmptyStringDecoder$3),
+    images: optional$1(array$1(object$1({ url: optional$1(nonEmptyStringDecoder$3) }))),
+    icons: optional$1(array$1(object$1({ icon: optional$1(nonEmptyStringDecoder$3) }))),
+    customConfig: anyJson$1(),
+    intents: optional$1(array$1(intentDefinitionDecoder$1))
 });
-const v2LocalizedDefinitionDecoder = object({
-    appId: optional(nonEmptyStringDecoder$1),
-    name: optional(nonEmptyStringDecoder$1),
-    details: optional(v2DetailsDecoder),
-    version: optional(nonEmptyStringDecoder$1),
-    title: optional(nonEmptyStringDecoder$1),
-    tooltip: optional(nonEmptyStringDecoder$1),
-    lang: optional(nonEmptyStringDecoder$1),
-    description: optional(nonEmptyStringDecoder$1),
-    categories: optional(array(nonEmptyStringDecoder$1)),
-    icons: optional(array(v2IconDecoder)),
-    screenshots: optional(array(v2ScreenshotDecoder)),
-    contactEmail: optional(nonEmptyStringDecoder$1),
-    supportEmail: optional(nonEmptyStringDecoder$1),
-    moreInfo: optional(nonEmptyStringDecoder$1),
-    publisher: optional(nonEmptyStringDecoder$1),
-    customConfig: optional(array(anyJson())),
-    hostManifests: optional(anyJson()),
-    interop: optional(v2InteropDecoder)
+const v2LocalizedDefinitionDecoder = object$1({
+    appId: optional$1(nonEmptyStringDecoder$3),
+    name: optional$1(nonEmptyStringDecoder$3),
+    details: optional$1(v2DetailsDecoder),
+    version: optional$1(nonEmptyStringDecoder$3),
+    title: optional$1(nonEmptyStringDecoder$3),
+    tooltip: optional$1(nonEmptyStringDecoder$3),
+    lang: optional$1(nonEmptyStringDecoder$3),
+    description: optional$1(nonEmptyStringDecoder$3),
+    categories: optional$1(array$1(nonEmptyStringDecoder$3)),
+    icons: optional$1(array$1(v2IconDecoder)),
+    screenshots: optional$1(array$1(v2ScreenshotDecoder)),
+    contactEmail: optional$1(nonEmptyStringDecoder$3),
+    supportEmail: optional$1(nonEmptyStringDecoder$3),
+    moreInfo: optional$1(nonEmptyStringDecoder$3),
+    publisher: optional$1(nonEmptyStringDecoder$3),
+    customConfig: optional$1(array$1(anyJson$1())),
+    hostManifests: optional$1(anyJson$1()),
+    interop: optional$1(v2InteropDecoder)
 });
-const v2DefinitionDecoder = object({
-    appId: nonEmptyStringDecoder$1,
-    name: nonEmptyStringDecoder$1,
+const v2DefinitionDecoder = object$1({
+    appId: nonEmptyStringDecoder$3,
+    name: nonEmptyStringDecoder$3,
     type: v2TypeDecoder,
     details: v2DetailsDecoder,
-    version: optional(nonEmptyStringDecoder$1),
-    title: optional(nonEmptyStringDecoder$1),
-    tooltip: optional(nonEmptyStringDecoder$1),
-    lang: optional(nonEmptyStringDecoder$1),
-    description: optional(nonEmptyStringDecoder$1),
-    categories: optional(array(nonEmptyStringDecoder$1)),
-    icons: optional(array(v2IconDecoder)),
-    screenshots: optional(array(v2ScreenshotDecoder)),
-    contactEmail: optional(nonEmptyStringDecoder$1),
-    supportEmail: optional(nonEmptyStringDecoder$1),
-    moreInfo: optional(nonEmptyStringDecoder$1),
-    publisher: optional(nonEmptyStringDecoder$1),
-    customConfig: optional(array(anyJson())),
-    hostManifests: optional(anyJson()),
-    interop: optional(v2InteropDecoder),
-    localizedVersions: optional(dict(v2LocalizedDefinitionDecoder))
+    version: optional$1(nonEmptyStringDecoder$3),
+    title: optional$1(nonEmptyStringDecoder$3),
+    tooltip: optional$1(nonEmptyStringDecoder$3),
+    lang: optional$1(nonEmptyStringDecoder$3),
+    description: optional$1(nonEmptyStringDecoder$3),
+    categories: optional$1(array$1(nonEmptyStringDecoder$3)),
+    icons: optional$1(array$1(v2IconDecoder)),
+    screenshots: optional$1(array$1(v2ScreenshotDecoder)),
+    contactEmail: optional$1(nonEmptyStringDecoder$3),
+    supportEmail: optional$1(nonEmptyStringDecoder$3),
+    moreInfo: optional$1(nonEmptyStringDecoder$3),
+    publisher: optional$1(nonEmptyStringDecoder$3),
+    customConfig: optional$1(array$1(anyJson$1())),
+    hostManifests: optional$1(anyJson$1()),
+    interop: optional$1(v2InteropDecoder),
+    localizedVersions: optional$1(dict(v2LocalizedDefinitionDecoder))
 });
 const allDefinitionsDecoder = oneOf(v1DefinitionDecoder, v2DefinitionDecoder);
 
@@ -1959,6 +2096,9 @@ class FDC3Service {
     }
     mergeBaseAppDataWithGlueManifest(baseAppData, hostManifestDefinition) {
         let baseApplicationDefinition = baseAppData;
+        if (hostManifestDefinition.customProperties) {
+            baseApplicationDefinition.userProperties = { ...baseAppData.userProperties, ...hostManifestDefinition.customProperties };
+        }
         if (hostManifestDefinition.details) {
             const details = { ...baseAppData.createOptions, ...hostManifestDefinition.details };
             baseApplicationDefinition.createOptions = details;
@@ -1983,8 +2123,8 @@ class FDC3Service {
 
 const decoders$1 = {
     common: {
-        nonEmptyStringDecoder: nonEmptyStringDecoder$1,
-        nonNegativeNumberDecoder: nonNegativeNumberDecoder$1
+        nonEmptyStringDecoder: nonEmptyStringDecoder$3,
+        nonNegativeNumberDecoder: nonNegativeNumberDecoder$3
     },
     fdc3: {
         allDefinitionsDecoder,
@@ -2033,810 +2173,1105 @@ ioc.fdc3;
 const decoders = ioc.decoders;
 ioc.errors;
 
-const nonEmptyStringDecoder = string$1().where((s) => s.length > 0, "Expected a non-empty string");
-const nonNegativeNumberDecoder = number$1().where((num) => num >= 0, "Expected a non-negative number");
-const optionalNonEmptyStringDecoder = optional$1(nonEmptyStringDecoder);
-const libDomainDecoder = oneOf$1(constant$1("system"), constant$1("windows"), constant$1("appManager"), constant$1("layouts"), constant$1("intents"), constant$1("notifications"), constant$1("channels"), constant$1("extension"), constant$1("themes"), constant$1("prefs"), constant$1("ui"));
-const windowOperationTypesDecoder = oneOf$1(constant$1("openWindow"), constant$1("windowHello"), constant$1("windowAdded"), constant$1("windowRemoved"), constant$1("getBounds"), constant$1("getFrameBounds"), constant$1("getUrl"), constant$1("moveResize"), constant$1("focus"), constant$1("close"), constant$1("getTitle"), constant$1("setTitle"), constant$1("focusChange"), constant$1("getChannel"), constant$1("notifyChannelsChanged"));
-const appManagerOperationTypesDecoder = oneOf$1(constant$1("appHello"), constant$1("appDirectoryStateChange"), constant$1("instanceStarted"), constant$1("instanceStopped"), constant$1("applicationStart"), constant$1("instanceStop"), constant$1("clear"));
-const layoutsOperationTypesDecoder = oneOf$1(constant$1("layoutAdded"), constant$1("layoutChanged"), constant$1("layoutRemoved"), constant$1("layoutRenamed"), constant$1("get"), constant$1("getAll"), constant$1("export"), constant$1("import"), constant$1("remove"), constant$1("rename"), constant$1("clientSaveRequest"), constant$1("getGlobalPermissionState"), constant$1("checkGlobalActivated"), constant$1("requestGlobalPermission"), constant$1("getDefaultGlobal"), constant$1("setDefaultGlobal"), constant$1("clearDefaultGlobal"), constant$1("updateMetadata"));
-const notificationsOperationTypesDecoder = oneOf$1(constant$1("raiseNotification"), constant$1("requestPermission"), constant$1("notificationShow"), constant$1("notificationClick"), constant$1("getPermission"), constant$1("list"), constant$1("notificationRaised"), constant$1("notificationClosed"), constant$1("click"), constant$1("clear"), constant$1("clearAll"), constant$1("configure"), constant$1("getConfiguration"), constant$1("configurationChanged"), constant$1("setState"), constant$1("clearOld"), constant$1("activeCountChange"), constant$1("stateChange"));
-const systemOperationTypesDecoder = oneOf$1(constant$1("getEnvironment"), constant$1("getBase"), constant$1("platformShutdown"), constant$1("isFdc3DataWrappingSupported"), constant$1("clientError"), constant$1("systemHello"));
-const windowRelativeDirectionDecoder = oneOf$1(constant$1("top"), constant$1("left"), constant$1("right"), constant$1("bottom"));
-const windowBoundsDecoder = object$1({
-    top: number$1(),
-    left: number$1(),
-    width: nonNegativeNumberDecoder,
-    height: nonNegativeNumberDecoder
+const nonEmptyStringDecoder$2 = string$2().where((s) => s.length > 0, "Expected a non-empty string");
+const nonNegativeNumberDecoder$2 = number$2().where((num) => num >= 0, "Expected a non-negative number");
+const optionalNonEmptyStringDecoder = optional$2(nonEmptyStringDecoder$2);
+const libDomainDecoder = oneOf$1(constant$2("system"), constant$2("windows"), constant$2("appManager"), constant$2("layouts"), constant$2("intents"), constant$2("notifications"), constant$2("channels"), constant$2("extension"), constant$2("themes"), constant$2("prefs"), constant$2("ui"));
+const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("operationCheck"));
+const appManagerOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("appDirectoryStateChange"), constant$2("instanceStarted"), constant$2("instanceStopped"), constant$2("applicationStart"), constant$2("instanceStop"), constant$2("clear"), constant$2("operationCheck"));
+const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
+const notificationsOperationTypesDecoder = oneOf$1(constant$2("raiseNotification"), constant$2("requestPermission"), constant$2("notificationShow"), constant$2("notificationClick"), constant$2("getPermission"), constant$2("list"), constant$2("notificationRaised"), constant$2("notificationClosed"), constant$2("click"), constant$2("clear"), constant$2("clearAll"), constant$2("configure"), constant$2("getConfiguration"), constant$2("configurationChanged"), constant$2("setState"), constant$2("clearOld"), constant$2("activeCountChange"), constant$2("stateChange"), constant$2("operationCheck"), constant$2("getActiveCount"));
+const systemOperationTypesDecoder = oneOf$1(constant$2("getEnvironment"), constant$2("getBase"), constant$2("platformShutdown"), constant$2("isFdc3DataWrappingSupported"), constant$2("clientError"), constant$2("systemHello"), constant$2("operationCheck"));
+const windowRelativeDirectionDecoder = oneOf$1(constant$2("top"), constant$2("left"), constant$2("right"), constant$2("bottom"));
+const windowBoundsDecoder = object$2({
+    top: number$2(),
+    left: number$2(),
+    width: nonNegativeNumberDecoder$2,
+    height: nonNegativeNumberDecoder$2
 });
-const windowOpenSettingsDecoder = optional$1(object$1({
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    context: optional$1(anyJson$1()),
-    relativeTo: optional$1(nonEmptyStringDecoder),
-    relativeDirection: optional$1(windowRelativeDirectionDecoder),
-    windowId: optional$1(nonEmptyStringDecoder),
-    layoutComponentId: optional$1(nonEmptyStringDecoder)
+const windowOpenSettingsDecoder = optional$2(object$2({
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    context: optional$2(anyJson$2()),
+    relativeTo: optional$2(nonEmptyStringDecoder$2),
+    relativeDirection: optional$2(windowRelativeDirectionDecoder),
+    windowId: optional$2(nonEmptyStringDecoder$2),
+    layoutComponentId: optional$2(nonEmptyStringDecoder$2)
 }));
-const openWindowConfigDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    url: nonEmptyStringDecoder,
+const openWindowConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    url: nonEmptyStringDecoder$2,
     options: windowOpenSettingsDecoder
 });
-const windowHelloDecoder = object$1({
-    windowId: optional$1(nonEmptyStringDecoder)
+const windowHelloDecoder = object$2({
+    windowId: optional$2(nonEmptyStringDecoder$2)
 });
-const coreWindowDataDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    name: nonEmptyStringDecoder
+const coreWindowDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    name: nonEmptyStringDecoder$2
 });
-const simpleWindowDecoder = object$1({
-    windowId: nonEmptyStringDecoder
+const simpleWindowDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2
 });
-const helloSuccessDecoder = object$1({
-    windows: array$1(coreWindowDataDecoder),
-    isWorkspaceFrame: boolean$1()
+const helloSuccessDecoder = object$2({
+    windows: array$2(coreWindowDataDecoder),
+    isWorkspaceFrame: boolean$2()
 });
-const windowTitleConfigDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    title: string$1()
+const windowTitleConfigDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    title: string$2()
 });
-const focusEventDataDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    hasFocus: boolean$1()
+const focusEventDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    hasFocus: boolean$2()
 });
-const windowMoveResizeConfigDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    relative: optional$1(boolean$1())
+const windowMoveResizeConfigDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    relative: optional$2(boolean$2())
 });
-const windowBoundsResultDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    bounds: object$1({
-        top: number$1(),
-        left: number$1(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
+const windowBoundsResultDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    bounds: object$2({
+        top: number$2(),
+        left: number$2(),
+        width: nonNegativeNumberDecoder$2,
+        height: nonNegativeNumberDecoder$2
     })
 });
-const frameWindowBoundsResultDecoder = object$1({
-    bounds: object$1({
-        top: number$1(),
-        left: number$1(),
-        width: nonNegativeNumberDecoder,
-        height: nonNegativeNumberDecoder
+const frameWindowBoundsResultDecoder = object$2({
+    bounds: object$2({
+        top: number$2(),
+        left: number$2(),
+        width: nonNegativeNumberDecoder$2,
+        height: nonNegativeNumberDecoder$2
     })
 });
-const windowUrlResultDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    url: nonEmptyStringDecoder
+const windowUrlResultDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    url: nonEmptyStringDecoder$2
 });
-const anyDecoder = anyJson$1();
-const boundsDecoder = object$1({
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder)
+const anyDecoder = anyJson$2();
+const boundsDecoder = object$2({
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2)
 });
-const instanceDataDecoder = object$1({
-    id: nonEmptyStringDecoder,
-    applicationName: nonEmptyStringDecoder
+const instanceDataDecoder = object$2({
+    id: nonEmptyStringDecoder$2,
+    applicationName: nonEmptyStringDecoder$2
 });
-const iframePermissionsPolicyConfigDecoder = object$1({
-    flags: string$1()
+const iframePermissionsPolicyConfigDecoder = object$2({
+    flags: string$2()
 });
-const workspacesSandboxDecoder = object$1({
-    flags: string$1()
+const workspacesSandboxDecoder = object$2({
+    flags: string$2()
 });
-const requestChannelSelectorConfigDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    channelsNames: array$1(nonEmptyStringDecoder)
+const requestChannelSelectorConfigDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    channelsNames: array$2(nonEmptyStringDecoder$2)
 });
-const channelSelectorDecoder$1 = object$1({
-    enabled: boolean$1(),
+const channelSelectorDecoder$1 = object$2({
+    enabled: boolean$2(),
 });
-const applicationDetailsDecoder = object$1({
-    url: nonEmptyStringDecoder,
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    workspacesSandbox: optional$1(workspacesSandboxDecoder),
-    channelSelector: optional$1(channelSelectorDecoder$1),
-    iframePermissionsPolicy: optional$1(iframePermissionsPolicyConfigDecoder)
+const applicationDetailsDecoder = object$2({
+    url: nonEmptyStringDecoder$2,
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    workspacesSandbox: optional$2(workspacesSandboxDecoder),
+    channelSelector: optional$2(channelSelectorDecoder$1),
+    iframePermissionsPolicy: optional$2(iframePermissionsPolicyConfigDecoder)
 });
-const intentDefinitionDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    displayName: optional$1(string$1()),
-    contexts: optional$1(array$1(string$1())),
-    customConfig: optional$1(object$1())
+const intentDefinitionDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    displayName: optional$2(string$2()),
+    contexts: optional$2(array$2(string$2())),
+    customConfig: optional$2(object$2())
 });
-object$1({
-    name: nonEmptyStringDecoder,
-    title: optional$1(nonEmptyStringDecoder),
-    version: optional$1(nonEmptyStringDecoder),
-    appId: optional$1(nonEmptyStringDecoder),
-    manifest: nonEmptyStringDecoder,
-    manifestType: nonEmptyStringDecoder,
-    tooltip: optional$1(nonEmptyStringDecoder),
-    description: optional$1(nonEmptyStringDecoder),
-    contactEmail: optional$1(nonEmptyStringDecoder),
-    supportEmail: optional$1(nonEmptyStringDecoder),
-    publisher: optional$1(nonEmptyStringDecoder),
-    images: optional$1(array$1(object$1({ url: optional$1(nonEmptyStringDecoder) }))),
-    icons: optional$1(array$1(object$1({ icon: optional$1(nonEmptyStringDecoder) }))),
-    customConfig: anyJson$1(),
-    intents: optional$1(array$1(intentDefinitionDecoder))
+object$2({
+    name: nonEmptyStringDecoder$2,
+    title: optional$2(nonEmptyStringDecoder$2),
+    version: optional$2(nonEmptyStringDecoder$2),
+    appId: optional$2(nonEmptyStringDecoder$2),
+    manifest: nonEmptyStringDecoder$2,
+    manifestType: nonEmptyStringDecoder$2,
+    tooltip: optional$2(nonEmptyStringDecoder$2),
+    description: optional$2(nonEmptyStringDecoder$2),
+    contactEmail: optional$2(nonEmptyStringDecoder$2),
+    supportEmail: optional$2(nonEmptyStringDecoder$2),
+    publisher: optional$2(nonEmptyStringDecoder$2),
+    images: optional$2(array$2(object$2({ url: optional$2(nonEmptyStringDecoder$2) }))),
+    icons: optional$2(array$2(object$2({ icon: optional$2(nonEmptyStringDecoder$2) }))),
+    customConfig: anyJson$2(),
+    intents: optional$2(array$2(intentDefinitionDecoder))
 });
-const applicationDefinitionDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    type: nonEmptyStringDecoder.where((s) => s === "window", "Expected a value of window"),
-    title: optional$1(nonEmptyStringDecoder),
-    version: optional$1(nonEmptyStringDecoder),
-    customProperties: optional$1(anyJson$1()),
-    icon: optional$1(string$1()),
-    caption: optional$1(string$1()),
+const applicationDefinitionDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    type: nonEmptyStringDecoder$2.where((s) => s === "window", "Expected a value of window"),
+    title: optional$2(nonEmptyStringDecoder$2),
+    version: optional$2(nonEmptyStringDecoder$2),
+    customProperties: optional$2(anyJson$2()),
+    icon: optional$2(string$2()),
+    caption: optional$2(string$2()),
     details: applicationDetailsDecoder,
-    intents: optional$1(array$1(intentDefinitionDecoder)),
-    hidden: optional$1(boolean$1()),
-    fdc3: optional$1(decoders.fdc3.v2DefinitionDecoder)
+    intents: optional$2(array$2(intentDefinitionDecoder)),
+    hidden: optional$2(boolean$2()),
+    fdc3: optional$2(decoders.fdc3.v2DefinitionDecoder)
 });
 const allApplicationDefinitionsDecoder = oneOf$1(applicationDefinitionDecoder, decoders.fdc3.v2DefinitionDecoder, decoders.fdc3.v1DefinitionDecoder);
-object$1({
-    definitions: array$1(allApplicationDefinitionsDecoder),
-    mode: oneOf$1(constant$1("replace"), constant$1("merge"))
+object$2({
+    definitions: array$2(allApplicationDefinitionsDecoder),
+    mode: oneOf$1(constant$2("replace"), constant$2("merge"))
 });
-const appRemoveConfigDecoder = object$1({
-    name: nonEmptyStringDecoder
+const appRemoveConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2
 });
-const appsExportOperationDecoder = object$1({
-    definitions: array$1(applicationDefinitionDecoder)
+const appsExportOperationDecoder = object$2({
+    definitions: array$2(applicationDefinitionDecoder)
 });
-const applicationDataDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    type: nonEmptyStringDecoder.where((s) => s === "window", "Expected a value of window"),
-    instances: array$1(instanceDataDecoder),
-    userProperties: optional$1(anyJson$1()),
-    title: optional$1(nonEmptyStringDecoder),
-    version: optional$1(nonEmptyStringDecoder),
-    icon: optional$1(nonEmptyStringDecoder),
-    caption: optional$1(nonEmptyStringDecoder)
+const applicationDataDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    type: nonEmptyStringDecoder$2.where((s) => s === "window", "Expected a value of window"),
+    instances: array$2(instanceDataDecoder),
+    userProperties: optional$2(anyJson$2()),
+    title: optional$2(nonEmptyStringDecoder$2),
+    version: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(nonEmptyStringDecoder$2),
+    caption: optional$2(nonEmptyStringDecoder$2)
 });
-const baseApplicationDataDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    type: nonEmptyStringDecoder.where((s) => s === "window", "Expected a value of window"),
-    userProperties: anyJson$1(),
-    title: optional$1(nonEmptyStringDecoder),
-    version: optional$1(nonEmptyStringDecoder),
-    icon: optional$1(nonEmptyStringDecoder),
-    caption: optional$1(nonEmptyStringDecoder)
+const baseApplicationDataDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    type: nonEmptyStringDecoder$2.where((s) => s === "window", "Expected a value of window"),
+    userProperties: anyJson$2(),
+    title: optional$2(nonEmptyStringDecoder$2),
+    version: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(nonEmptyStringDecoder$2),
+    caption: optional$2(nonEmptyStringDecoder$2)
 });
-const appDirectoryStateChangeDecoder = object$1({
-    appsAdded: array$1(baseApplicationDataDecoder),
-    appsChanged: array$1(baseApplicationDataDecoder),
-    appsRemoved: array$1(baseApplicationDataDecoder)
+const appDirectoryStateChangeDecoder = object$2({
+    appsAdded: array$2(baseApplicationDataDecoder),
+    appsChanged: array$2(baseApplicationDataDecoder),
+    appsRemoved: array$2(baseApplicationDataDecoder)
 });
-const appHelloSuccessDecoder = object$1({
-    apps: array$1(applicationDataDecoder),
-    initialChannelId: optional$1(nonEmptyStringDecoder)
+const appHelloSuccessDecoder = object$2({
+    apps: array$2(applicationDataDecoder),
+    initialChannelId: optional$2(nonEmptyStringDecoder$2)
 });
-const basicInstanceDataDecoder = object$1({
-    id: nonEmptyStringDecoder
+const basicInstanceDataDecoder = object$2({
+    id: nonEmptyStringDecoder$2
 });
-const layoutTypeDecoder = oneOf$1(constant$1("Global"), constant$1("Activity"), constant$1("ApplicationDefault"), constant$1("Swimlane"), constant$1("Workspace"));
-const componentTypeDecoder = oneOf$1(constant$1("application"), constant$1("activity"));
-const windowComponentStateDecoder = object$1({
-    context: optional$1(anyJson$1()),
+const layoutTypeDecoder = oneOf$1(constant$2("Global"), constant$2("Activity"), constant$2("ApplicationDefault"), constant$2("Swimlane"), constant$2("Workspace"));
+const componentTypeDecoder = oneOf$1(constant$2("application"), constant$2("activity"));
+const windowComponentStateDecoder = object$2({
+    context: optional$2(anyJson$2()),
     bounds: windowBoundsDecoder,
-    createArgs: object$1({
-        name: optional$1(nonEmptyStringDecoder),
-        url: optional$1(nonEmptyStringDecoder),
-        context: optional$1(anyJson$1())
+    createArgs: object$2({
+        name: optional$2(nonEmptyStringDecoder$2),
+        url: optional$2(nonEmptyStringDecoder$2),
+        context: optional$2(anyJson$2())
     }),
-    windowState: optional$1(nonEmptyStringDecoder),
-    restoreState: optional$1(nonEmptyStringDecoder),
-    instanceId: nonEmptyStringDecoder,
-    isCollapsed: optional$1(boolean$1()),
-    isSticky: optional$1(boolean$1()),
-    restoreSettings: object$1({
-        groupId: optional$1(nonEmptyStringDecoder),
-        groupZOrder: optional$1(number$1())
+    windowState: optional$2(nonEmptyStringDecoder$2),
+    restoreState: optional$2(nonEmptyStringDecoder$2),
+    instanceId: nonEmptyStringDecoder$2,
+    isCollapsed: optional$2(boolean$2()),
+    isSticky: optional$2(boolean$2()),
+    restoreSettings: object$2({
+        groupId: optional$2(nonEmptyStringDecoder$2),
+        groupZOrder: optional$2(number$2())
     })
 });
-const windowLayoutComponentDecoder = object$1({
-    type: constant$1("window"),
-    componentType: optional$1(componentTypeDecoder),
-    application: nonEmptyStringDecoder,
+const windowLayoutComponentDecoder = object$2({
+    type: constant$2("window"),
+    componentType: optional$2(componentTypeDecoder),
+    application: nonEmptyStringDecoder$2,
     state: windowComponentStateDecoder
 });
-const windowLayoutItemDecoder = object$1({
-    type: constant$1("window"),
-    config: object$1({
-        appName: nonEmptyStringDecoder,
-        url: optional$1(nonEmptyStringDecoder),
-        title: optional$1(string$1()),
-        allowExtract: optional$1(boolean$1()),
-        allowReorder: optional$1(boolean$1()),
-        showCloseButton: optional$1(boolean$1()),
-        isMaximized: optional$1(boolean$1())
+const windowLayoutItemDecoder = object$2({
+    type: constant$2("window"),
+    config: object$2({
+        appName: nonEmptyStringDecoder$2,
+        url: optional$2(nonEmptyStringDecoder$2),
+        title: optional$2(string$2()),
+        allowExtract: optional$2(boolean$2()),
+        allowReorder: optional$2(boolean$2()),
+        showCloseButton: optional$2(boolean$2()),
+        isMaximized: optional$2(boolean$2())
     })
 });
-const groupLayoutItemDecoder = object$1({
-    type: constant$1("group"),
-    config: anyJson$1(),
-    children: array$1(oneOf$1(windowLayoutItemDecoder))
+const groupLayoutItemDecoder = object$2({
+    type: constant$2("group"),
+    config: anyJson$2(),
+    children: array$2(oneOf$1(windowLayoutItemDecoder))
 });
-const columnLayoutItemDecoder = object$1({
-    type: constant$1("column"),
-    config: anyJson$1(),
-    children: array$1(oneOf$1(groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => columnLayoutItemDecoder), lazy(() => rowLayoutItemDecoder)))
+const columnLayoutItemDecoder = object$2({
+    type: constant$2("column"),
+    config: anyJson$2(),
+    children: array$2(oneOf$1(groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => columnLayoutItemDecoder), lazy(() => rowLayoutItemDecoder)))
 });
-const rowLayoutItemDecoder = object$1({
-    type: constant$1("row"),
-    config: anyJson$1(),
-    children: array$1(oneOf$1(columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => rowLayoutItemDecoder)))
+const rowLayoutItemDecoder = object$2({
+    type: constant$2("row"),
+    config: anyJson$2(),
+    children: array$2(oneOf$1(columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder, lazy(() => rowLayoutItemDecoder)))
 });
-const workspaceLayoutComponentStateDecoder = object$1({
-    config: anyJson$1(),
-    context: anyJson$1(),
-    children: array$1(oneOf$1(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
+const workspaceLayoutComponentStateDecoder = object$2({
+    config: anyJson$2(),
+    context: anyJson$2(),
+    children: array$2(oneOf$1(rowLayoutItemDecoder, columnLayoutItemDecoder, groupLayoutItemDecoder, windowLayoutItemDecoder))
 });
-const workspaceLayoutComponentDecoder = object$1({
-    type: constant$1("Workspace"),
-    application: optional$1(nonEmptyStringDecoder),
+const workspaceLayoutComponentDecoder = object$2({
+    type: constant$2("Workspace"),
+    application: optional$2(nonEmptyStringDecoder$2),
     state: workspaceLayoutComponentStateDecoder
 });
-const workspaceFrameComponentStateDecoder = object$1({
+const workspaceFrameComponentStateDecoder = object$2({
     bounds: windowBoundsDecoder,
-    instanceId: nonEmptyStringDecoder,
-    selectedWorkspace: nonNegativeNumberDecoder,
-    workspaces: array$1(workspaceLayoutComponentStateDecoder),
-    windowState: optional$1(nonEmptyStringDecoder),
-    restoreState: optional$1(nonEmptyStringDecoder),
-    context: optional$1(anyJson$1())
+    instanceId: nonEmptyStringDecoder$2,
+    selectedWorkspace: nonNegativeNumberDecoder$2,
+    workspaces: array$2(workspaceLayoutComponentStateDecoder),
+    windowState: optional$2(nonEmptyStringDecoder$2),
+    restoreState: optional$2(nonEmptyStringDecoder$2),
+    context: optional$2(anyJson$2())
 });
-const workspaceFrameComponentDecoder = object$1({
-    type: constant$1("workspaceFrame"),
-    application: nonEmptyStringDecoder,
-    componentType: optional$1(componentTypeDecoder),
+const workspaceFrameComponentDecoder = object$2({
+    type: constant$2("workspaceFrame"),
+    application: nonEmptyStringDecoder$2,
+    componentType: optional$2(componentTypeDecoder),
     state: workspaceFrameComponentStateDecoder
 });
-const glueLayoutDecoder = object$1({
-    name: nonEmptyStringDecoder,
+const glueLayoutDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
     type: layoutTypeDecoder,
-    token: optional$1(nonEmptyStringDecoder),
-    components: array$1(oneOf$1(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
-    context: optional$1(anyJson$1()),
-    metadata: optional$1(anyJson$1()),
-    version: optional$1(number$1())
+    token: optional$2(nonEmptyStringDecoder$2),
+    components: array$2(oneOf$1(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
+    context: optional$2(anyJson$2()),
+    metadata: optional$2(anyJson$2()),
+    version: optional$2(number$2())
 });
-const newLayoutOptionsDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    context: optional$1(anyJson$1()),
-    metadata: optional$1(anyJson$1()),
-    instances: optional$1(array$1(nonEmptyStringDecoder)),
-    ignoreInstances: optional$1(array$1(nonEmptyStringDecoder))
-});
-const restoreOptionsDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    context: optional$1(anyJson$1()),
-    closeRunningInstance: optional$1(boolean$1()),
-    closeMe: optional$1(boolean$1()),
-    timeout: optional$1(nonNegativeNumberDecoder)
-});
-const layoutSummaryDecoder = object$1({
-    name: nonEmptyStringDecoder,
+const renamedLayoutNotificationDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
     type: layoutTypeDecoder,
-    context: optional$1(anyJson$1()),
-    metadata: optional$1(anyJson$1())
+    token: optional$2(nonEmptyStringDecoder$2),
+    components: array$2(oneOf$1(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
+    context: optional$2(anyJson$2()),
+    metadata: optional$2(anyJson$2()),
+    version: optional$2(number$2()),
+    prevName: nonEmptyStringDecoder$2
 });
-const simpleLayoutConfigDecoder = object$1({
-    name: nonEmptyStringDecoder,
+const newLayoutOptionsDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    context: optional$2(anyJson$2()),
+    metadata: optional$2(anyJson$2()),
+    instances: optional$2(array$2(nonEmptyStringDecoder$2)),
+    ignoreInstances: optional$2(array$2(nonEmptyStringDecoder$2))
+});
+const restoreOptionsDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    context: optional$2(anyJson$2()),
+    closeRunningInstance: optional$2(boolean$2()),
+    closeMe: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$2)
+});
+const layoutSummaryDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    type: layoutTypeDecoder,
+    context: optional$2(anyJson$2()),
+    metadata: optional$2(anyJson$2())
+});
+const simpleLayoutConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
     type: layoutTypeDecoder
 });
-const saveLayoutConfigDecoder = object$1({
+const saveLayoutConfigDecoder = object$2({
     layout: newLayoutOptionsDecoder
 });
-const renameLayoutConfigDecoder = object$1({
+const renameLayoutConfigDecoder = object$2({
     layout: glueLayoutDecoder,
-    newName: nonEmptyStringDecoder
+    newName: nonEmptyStringDecoder$2
 });
-const layoutResultDecoder = object$1({
-    status: nonEmptyStringDecoder
+const layoutResultDecoder = object$2({
+    status: nonEmptyStringDecoder$2
 });
-const updateLayoutMetadataConfigDecoder = object$1({
+const updateLayoutMetadataConfigDecoder = object$2({
     layout: glueLayoutDecoder,
 });
-const restoreLayoutConfigDecoder = object$1({
+const restoreLayoutConfigDecoder = object$2({
     layout: restoreOptionsDecoder
 });
-const getAllLayoutsConfigDecoder = object$1({
+const getAllLayoutsConfigDecoder = object$2({
     type: layoutTypeDecoder
 });
-const allLayoutsFullConfigDecoder = object$1({
-    layouts: array$1(glueLayoutDecoder)
+const allLayoutsFullConfigDecoder = object$2({
+    layouts: array$2(glueLayoutDecoder)
 });
-const importModeDecoder = oneOf$1(constant$1("replace"), constant$1("merge"));
-const layoutsImportConfigDecoder = object$1({
-    layouts: array$1(glueLayoutDecoder),
+const defaultGlobalChangedDecoder = optional$2(object$2({
+    name: nonEmptyStringDecoder$2
+}));
+const importModeDecoder = oneOf$1(constant$2("replace"), constant$2("merge"));
+const layoutsImportConfigDecoder = object$2({
+    layouts: array$2(glueLayoutDecoder),
     mode: importModeDecoder,
-    skipManagerRequest: optional$1(boolean$1())
+    skipManagerRequest: optional$2(boolean$2())
 });
-const allLayoutsSummariesResultDecoder = object$1({
-    summaries: array$1(layoutSummaryDecoder)
+const allLayoutsSummariesResultDecoder = object$2({
+    summaries: array$2(layoutSummaryDecoder)
 });
-const simpleLayoutResultDecoder = object$1({
+const simpleLayoutResultDecoder = object$2({
     layout: glueLayoutDecoder
 });
-const optionalSimpleLayoutResult = object$1({
-    layout: optional$1(glueLayoutDecoder)
+const optionalSimpleLayoutResult = object$2({
+    layout: optional$2(glueLayoutDecoder)
 });
-const setDefaultGlobalConfigDecoder = object$1({
-    name: nonEmptyStringDecoder
+const setDefaultGlobalConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2
 });
-const intentsOperationTypesDecoder = oneOf$1(constant$1("findIntent"), constant$1("getIntents"), constant$1("raiseIntent"), constant$1("raise"), constant$1("filterHandlers"));
-const intentHandlerDecoder = object$1({
-    applicationName: nonEmptyStringDecoder,
-    applicationTitle: optional$1(string$1()),
-    applicationDescription: optional$1(string$1()),
-    applicationIcon: optional$1(string$1()),
-    type: oneOf$1(constant$1("app"), constant$1("instance")),
-    displayName: optional$1(string$1()),
-    contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
-    instanceId: optional$1(string$1()),
-    instanceTitle: optional$1(string$1()),
-    resultType: optional$1(string$1())
+const intentsOperationTypesDecoder = oneOf$1(constant$2("findIntent"), constant$2("getIntents"), constant$2("getIntentsByHandler"), constant$2("raise"), constant$2("filterHandlers"));
+const intentHandlerDecoder = object$2({
+    applicationName: nonEmptyStringDecoder$2,
+    applicationTitle: optional$2(string$2()),
+    applicationDescription: optional$2(string$2()),
+    applicationIcon: optional$2(string$2()),
+    type: oneOf$1(constant$2("app"), constant$2("instance")),
+    displayName: optional$2(string$2()),
+    contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
+    instanceId: optional$2(string$2()),
+    instanceTitle: optional$2(string$2()),
+    resultType: optional$2(string$2())
 });
-object$1({
-    applicationName: string$1(),
-    applicationIcon: optional$1(string$1()),
-    instanceId: optional$1(string$1()),
+object$2({
+    applicationName: string$2(),
+    applicationIcon: optional$2(string$2()),
+    instanceId: optional$2(string$2()),
 });
-const intentResolverResponseDecoder = object$1({
-    intent: nonEmptyStringDecoder,
+object$2({
+    intent: nonEmptyStringDecoder$2,
     handler: intentHandlerDecoder
 });
-const intentDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    handlers: array$1(intentHandlerDecoder)
+const intentDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    handlers: array$2(intentHandlerDecoder)
 });
-const intentTargetDecoder = oneOf$1(constant$1("startNew"), constant$1("reuse"), object$1({
-    app: optional$1(nonEmptyStringDecoder),
-    instance: optional$1(nonEmptyStringDecoder)
+const intentTargetDecoder = oneOf$1(constant$2("startNew"), constant$2("reuse"), object$2({
+    app: optional$2(nonEmptyStringDecoder$2),
+    instance: optional$2(nonEmptyStringDecoder$2)
 }));
-const intentContextDecoder = object$1({
-    type: optional$1(nonEmptyStringDecoder),
-    data: optional$1(anyJson$1())
+const intentContextDecoder = object$2({
+    type: optional$2(nonEmptyStringDecoder$2),
+    data: optional$2(anyJson$2())
 });
-const intentsDecoder = array$1(intentDecoder);
-const wrappedIntentsDecoder = object$1({
+const intentsDecoder = array$2(intentDecoder);
+const wrappedIntentsDecoder = object$2({
     intents: intentsDecoder
 });
-const intentFilterDecoder = object$1({
-    name: optional$1(nonEmptyStringDecoder),
-    contextType: optional$1(nonEmptyStringDecoder),
-    resultType: optional$1(nonEmptyStringDecoder)
+const intentFilterDecoder = object$2({
+    name: optional$2(nonEmptyStringDecoder$2),
+    contextType: optional$2(nonEmptyStringDecoder$2),
+    resultType: optional$2(nonEmptyStringDecoder$2)
 });
-const findFilterDecoder = oneOf$1(nonEmptyStringDecoder, intentFilterDecoder);
-const wrappedIntentFilterDecoder = object$1({
-    filter: optional$1(intentFilterDecoder)
+const findFilterDecoder = oneOf$1(nonEmptyStringDecoder$2, intentFilterDecoder);
+const wrappedIntentFilterDecoder = object$2({
+    filter: optional$2(intentFilterDecoder)
 });
-const intentRequestDecoder = object$1({
-    intent: nonEmptyStringDecoder,
-    target: optional$1(intentTargetDecoder),
-    context: optional$1(intentContextDecoder),
-    options: optional$1(windowOpenSettingsDecoder),
-    handlers: optional$1(array$1(intentHandlerDecoder)),
-    timeout: optional$1(nonNegativeNumberDecoder),
-    waitUserResponseIndefinitely: optional$1(boolean$1()),
-    clearSavedHandler: optional$1(boolean$1())
+const applicationStartOptionsDecoder = object$2({
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    relativeTo: optional$2(nonEmptyStringDecoder$2),
+    relativeDirection: optional$2(windowRelativeDirectionDecoder),
+    waitForAGMReady: optional$2(boolean$2()),
+    channelId: optional$2(nonEmptyStringDecoder$2),
 });
-const originAppDecoder = object$1({
-    interopInstance: nonEmptyStringDecoder,
-    name: optional$1(nonEmptyStringDecoder)
+const intentRequestDecoder = object$2({
+    intent: nonEmptyStringDecoder$2,
+    target: optional$2(intentTargetDecoder),
+    context: optional$2(intentContextDecoder),
+    options: optional$2(applicationStartOptionsDecoder),
+    handlers: optional$2(array$2(intentHandlerDecoder)),
+    timeout: optional$2(nonNegativeNumberDecoder$2),
+    waitUserResponseIndefinitely: optional$2(boolean$2()),
+    clearSavedHandler: optional$2(boolean$2())
 });
-const startReasonDecoder = object$1({
+const originAppDecoder = object$2({
+    interopInstance: nonEmptyStringDecoder$2,
+    name: optional$2(nonEmptyStringDecoder$2)
+});
+const startReasonDecoder = object$2({
     originApp: originAppDecoder,
-    intentRequest: optional$1(intentRequestDecoder)
+    intentRequest: optional$2(intentRequestDecoder)
 });
-const applicationStartConfigDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    waitForAGMReady: boolean$1(),
-    id: optional$1(nonEmptyStringDecoder),
-    context: optional$1(anyJson$1()),
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    relativeTo: optional$1(nonEmptyStringDecoder),
-    relativeDirection: optional$1(windowRelativeDirectionDecoder),
-    forceChromeTab: optional$1(boolean$1()),
-    layoutComponentId: optional$1(nonEmptyStringDecoder),
-    channelId: optional$1(nonEmptyStringDecoder),
+const applicationStartConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    waitForAGMReady: boolean$2(),
+    id: optional$2(nonEmptyStringDecoder$2),
+    context: optional$2(anyJson$2()),
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    relativeTo: optional$2(nonEmptyStringDecoder$2),
+    relativeDirection: optional$2(windowRelativeDirectionDecoder),
+    forceChromeTab: optional$2(boolean$2()),
+    layoutComponentId: optional$2(nonEmptyStringDecoder$2),
+    channelId: optional$2(nonEmptyStringDecoder$2),
     startReason: startReasonDecoder
 });
-const raiseRequestDecoder = oneOf$1(nonEmptyStringDecoder, intentRequestDecoder);
-const resolverConfigDecoder = object$1({
-    enabled: boolean$1(),
-    appName: nonEmptyStringDecoder,
-    waitResponseTimeout: number$1()
+const raiseRequestDecoder = oneOf$1(nonEmptyStringDecoder$2, intentRequestDecoder);
+const resolverConfigDecoder = object$2({
+    enabled: boolean$2(),
+    appName: nonEmptyStringDecoder$2,
+    waitResponseTimeout: number$2()
 });
-const raiseIntentRequestDecoder = object$1({
+const handlerFilterDecoder = object$2({
+    title: optional$2(nonEmptyStringDecoder$2),
+    openResolver: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$2),
+    intent: optional$2(nonEmptyStringDecoder$2),
+    contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
+    resultType: optional$2(nonEmptyStringDecoder$2),
+    applicationNames: optional$2(array$2(nonEmptyStringDecoder$2))
+});
+const embeddedResolverConfigDecoder = object$2({
+    enabled: boolean$2(),
+    initialCaller: object$2({ instanceId: nonEmptyStringDecoder$2 }),
+});
+const raiseIntentRequestDecoder = object$2({
     intentRequest: intentRequestDecoder,
-    resolverConfig: resolverConfigDecoder
+    resolverConfig: resolverConfigDecoder,
+    embeddedResolverConfig: optional$2(embeddedResolverConfigDecoder)
 });
-const intentResultDecoder = object$1({
+const intentResultDecoder = object$2({
     request: intentRequestDecoder,
     handler: intentHandlerDecoder,
-    result: anyJson$1()
+    result: anyJson$2()
 });
-const handlersFilterDecoder = object$1({
-    title: optional$1(nonEmptyStringDecoder),
-    openResolver: optional$1(boolean$1()),
-    timeout: optional$1(nonNegativeNumberDecoder),
-    intent: optional$1(nonEmptyStringDecoder),
-    contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
-    resultType: optional$1(nonEmptyStringDecoder),
-    applicationNames: optional$1(array$1(nonEmptyStringDecoder))
+const filterHandlersResultDecoder = object$2({
+    handlers: array$2(intentHandlerDecoder)
 });
-const filterHandlersResultDecoder = object$1({
-    handlers: array$1(intentHandlerDecoder)
+const filterHandlersWithResolverConfigDecoder = object$2({
+    filterHandlersRequest: handlerFilterDecoder,
+    resolverConfig: resolverConfigDecoder,
+    embeddedResolverConfig: optional$2(embeddedResolverConfigDecoder)
 });
-const filterHandlersWithResolverConfigDecoder = object$1({
-    filterHandlersRequest: handlersFilterDecoder,
-    resolverConfig: resolverConfigDecoder
+const AddIntentListenerRequestDecoder = object$2({
+    intent: nonEmptyStringDecoder$2,
+    contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
+    displayName: optional$2(string$2()),
+    icon: optional$2(string$2()),
+    description: optional$2(string$2()),
+    resultType: optional$2(string$2())
 });
-const AddIntentListenerRequestDecoder = object$1({
-    intent: nonEmptyStringDecoder,
-    contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
-    displayName: optional$1(string$1()),
-    icon: optional$1(string$1()),
-    description: optional$1(string$1()),
-    resultType: optional$1(string$1())
+const AddIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder$2, AddIntentListenerRequestDecoder);
+const intentInfoDecoder = object$2({
+    intent: nonEmptyStringDecoder$2,
+    contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
+    description: optional$2(nonEmptyStringDecoder$2),
+    displayName: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(nonEmptyStringDecoder$2),
+    resultType: optional$2(nonEmptyStringDecoder$2)
 });
-const AddIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder, AddIntentListenerRequestDecoder);
-const intentInfoDecoder = object$1({
-    intent: nonEmptyStringDecoder,
-    contextTypes: optional$1(array$1(nonEmptyStringDecoder)),
-    description: optional$1(nonEmptyStringDecoder),
-    displayName: optional$1(nonEmptyStringDecoder),
-    icon: optional$1(nonEmptyStringDecoder),
-    resultType: optional$1(nonEmptyStringDecoder)
-});
-const getIntentsResultDecoder = object$1({
-    intents: array$1(intentInfoDecoder)
+const getIntentsResultDecoder = object$2({
+    intents: array$2(intentInfoDecoder)
 });
 const channelNameDecoder = (channelNames) => {
-    return nonEmptyStringDecoder.where(s => channelNames.includes(s), "Expected a valid channel name");
+    return nonEmptyStringDecoder$2.where(s => channelNames.includes(s), "Expected a valid channel name");
 };
-const fdc3OptionsDecoder = object$1({
-    contextType: optional$1(nonEmptyStringDecoder)
+const fdc3OptionsDecoder = object$2({
+    contextType: optional$2(nonEmptyStringDecoder$2)
 });
-const publishOptionsDecoder = optional$1(oneOf$1(nonEmptyStringDecoder, object$1({
-    name: optional$1(nonEmptyStringDecoder),
-    fdc3: optional$1(boolean$1())
+const publishOptionsDecoder = optional$2(oneOf$1(nonEmptyStringDecoder$2, object$2({
+    name: optional$2(nonEmptyStringDecoder$2),
+    fdc3: optional$2(boolean$2())
 })));
-const leaveChannelsConfig = object$1({
+const leaveChannelsConfig = object$2({
     windowId: optionalNonEmptyStringDecoder,
     channel: optionalNonEmptyStringDecoder
 });
-const fdc3ContextDecoder = anyJson$1().where((value) => typeof value.type === "string", "Expected a valid FDC3 Context with compulsory 'type' field");
-const interopActionSettingsDecoder = object$1({
-    method: nonEmptyStringDecoder,
-    arguments: optional$1(anyJson$1()),
-    target: optional$1(oneOf$1(constant$1("all"), constant$1("best")))
+const fdc3ContextDecoder = anyJson$2().where((value) => typeof value.type === "string", "Expected a valid FDC3 Context with compulsory 'type' field");
+const interopActionSettingsDecoder = object$2({
+    method: nonEmptyStringDecoder$2,
+    arguments: optional$2(anyJson$2()),
+    target: optional$2(oneOf$1(constant$2("all"), constant$2("best")))
 });
-const glue42NotificationActionDecoder = object$1({
-    action: string$1(),
-    title: nonEmptyStringDecoder,
-    icon: optional$1(string$1()),
-    interop: optional$1(interopActionSettingsDecoder)
+const glue42NotificationActionDecoder = object$2({
+    action: string$2(),
+    title: nonEmptyStringDecoder$2,
+    icon: optional$2(string$2()),
+    interop: optional$2(interopActionSettingsDecoder)
 });
-const notificationStateDecoder = oneOf$1(constant$1("Active"), constant$1("Acknowledged"), constant$1("Seen"), constant$1("Closed"), constant$1("Stale"), constant$1("Snoozed"), constant$1("Processing"));
-const activeNotificationsCountChangeDecoder = object$1({
-    count: number$1()
+const notificationStateDecoder = oneOf$1(constant$2("Active"), constant$2("Acknowledged"), constant$2("Seen"), constant$2("Closed"), constant$2("Stale"), constant$2("Snoozed"), constant$2("Processing"));
+const activeNotificationsCountChangeDecoder = object$2({
+    count: number$2()
 });
-const notificationDefinitionDecoder = object$1({
-    badge: optional$1(string$1()),
-    body: optional$1(string$1()),
-    data: optional$1(anyJson$1()),
-    dir: optional$1(oneOf$1(constant$1("auto"), constant$1("ltr"), constant$1("rtl"))),
-    icon: optional$1(string$1()),
-    image: optional$1(string$1()),
-    lang: optional$1(string$1()),
-    renotify: optional$1(boolean$1()),
-    requireInteraction: optional$1(boolean$1()),
-    silent: optional$1(boolean$1()),
-    tag: optional$1(string$1()),
-    timestamp: optional$1(nonNegativeNumberDecoder),
-    vibrate: optional$1(array$1(number$1()))
+const notificationDefinitionDecoder = object$2({
+    badge: optional$2(string$2()),
+    body: optional$2(string$2()),
+    data: optional$2(anyJson$2()),
+    dir: optional$2(oneOf$1(constant$2("auto"), constant$2("ltr"), constant$2("rtl"))),
+    icon: optional$2(string$2()),
+    image: optional$2(string$2()),
+    lang: optional$2(string$2()),
+    renotify: optional$2(boolean$2()),
+    requireInteraction: optional$2(boolean$2()),
+    silent: optional$2(boolean$2()),
+    tag: optional$2(string$2()),
+    timestamp: optional$2(nonNegativeNumberDecoder$2),
+    vibrate: optional$2(array$2(number$2()))
 });
-const glue42NotificationOptionsDecoder = object$1({
-    title: nonEmptyStringDecoder,
-    clickInterop: optional$1(interopActionSettingsDecoder),
-    actions: optional$1(array$1(glue42NotificationActionDecoder)),
-    focusPlatformOnDefaultClick: optional$1(boolean$1()),
-    badge: optional$1(string$1()),
-    body: optional$1(string$1()),
-    data: optional$1(anyJson$1()),
-    dir: optional$1(oneOf$1(constant$1("auto"), constant$1("ltr"), constant$1("rtl"))),
-    icon: optional$1(string$1()),
-    image: optional$1(string$1()),
-    lang: optional$1(string$1()),
-    renotify: optional$1(boolean$1()),
-    requireInteraction: optional$1(boolean$1()),
-    silent: optional$1(boolean$1()),
-    tag: optional$1(string$1()),
-    timestamp: optional$1(nonNegativeNumberDecoder),
-    vibrate: optional$1(array$1(number$1())),
-    severity: optional$1(oneOf$1(constant$1("Low"), constant$1("None"), constant$1("Medium"), constant$1("High"), constant$1("Critical"))),
-    showToast: optional$1(boolean$1()),
-    showInPanel: optional$1(boolean$1()),
-    state: optional$1(notificationStateDecoder)
+const glue42NotificationOptionsDecoder = object$2({
+    title: nonEmptyStringDecoder$2,
+    clickInterop: optional$2(interopActionSettingsDecoder),
+    actions: optional$2(array$2(glue42NotificationActionDecoder)),
+    focusPlatformOnDefaultClick: optional$2(boolean$2()),
+    badge: optional$2(string$2()),
+    body: optional$2(string$2()),
+    data: optional$2(anyJson$2()),
+    dir: optional$2(oneOf$1(constant$2("auto"), constant$2("ltr"), constant$2("rtl"))),
+    icon: optional$2(string$2()),
+    image: optional$2(string$2()),
+    lang: optional$2(string$2()),
+    renotify: optional$2(boolean$2()),
+    requireInteraction: optional$2(boolean$2()),
+    silent: optional$2(boolean$2()),
+    tag: optional$2(string$2()),
+    timestamp: optional$2(nonNegativeNumberDecoder$2),
+    vibrate: optional$2(array$2(number$2())),
+    severity: optional$2(oneOf$1(constant$2("Low"), constant$2("None"), constant$2("Medium"), constant$2("High"), constant$2("Critical"))),
+    showToast: optional$2(boolean$2()),
+    showInPanel: optional$2(boolean$2()),
+    state: optional$2(notificationStateDecoder)
 });
-const notificationSetStateRequestDecoder = object$1({
-    id: nonEmptyStringDecoder,
+const notificationSetStateRequestDecoder = object$2({
+    id: nonEmptyStringDecoder$2,
     state: notificationStateDecoder
 });
-object$1().where((value) => value.fdc3 ? typeof value.fdc3.type === "string" : true, "Expected a valid FDC3 Context with compulsory 'type' field");
-const channelFDC3DisplayMetadataDecoder = object$1({
-    color: optional$1(nonEmptyStringDecoder),
-    icon: optional$1(nonEmptyStringDecoder),
-    name: optional$1(nonEmptyStringDecoder),
-    glyph: optional$1(nonEmptyStringDecoder)
+object$2().where((value) => value.fdc3 ? typeof value.fdc3.type === "string" : true, "Expected a valid FDC3 Context with compulsory 'type' field");
+const channelFDC3DisplayMetadataDecoder = object$2({
+    color: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(nonEmptyStringDecoder$2),
+    name: optional$2(nonEmptyStringDecoder$2),
+    glyph: optional$2(nonEmptyStringDecoder$2)
 });
-const channelFdc3MetaDecoder = object$1({
-    id: nonEmptyStringDecoder,
-    displayMetadata: optional$1(channelFDC3DisplayMetadataDecoder)
+const channelFdc3MetaDecoder = object$2({
+    id: nonEmptyStringDecoder$2,
+    displayMetadata: optional$2(channelFDC3DisplayMetadataDecoder)
 });
-const channelMetaDecoder = object$1({
-    color: nonEmptyStringDecoder,
-    fdc3: optional$1(channelFdc3MetaDecoder)
+const channelMetaDecoder = object$2({
+    color: nonEmptyStringDecoder$2,
+    fdc3: optional$2(channelFdc3MetaDecoder)
 });
-const channelDefinitionDecoder = object$1({
-    name: nonEmptyStringDecoder,
+const channelDefinitionDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
     meta: channelMetaDecoder,
-    data: optional$1(object$1()),
+    data: optional$2(object$2()),
 });
-const removeChannelDataDecoder = object$1({
-    name: nonEmptyStringDecoder
+const pathValueDecoder = object$2({
+    path: nonEmptyStringDecoder$2,
+    value: anyJson$2()
 });
-const channelRestrictionsDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    read: boolean$1(),
-    write: boolean$1(),
-    windowId: optional$1(nonEmptyStringDecoder)
+const pathsValueDecoder = array$2(pathValueDecoder);
+const removeChannelDataDecoder = object$2({
+    name: nonEmptyStringDecoder$2
 });
-const channelRestrictionConfigWithWindowIdDecoder = object$1({
-    name: nonEmptyStringDecoder,
-    read: boolean$1(),
-    write: boolean$1(),
-    windowId: nonEmptyStringDecoder
+const channelRestrictionsDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    read: boolean$2(),
+    write: boolean$2(),
+    windowId: optional$2(nonEmptyStringDecoder$2)
 });
-const restrictionConfigDataDecoder = object$1({
+const channelRestrictionConfigWithWindowIdDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    read: boolean$2(),
+    write: boolean$2(),
+    windowId: nonEmptyStringDecoder$2
+});
+const restrictionConfigDataDecoder = object$2({
     config: channelRestrictionConfigWithWindowIdDecoder
 });
-const restrictionsDecoder = object$1({
-    channels: array$1(channelRestrictionsDecoder)
+const restrictionsDecoder = object$2({
+    channels: array$2(channelRestrictionsDecoder)
 });
-const getRestrictionsDataDecoder = object$1({
-    windowId: nonEmptyStringDecoder
+const getRestrictionsDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2
 });
-const restrictionsConfigDecoder = object$1({
-    read: boolean$1(),
-    write: boolean$1(),
-    windowId: optional$1(nonEmptyStringDecoder)
+const restrictionsConfigDecoder = object$2({
+    read: boolean$2(),
+    write: boolean$2(),
+    windowId: optional$2(nonEmptyStringDecoder$2)
 });
-const restrictAllDataDecoder = object$1({
+const restrictAllDataDecoder = object$2({
     restrictions: restrictionsConfigDecoder
 });
-const raiseNotificationDecoder = object$1({
+const raiseNotificationDecoder = object$2({
     settings: glue42NotificationOptionsDecoder,
-    id: nonEmptyStringDecoder
+    id: nonEmptyStringDecoder$2
 });
-const raiseNotificationResultDecoder = object$1({
+const raiseNotificationResultDecoder = object$2({
     settings: glue42NotificationOptionsDecoder
 });
-const permissionRequestResultDecoder = object$1({
-    permissionGranted: boolean$1()
+const permissionRequestResultDecoder = object$2({
+    permissionGranted: boolean$2()
 });
-const permissionQueryResultDecoder = object$1({
-    permission: oneOf$1(constant$1("default"), constant$1("granted"), constant$1("denied"))
+const permissionQueryResultDecoder = object$2({
+    permission: oneOf$1(constant$2("default"), constant$2("granted"), constant$2("denied"))
 });
-const notificationEventPayloadDecoder = object$1({
+const notificationEventPayloadDecoder = object$2({
     definition: notificationDefinitionDecoder,
-    action: optional$1(string$1()),
-    id: optional$1(nonEmptyStringDecoder)
+    action: optional$2(string$2()),
+    id: optional$2(nonEmptyStringDecoder$2)
 });
-const notificationFilterDecoder = object$1({
-    allowed: optional$1(array$1(nonEmptyStringDecoder)),
-    blocked: optional$1(array$1(nonEmptyStringDecoder))
+const notificationFilterDecoder = object$2({
+    allowed: optional$2(array$2(nonEmptyStringDecoder$2)),
+    blocked: optional$2(array$2(nonEmptyStringDecoder$2))
 });
-const notificationsConfigurationDecoder = object$1({
-    enable: optional$1(boolean$1()),
-    enableToasts: optional$1(boolean$1()),
-    sourceFilter: optional$1(notificationFilterDecoder),
+const notificationsConfigurationDecoder = object$2({
+    enable: optional$2(boolean$2()),
+    enableToasts: optional$2(boolean$2()),
+    sourceFilter: optional$2(notificationFilterDecoder),
+    showNotificationBadge: optional$2(boolean$2())
 });
-const notificationsConfigurationProtocolDecoder = object$1({
+const notificationsConfigurationProtocolDecoder = object$2({
     configuration: notificationsConfigurationDecoder
 });
-const strictNotificationsConfigurationProtocolDecoder = object$1({
-    configuration: object$1({
-        enable: boolean$1(),
-        enableToasts: boolean$1(),
-        sourceFilter: object$1({
-            allowed: array$1(nonEmptyStringDecoder),
-            blocked: array$1(nonEmptyStringDecoder)
+const strictNotificationsConfigurationProtocolDecoder = object$2({
+    configuration: object$2({
+        enable: boolean$2(),
+        enableToasts: boolean$2(),
+        sourceFilter: object$2({
+            allowed: array$2(nonEmptyStringDecoder$2),
+            blocked: array$2(nonEmptyStringDecoder$2)
         })
     })
 });
-const platformSaveRequestConfigDecoder = object$1({
-    layoutType: oneOf$1(constant$1("Global"), constant$1("Workspace")),
-    layoutName: nonEmptyStringDecoder,
-    context: optional$1(anyJson$1())
+const platformSaveRequestConfigDecoder = object$2({
+    layoutType: oneOf$1(constant$2("Global"), constant$2("Workspace")),
+    layoutName: nonEmptyStringDecoder$2,
+    context: optional$2(anyJson$2())
 });
-const saveRequestClientResponseDecoder = object$1({
-    windowContext: optional$1(anyJson$1()),
+const saveRequestClientResponseDecoder = object$2({
+    windowContext: optional$2(anyJson$2()),
 });
-const permissionStateResultDecoder = object$1({
-    state: oneOf$1(constant$1("prompt"), constant$1("denied"), constant$1("granted"))
+const permissionStateResultDecoder = object$2({
+    state: oneOf$1(constant$2("prompt"), constant$2("denied"), constant$2("granted"))
 });
-const simpleAvailabilityResultDecoder = object$1({
-    isAvailable: boolean$1()
+const simpleAvailabilityResultDecoder = object$2({
+    isAvailable: boolean$2()
 });
-const simpleItemIdDecoder = object$1({
-    itemId: nonEmptyStringDecoder
+const simpleItemIdDecoder = object$2({
+    itemId: nonEmptyStringDecoder$2
 });
-const operationCheckResultDecoder = object$1({
-    isSupported: boolean$1()
+const operationCheckResultDecoder = object$2({
+    isSupported: boolean$2()
 });
-const operationCheckConfigDecoder = object$1({
-    operation: nonEmptyStringDecoder
+const operationCheckConfigDecoder = object$2({
+    operation: nonEmptyStringDecoder$2
 });
-const workspaceFrameBoundsResultDecoder = object$1({
+const workspaceFrameBoundsResultDecoder = object$2({
     bounds: windowBoundsDecoder
 });
-const themeDecoder = object$1({
-    displayName: nonEmptyStringDecoder,
-    name: nonEmptyStringDecoder
+const themeDecoder = object$2({
+    displayName: nonEmptyStringDecoder$2,
+    name: nonEmptyStringDecoder$2
 });
-const simpleThemeResponseDecoder = object$1({
+const simpleThemeResponseDecoder = object$2({
     theme: themeDecoder
 });
-const allThemesResponseDecoder = object$1({
-    themes: array$1(themeDecoder)
+const allThemesResponseDecoder = object$2({
+    themes: array$2(themeDecoder)
 });
-const selectThemeConfigDecoder = object$1({
-    name: nonEmptyStringDecoder
+const selectThemeConfigDecoder = object$2({
+    name: nonEmptyStringDecoder$2
 });
-const notificationsDataDecoder = object$1({
-    id: nonEmptyStringDecoder,
-    title: nonEmptyStringDecoder,
-    clickInterop: optional$1(interopActionSettingsDecoder),
-    actions: optional$1(array$1(glue42NotificationActionDecoder)),
-    focusPlatformOnDefaultClick: optional$1(boolean$1()),
-    badge: optional$1(string$1()),
-    body: optional$1(string$1()),
-    data: optional$1(anyJson$1()),
-    dir: optional$1(oneOf$1(constant$1("auto"), constant$1("ltr"), constant$1("rtl"))),
-    icon: optional$1(string$1()),
-    image: optional$1(string$1()),
-    lang: optional$1(string$1()),
-    renotify: optional$1(boolean$1()),
-    requireInteraction: optional$1(boolean$1()),
-    silent: optional$1(boolean$1()),
-    tag: optional$1(string$1()),
-    timestamp: optional$1(nonNegativeNumberDecoder),
-    vibrate: optional$1(array$1(number$1())),
-    severity: optional$1(oneOf$1(constant$1("Low"), constant$1("None"), constant$1("Medium"), constant$1("High"), constant$1("Critical"))),
-    showToast: optional$1(boolean$1()),
-    showInPanel: optional$1(boolean$1()),
-    state: optional$1(notificationStateDecoder)
+const notificationsDataDecoder = object$2({
+    id: nonEmptyStringDecoder$2,
+    title: nonEmptyStringDecoder$2,
+    clickInterop: optional$2(interopActionSettingsDecoder),
+    actions: optional$2(array$2(glue42NotificationActionDecoder)),
+    focusPlatformOnDefaultClick: optional$2(boolean$2()),
+    badge: optional$2(string$2()),
+    body: optional$2(string$2()),
+    data: optional$2(anyJson$2()),
+    dir: optional$2(oneOf$1(constant$2("auto"), constant$2("ltr"), constant$2("rtl"))),
+    icon: optional$2(string$2()),
+    image: optional$2(string$2()),
+    lang: optional$2(string$2()),
+    renotify: optional$2(boolean$2()),
+    requireInteraction: optional$2(boolean$2()),
+    silent: optional$2(boolean$2()),
+    tag: optional$2(string$2()),
+    timestamp: optional$2(nonNegativeNumberDecoder$2),
+    vibrate: optional$2(array$2(number$2())),
+    severity: optional$2(oneOf$1(constant$2("Low"), constant$2("None"), constant$2("Medium"), constant$2("High"), constant$2("Critical"))),
+    showToast: optional$2(boolean$2()),
+    showInPanel: optional$2(boolean$2()),
+    state: optional$2(notificationStateDecoder)
 });
-const simpleNotificationDataDecoder = object$1({
+const simpleNotificationDataDecoder = object$2({
     notification: notificationsDataDecoder
 });
-const allNotificationsDataDecoder = object$1({
-    notifications: array$1(notificationsDataDecoder)
+const allNotificationsDataDecoder = object$2({
+    notifications: array$2(notificationsDataDecoder)
 });
-const simpleNotificationSelectDecoder = object$1({
-    id: nonEmptyStringDecoder
+const simpleNotificationSelectDecoder = object$2({
+    id: nonEmptyStringDecoder$2
 });
-const getWindowIdsOnChannelDataDecoder = object$1({
-    channel: nonEmptyStringDecoder
+const getWindowIdsOnChannelDataDecoder = object$2({
+    channel: nonEmptyStringDecoder$2
 });
-const getWindowIdsOnChannelResultDecoder = object$1({
-    windowIds: array$1(nonEmptyStringDecoder)
+const getWindowIdsOnChannelResultDecoder = object$2({
+    windowIds: array$2(nonEmptyStringDecoder$2)
 });
-const channelsOperationTypesDecoder = oneOf$1(constant$1("addChannel"), constant$1("getMyChannel"), constant$1("getWindowIdsOnChannel"), constant$1("getWindowIdsWithChannels"), constant$1("joinChannel"), constant$1("restrict"), constant$1("getRestrictions"), constant$1("restrictAll"), constant$1("notifyChannelsChanged"), constant$1("leaveChannel"), constant$1("getMode"));
-const getChannelsModeDecoder = object$1({
-    mode: oneOf$1(constant$1("single"), constant$1("multi"))
+const channelsOperationTypesDecoder = oneOf$1(constant$2("addChannel"), constant$2("getMyChannel"), constant$2("getWindowIdsOnChannel"), constant$2("getWindowIdsWithChannels"), constant$2("joinChannel"), constant$2("restrict"), constant$2("getRestrictions"), constant$2("restrictAll"), constant$2("notifyChannelsChanged"), constant$2("leaveChannel"), constant$2("getMode"), constant$2("operationCheck"));
+const getChannelsModeDecoder = object$2({
+    mode: oneOf$1(constant$2("single"), constant$2("multi"))
 });
-const getMyChanelResultDecoder = object$1({
-    channel: optional$1(nonEmptyStringDecoder)
+const getMyChanelResultDecoder = object$2({
+    channel: optional$2(nonEmptyStringDecoder$2)
 });
-const windowWithChannelFilterDecoder = object$1({
-    application: optional$1(nonEmptyStringDecoder),
-    channels: optional$1(array$1(nonEmptyStringDecoder)),
-    windowIds: optional$1(array$1(nonEmptyStringDecoder))
+const windowWithChannelFilterDecoder = object$2({
+    application: optional$2(nonEmptyStringDecoder$2),
+    channels: optional$2(array$2(nonEmptyStringDecoder$2)),
+    windowIds: optional$2(array$2(nonEmptyStringDecoder$2))
 });
-const wrappedWindowWithChannelFilterDecoder = object$1({
-    filter: optional$1(windowWithChannelFilterDecoder)
+const wrappedWindowWithChannelFilterDecoder = object$2({
+    filter: optional$2(windowWithChannelFilterDecoder)
 });
-const getWindowIdsWithChannelsResultDecoder = object$1({
-    windowIdsWithChannels: array$1(object$1({
-        application: nonEmptyStringDecoder,
-        channel: optional$1(nonEmptyStringDecoder),
-        windowId: nonEmptyStringDecoder
+const getWindowIdsWithChannelsResultDecoder = object$2({
+    windowIdsWithChannels: array$2(object$2({
+        application: nonEmptyStringDecoder$2,
+        channel: optional$2(nonEmptyStringDecoder$2),
+        windowId: nonEmptyStringDecoder$2
     }))
 });
-const startApplicationContextDecoder = optional$1(anyJson$1());
-const startApplicationOptionsDecoder = optional$1(object$1({
-    top: optional$1(number$1()),
-    left: optional$1(number$1()),
-    width: optional$1(nonNegativeNumberDecoder),
-    height: optional$1(nonNegativeNumberDecoder),
-    relativeTo: optional$1(nonEmptyStringDecoder),
-    relativeDirection: optional$1(windowRelativeDirectionDecoder),
-    waitForAGMReady: optional$1(boolean$1()),
-    channelId: optional$1(nonEmptyStringDecoder),
-    reuseId: optional$1(nonEmptyStringDecoder),
-    originIntentRequest: optional$1(intentRequestDecoder)
+const startApplicationContextDecoder = optional$2(anyJson$2());
+const startApplicationOptionsDecoder = optional$2(object$2({
+    top: optional$2(number$2()),
+    left: optional$2(number$2()),
+    width: optional$2(nonNegativeNumberDecoder$2),
+    height: optional$2(nonNegativeNumberDecoder$2),
+    relativeTo: optional$2(nonEmptyStringDecoder$2),
+    relativeDirection: optional$2(windowRelativeDirectionDecoder),
+    waitForAGMReady: optional$2(boolean$2()),
+    channelId: optional$2(nonEmptyStringDecoder$2),
+    reuseId: optional$2(nonEmptyStringDecoder$2),
+    originIntentRequest: optional$2(intentRequestDecoder)
 }));
-const joinChannelDataDecoder = object$1({
-    channel: nonEmptyStringDecoder,
-    windowId: nonEmptyStringDecoder
+const joinChannelDataDecoder = object$2({
+    channel: nonEmptyStringDecoder$2,
+    windowId: nonEmptyStringDecoder$2
 });
-const leaveChannelDataDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    channelName: optional$1(nonEmptyStringDecoder)
+const leaveChannelDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    channelName: optional$2(nonEmptyStringDecoder$2)
 });
-const channelsChangedDataDecoder = object$1({
-    windowId: nonEmptyStringDecoder,
-    channelNames: array$1(nonEmptyStringDecoder)
+const channelsChangedDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    channelNames: array$2(nonEmptyStringDecoder$2)
 });
-const windowChannelResultDecoder = object$1({
-    channel: optional$1(nonEmptyStringDecoder),
+const windowChannelResultDecoder = object$2({
+    channel: optional$2(nonEmptyStringDecoder$2),
 });
-const prefsOperationTypesDecoder = oneOf$1(constant$1("clear"), constant$1("clearAll"), constant$1("get"), constant$1("getAll"), constant$1("set"), constant$1("update"), constant$1("prefsChanged"), constant$1("prefsHello"));
-const appPreferencesDecoder = object$1({
-    app: nonEmptyStringDecoder,
-    data: object$1(),
-    lastUpdate: optional$1(nonEmptyStringDecoder),
+const prefsOperationTypesDecoder = oneOf$1(constant$2("clear"), constant$2("clearAll"), constant$2("get"), constant$2("getAll"), constant$2("set"), constant$2("update"), constant$2("prefsChanged"), constant$2("prefsHello"), constant$2("operationCheck"), constant$2("registerSubscriber"));
+const appPreferencesDecoder = object$2({
+    app: nonEmptyStringDecoder$2,
+    data: object$2(),
+    lastUpdate: optional$2(nonEmptyStringDecoder$2),
 });
-const basePrefsConfigDecoder = object$1({
-    app: nonEmptyStringDecoder,
+const basePrefsConfigDecoder = object$2({
+    app: nonEmptyStringDecoder$2,
 });
-const getPrefsResultDecoder = object$1({
+const getPrefsResultDecoder = object$2({
     prefs: appPreferencesDecoder,
 });
-const getAllPrefsResultDecoder = object$1({
-    all: array$1(appPreferencesDecoder),
+const getAllPrefsResultDecoder = object$2({
+    all: array$2(appPreferencesDecoder),
 });
-const subscriberRegisterConfigDecoder = object$1({
-    interopId: nonEmptyStringDecoder,
+const subscriberRegisterConfigDecoder = object$2({
+    interopId: nonEmptyStringDecoder$2,
 });
-const changePrefsDataDecoder = object$1({
-    app: nonEmptyStringDecoder,
-    data: object$1(),
+const changePrefsDataDecoder = object$2({
+    app: nonEmptyStringDecoder$2,
+    data: object$2(),
 });
-const prefsHelloSuccessDecoder = object$1({
-    platform: object$1({
-        app: nonEmptyStringDecoder,
+const prefsHelloSuccessDecoder = object$2({
+    platform: object$2({
+        app: nonEmptyStringDecoder$2,
     }),
-    validNonExistentApps: optional$1(array$1(nonEmptyStringDecoder)),
+    validNonExistentApps: optional$2(array$2(nonEmptyStringDecoder$2)),
 });
-const clientErrorDataDecoder = object$1({
-    message: nonEmptyStringDecoder
+const clientErrorDataDecoder = object$2({
+    message: nonEmptyStringDecoder$2
 });
-const systemHelloSuccessDecoder = object$1({
-    isClientErrorOperationSupported: boolean$1()
+const systemHelloSuccessDecoder = object$2({
+    isClientErrorOperationSupported: boolean$2()
 });
+
+const nonEmptyStringDecoder$1 = decoders.common.nonEmptyStringDecoder;
+const nonNegativeNumberDecoder$1 = decoders.common.nonNegativeNumberDecoder;
+const widgetSourcesDecoder = object$2({
+    bundle: nonEmptyStringDecoder$1,
+    styles: array$2(nonEmptyStringDecoder$1),
+    fonts: optional$2(array$2(nonEmptyStringDecoder$1))
+});
+const modalsSourcesDecoder = object$2({
+    bundle: nonEmptyStringDecoder$1,
+    styles: array$2(nonEmptyStringDecoder$1),
+    fonts: optional$2(array$2(nonEmptyStringDecoder$1))
+});
+const intentResolverSourcesDecoder = object$2({
+    bundle: nonEmptyStringDecoder$1,
+    styles: array$2(nonEmptyStringDecoder$1),
+    fonts: optional$2(array$2(nonEmptyStringDecoder$1))
+});
+const channelSelectorTypeDecoder = oneOf$1(constant$2("directional"), constant$2("default"));
+const channelSelectorDecoder = object$2({
+    type: optional$2(channelSelectorTypeDecoder),
+    enable: optional$2(boolean$2())
+});
+const positionDecoder = oneOf$1(constant$2("top"), constant$2("bottom"), constant$2("left"), constant$2("right"));
+const modeDecoder = oneOf$1(constant$2("default"), constant$2("compact"));
+const displayModeDecoder = oneOf$1(constant$2("all"), constant$2("fdc3"));
+const widgetChannelsDecoder = object$2({
+    selector: optional$2(channelSelectorDecoder),
+    displayMode: optional$2(displayModeDecoder)
+});
+const platformWidgetDefaultConfigDecoder = object$2({
+    channels: optional$2(widgetChannelsDecoder),
+    position: optional$2(positionDecoder),
+    mode: optional$2(modeDecoder),
+    displayInWorkspace: optional$2(boolean$2())
+});
+const widgetConfigDecoder = object$2({
+    enable: boolean$2(),
+    awaitFactory: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$1),
+    channels: optional$2(widgetChannelsDecoder),
+    position: optional$2(positionDecoder),
+    mode: optional$2(modeDecoder),
+    displayInWorkspace: optional$2(boolean$2())
+});
+const modalsConfigDecoder = object$2({
+    alerts: optional$2(object$2({
+        enabled: boolean$2()
+    })),
+    dialogs: optional$2(object$2({
+        enabled: boolean$2()
+    })),
+    awaitFactory: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$1),
+});
+const uiOperationTypesDecoder = oneOf$1(constant$2("getResources"), constant$2("operationCheck"), constant$2("showAlert"), constant$2("showDialog"), constant$2("alertInteropAction"), constant$2("showResolver"));
+const getResourcesDataDecoder = object$2({
+    origin: nonEmptyStringDecoder$1
+});
+const blockedResourcesDecoder = object$2({
+    blockedOrigin: constant$2(true)
+});
+const availableWidgetResourcesDecoder = object$2({
+    blockedOrigin: constant$2(false),
+    config: platformWidgetDefaultConfigDecoder,
+    sources: widgetSourcesDecoder
+});
+const widgetResourcesDecoder = union$1(blockedResourcesDecoder, availableWidgetResourcesDecoder);
+const availableModalsResourcesDecoder = object$2({
+    blockedOrigin: constant$2(false),
+    sources: modalsSourcesDecoder
+});
+const modalsResourcesDecoder = union$1(blockedResourcesDecoder, availableModalsResourcesDecoder);
+const availableIntentResolverResourcesDecoder = object$2({
+    blockedOrigin: constant$2(false),
+    sources: intentResolverSourcesDecoder
+});
+const intentResolverResourcesDecoder = union$1(blockedResourcesDecoder, availableIntentResolverResourcesDecoder);
+const resourcesDecoder = object$2({
+    widget: optional$2(widgetResourcesDecoder),
+    modals: optional$2(modalsResourcesDecoder),
+    intentResolver: optional$2(intentResolverResourcesDecoder)
+});
+const getResourcesResultDecoder = object$2({
+    resources: resourcesDecoder,
+});
+const alertsInteropSettingsDecoder = object$2({
+    method: nonEmptyStringDecoder$1,
+    arguments: optional$2(anyJson$2()),
+    target: optional$2(oneOf$1(constant$2("best"), constant$2("all"), nonEmptyStringDecoder$1))
+});
+const modalRequestTargetDecoder = oneOf$1(constant$2("Global"), constant$2("WindowContainer"), nonEmptyStringDecoder$1);
+const modalRequestMessageTargetDecoder = object$2({
+    instance: nonEmptyStringDecoder$1,
+    container: optional$2(oneOf$1(constant$2("Global"), constant$2("WindowContainer")))
+});
+const alertRequestConfigDecoder = object$2({
+    variant: oneOf$1(constant$2("default"), constant$2("success"), constant$2("critical"), constant$2("info"), constant$2("warning")),
+    text: nonEmptyStringDecoder$1,
+    showCloseButton: optional$2(boolean$2()),
+    clickInterop: optional$2(alertsInteropSettingsDecoder),
+    onCloseInterop: optional$2(alertsInteropSettingsDecoder),
+    actions: optional$2(array$2(object$2({
+        id: nonEmptyStringDecoder$1,
+        title: nonEmptyStringDecoder$1,
+        clickInterop: alertsInteropSettingsDecoder
+    }))),
+    data: optional$2(anyJson$2()),
+    ttl: optional$2(nonNegativeNumberDecoder$1),
+    target: optional$2(modalRequestTargetDecoder)
+});
+const uiAlertRequestMessageDecoder = object$2({
+    config: alertRequestConfigDecoder,
+    target: modalRequestMessageTargetDecoder
+});
+const dialogRequestConfigDecoder = object$2({
+    templateName: nonEmptyStringDecoder$1,
+    variables: anyJson$2(),
+    target: optional$2(modalRequestTargetDecoder),
+    timer: optional$2(object$2({
+        duration: nonNegativeNumberDecoder$1
+    })),
+    size: optional$2(object$2({
+        width: nonNegativeNumberDecoder$1,
+        height: nonNegativeNumberDecoder$1
+    })),
+    movable: optional$2(boolean$2()),
+    transparent: optional$2(boolean$2())
+});
+const dialogResponseDecoder = object$2({
+    isExpired: optional$2(boolean$2()),
+    isClosed: optional$2(boolean$2()),
+    isEnterPressed: optional$2(boolean$2()),
+    responseButtonClicked: optional$2(object$2({
+        id: nonEmptyStringDecoder$1,
+        text: nonEmptyStringDecoder$1
+    })),
+    inputs: optional$2(array$2(object$2({
+        type: oneOf$1(constant$2("checkbox"), constant$2("email"), constant$2("number"), constant$2("password"), constant$2("text")),
+        id: nonEmptyStringDecoder$1,
+        checked: optional$2(boolean$2()),
+        value: optional$2(string$2())
+    })))
+});
+object$2({
+    result: dialogResponseDecoder
+});
+const uiDialogRequestMessageDecoder = object$2({
+    config: dialogRequestConfigDecoder,
+    target: modalRequestMessageTargetDecoder
+});
+const openAlertResultDecoder = object$2({
+    id: nonEmptyStringDecoder$1
+});
+const openDialogResultDecoder = object$2({
+    id: nonEmptyStringDecoder$1,
+    responsePromise: anyJson$2()
+});
+const dialogOnCompletionConfigDecoder = object$2({
+    response: dialogResponseDecoder
+});
+const alertInteropActionDecoder = object$2({
+    name: nonEmptyStringDecoder$1,
+    settings: alertsInteropSettingsDecoder
+});
+const alertOnClickConfigDecoder = object$2({
+    interopAction: alertInteropActionDecoder
+});
+const alertInteropActionDataDecoder = object$2({
+    interopAction: alertInteropActionDecoder
+});
+const intentResolverConfigDecoder = object$2({
+    enable: boolean$2(),
+    awaitFactory: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$1)
+});
+const openResolverResultDecoder = object$2({
+    id: nonEmptyStringDecoder$1
+});
+const userSettingsDecoder = object$2({
+    preserveChoice: boolean$2()
+});
+const userChoiceResponseDecoder = object$2({
+    intent: nonEmptyStringDecoder$1,
+    handler: intentHandlerDecoder,
+    userSettings: userSettingsDecoder
+});
+const intentResolverResponseDecoder = object$2({
+    isExpired: optional$2(boolean$2()),
+    isClosed: optional$2(boolean$2()),
+    userChoice: optional$2(userChoiceResponseDecoder)
+});
+const onUserResponseResponseDecoder = object$2({
+    response: intentResolverResponseDecoder
+});
+const openConfigWithIntentRequestDecoder = object$2({
+    intentRequest: intentRequestDecoder
+});
+const openConfigWithHandlerFilterDecoder = object$2({
+    handlerFilter: handlerFilterDecoder
+});
+const intentResolverOpenConfigDecoder = union$1(openConfigWithIntentRequestDecoder, openConfigWithHandlerFilterDecoder);
+const uiResolverRequestMessageConfigDecoder = intersection(intentResolverOpenConfigDecoder, object$2({ timeout: nonNegativeNumberDecoder$1 }));
+const uiResolverRequestMessageDecoder = object$2({
+    config: uiResolverRequestMessageConfigDecoder
+});
+const uiResolverResponseMessageDecoder = object$2({
+    result: intentResolverResponseDecoder
+});
+
+const parseConfig = (config = {}) => {
+    const isPlatformInternal = !!config?.gateway?.webPlatform?.port;
+    const decodedWidgetConfigResult = optional$2(widgetConfigDecoder).run(config.widget);
+    if (!decodedWidgetConfigResult.ok) {
+        throw ioError.raiseError(`The provided widget config is invalid. Error: ${JSON.stringify(decodedWidgetConfigResult.error)}`);
+    }
+    const decodedModalsConfigResult = optional$2(modalsConfigDecoder).run(config.modals);
+    if (!decodedModalsConfigResult.ok) {
+        throw ioError.raiseError(`The provided modals config is invalid. Error: ${JSON.stringify(decodedModalsConfigResult.error)}`);
+    }
+    const decodedIntentResolverConfigResult = optional$2(intentResolverConfigDecoder).run(config.intentResolver);
+    if (!decodedIntentResolverConfigResult.ok) {
+        throw ioError.raiseError(`The provided 'intentResolver' config is invalid. Error: ${JSON.stringify(decodedIntentResolverConfigResult.error)}`);
+    }
+    const combined = {
+        ...defaultConfig,
+        ...config,
+        isPlatformInternal,
+        logger: config.systemLogger?.level ?? "info",
+        widget: deepmerge$1(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
+        modals: deepmerge$1(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
+        intentResolver: deepmerge$1(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
+    };
+    return combined;
+};
+
+const checkSingleton = () => {
+    const ioConnectBrowserNamespace = window.glue42core || window.iobrowser;
+    if (ioConnectBrowserNamespace && ioConnectBrowserNamespace.webStarted) {
+        return ioError.raiseError("IoConnect Browser has already been started for this application.");
+    }
+    if (!ioConnectBrowserNamespace) {
+        window.iobrowser = { webStarted: true };
+        return;
+    }
+    ioConnectBrowserNamespace.webStarted = true;
+};
+
+const enterprise = (config) => {
+    const enterpriseConfig = {
+        windows: true,
+        layouts: "full",
+        appManager: "full",
+        channels: true,
+        libraries: config?.libraries ?? [],
+        logger: config?.systemLogger?.level ?? "warn"
+    };
+    const injectedFactory = window.IODesktop || window.Glue;
+    return injectedFactory(enterpriseConfig);
+};
 
 const operations$a = {
     openWindow: { name: "openWindow", dataDecoder: openWindowConfigDecoder, resultDecoder: coreWindowDataDecoder },
@@ -2853,12 +3288,9 @@ const operations$a = {
     setTitle: { name: "setTitle", dataDecoder: windowTitleConfigDecoder },
     focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder },
     getChannel: { name: "getChannel", dataDecoder: simpleWindowDecoder, resultDecoder: windowChannelResultDecoder },
-    notifyChannelsChanged: { name: "notifyChannelsChanged", dataDecoder: channelsChangedDataDecoder }
+    notifyChannelsChanged: { name: "notifyChannelsChanged", dataDecoder: channelsChangedDataDecoder },
+    operationCheck: { name: "operationCheck" }
 };
-
-function getDefaultExportFromCjs$1 (x) {
-	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
-}
 
 function createRegistry$1(options) {
     if (options && options.errorHandling
@@ -3058,10 +3490,10 @@ class WebWindowModel {
             return this.me;
         }
         if (typeof width !== "undefined") {
-            runDecoderWithIOError(nonNegativeNumberDecoder, width);
+            runDecoderWithIOError(nonNegativeNumberDecoder$2, width);
         }
         if (typeof height !== "undefined") {
-            runDecoderWithIOError(nonNegativeNumberDecoder, height);
+            runDecoderWithIOError(nonNegativeNumberDecoder$2, height);
         }
         const commandArgs = Object.assign({}, { width, height }, { windowId: this.id, relative: true });
         await this._bridge.send("windows", operations$a.moveResize, commandArgs);
@@ -3072,10 +3504,10 @@ class WebWindowModel {
             return this.me;
         }
         if (typeof top !== "undefined") {
-            runDecoderWithIOError(number$1(), top);
+            runDecoderWithIOError(number$2(), top);
         }
         if (typeof left !== "undefined") {
-            runDecoderWithIOError(number$1(), left);
+            runDecoderWithIOError(number$2(), left);
         }
         const commandArgs = Object.assign({}, { top, left }, { windowId: this.id, relative: true });
         await this._bridge.send("windows", operations$a.moveResize, commandArgs);
@@ -3099,7 +3531,7 @@ class WebWindowModel {
         return result.title;
     }
     async setTitle(title) {
-        const ttl = runDecoderWithIOError(nonEmptyStringDecoder, title);
+        const ttl = runDecoderWithIOError(nonEmptyStringDecoder$2, title);
         await this._bridge.send("windows", operations$a.setTitle, { windowId: this.id, title: ttl });
         return this.me;
     }
@@ -3148,7 +3580,7 @@ const commonOperations = {
     getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: workspaceFrameBoundsResultDecoder, dataDecoder: simpleItemIdDecoder }
 };
 
-const PromiseWrap = (promise, timeoutMilliseconds, timeoutMessage) => {
+const PromiseWrap = (callback, timeoutMilliseconds, timeoutMessage) => {
     return new Promise((resolve, reject) => {
         let promiseActive = true;
         const timeout = setTimeout(() => {
@@ -3159,7 +3591,7 @@ const PromiseWrap = (promise, timeoutMilliseconds, timeoutMessage) => {
             const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
             reject(message);
         }, timeoutMilliseconds);
-        promise()
+        callback()
             .then((result) => {
             if (!promiseActive) {
                 return;
@@ -3198,6 +3630,7 @@ const PromisePlus$1 = (executor, timeoutMilliseconds, timeoutMessage) => {
 };
 
 class WindowsController {
+    supportedOperationsNames = [];
     focusEventHandler;
     registry = CallbackRegistryFactory$1();
     platformRegistration;
@@ -3251,8 +3684,8 @@ class WindowsController {
         return await operation.execute(operationData);
     }
     async open(name, url, options) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
-        runDecoderWithIOError(nonEmptyStringDecoder, url);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, url);
         const settings = runDecoderWithIOError(windowOpenSettingsDecoder, options);
         const windowSuccess = await this.bridge.send("windows", operations$a.openWindow, { name, url, options: settings });
         return this.waitForWindowAdded(windowSuccess.windowId);
@@ -3261,7 +3694,7 @@ class WindowsController {
         return this.allWindowProjections.map((projection) => projection.api);
     }
     findById(id) {
-        runDecoderWithIOError(nonEmptyStringDecoder, id);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
         return this.allWindowProjections.find((projection) => projection.id === id)?.api;
     }
     toApi() {
@@ -3288,6 +3721,8 @@ class WindowsController {
         operations$a.setTitle.execute = this.handleSetTitle.bind(this);
         operations$a.getChannel.execute = this.handleGetChannel.bind(this);
         operations$a.notifyChannelsChanged.execute = this.handleChannelsChanged.bind(this);
+        operations$a.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$a);
     }
     my() {
         return Object.assign({}, this.me);
@@ -3328,7 +3763,8 @@ class WindowsController {
             this.logger.trace("i am not treated as a workspace frame, setting my window");
             const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
             if (!myWindow) {
-                return ioError.raiseError("Cannot initialize the window library, because I received no information about me from the platform");
+                const windowsInfo = windows.map(w => `${w.windowId}:${w.name}`).join(", ");
+                return ioError.raiseError(`Cannot initialize the window library, because I received no information about me -> id: ${this.publicWindowId} name: ${window.name} from the platform: known windows: ${windowsInfo}`);
             }
             const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name);
             this.me = myProjection.api;
@@ -3666,11 +4102,13 @@ const operations$9 = {
     import: { name: "import" },
     remove: { name: "remove", dataDecoder: appRemoveConfigDecoder },
     export: { name: "export", resultDecoder: appsExportOperationDecoder },
-    clear: { name: "clear" }
+    clear: { name: "clear" },
+    operationCheck: { name: "operationCheck" }
 };
 
 class AppManagerController {
     me;
+    supportedOperationsNames = [];
     baseApplicationsTimeoutMS = 60000;
     appImportTimeoutMS = 20;
     registry = CallbackRegistryFactory$1();
@@ -3765,7 +4203,7 @@ class AppManagerController {
         return this.ioc.buildInstance(openResult, app);
     }
     getApplication(name) {
-        const verifiedName = runDecoderWithIOError(nonEmptyStringDecoder, name);
+        const verifiedName = runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         return this.applications.find((app) => app.name === verifiedName);
     }
     getInstances() {
@@ -3807,6 +4245,8 @@ class AppManagerController {
         operations$9.appDirectoryStateChange.execute = this.handleAppDirectoryStateChange.bind(this);
         operations$9.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
         operations$9.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
+        operations$9.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$9);
     }
     async handleAppDirectoryStateChange(data) {
         data.appsAdded.forEach(this.handleApplicationAddedMessage.bind(this));
@@ -3888,9 +4328,9 @@ class AppManagerController {
             return ioError.raiseError("Cannot import more than 10000 app definitions in Glue42 Core.");
         }
         const parseResult = definitions.reduce((soFar, definition) => {
-            const decodeResult = allApplicationDefinitionsDecoder.run(definition);
-            if (!decodeResult.ok) {
-                soFar.invalid.push({ app: definition?.name, error: JSON.stringify(decodeResult.error) });
+            const { isValid, error } = this.isValidDefinition(definition);
+            if (!isValid) {
+                soFar.invalid.push({ app: definition?.name, error: error ?? `Provided definition is invalid ${JSON.stringify(definition)}` });
             }
             else {
                 soFar.valid.push(definition);
@@ -3904,8 +4344,22 @@ class AppManagerController {
             errors: parseResult.invalid
         };
     }
+    isValidDefinition(definition) {
+        const isFdc3V2Definition = definition?.appId && definition?.details;
+        if (isFdc3V2Definition) {
+            const decodeResult = decoders.fdc3.v2DefinitionDecoder.run(definition);
+            return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid FDC3 v2 definition. Error: ${JSON.stringify(decodeResult.error)}` };
+        }
+        const isFdc3V1Definition = definition?.appId && definition?.manifest;
+        if (isFdc3V1Definition) {
+            const decodeResult = decoders.fdc3.v1DefinitionDecoder.run(definition);
+            return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid FDC3 v1 definition. Error: ${JSON.stringify(decodeResult.error)}` };
+        }
+        const decodeResult = applicationDefinitionDecoder.run(definition);
+        return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid definition. Error: ${JSON.stringify(decodeResult.error)}` };
+    }
     async remove(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         await this.bridge.send("appManager", operations$9.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
     }
     async clear() {
@@ -4043,7 +4497,9 @@ const operations$8 = {
     layoutAdded: { name: "layoutAdded", dataDecoder: glueLayoutDecoder },
     layoutChanged: { name: "layoutChanged", dataDecoder: glueLayoutDecoder },
     layoutRemoved: { name: "layoutRemoved", dataDecoder: glueLayoutDecoder },
-    layoutRenamed: { name: "layoutRenamed", dataDecoder: glueLayoutDecoder },
+    layoutRestored: { name: "layoutRestored", dataDecoder: glueLayoutDecoder },
+    defaultLayoutChanged: { name: "defaultLayoutChanged", dataDecoder: defaultGlobalChangedDecoder },
+    layoutRenamed: { name: "layoutRenamed", dataDecoder: renamedLayoutNotificationDecoder },
     get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult },
     getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
     export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
@@ -4059,10 +4515,13 @@ const operations$8 = {
     getDefaultGlobal: { name: "getDefaultGlobal", resultDecoder: optionalSimpleLayoutResult },
     setDefaultGlobal: { name: "setDefaultGlobal", dataDecoder: setDefaultGlobalConfigDecoder },
     clearDefaultGlobal: { name: "clearDefaultGlobal" },
-    updateMetadata: { name: "updateMetadata", dataDecoder: updateLayoutMetadataConfigDecoder }
+    getCurrent: { name: "getCurrent", resultDecoder: optionalSimpleLayoutResult },
+    updateMetadata: { name: "updateMetadata", dataDecoder: updateLayoutMetadataConfigDecoder },
+    operationCheck: { name: "operationCheck" }
 };
 
 class LayoutsController {
+    supportedOperationsNames = [];
     defaultLayoutRestoreTimeoutMS = 120000;
     registry = CallbackRegistryFactory$1();
     bridge;
@@ -4098,6 +4557,7 @@ class LayoutsController {
         const api = {
             get: this.get.bind(this),
             getAll: this.getAll.bind(this),
+            getCurrentLayout: this.getCurrentLayout.bind(this),
             export: this.exportLayouts.bind(this),
             import: this.importLayouts.bind(this),
             save: this.save.bind(this),
@@ -4106,6 +4566,7 @@ class LayoutsController {
             onAdded: this.onAdded.bind(this),
             onChanged: this.onChanged.bind(this),
             onRemoved: this.onRemoved.bind(this),
+            onDefaultGlobalChanged: this.onDefaultGlobalChanged.bind(this),
             onSaveRequested: this.subscribeOnSaveRequested.bind(this),
             getMultiScreenPermissionState: this.getGlobalPermissionState.bind(this),
             requestMultiScreenPermission: this.requestGlobalPermission.bind(this),
@@ -4115,6 +4576,7 @@ class LayoutsController {
             clearDefaultGlobal: this.clearDefaultGlobal.bind(this),
             rename: this.rename.bind(this),
             onRenamed: this.onRenamed.bind(this),
+            onRestored: this.onRestored.bind(this),
             updateMetadata: this.updateMetadata.bind(this)
         };
         return Object.freeze(api);
@@ -4124,12 +4586,20 @@ class LayoutsController {
         operations$8.layoutChanged.execute = this.handleOnChanged.bind(this);
         operations$8.layoutRemoved.execute = this.handleOnRemoved.bind(this);
         operations$8.layoutRenamed.execute = this.handleOnRenamed.bind(this);
+        operations$8.layoutRestored.execute = this.handleOnRestored.bind(this);
+        operations$8.defaultLayoutChanged.execute = this.handleOnDefaultChanged.bind(this);
         operations$8.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
+        operations$8.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$8);
     }
     async get(name, type) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         runDecoderWithIOError(layoutTypeDecoder, type);
         const result = await this.bridge.send("layouts", operations$8.get, { name, type });
+        return result.layout;
+    }
+    async getCurrentLayout() {
+        const result = await this.bridge.send("layouts", operations$8.getCurrent, undefined);
         return result.layout;
     }
     async getAll(type) {
@@ -4175,7 +4645,7 @@ class LayoutsController {
     }
     async remove(type, name) {
         runDecoderWithIOError(layoutTypeDecoder, type);
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         await this.bridge.send("layouts", operations$8.remove, { type, name });
     }
     async handleSaveRequest(config) {
@@ -4221,7 +4691,7 @@ class LayoutsController {
         return requestResult.layout;
     }
     async setDefaultGlobal(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         await this.bridge.send("layouts", operations$8.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
     }
     async clearDefaultGlobal() {
@@ -4229,7 +4699,7 @@ class LayoutsController {
     }
     async rename(layout, newName) {
         runDecoderWithIOError(glueLayoutDecoder, layout);
-        runDecoderWithIOError(nonEmptyStringDecoder, newName);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, newName);
         const result = await this.bridge.send("layouts", operations$8.rename, { layout, newName }, undefined, { includeOperationCheck: true });
         return result;
     }
@@ -4238,12 +4708,22 @@ class LayoutsController {
         await this.bridge.send("layouts", operations$8.updateMetadata, { layout }, undefined, { includeOperationCheck: true });
     }
     onAdded(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onAdded, because the provided callback is not a function!");
+        }
         this.exportLayouts("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
         this.exportLayouts("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
         return this.registry.add(operations$8.layoutAdded.name, callback);
     }
     onChanged(callback) {
         return this.registry.add(operations$8.layoutChanged.name, callback);
+    }
+    onDefaultGlobalChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onDefaultGlobalChanged, because the provided callback is not a function!");
+        }
+        this.getDefaultGlobal().then((layout) => callback(layout ? { name: layout.name } : undefined)).catch(() => { });
+        return this.registry.add(operations$8.defaultLayoutChanged.name, callback);
     }
     onRemoved(callback) {
         return this.registry.add(operations$8.layoutRemoved.name, callback);
@@ -4253,6 +4733,12 @@ class LayoutsController {
             return ioError.raiseError("Cannot subscribe to onRenamed, because the provided callback is not a function!");
         }
         return this.registry.add(operations$8.layoutRenamed.name, callback);
+    }
+    onRestored(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onRestored, because the provided callback is not a function!");
+        }
+        return this.registry.add(operations$8.layoutRestored.name, callback);
     }
     subscribeOnSaveRequested(callback) {
         if (typeof callback !== "function") {
@@ -4272,11 +4758,18 @@ class LayoutsController {
     async handleOnChanged(layout) {
         this.registry.execute(operations$8.layoutChanged.name, layout);
     }
+    async handleOnDefaultChanged(layout) {
+        this.registry.execute(operations$8.defaultLayoutChanged.name, layout);
+    }
     async handleOnRemoved(layout) {
         this.registry.execute(operations$8.layoutRemoved.name, layout);
     }
-    async handleOnRenamed(layout) {
-        this.registry.execute(operations$8.layoutRenamed.name, layout);
+    async handleOnRestored(layout) {
+        this.registry.execute(operations$8.layoutRestored.name, layout);
+    }
+    async handleOnRenamed(renamedData) {
+        const { prevName, ...layout } = renamedData;
+        this.registry.execute(operations$8.layoutRenamed.name, layout, { name: prevName });
     }
 }
 
@@ -4295,17 +4788,20 @@ const operations$7 = {
     clearOld: { name: "clearOld" },
     configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder },
     getConfiguration: { name: "getConfiguration", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    getActiveCount: { name: "getActiveCount", resultDecoder: activeNotificationsCountChangeDecoder },
     configurationChanged: { name: "configurationChanged", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
     setState: { name: "setState", dataDecoder: notificationSetStateRequestDecoder },
     activeCountChange: { name: "activeCountChange", resultDecoder: activeNotificationsCountChangeDecoder },
-    stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder }
+    stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder },
+    operationCheck: { name: "operationCheck" }
 };
 
+/* @ts-self-types="./index.d.ts" */
 let urlAlphabet$1 =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 let nanoid$1 = (size = 21) => {
   let id = '';
-  let i = size;
+  let i = size | 0;
   while (i--) {
     id += urlAlphabet$1[(Math.random() * 64) | 0];
   }
@@ -4313,6 +4809,7 @@ let nanoid$1 = (size = 21) => {
 };
 
 class NotificationsController {
+    supportedOperationsNames = [];
     registry = CallbackRegistryFactory$1();
     logger;
     bridge;
@@ -4320,6 +4817,8 @@ class NotificationsController {
     notifications = {};
     coreGlue;
     buildNotificationFunc;
+    notificationsConfiguration;
+    notificationsActiveCount = 0;
     handlePlatformShutdown() {
         this.notifications = {};
         this.registry.clear();
@@ -4331,6 +4830,8 @@ class NotificationsController {
         this.coreGlue = coreGlue;
         this.notificationsSettings = ioc.config.notifications;
         this.buildNotificationFunc = ioc.buildNotification;
+        this.notificationsConfiguration = await this.getConfiguration();
+        this.notificationsActiveCount = await this.getActiveCount();
         const api = this.toApi();
         this.addOperationExecutors();
         coreGlue.notifications = api;
@@ -4367,6 +4868,7 @@ class NotificationsController {
             setState: this.setState.bind(this),
             onConfigurationChanged: this.onConfigurationChanged.bind(this),
             onActiveCountChanged: this.onActiveCountChanged.bind(this),
+            onCounterChanged: this.onActiveCountChanged.bind(this),
             onStateChanged: this.onStateChanged.bind(this)
         };
         return Object.freeze(api);
@@ -4410,14 +4912,14 @@ class NotificationsController {
         return this.registry.add("notification-closed", callback);
     }
     async click(id, action) {
-        runDecoderWithIOError(nonEmptyStringDecoder, id);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
         if (action) {
-            runDecoderWithIOError(nonEmptyStringDecoder, action);
+            runDecoderWithIOError(nonEmptyStringDecoder$2, action);
         }
         await this.bridge.send("notifications", operations$7.click, { id, action }, undefined, { includeOperationCheck: true });
     }
     async clear(id) {
-        runDecoderWithIOError(nonEmptyStringDecoder, id);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
         await this.bridge.send("notifications", operations$7.clear, { id }, undefined, { includeOperationCheck: true });
     }
     async clearAll() {
@@ -4434,6 +4936,16 @@ class NotificationsController {
         const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
         return response.configuration;
     }
+    async getActiveCount() {
+        try {
+            const response = await this.bridge.send("notifications", operations$7.getActiveCount, undefined, undefined, { includeOperationCheck: true });
+            return response.count;
+        }
+        catch (error) {
+            console.warn("Failed to get accurate active notifications count", error);
+            return 0;
+        }
+    }
     async getFilter() {
         const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
         return response.configuration.sourceFilter;
@@ -4444,7 +4956,7 @@ class NotificationsController {
         return verifiedFilter;
     }
     async setState(id, state) {
-        runDecoderWithIOError(nonEmptyStringDecoder, id);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
         runDecoderWithIOError(notificationStateDecoder, state);
         await this.bridge.send("notifications", operations$7.setState, { id, state }, undefined, { includeOperationCheck: true });
     }
@@ -4452,12 +4964,14 @@ class NotificationsController {
         if (typeof callback !== "function") {
             return ioError.raiseError("Cannot subscribe to configuration changed, because the provided callback is not a function!");
         }
+        setTimeout(() => callback(this.notificationsConfiguration), 0);
         return this.registry.add("notifications-config-changed", callback);
     }
     onActiveCountChanged(callback) {
         if (typeof callback !== "function") {
             return ioError.raiseError("Cannot subscribe to onActiveCountChanged changed, because the provided callback is not a function!");
         }
+        setTimeout(() => callback({ count: this.notificationsActiveCount }), 0);
         return this.registry.add("notifications-active-count-changed", callback);
     }
     onStateChanged(callback) {
@@ -4474,11 +4988,15 @@ class NotificationsController {
         operations$7.configurationChanged.execute = this.handleConfigurationChanged.bind(this);
         operations$7.activeCountChange.execute = this.handleActiveCountChanged.bind(this);
         operations$7.stateChange.execute = this.handleNotificationStateChanged.bind(this);
+        operations$7.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$7);
     }
     async handleConfigurationChanged(data) {
+        this.notificationsConfiguration = data.configuration;
         this.registry.execute("notifications-config-changed", data.configuration);
     }
     async handleActiveCountChanged(data) {
+        this.notificationsActiveCount = data.count;
         this.registry.execute("notifications-active-count-changed", data);
     }
     async handleNotificationStateChanged(data) {
@@ -4521,20 +5039,15 @@ class NotificationsController {
 const operations$6 = {
     getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder },
     findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder, resultDecoder: wrappedIntentsDecoder },
-    raiseIntent: { name: "raiseIntent", dataDecoder: intentRequestDecoder, resultDecoder: intentResultDecoder },
     raise: { name: "raise", dataDecoder: raiseIntentRequestDecoder, resultDecoder: intentResultDecoder },
     filterHandlers: { name: "filterHandlers", dataDecoder: filterHandlersWithResolverConfigDecoder, resultDecoder: filterHandlersResultDecoder },
     getIntentsByHandler: { name: "getIntentsByHandler", dataDecoder: intentHandlerDecoder, resultDecoder: getIntentsResultDecoder }
 };
 
 const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
-const INTENTS_RESOLVER_INTEROP_PREFIX = "T42.Intents.Resolver.Control.";
 const INTENTS_RESOLVER_APP_NAME = "intentsResolver";
 const DEFAULT_RESOLVER_RESPONSE_TIMEOUT = 60 * 1000;
 const ADDITIONAL_BRIDGE_OPERATION_TIMEOUT = 30 * 1000;
-const INTENTS_RESOLVER_WIDTH = 400;
-const INTENTS_RESOLVER_HEIGHT = 440;
-const MAX_SET_TIMEOUT_DELAY = 2147483647;
 const DEFAULT_PICK_HANDLER_BY_TIMEOUT = 90 * 1000;
 
 class IntentsController {
@@ -4543,13 +5056,12 @@ class IntentsController {
     interop;
     appManagerController;
     windowsController;
-    legacyIntentsController;
     myIntents = new Set();
     prefsController;
-    registry = CallbackRegistryFactory$1();
+    uiController;
     useIntentsResolverUI = true;
     intentsResolverAppName;
-    intentResolverResponseTimeout;
+    intentResolverResponseTimeout = DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
     unregisterIntentPromises = [];
     async start(coreGlue, ioc) {
         this.logger = coreGlue.logger.subLogger("intents.controller.web");
@@ -4558,8 +5070,8 @@ class IntentsController {
         this.interop = coreGlue.interop;
         this.appManagerController = ioc.appManagerController;
         this.windowsController = ioc.windowsController;
-        this.legacyIntentsController = ioc.legacyIntentsHelper;
         this.prefsController = ioc.prefsController;
+        this.uiController = ioc.uiController;
         this.checkIfIntentsResolverIsEnabled(ioc.config);
         const api = this.toApi();
         this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
@@ -4610,20 +5122,20 @@ class IntentsController {
         if (resultFromRememberedHandler) {
             return resultFromRememberedHandler;
         }
-        const requestWithResolverInfo = { intentRequest, resolverConfig: this.getResolverConfigByRequest({ intentRequest }) };
-        const isRaiseOperationSupported = await this.isRaiseOperationSupported();
-        if (!isRaiseOperationSupported.supported) {
-            this.logger.warn(`${isRaiseOperationSupported.reason}. Invoking legacy raise method`);
-            return this.legacyIntentsController.raise(requestWithResolverInfo, this.find.bind(this));
-        }
-        this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${this.intentResolverResponseTimeout}ms`);
+        const requestWithResolverInfo = {
+            intentRequest,
+            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
+            embeddedResolverConfig: this.getEmbeddedResolverConfig()
+        };
         const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
             ? MAX_SET_TIMEOUT_DELAY
             : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+        this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${methodResponseTimeoutMs}ms`);
         const response = await this.bridge.send("intents", operations$6.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
+        this.logger.trace(`Raise operation completed with response: ${JSON.stringify(response)}`);
         return response;
     }
-    getResolverConfigByRequest(filter) {
+    getLegacyResolverConfigByRequest(filter) {
         if (filter.handlerFilter) {
             return {
                 enabled: typeof filter.handlerFilter?.openResolver === "boolean" ? filter.handlerFilter?.openResolver : this.useIntentsResolverUI,
@@ -4638,20 +5150,11 @@ class IntentsController {
             waitResponseTimeout
         };
     }
-    async isRaiseOperationSupported() {
-        try {
-            const { isSupported } = await this.bridge.send("intents", commonOperations.operationCheck, { operation: "raise" });
-            return {
-                supported: isSupported,
-                reason: isSupported ? "" : "The platform of this client is outdated and does not support \"raise\" operation"
-            };
-        }
-        catch (error) {
-            return {
-                supported: false,
-                reason: "The platform of this client is outdated and does not support \"operationCheck\" command"
-            };
-        }
+    getEmbeddedResolverConfig() {
+        return {
+            enabled: this.uiController.isIntentResolverEnabled(),
+            initialCaller: { instanceId: this.interop.instance.instance }
+        };
     }
     async all() {
         await Promise.all(this.unregisterIntentPromises);
@@ -4786,13 +5289,13 @@ class IntentsController {
             });
         });
     }
-    subscribeForServerMethodEvent(method, callback) {
-        return this.interop[method](async ({ server, method }) => {
+    subscribeForServerMethodEvent(eventMethod, callback) {
+        return this.interop[eventMethod](async ({ server, method }) => {
             if (!method.name.startsWith(GLUE42_FDC3_INTENTS_METHOD_PREFIX)) {
                 return;
             }
             const intentName = method.name.replace(GLUE42_FDC3_INTENTS_METHOD_PREFIX, "");
-            const handler = await this.buildIntentHandlerFromServerMethod(server, method, intentName);
+            const handler = await this.buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName);
             callback(handler, intentName);
         });
     }
@@ -4809,11 +5312,11 @@ class IntentsController {
         };
         return handler;
     }
-    async buildIntentHandlerFromServerMethod(server, method, intentName) {
+    async buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName) {
         const info = method.flags.intent;
         const app = this.appManagerController.getApplication(server.application || server.applicationName);
         let title;
-        if (server.windowId) {
+        if (eventMethod === "serverMethodAdded" && server.windowId) {
             title = await (this.windowsController.findById(server.windowId))?.getTitle();
         }
         const appIntent = app?.userProperties?.intents?.find((intent) => intent.name === intentName);
@@ -4863,13 +5366,18 @@ class IntentsController {
         });
     }
     async filterHandlers(handlerFilter) {
-        runDecoderWithIOError(handlersFilterDecoder, handlerFilter);
+        runDecoderWithIOError(handlerFilterDecoder, handlerFilter);
         this.checkIfAtLeastOneFilterIsPresent(handlerFilter);
-        if (handlerFilter.openResolver && !this.useIntentsResolverUI) {
+        const embeddedResolverConfig = this.getEmbeddedResolverConfig();
+        if (handlerFilter.openResolver && !this.useIntentsResolverUI && !embeddedResolverConfig.enabled) {
             return ioError.raiseError("Cannot resolve 'filterHandlers' request using Intents Resolver UI because it's globally disabled");
         }
         const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-        const filterHandlersRequestWithResolverConfig = { filterHandlersRequest: handlerFilter, resolverConfig: this.getResolverConfigByRequest({ handlerFilter }) };
+        const filterHandlersRequestWithResolverConfig = {
+            filterHandlersRequest: handlerFilter,
+            resolverConfig: this.getLegacyResolverConfigByRequest({ handlerFilter }),
+            embeddedResolverConfig
+        };
         const result = await this.bridge.send("intents", operations$6.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
         return result;
     }
@@ -4947,18 +5455,15 @@ class IntentsController {
                     instance: rememberedHandler.instanceId
                 }
             },
-            resolverConfig: {
-                enabled: false,
-                appName: this.intentsResolverAppName,
-                waitResponseTimeout: intentRequest.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT
-            }
+            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
+            embeddedResolverConfig: this.getEmbeddedResolverConfig()
         };
         try {
             const response = await this.bridge.send("intents", operations$6.raise, operationData);
             return response;
         }
         catch (error) {
-            this.logger.trace("Could not raise intent to remembered handler. Removing it from Prefs store");
+            this.logger.trace(`Could not raise intent to remembered handler. Reason: ${error}. Removing it from Prefs store`);
             await this.removeRememberedHandler(intentRequest.intent);
         }
     }
@@ -4978,6 +5483,7 @@ const operations$5 = {
     leaveChannel: { name: "leaveChannel", dataDecoder: leaveChannelDataDecoder },
     requestChannelSelector: { name: "requestChannelSelector", dataDecoder: requestChannelSelectorConfigDecoder },
     getMode: { name: "getMode", resultDecoder: getChannelsModeDecoder },
+    operationCheck: { name: "operationCheck" }
 };
 
 const DEFAULT_MODE = "single";
@@ -4987,6 +5493,7 @@ const CHANGED_KEY = "changed";
 const CHANNELS_CHANGED = "channels_changed";
 
 class ChannelsController {
+    supportedOperationsNames = [];
     registry = CallbackRegistryFactory$1();
     logger;
     contexts;
@@ -5007,6 +5514,8 @@ class ChannelsController {
         operations$5.restrict.execute = ({ config }) => this.restrict(config);
         operations$5.getRestrictions.execute = ({ windowId }) => this.getRestrictions(windowId);
         operations$5.restrictAll.execute = ({ restrictions }) => this.restrictAll(restrictions);
+        operations$5.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$5);
     }
     async start(coreGlue, ioc) {
         this.logger = coreGlue.logger.subLogger("channels.controller.web");
@@ -5120,7 +5629,10 @@ class ChannelsController {
             getWindowsWithChannels: this.getWindowsWithChannels.bind(this),
             restrict: this.restrict.bind(this),
             getRestrictions: this.getRestrictions.bind(this),
-            restrictAll: this.restrictAll.bind(this)
+            restrictAll: this.restrictAll.bind(this),
+            clearChannelData: this.clearChannelData.bind(this),
+            setPath: this.setPath.bind(this),
+            setPaths: this.setPaths.bind(this)
         };
         return Object.freeze(api);
     }
@@ -5139,8 +5651,8 @@ class ChannelsController {
         }
         this.currentChannels = [...this.currentChannels, name];
         const contextName = this.createContextName(name);
-        const unsub = await this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, extraData?.updaterId);
+        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
         });
         this.unsubscribeDict[name] = unsub;
         this.executeChangedEvents(name);
@@ -5155,8 +5667,8 @@ class ChannelsController {
         this.unsubscribe(currentChannel);
         this.currentChannels = [name];
         const contextName = this.createContextName(name);
-        const unsub = await this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, extraData?.updaterId);
+        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
         });
         this.unsubscribeDict[name] = unsub;
         this.executeChangedEvents(name);
@@ -5249,8 +5761,8 @@ class ChannelsController {
         const wrappedCallback = options?.contextType
             ? this.getWrappedSubscribeCallbackWithFdc3Type(callback, options.contextType)
             : this.getWrappedSubscribeCallback(callback);
-        return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-            wrappedCallback(context.data, context, extraData?.updaterId);
+        return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            wrappedCallback(context.data, context, delta, extraData?.updaterId);
         });
     }
     async publish(data, options) {
@@ -5361,7 +5873,7 @@ class ChannelsController {
         };
     }
     async remove(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         const channelWithSuchNameExists = this.getAllChannelNames().includes(name);
         if (!channelWithSuchNameExists) {
             return ioError.raiseError("There's no channel with such name");
@@ -5371,19 +5883,15 @@ class ChannelsController {
     replaySubscribe = (callback, channelId) => {
         this.get(channelId)
             .then((channelContext) => {
-            if (typeof channelContext.data === "object" && Object.keys(channelContext.data).length) {
-                const contextName = this.createContextName(channelContext.name);
-                return this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-                    callback(context.data, context, extraData?.updaterId);
-                });
+            if (!channelContext) {
+                return undefined;
             }
-            return undefined;
+            const contextName = this.createContextName(channelContext.name);
+            return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+                callback(context.data, context, delta, extraData?.updaterId);
+            });
         })
-            .then((un) => {
-            if (un && typeof un === "function") {
-                un();
-            }
-        })
+            .then((un) => un?.())
             .catch(err => this.logger.trace(err));
     };
     async getMy(options) {
@@ -5415,6 +5923,13 @@ class ChannelsController {
             return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
         }, []);
         return result;
+    }
+    async clearChannelData(name) {
+        const paths = [
+            { path: "data", value: {} },
+            { path: "latest_fdc3_type", value: null },
+        ];
+        await this.handleSetPaths("clearChannelData", paths, name);
     }
     async restrict(config) {
         runDecoderWithIOError(channelRestrictionsDecoder, config);
@@ -5461,6 +5976,50 @@ class ChannelsController {
         }
         this.replaySubscribeCallback(currentChannel.name);
     }
+    async setPath(path, name) {
+        const validatedPath = runDecoderWithIOError(pathValueDecoder, path);
+        const paths = [{ path: `data.${validatedPath.path}`, value: validatedPath.value }];
+        await this.handleSetPaths("setPath", paths, name);
+    }
+    async setPaths(paths, name) {
+        const validatedPaths = runDecoderWithIOError(pathsValueDecoder, paths);
+        const dataPaths = validatedPaths.map(({ path, value }) => ({ path: `data.${path}`, value }));
+        await this.handleSetPaths("setPaths", dataPaths, name);
+    }
+    async handleSetPaths(operation, paths, name) {
+        const channelNamesToUpdate = name ? [name] : this.currentChannels;
+        if (!channelNamesToUpdate.length) {
+            return ioError.raiseError(`Cannot complete ${operation} operation, because channel is not specified. Either join one or pass a channel name as second argument!`);
+        }
+        this.validateChannelNames(channelNamesToUpdate);
+        const { allowed, forbidden } = this.groupChannelsByPermission("write", channelNamesToUpdate);
+        if (channelNamesToUpdate.length === forbidden.length) {
+            return ioError.raiseError(`Cannot complete ${operation} operation due to write restrictions to the following channels: ${channelNamesToUpdate.join(", ")}`);
+        }
+        if (forbidden.length) {
+            this.logger.warn(`Cannot set paths on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} due to write restrictions`);
+        }
+        await Promise.all(allowed.map((channelName) => {
+            const contextName = this.createContextName(channelName);
+            return this.contexts.setPaths(contextName, paths);
+        }));
+    }
+    validateChannelNames(names) {
+        const allChannelNames = this.getAllChannelNames();
+        names.forEach((name) => runDecoderWithIOError(channelNameDecoder(allChannelNames), name));
+    }
+    groupChannelsByPermission(action, channelNames) {
+        return channelNames.reduce((byFar, channelName) => {
+            const isAllowed = this.isAllowedByRestrictions(channelName, action);
+            if (isAllowed) {
+                byFar.allowed.push(channelName);
+            }
+            else {
+                byFar.forbidden.push(channelName);
+            }
+            return byFar;
+        }, { allowed: [], forbidden: [] });
+    }
     isAllowedByRestrictions(channelName, action) {
         const { channels } = this.getMyRestrictions();
         if (!channels?.length) {
@@ -5476,8 +6035,8 @@ class ChannelsController {
     }
     replaySubscribeCallback(channelName) {
         const contextName = this.createContextName(channelName);
-        this.contexts.subscribe(contextName, (context, _, __, ___, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, extraData?.updaterId);
+        this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
         }).then((unsub) => {
             if (unsub && typeof unsub === "function") {
                 unsub();
@@ -5517,12 +6076,15 @@ class ChannelsController {
         return this.publishFdc3Data(channelName, data);
     }
     async publishOnMultipleChannels(data, isFdc3) {
-        const channelsWithRestrictions = this.currentChannels.map((channelName) => this.isAllowedByRestrictions(channelName, "write") ? undefined : channelName).filter((name) => !!name);
-        if (channelsWithRestrictions.length) {
-            return ioError.raiseError(`Cannot complete publish operation due to write restrictions on channel${channelsWithRestrictions.length > 1 ? "s" : ""}: ${channelsWithRestrictions.join(", ")}`);
+        const { allowed, forbidden } = this.groupChannelsByPermission("write", this.currentChannels);
+        if (this.currentChannels.length === forbidden.length) {
+            return ioError.raiseError(`Cannot complete 'publish' operation due to write restrictions to all joined channels: ${this.currentChannels.join(", ")}`);
+        }
+        if (forbidden.length) {
+            this.logger.warn(`Data on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} won't be published due to write restrictions`);
         }
         const publishMethod = isFdc3 ? this.publishFdc3Data.bind(this) : this.updateData.bind(this);
-        await Promise.all(this.currentChannels.map((channelName) => publishMethod(channelName, data)));
+        await Promise.all(allowed.map((channelName) => publishMethod(channelName, data)));
     }
     async publishFdc3Data(channelName, data) {
         runDecoderWithIOError(fdc3ContextDecoder, data);
@@ -5532,18 +6094,18 @@ class ChannelsController {
         return this.updateData(channelName, fdc3DataToPublish);
     }
     getWrappedSubscribeCallback(callback) {
-        const wrappedCallback = (channelData, context, updaterId) => {
+        const wrappedCallback = (channelData, context, delta, updaterId) => {
             const canRead = this.isAllowedByRestrictions(context.name, "read");
             if (!canRead) {
                 return;
             }
             const { data, latest_fdc3_type } = context;
-            if (!latest_fdc3_type) {
+            const latestTypePropName = `fdc3_${latest_fdc3_type}`;
+            if (!latest_fdc3_type || (delta.data && !delta.data[latestTypePropName])) {
                 callback(channelData, context, updaterId);
                 return;
             }
             const parsedType = latest_fdc3_type.split("&").join(".");
-            const latestTypePropName = `fdc3_${latest_fdc3_type}`;
             const fdc3Data = { type: parsedType, ...data[latestTypePropName] };
             const { [latestTypePropName]: latestFDC3Type, ...rest } = channelData;
             callback({ ...rest, fdc3: fdc3Data }, context, updaterId);
@@ -5552,14 +6114,14 @@ class ChannelsController {
     }
     getWrappedSubscribeCallbackWithFdc3Type(callback, fdc3Type) {
         const didReplay = { replayed: false };
-        const wrappedCallback = (_, context, updaterId) => {
+        const wrappedCallback = (_, context, delta, updaterId) => {
             const canRead = this.isAllowedByRestrictions(context.name, "read");
             if (!canRead) {
                 return;
             }
             const { data, latest_fdc3_type } = context;
             const searchedType = `fdc3_${fdc3Type.split(".").join("&")}`;
-            if (!data[searchedType]) {
+            if (!data[searchedType] || (delta.data && !delta.data[searchedType])) {
                 return;
             }
             if (didReplay.replayed) {
@@ -5623,9 +6185,11 @@ const operations$4 = {
     isFdc3DataWrappingSupported: { name: "isFdc3DataWrappingSupported" },
     clientError: { name: "clientError", dataDecoder: clientErrorDataDecoder },
     systemHello: { name: "systemHello", resultDecoder: systemHelloSuccessDecoder },
+    operationCheck: { name: "operationCheck" }
 };
 
 class SystemController {
+    supportedOperationsNames = [];
     bridge;
     ioc;
     logger;
@@ -5676,11 +6240,13 @@ class SystemController {
         const globalNamespace = window.glue42core || window.iobrowser;
         const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
         const globalObj = Object.assign({}, globalNamespace, base, { environment });
-        window[globalNamespaceName] = Object.freeze(globalObj);
+        window[globalNamespaceName] = globalObj;
     }
     addOperationsExecutors() {
         operations$4.platformShutdown.execute = this.processPlatformShutdown.bind(this);
         operations$4.isFdc3DataWrappingSupported.execute = this.handleIsFdc3DataWrappingSupported.bind(this);
+        operations$4.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$4);
     }
     async handleIsFdc3DataWrappingSupported() {
         return { isSupported: true };
@@ -5738,10 +6304,10 @@ class Notification {
     }
 }
 
-oneOf$1(constant$1("clientHello"));
-const extensionConfigDecoder = object$1({
-    widget: object$1({
-        inject: boolean$1()
+oneOf$1(constant$2("clientHello"));
+const extensionConfigDecoder = object$2({
+    widget: object$2({
+        inject: boolean$2()
     })
 });
 
@@ -5828,6 +6394,8 @@ class EventsDispatcher {
     glue42EventName = "Glue42";
     _handleMessage;
     _resolveWidgetReadyPromise;
+    _resolveModalsUIFactoryReadyPromise;
+    _resolveIntentResolverUIFactoryReadyPromise;
     constructor(config) {
         this.config = config;
     }
@@ -5835,7 +6403,9 @@ class EventsDispatcher {
         notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
         contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
         requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) },
-        widgetFactoryReady: { name: "widgetFactoryReady", handle: this.handleWidgetReady.bind(this) }
+        widgetFactoryReady: { name: "widgetFactoryReady", handle: this.handleWidgetReady.bind(this) },
+        modalsUIFactoryReady: { name: "modalsUIFactoryReady", handle: this.handleModalsUIFactoryReady.bind(this) },
+        intentResolverUIFactoryReady: { name: "intentResolverUIFactoryReady", handle: this.handleIntentResolverUIFactoryReady.bind(this) },
     };
     stop() {
         window.removeEventListener(this.glue42EventName, this._handleMessage);
@@ -5851,14 +6421,26 @@ class EventsDispatcher {
     onContentMessage(callback) {
         return this.registry.add("content-inc", callback);
     }
-    async widgetReady(timeout) {
-        const widgetReadyPromise = PromiseWrap(() => {
-            return new Promise((resolve) => {
-                this._resolveWidgetReadyPromise = resolve;
-            });
-        }, timeout, `Timeout of ${timeout}ms hit waiting for IOBrowserWidget to be ready`);
+    async widgetReady() {
+        const widgetReadyPromise = new Promise((resolve) => {
+            this._resolveWidgetReadyPromise = resolve;
+        });
         this.requestWidgetReady();
         return widgetReadyPromise;
+    }
+    async modalsUIFactoryReady() {
+        const modalsUIFactoryReadyPromise = new Promise((resolve) => {
+            this._resolveModalsUIFactoryReadyPromise = resolve;
+        });
+        this.requestModalsUIFactoryReady();
+        return modalsUIFactoryReadyPromise;
+    }
+    async intentResolverUIFactoryReady() {
+        const intentResolverUIFactoryReadyPromise = new Promise((resolve) => {
+            this._resolveIntentResolverUIFactoryReadyPromise = resolve;
+        });
+        this.requestIntentResolverUIFactoryReady();
+        return intentResolverUIFactoryReadyPromise;
     }
     wireCustomEventListener() {
         this._handleMessage = this.handleMessage.bind(this);
@@ -5898,6 +6480,18 @@ class EventsDispatcher {
     }
     handleWidgetReady() {
         this._resolveWidgetReadyPromise?.();
+    }
+    requestModalsUIFactoryReady() {
+        this.send(REQUEST_MODALS_UI_FACTORY_READY, "glue42");
+    }
+    handleModalsUIFactoryReady() {
+        this._resolveModalsUIFactoryReadyPromise?.();
+    }
+    requestIntentResolverUIFactoryReady() {
+        this.send(REQUEST_INTENT_RESOLVER_UI_FACTORY_READY, "glue42");
+    }
+    handleIntentResolverUIFactoryReady() {
+        this._resolveIntentResolverUIFactoryReadyPromise?.();
     }
     send(eventName, namespace, message) {
         const payload = {};
@@ -6095,211 +6689,6 @@ class PreferredConnectionController {
     }
 }
 
-class LegacyIntentsHelper {
-    bridge;
-    interop;
-    appManagerController;
-    windowsController;
-    logger;
-    intentsResolverResponsePromises = {};
-    constructor(logger, bridge, interop, appManagerController, windowsController) {
-        this.bridge = bridge;
-        this.interop = interop;
-        this.appManagerController = appManagerController;
-        this.windowsController = windowsController;
-        this.logger = this.configureLogger(logger);
-    }
-    async raise(requestWithResolverInfo, findIntentFn) {
-        const { intentRequest, resolverConfig } = requestWithResolverInfo;
-        const intent = (await findIntentFn(intentRequest.intent)).find(intent => intent.name === intentRequest.intent);
-        if (!intent) {
-            return ioError.raiseError(`Intent with name ${intentRequest.intent} not found`);
-        }
-        const { open, reason } = this.checkIfResolverShouldBeOpened(intent, intentRequest, resolverConfig);
-        if (!open) {
-            this.logger?.trace(`Intent Resolver UI won't be used. Reason: ${reason}`);
-            return this.invokeRaiseIntent(intentRequest);
-        }
-        const intentResult = await this.raiseIntentWithResolverApp(requestWithResolverInfo);
-        return intentResult;
-    }
-    configureLogger(loggerInst) {
-        return loggerInst.subLogger("intents.legacy.helper.web");
-    }
-    async raiseIntentWithResolverApp(requestWithResolverInfo) {
-        const { intentRequest, resolverConfig } = requestWithResolverInfo;
-        this.logger.trace(`Intents Resolver UI with app name ${resolverConfig.appName} will be used`);
-        const responseMethodName = await this.registerResponseMethod();
-        this.logger.trace(`Registered interop method ${responseMethodName}`);
-        const resolverInstance = await this.openIntentResolverApplication(requestWithResolverInfo, responseMethodName);
-        this.logger.trace(`Intents Resolver Instance with id ${resolverInstance.id} opened`);
-        const handler = await this.handleInstanceResponse(resolverInstance.id);
-        const target = handler.type === "app"
-            ? { app: handler.applicationName }
-            : { instance: handler.instanceId };
-        this.logger.trace(`Intent handler chosen by the user: ${JSON.stringify(target)}`);
-        const intentResult = await this.invokeRaiseIntent({ ...intentRequest, target });
-        return intentResult;
-    }
-    async handleInstanceResponse(instanceId) {
-        try {
-            const { handler, intent } = await this.intentsResolverResponsePromises[instanceId].promise;
-            this.logger?.trace(`Intent handler chosen for intent ${intent}: ${JSON.stringify(handler)}`);
-            this.stopResolverInstance(instanceId);
-            return handler;
-        }
-        catch (error) {
-            this.stopResolverInstance(instanceId);
-            return ioError.raiseError(error);
-        }
-    }
-    invokeRaiseIntent(requestObj) {
-        return this.bridge.send("intents", operations$6.raiseIntent, requestObj);
-    }
-    async registerResponseMethod() {
-        const methodName = INTENTS_RESOLVER_INTEROP_PREFIX + nanoid$1(10);
-        await this.interop.register(methodName, this.resolverResponseHandler.bind(this));
-        return methodName;
-    }
-    async openIntentResolverApplication(requestWithResolverInfo, methodName) {
-        const { intentRequest, resolverConfig } = requestWithResolverInfo;
-        const startContext = this.buildStartContext(intentRequest, methodName);
-        const startOptions = await this.buildStartOptions();
-        this.logger.trace(`Starting Intents Resolver UI with context: ${JSON.stringify(startContext)} and options: ${startOptions}`);
-        const instance = await this.appManagerController.getApplication(resolverConfig.appName).start(startContext, startOptions);
-        this.logger.trace(`Intents Resolver instance with id ${instance.id} opened`);
-        this.subscribeOnInstanceStopped(instance);
-        this.createResponsePromise(intentRequest.intent, instance.id, methodName, resolverConfig.waitResponseTimeout);
-        return instance;
-    }
-    async cleanUpIntentResolverPromise(instanceId) {
-        const intentPromise = this.intentsResolverResponsePromises[instanceId];
-        if (!intentPromise) {
-            return;
-        }
-        const unregisterPromise = this.interop.unregister(intentPromise.methodName);
-        unregisterPromise.catch((error) => this.logger.warn(error));
-        delete this.intentsResolverResponsePromises[instanceId];
-    }
-    buildStartContext(requestObj, methodName) {
-        return {
-            intent: requestObj,
-            callerId: this.interop.instance.instance,
-            methodName
-        };
-    }
-    async buildStartOptions() {
-        const bounds = await this.getTargetBounds();
-        return {
-            top: (bounds.height - INTENTS_RESOLVER_HEIGHT) / 2 + bounds.top,
-            left: (bounds.width - INTENTS_RESOLVER_WIDTH) / 2 + bounds.left,
-            width: INTENTS_RESOLVER_WIDTH,
-            height: INTENTS_RESOLVER_HEIGHT
-        };
-    }
-    async getTargetBounds() {
-        const bounds = await this.tryGetWindowBasedBounds() || await this.tryGetWorkspaceBasedBounds();
-        if (bounds) {
-            this.logger.trace(`Opening Intents Resolver UI with bounds: ${JSON.stringify(bounds)}`);
-            return bounds;
-        }
-        const defaultBounds = {
-            top: window.screen.availTop || 0,
-            left: window.screen.availLeft || 0,
-            width: window.screen.width,
-            height: window.screen.height
-        };
-        this.logger.trace(`Opening Intents Resolver UI relative to my screen bounds: ${JSON.stringify(defaultBounds)}`);
-        return defaultBounds;
-    }
-    async tryGetWindowBasedBounds() {
-        try {
-            const myWindowBounds = await this.windowsController.my().getBounds();
-            this.logger.trace(`Opening the resolver UI relative to my window bounds: ${JSON.stringify(myWindowBounds)}`);
-            return myWindowBounds;
-        }
-        catch (error) {
-            this.logger.trace(`Failure to get my window bounds: ${JSON.stringify(error)}`);
-        }
-        return undefined;
-    }
-    async tryGetWorkspaceBasedBounds() {
-        try {
-            await this.bridge.send("workspaces", commonOperations.operationCheck, { operation: "getWorkspaceWindowFrameBounds" });
-            const bridgeResponse = await this.bridge.send("workspaces", commonOperations.getWorkspaceWindowFrameBounds, { itemId: this.windowsController.my().id });
-            const myWorkspaceBounds = bridgeResponse.bounds;
-            this.logger.trace(`Opening the resolver UI relative to my workspace frame window bounds: ${JSON.stringify(myWorkspaceBounds)}`);
-            return myWorkspaceBounds;
-        }
-        catch (error) {
-            this.logger.trace(`Failure to get my workspace frame window bounds: ${JSON.stringify(error)}`);
-        }
-        return undefined;
-    }
-    subscribeOnInstanceStopped(instance) {
-        const { application } = instance;
-        const unsub = application.onInstanceStopped((inst) => {
-            if (inst.id !== instance.id) {
-                return;
-            }
-            const intentPromise = this.intentsResolverResponsePromises[inst.id];
-            if (!intentPromise) {
-                return unsub();
-            }
-            intentPromise.reject(`Cannot resolve raised intent "${intentPromise.intent}" - User closed ${application.name} app without choosing an intent handler`);
-            this.cleanUpIntentResolverPromise(inst.id);
-            unsub();
-        });
-    }
-    createResponsePromise(intent, instanceId, methodName, timeout) {
-        let resolve = () => { };
-        let reject = () => { };
-        const promise = PromisePlus$1((res, rej) => {
-            resolve = res;
-            reject = rej;
-        }, timeout, `Timeout of ${timeout}ms hit waiting for the user to choose a handler for intent ${intent}`);
-        this.intentsResolverResponsePromises[instanceId] = { intent, resolve, reject, promise, methodName };
-    }
-    resolverResponseHandler(args, callerId) {
-        const response = intentResolverResponseDecoder.run(args);
-        const instanceId = callerId.instance;
-        if (response.ok) {
-            this.logger.trace(`Intent Resolver instance with id ${instanceId} send a valid response: ${JSON.stringify(response.result)}`);
-            return this.intentsResolverResponsePromises[instanceId].resolve(response.result);
-        }
-        this.logger.trace(`Intent Resolver instance with id ${instanceId} sent an invalid response. Error: ${JSON.stringify(response.error)}`);
-        this.intentsResolverResponsePromises[instanceId].reject(response.error.message);
-        this.stopResolverInstance(instanceId);
-    }
-    stopResolverInstance(instanceId) {
-        const searchedInstance = this.appManagerController.getInstances().find((inst) => inst.id === instanceId);
-        if (!searchedInstance) {
-            return;
-        }
-        searchedInstance.stop().catch(err => this.logger.error(err));
-    }
-    checkIfIntentHasMoreThanOneHandler(intent, request) {
-        if (typeof request.target === "object") {
-            return false;
-        }
-        return request.handlers ? request.handlers.length > 1 : intent.handlers.length > 1;
-    }
-    checkIfResolverShouldBeOpened(intent, intentRequest, resolverConfig) {
-        if (!resolverConfig.enabled) {
-            return { open: false, reason: "Intent Resolver is disabled. Raising intent to first found handler" };
-        }
-        const intentsResolverApp = this.appManagerController.getApplication(resolverConfig.appName);
-        if (!intentsResolverApp) {
-            return { open: false, reason: `Application with name ${resolverConfig.appName} not found` };
-        }
-        const hasMoreThanOneHandler = this.checkIfIntentHasMoreThanOneHandler(intent, intentRequest);
-        if (!hasMoreThanOneHandler) {
-            return { open: false, reason: "Raised intent has only one handler" };
-        }
-        return { open: true };
-    }
-}
-
 const operations$2 = {
     getCurrent: { name: "getCurrent", resultDecoder: simpleThemeResponseDecoder },
     list: { name: "list", resultDecoder: allThemesResponseDecoder },
@@ -6346,7 +6735,7 @@ class ThemesController {
         return bridgeResponse.themes;
     }
     async select(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder, name);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         await this.bridge.send("themes", operations$2.select, { name }, undefined, { includeOperationCheck: true });
     }
     async onChanged(callback) {
@@ -6431,10 +6820,12 @@ const operations$1 = {
     update: { name: "update", dataDecoder: changePrefsDataDecoder },
     prefsChanged: { name: "prefsChanged", dataDecoder: getPrefsResultDecoder },
     prefsHello: { name: "prefsHello", resultDecoder: prefsHelloSuccessDecoder },
+    operationCheck: { name: "operationCheck" },
     registerSubscriber: { name: "registerSubscriber", dataDecoder: subscriberRegisterConfigDecoder },
 };
 
 class PrefsController {
+    supportedOperationsNames = [];
     bridge;
     config;
     logger;
@@ -6481,17 +6872,19 @@ class PrefsController {
         return await operation.execute(operationData);
     }
     async get(app) {
-        const verifiedApp = app === undefined || app === null ? this.getMyAppName() : runDecoderWithIOError(nonEmptyStringDecoder, app);
+        const verifiedApp = app === undefined || app === null ? this.getMyAppName() : runDecoderWithIOError(nonEmptyStringDecoder$2, app);
         const { prefs } = await this.bridge.send("prefs", operations$1.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
         return prefs;
     }
     async update(data, options) {
-        const verifiedOptions = runDecoderWithIOError(optional$1(basePrefsConfigDecoder), options);
+        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
         const app = verifiedOptions?.app ?? this.getMyAppName();
         await this.updateFor(app, data);
     }
     addOperationsExecutors() {
         operations$1.prefsChanged.execute = this.handleOnChanged.bind(this);
+        operations$1.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$1);
     }
     toApi() {
         const api = {
@@ -6517,7 +6910,7 @@ class PrefsController {
         await this.bridge.send("prefs", operations$1.clearAll, undefined, undefined, { includeOperationCheck: true });
     }
     async clearFor(app) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder, app);
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
         await this.bridge.send("prefs", operations$1.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
     }
     async getAll() {
@@ -6525,13 +6918,13 @@ class PrefsController {
         return result;
     }
     async set(data, options) {
-        const verifiedOptions = runDecoderWithIOError(optional$1(basePrefsConfigDecoder), options);
+        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
         const app = verifiedOptions?.app ?? this.getMyAppName();
         await this.setFor(app, data);
     }
     async setFor(app, data) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder, app);
-        const verifiedData = runDecoderWithIOError(object$1(), data);
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const verifiedData = runDecoderWithIOError(object$2(), data);
         await this.bridge.send("prefs", operations$1.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
     }
     subscribe(callback) {
@@ -6539,7 +6932,7 @@ class PrefsController {
         return this.subscribeFor(app, callback);
     }
     subscribeFor(app, callback) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder, app);
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
         const applications = this.appManagerController.getApplications();
         const isValidApp = verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp) || this.validNonExistentApps.includes(verifiedApp);
         if (!isValidApp) {
@@ -6561,8 +6954,8 @@ class PrefsController {
         return this.registry.add(subscriptionKey, callback);
     }
     async updateFor(app, data) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder, app);
-        const verifiedData = runDecoderWithIOError(object$1(), data);
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const verifiedData = runDecoderWithIOError(object$2(), data);
         await this.bridge.send("prefs", operations$1.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
     }
     getMyAppName() {
@@ -6581,199 +6974,42 @@ class PrefsController {
     }
 }
 
-var isMergeableObject = function isMergeableObject(value) {
-	return isNonNullObject(value)
-		&& !isSpecial(value)
-};
-
-function isNonNullObject(value) {
-	return !!value && typeof value === 'object'
-}
-
-function isSpecial(value) {
-	var stringValue = Object.prototype.toString.call(value);
-
-	return stringValue === '[object RegExp]'
-		|| stringValue === '[object Date]'
-		|| isReactElement(value)
-}
-
-// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
-var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
-
-function isReactElement(value) {
-	return value.$$typeof === REACT_ELEMENT_TYPE
-}
-
-function emptyTarget(val) {
-	return Array.isArray(val) ? [] : {}
-}
-
-function cloneUnlessOtherwiseSpecified(value, options) {
-	return (options.clone !== false && options.isMergeableObject(value))
-		? deepmerge(emptyTarget(value), value, options)
-		: value
-}
-
-function defaultArrayMerge(target, source, options) {
-	return target.concat(source).map(function(element) {
-		return cloneUnlessOtherwiseSpecified(element, options)
-	})
-}
-
-function getMergeFunction(key, options) {
-	if (!options.customMerge) {
-		return deepmerge
-	}
-	var customMerge = options.customMerge(key);
-	return typeof customMerge === 'function' ? customMerge : deepmerge
-}
-
-function getEnumerableOwnPropertySymbols(target) {
-	return Object.getOwnPropertySymbols
-		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
-			return Object.propertyIsEnumerable.call(target, symbol)
-		})
-		: []
-}
-
-function getKeys(target) {
-	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
-}
-
-function propertyIsOnObject(object, property) {
-	try {
-		return property in object
-	} catch(_) {
-		return false
-	}
-}
-
-// Protects from prototype poisoning and unexpected merging up the prototype chain.
-function propertyIsUnsafe(target, key) {
-	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
-		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
-			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
-}
-
-function mergeObject(target, source, options) {
-	var destination = {};
-	if (options.isMergeableObject(target)) {
-		getKeys(target).forEach(function(key) {
-			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
-		});
-	}
-	getKeys(source).forEach(function(key) {
-		if (propertyIsUnsafe(target, key)) {
-			return
-		}
-
-		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
-			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
-		} else {
-			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
-		}
-	});
-	return destination
-}
-
-function deepmerge(target, source, options) {
-	options = options || {};
-	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
-	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
-	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
-	// implementations can use it. The caller may not replace it.
-	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
-
-	var sourceIsArray = Array.isArray(source);
-	var targetIsArray = Array.isArray(target);
-	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
-
-	if (!sourceAndTargetTypesMatch) {
-		return cloneUnlessOtherwiseSpecified(source, options)
-	} else if (sourceIsArray) {
-		return options.arrayMerge(target, source, options)
-	} else {
-		return mergeObject(target, source, options)
-	}
-}
-
-deepmerge.all = function deepmergeAll(array, options) {
-	if (!Array.isArray(array)) {
-		throw new Error('first argument should be an array')
-	}
-
-	return array.reduce(function(prev, next) {
-		return deepmerge(prev, next, options)
-	}, {})
-};
-
-var deepmerge_1 = deepmerge;
-
-var cjs = deepmerge_1;
-
-var deepmerge$1 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs);
-
-const widgetSourcesDecoder = object$1({
-    bundle: nonEmptyStringDecoder,
-    styles: array$1(nonEmptyStringDecoder)
-});
-const channelSelectorTypeDecoder = oneOf$1(constant$1("directional"), constant$1("default"));
-const channelSelectorDecoder = object$1({
-    type: optional$1(channelSelectorTypeDecoder),
-    enable: optional$1(boolean$1())
-});
-const positionDecoder = oneOf$1(constant$1("top"), constant$1("bottom"), constant$1("left"), constant$1("right"));
-const modeDecoder = oneOf$1(constant$1("default"), constant$1("compact"));
-const displayModeDecoder = oneOf$1(constant$1("all"), constant$1("fdc3"));
-const widgetChannelsDecoder = object$1({
-    selector: optional$1(channelSelectorDecoder),
-    displayMode: optional$1(displayModeDecoder)
-});
-const platformWidgetDefaultConfigDecoder = object$1({
-    channels: optional$1(widgetChannelsDecoder),
-    position: optional$1(positionDecoder),
-    mode: optional$1(modeDecoder),
-    displayInWorkspace: optional$1(boolean$1())
-});
-const widgetConfigDecoder = object$1({
-    enable: boolean$1(),
-    awaitFactory: optional$1(boolean$1()),
-    timeout: optional$1(number$1()),
-    channelSelector: optional$1(channelSelectorDecoder),
-    position: optional$1(positionDecoder),
-    mode: optional$1(modeDecoder),
-    displayInWorkspace: optional$1(boolean$1())
-});
-const uiOperationTypesDecoder = oneOf$1(constant$1("getResources"), constant$1("operationCheck"));
-const getResourcesDataDecoder = object$1({
-    origin: nonEmptyStringDecoder
-});
-const widgetResourcesDecoder = object$1({
-    blockedOrigin: boolean$1(),
-    config: optional$1(platformWidgetDefaultConfigDecoder),
-    sources: optional$1(widgetSourcesDecoder)
-});
-const resourcesDecoder = object$1({
-    widget: optional$1(widgetResourcesDecoder)
-});
-const getResourcesResultDecoder = object$1({
-    resources: resourcesDecoder
-});
-
 const operations = {
     getResources: { name: "getResources", dataDecoder: getResourcesDataDecoder, resultDecoder: getResourcesResultDecoder },
-    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder }
+    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
+    showAlert: { name: "showAlert", dataDecoder: uiAlertRequestMessageDecoder },
+    showDialog: { name: "showDialog", dataDecoder: uiDialogRequestMessageDecoder },
+    alertInteropAction: { name: "alertInteropAction", dataDecoder: alertInteropActionDataDecoder },
+    showResolver: { name: "showResolver", dataDecoder: uiResolverRequestMessageDecoder, resultDecoder: uiResolverResponseMessageDecoder },
 };
+
+const DEFAULT_ALERT_TTL = 5 * 1000;
+const MODALS_SHADOW_HOST_ID = "io-modals-shadow-host";
+const MODALS_ROOT_ELEMENT_ID = "io-modals-root";
+const WIDGET_SHADOW_HOST_ID = "io-widget-shadow-host";
+const WIDGET_ROOT_ELEMENT_ID = "io-widget-root";
+const INTENT_RESOLVER_SHADOW_HOST_ID = "io-intent-resolver-shadow-host";
+const INTENT_RESOLVER_ROOT_ELEMENT_ID = "io-intent-resolver-root";
+const SHADOW_ROOT_ELEMENT_CLASSNAME = "io-body io-variables";
 
 class UIController {
     ioc;
+    supportedOperationsNames = [];
     logger;
     bridge;
     config;
-    resources;
-    displayWidget = false;
+    zIndexDictionary = {
+        [WIDGET_SHADOW_HOST_ID]: "100",
+        [MODALS_SHADOW_HOST_ID]: "101",
+        [INTENT_RESOLVER_SHADOW_HOST_ID]: "100"
+    };
+    widgetResources;
+    modalsResources;
+    intentResolverResources;
+    modalsUiApi;
+    isDialogOpen = false;
+    intentResolverUiApi;
+    isIntentResolverOpen = false;
     constructor(ioc) {
         this.ioc = ioc;
     }
@@ -6782,21 +7018,14 @@ class UIController {
         this.logger.trace("starting the ui controller");
         this.bridge = ioc.bridge;
         this.config = ioc.config;
-        this.resources = await this.getResources();
-        if (!this.resources) {
+        this.addOperationsExecutors();
+        const resources = await this.getResources();
+        if (!resources) {
             this.logger.trace("No UI elements to display - platform is not initialized with any UI resources");
             return;
         }
-        this.logger.trace(`Received UI resources from platform: ${JSON.stringify(this.resources)}`);
-        this.setDisplayFlags();
-        const uiComponentsToDisplay = this.displayWidget;
-        if (!uiComponentsToDisplay) {
-            this.logger.trace("No UI elements to display.");
-            return;
-        }
-        if (this.displayWidget) {
-            await this.loadWidget();
-        }
+        this.logger.trace(`Received UI resources from platform: ${JSON.stringify(resources)}`);
+        this.setResources(resources);
     }
     async handleBridgeMessage(args) {
         const operationName = runDecoderWithIOError(uiOperationTypesDecoder, args.operation);
@@ -6811,11 +7040,155 @@ class UIController {
         return await operation.execute(operationData);
     }
     async showComponents(io) {
-        const widgetInitPromise = this.displayWidget ? this.invokeWidgetFactory(io) : Promise.resolve();
-        if (!this.config?.widget?.awaitFactory) {
-            return;
+        const initializeWidgetPromise = this.widgetResources ? this.initializeWidget(io, this.widgetResources) : Promise.resolve();
+        const initializeModalsPromise = this.modalsResources ? this.initializeModalsUi(io, this.modalsResources) : Promise.resolve();
+        const initializeIntentResolverPromise = this.intentResolverResources ? this.initializeIntentResolverUI(io, this.intentResolverResources) : Promise.resolve();
+        await Promise.all([
+            this.config.widget.awaitFactory ? initializeWidgetPromise : Promise.resolve(),
+            this.config.modals.awaitFactory ? initializeModalsPromise : Promise.resolve(),
+            this.config.intentResolver.awaitFactory ? initializeIntentResolverPromise : Promise.resolve(),
+        ]);
+    }
+    isIntentResolverEnabled() {
+        return !!this.intentResolverResources && this.config.intentResolver.enable;
+    }
+    addOperationsExecutors() {
+        operations.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        operations.showAlert.execute = this.handleShowAlert.bind(this);
+        operations.showDialog.execute = this.handleShowDialog.bind(this);
+        operations.showResolver.execute = this.handleShowResolver.bind(this);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations);
+    }
+    async handleShowAlert({ config }) {
+        if (!this.config.modals.alerts.enabled) {
+            return ioError.raiseError("Unable to perform showAlert operation because the client was initialized with 'modals: { alerts: { enabled: false } }' config.");
         }
-        await widgetInitPromise;
+        const modalsUiApi = this.modalsUiApi;
+        if (!modalsUiApi) {
+            return ioError.raiseError("Unable to perform showAlert operation because modalsUiApi is missing.");
+        }
+        const { promise: closePromise, resolve: resolveClosePromise } = wrapPromise();
+        const onClick = (config) => {
+            const decodedConfig = alertOnClickConfigDecoder.run(config);
+            if (!decodedConfig.ok) {
+                this.logger.error(`alert.onClick() was invoked with an invalid config. Error: ${JSON.stringify(decodedConfig.error)}.`);
+                return;
+            }
+            const { interopAction } = decodedConfig.result;
+            this.bridge.send("ui", operations.alertInteropAction, { interopAction }, undefined, { includeOperationCheck: true })
+                .catch((error) => this.logger.warn(extractErrorMsg(error)));
+        };
+        let result;
+        try {
+            this.logger.trace(`Open alert with config: ${JSON.stringify(config)}`);
+            result = modalsUiApi.alerts.open({ ...config, onClick, onClose: resolveClosePromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`modalsUiApi.alerts.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodeResult = openAlertResultDecoder.run(result);
+        if (!decodeResult.ok) {
+            return ioError.raiseError(`modalsUiApi.alerts.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
+        }
+        const timeoutId = setTimeout(() => {
+            resolveClosePromise();
+        }, getSafeTimeoutDelay(config.ttl ?? DEFAULT_ALERT_TTL));
+        closePromise.then(() => {
+            clearTimeout(timeoutId);
+            try {
+                modalsUiApi.alerts.close({ id: decodeResult.result.id });
+            }
+            catch (error) {
+                this.logger.warn(`Failed to close alert with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+            }
+        });
+    }
+    async handleShowDialog({ config }) {
+        if (!this.config.modals.dialogs.enabled) {
+            return ioError.raiseError("Unable to perform showDialog operation because the client was initialized with 'modals: { dialogs: { enabled: false } }' config.");
+        }
+        const modalsUiApi = this.modalsUiApi;
+        if (!modalsUiApi) {
+            return ioError.raiseError("Unable to perform showDialog operation because modalsUiApi is missing.");
+        }
+        if (this.isDialogOpen) {
+            return ioError.raiseError("Cannot open a dialog because another one is already open.");
+        }
+        const { promise: completionPromise, resolve: resolveCompletionPromise } = wrapPromise();
+        let result;
+        try {
+            this.logger.trace(`Open dialog with config: ${JSON.stringify(config)}`);
+            result = modalsUiApi.dialogs.open({ ...config, onCompletion: resolveCompletionPromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`modalsUiApi.dialogs.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodeResult = openDialogResultDecoder.run(result);
+        if (!decodeResult.ok) {
+            return ioError.raiseError(`modalsUiApi.dialogs.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
+        }
+        this.isDialogOpen = true;
+        let timeoutId;
+        if (config.timer) {
+            timeoutId = setTimeout(() => {
+                resolveCompletionPromise({ response: { isExpired: true } });
+            }, getSafeTimeoutDelay(config.timer.duration));
+        }
+        const response = await completionPromise;
+        clearTimeout(timeoutId);
+        this.isDialogOpen = false;
+        try {
+            modalsUiApi.dialogs.close({ id: decodeResult.result.id });
+        }
+        catch (error) {
+            this.logger.warn(`Failed to close dialog with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+        }
+        const decodeResponse = dialogOnCompletionConfigDecoder.run(response);
+        if (!decodeResponse.ok) {
+            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodeResponse.error)}.`);
+        }
+        return { result: decodeResponse.result.response };
+    }
+    async handleShowResolver({ config }) {
+        this.logger.trace(`Received open intent resolver request with config: ${JSON.stringify(config)}`);
+        if (!this.config.intentResolver.enable) {
+            return ioError.raiseError("Unable to perform showResolver operation because the client was initialized with 'intentResolver: { enable: false }' config.");
+        }
+        const intentResolverApi = this.intentResolverUiApi;
+        if (!intentResolverApi) {
+            return ioError.raiseError("Unable to perform showResolver operation because intentResolverApi is missing.");
+        }
+        if (this.isIntentResolverOpen) {
+            return ioError.raiseError("Cannot open the intent resolver because another one is already open.");
+        }
+        const { promise: completionPromise, resolve: resolveIntentResolverPromise } = wrapPromise();
+        let result;
+        try {
+            this.logger.trace(`Open intent resolver with config: ${JSON.stringify(config)}`);
+            result = intentResolverApi.open({ ...config, onUserResponse: resolveIntentResolverPromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`intentResolverUI.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodedOpenResult = openResolverResultDecoder.run(result);
+        if (!decodedOpenResult.ok) {
+            return ioError.raiseError(`intentResolverUI.open() returned an invalid result. Error: ${JSON.stringify(decodedOpenResult.error)}.`);
+        }
+        const timer = setTimeout(() => resolveIntentResolverPromise({ response: { isExpired: true } }), getSafeTimeoutDelay(config.timeout));
+        const response = await completionPromise;
+        clearTimeout(timer);
+        this.isIntentResolverOpen = false;
+        try {
+            intentResolverApi.close({ id: decodedOpenResult.result.id });
+        }
+        catch (error) {
+            this.logger.warn(`Failed to close intent resolver with id ${decodedOpenResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+        }
+        const decodedResponse = onUserResponseResponseDecoder.run(response);
+        if (!decodedResponse.ok) {
+            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodedResponse.error)}.`);
+        }
+        return { result: decodedResponse.result.response };
     }
     async getResources() {
         const data = {
@@ -6829,60 +7202,177 @@ class UIController {
             this.logger.warn(error?.message || JSON.stringify(error));
         }
     }
-    async loadWidget() {
-        this.logger.trace(`Client is initialized with widget config: ${JSON.stringify(this.config?.widget)}`);
-        if (!this.resources?.widget?.config || !this.resources.widget.sources) {
-            ioError.raiseError("Cannot load widget because sources are not provided");
-            return;
-        }
+    appendModalsResources(resources) {
+        this.logger.trace("Appending modals resources");
+        return this.appendResources(MODALS_SHADOW_HOST_ID, MODALS_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendWidgetResources(resources) {
+        this.logger.trace("Appending widget resources");
+        return this.appendResources(WIDGET_SHADOW_HOST_ID, WIDGET_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendIntentResolverResources(resources) {
+        this.logger.trace("Appending intent resolver resources");
+        return this.appendResources(INTENT_RESOLVER_SHADOW_HOST_ID, INTENT_RESOLVER_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendResources(shadowHostId, rootElementId, sources) {
+        const { bundle, fonts = [], styles } = sources;
+        const shadowHost = document.createElement("div");
+        shadowHost.id = shadowHostId;
+        shadowHost.style.position = "fixed";
+        shadowHost.style.zIndex = this.zIndexDictionary[shadowHostId];
+        const shadowRoot = shadowHost.attachShadow({ mode: "open" });
         const script = document.createElement("script");
-        script.src = this.resources?.widget.sources.bundle;
-        document.head.appendChild(script);
-        this.resources?.widget?.sources?.styles.forEach((style) => {
+        script.src = bundle;
+        script.type = "module";
+        shadowRoot.appendChild(script);
+        const rootElement = document.createElement("div");
+        rootElement.id = rootElementId;
+        rootElement.className = SHADOW_ROOT_ELEMENT_CLASSNAME;
+        shadowRoot.appendChild(rootElement);
+        styles.forEach((style) => {
             const link = document.createElement("link");
             link.rel = "stylesheet";
             link.href = style;
-            document.head.appendChild(link);
+            shadowRoot.appendChild(link);
         });
+        fonts.forEach((font) => {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = font;
+            document.head.insertBefore(link, document.head.firstChild);
+        });
+        document.body.appendChild(shadowHost);
+        return { rootElement };
     }
-    async invokeWidgetFactory(io) {
-        const timeout = this.config?.widget?.timeout || defaultWidgetTimeout;
-        await this.ioc.eventsDispatcher.widgetReady(timeout);
-        const config = deepmerge$1({ ...this.resources?.widget?.config, enable: this.displayWidget }, this.config?.widget || {});
-        this.logger.trace(`IOBrowserWidget factory is available. Invoking it with config: ${JSON.stringify(config)}`);
-        await window.IOBrowserWidget(io, config);
+    async initializeWidget(io, resources) {
+        this.logger.trace("Initializing IOBrowserWidget.");
+        const { rootElement } = this.appendWidgetResources(resources);
+        this.subscribeForThemeChanges(io, rootElement);
+        const config = {
+            ...deepmerge$1(resources.config, this.config.widget),
+            rootElement
+        };
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.widgetReady();
+            this.logger.trace(`IOBrowserWidget factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            await window.IOBrowserWidget(io, config);
+            this.logger.trace("IOBrowserWidget was initialized successfully.");
+        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserWidget to initialize.`);
     }
-    setDisplayFlags() {
-        this.setDisplayWidgetFlag();
+    async initializeModalsUi(io, resources) {
+        this.logger.trace("Initializing IOBrowserModalsUI.");
+        const { rootElement } = this.appendModalsResources(resources);
+        this.subscribeForThemeChanges(io, rootElement);
+        const config = {
+            ...this.config.modals,
+            rootElement
+        };
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.modalsUIFactoryReady();
+            this.logger.trace(`IOBrowserModalsUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            this.modalsUiApi = await window.IOBrowserModalsUI(io, config);
+            this.logger.trace("IOBrowserModalsUI was initialized successfully.");
+        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserModalsUI to initialize.`);
     }
-    setDisplayWidgetFlag() {
+    async initializeIntentResolverUI(io, resources) {
+        this.logger.trace("Initializing IOBrowserIntentResolverUI.");
+        const { rootElement } = this.appendIntentResolverResources(resources);
+        this.subscribeForThemeChanges(io, rootElement);
+        const config = {
+            ...this.config.intentResolver,
+            rootElement
+        };
+        const timeout = config.timeout;
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.intentResolverUIFactoryReady();
+            this.logger.trace(`IOBrowserIntentResolverUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            this.intentResolverUiApi = await window.IOBrowserIntentResolverUI(io, config);
+            this.logger.trace("IOBrowserIntentResolverUI initialized successfully.");
+        }, timeout, `Timeout of ${timeout}ms hit waiting for IOBrowserIntentResolverUI to initialize.`);
+    }
+    setResources(resources) {
+        this.setWidgetResources(resources.widget);
+        this.setModalsUiResources(resources.modals);
+        this.setIntentResolverResources(resources.intentResolver);
+    }
+    setWidgetResources(resources) {
         const baseMsg = "Widget won't be displayed. Reason: ";
-        if (!this.config?.widget) {
-            this.logger.trace(`${baseMsg} Client is not initialized with 'widget' config`);
+        const decodedConfig = widgetConfigDecoder.run(this.config.widget);
+        if (!decodedConfig.ok) {
+            this.logger.warn(`${baseMsg} invalid widget config. Error: ${decodedConfig.error}`);
             return;
         }
         if (!this.config.widget.enable) {
             this.logger.trace(`${baseMsg} Client initialized with 'widget: { enable: false }' config`);
             return;
         }
-        if (!this.resources?.widget) {
+        if (!resources) {
             this.logger.trace(`${baseMsg} Platform did not provide resources`);
             return;
         }
-        if (this.resources.widget.blockedOrigin) {
-            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}')`);
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving widget resources`);
             return;
         }
-        if (!this.resources.widget.sources || !this.resources.widget.config) {
-            this.logger.warn(`${baseMsg} Platform did not provide widget sources`);
-            return;
-        }
-        const decodedConfig = widgetConfigDecoder.run(this.config.widget);
+        this.widgetResources = resources;
+    }
+    setModalsUiResources(resources) {
+        const baseMsg = "Modals won't be displayed. Reason: ";
+        const decodedConfig = modalsConfigDecoder.run(this.config.modals);
         if (!decodedConfig.ok) {
-            this.logger.warn(`${baseMsg} invalid widget config. Error: ${decodedConfig.error}`);
+            this.logger.warn(`${baseMsg} invalid modals config. Error: ${decodedConfig.error}`);
             return;
         }
-        this.displayWidget = true;
+        if (!this.config.modals.alerts.enabled && !this.config.modals.dialogs.enabled) {
+            this.logger.trace(`${baseMsg} Client initialized with 'modals: { alerts: { enabled: false }, dialogs: { enabled: false } }' config`);
+            return;
+        }
+        if (!resources) {
+            this.logger.trace(`${baseMsg} Platform did not provide resources`);
+            return;
+        }
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving modals resources`);
+            return;
+        }
+        this.modalsResources = resources;
+    }
+    setIntentResolverResources(resources) {
+        const baseMsg = "Intent Resolver UI won't be displayed. Reason: ";
+        const decodedConfig = intentResolverConfigDecoder.run(this.config.intentResolver);
+        if (!decodedConfig.ok) {
+            this.logger.warn(`${baseMsg} invalid intent resolver config. Error: ${JSON.stringify(decodedConfig.error)}`);
+            return;
+        }
+        if (!this.config.intentResolver.enable) {
+            this.logger.trace(`${baseMsg} Client initialized with 'intentResolver: { enable: false }' config`);
+            return;
+        }
+        if (!resources) {
+            this.logger.trace(`${baseMsg} Platform did not provide resources`);
+            return;
+        }
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving intent resolver resources`);
+            return;
+        }
+        this.intentResolverResources = resources;
+    }
+    subscribeForThemeChanges(io, element) {
+        const themesApi = io.themes;
+        if (!themesApi) {
+            return;
+        }
+        const changeTheme = async (theme) => {
+            if (element.classList.contains(theme.name)) {
+                return;
+            }
+            const allThemes = await themesApi.list();
+            element.classList.remove(...allThemes.map(({ name }) => name));
+            element.classList.add(theme.name);
+        };
+        themesApi.onChanged(changeTheme);
+        themesApi.getCurrent().then(changeTheme);
     }
 }
 
@@ -6896,7 +7386,6 @@ class IoC {
     _layoutsControllerInstance;
     _notificationsControllerInstance;
     _intentsControllerInstance;
-    _legacyIntentsHelperInstance;
     _channelsControllerInstance;
     _themesControllerInstance;
     _extensionController;
@@ -6967,12 +7456,6 @@ class IoC {
             this._intentsControllerInstance = new IntentsController();
         }
         return this._intentsControllerInstance;
-    }
-    get legacyIntentsHelper() {
-        if (!this._legacyIntentsHelperInstance) {
-            this._legacyIntentsHelperInstance = new LegacyIntentsHelper(this._coreGlue.logger, this.bridge, this._coreGlue.interop, this.appManagerController, this.windowsController);
-        }
-        return this._legacyIntentsHelperInstance;
     }
     get systemController() {
         if (!this._systemControllerInstance) {
@@ -7053,7 +7536,34 @@ class IoC {
     }
 }
 
-var version$1 = "3.5.10";
+var version$1 = "4.0.0";
+
+const setupGlobalSystem = (io, bridge) => {
+    return {
+        getContainerInfo: async () => {
+            if (window === window.parent) {
+                return;
+            }
+            if (window.name.includes("#wsp")) {
+                return {
+                    workspaceFrame: {
+                        id: "N/A"
+                    }
+                };
+            }
+            return window.parent === window.top ?
+                { top: {} } :
+                { parent: {} };
+        },
+        getProfileData: async () => {
+            if (!bridge) {
+                throw new Error("Bridge is not available and cannot fetch the profile data");
+            }
+            const data = await bridge.send("system", { name: "getProfileData" }, undefined);
+            return data;
+        }
+    };
+};
 
 const createFactoryFunction = (coreFactoryFunction) => {
     let cachedApiPromise;
@@ -7076,6 +7586,8 @@ const createFactoryFunction = (coreFactoryFunction) => {
             logger.trace("start event dispatched, glue is ready, returning it");
             await ioc.uiController.showComponents(glue).catch((err) => logger.warn(err?.message ? err.message : JSON.stringify(err)));
             await Promise.all(Object.values(ioc.controllers).map((controller) => controller.postStart ? controller.postStart(glue, ioc) : Promise.resolve()));
+            window.iobrowser.system = setupGlobalSystem(glue, ioc.bridge);
+            window.iobrowser = Object.freeze({ ...window.iobrowser });
             return glue;
         }
         catch (error) {
@@ -8408,11 +8920,12 @@ class MessageReplayerImpl {
     }
 }
 
+/* @ts-self-types="./index.d.ts" */
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 let nanoid = (size = 21) => {
   let id = '';
-  let i = size;
+  let i = size | 0;
   while (i--) {
     id += urlAlphabet[(Math.random() * 64) | 0];
   }
@@ -8457,7 +8970,6 @@ class WebPlatformTransport {
     connectionReject;
     port;
     myClientId;
-    children = [];
     extContentAvailable = false;
     extContentConnecting = false;
     extContentConnected = false;
@@ -8481,7 +8993,7 @@ class WebPlatformTransport {
         parentPing: { name: "parentPing", handle: this.handleParentPing.bind(this) },
         platformPing: { name: "platformPing", handle: this.handlePlatformPing.bind(this) },
         platformReady: { name: "platformReady", handle: this.handlePlatformReady.bind(this) },
-        clientUnload: { name: "clientUnload", handle: this.handleClientUnload.bind(this) },
+        clientUnload: { name: "clientUnload", handle: () => { } },
         manualUnload: { name: "manualUnload", handle: this.handleManualUnload.bind(this) },
         extConnectionResponse: { name: "extConnectionResponse", handle: this.handleExtConnectionResponse.bind(this) },
         extSetupRequest: { name: "extSetupRequest", handle: this.handleExtSetupRequest.bind(this) },
@@ -8510,7 +9022,7 @@ class WebPlatformTransport {
     }
     async sendObject(msg) {
         if (this.extContentConnected) {
-            return window.postMessage({ glue42ExtOut: msg }, this.defaultTargetString);
+            return window.postMessage({ glue42ExtOut: msg }, window.origin);
         }
         if (!this.port) {
             throw new Error("Cannot send message, because the port was not opened yet");
@@ -8612,7 +9124,7 @@ class WebPlatformTransport {
                 request.glue42core.clientType = "child";
                 request.glue42core.bridgeInstanceId = this.myClientId;
                 request.glue42core.parentWindowId = this.parentWindowId;
-                return window.postMessage(request, this.defaultTargetString);
+                return window.postMessage(request, window.origin);
             }
             if (!target) {
                 throw new Error("Cannot send a connection request, because no glue target was specified!");
@@ -8693,10 +9205,10 @@ class WebPlatformTransport {
     }
     handleConnectionAccepted(event) {
         const data = event.data?.glue42core;
-        if (this.myClientId === data.clientId) {
-            return this.handleAcceptanceOfMyRequest(data);
+        if (this.myClientId !== data.clientId) {
+            return this.logger?.debug(`ignoring a connection accepted signal, because it is not targeted at me. My id: ${this.myClientId}, the id in the message: ${data.clientId}`);
         }
-        return this.handleAcceptanceOfGrandChildRequest(data, event);
+        return this.handleAcceptanceOfMyRequest(data);
     }
     handleAcceptanceOfMyRequest(data) {
         this.logger.debug("handling a connection accepted signal targeted at me.");
@@ -8759,23 +9271,6 @@ class WebPlatformTransport {
             return;
         }
     }
-    handleAcceptanceOfGrandChildRequest(data, event) {
-        if (this.extContentConnecting || this.extContentConnected) {
-            this.logger.debug("cannot process acceptance of a grandchild, because I am connected to a content script");
-            return;
-        }
-        this.logger.debug(`handling a connection accepted signal targeted at a grandchild: ${data.clientId}`);
-        const child = this.children.find((c) => c.grandChildId === data.clientId);
-        if (!child) {
-            this.logger.error(`cannot handle connection accepted for grandchild: ${data.clientId}, because there is no grandchild with this id`);
-            return;
-        }
-        child.connected = true;
-        this.logger.debug(`the grandchild connection for ${data.clientId} is set up, forwarding the success message and the gateway port`);
-        data.parentWindowId = this.publicWindowId;
-        child.source.postMessage(event.data, child.origin, [data.port]);
-        return;
-    }
     handleConnectionRejected(event) {
         this.logger.debug("handling a connection rejection. Most likely the reason is that this window was not created by a glue API call");
         if (!this.connectionReject) {
@@ -8787,26 +9282,11 @@ class WebPlatformTransport {
         this.connectionReject(errorMsg);
         delete this.connectionReject;
     }
-    handleConnectionRequest(event) {
+    handleConnectionRequest() {
         if (this.extContentConnecting) {
             this.logger.debug("This connection request event is targeted at the extension content");
             return;
         }
-        const source = event.source;
-        const data = event.data.glue42core;
-        if (!data.clientType || data.clientType !== "grandChild") {
-            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source was not opened by a glue API call");
-        }
-        if (!data.clientId) {
-            return this.rejectConnectionRequest(source, event.origin, "rejecting a connection request, because the source did not provide a valid id");
-        }
-        if (!this.parent) {
-            return this.rejectConnectionRequest(source, event.origin, "Cannot forward the connection request, because no direct connection to the platform was found");
-        }
-        this.logger.debug(`handling a connection request for a grandchild: ${data.clientId}`);
-        this.children.push({ grandChildId: data.clientId, source, connected: false, origin: event.origin });
-        this.logger.debug(`grandchild: ${data.clientId} is prepared, forwarding connection request to the platform`);
-        this.parent.postMessage(event.data, this.defaultTargetString);
     }
     handleParentPing(event) {
         if (!this.parentReady) {
@@ -8849,24 +9329,9 @@ class WebPlatformTransport {
             }
         };
         if (this.extContentConnected) {
-            return window.postMessage({ glue42ExtOut: message }, this.defaultTargetString);
+            return window.postMessage({ glue42ExtOut: message }, window.origin);
         }
         this.port?.postMessage(message);
-    }
-    handleClientUnload(event) {
-        const data = event.data.glue42core;
-        const clientId = data?.data.clientId;
-        if (!clientId) {
-            this.logger.warn("cannot process grand child unload, because the provided id was not valid");
-            return;
-        }
-        const foundChild = this.children.find((child) => child.grandChildId === clientId);
-        if (!foundChild) {
-            this.logger.warn("cannot process grand child unload, because this client is unaware of this grandchild");
-            return;
-        }
-        this.logger.debug(`handling grandchild unload for id: ${clientId}`);
-        this.children = this.children.filter((child) => child.grandChildId !== clientId);
     }
     handlePlatformPing() {
         return;
@@ -8877,16 +9342,6 @@ class WebPlatformTransport {
     }
     checkMessageTypeValid(typeToValidate) {
         return typeof typeToValidate === "string" && !!this.messages[typeToValidate];
-    }
-    rejectConnectionRequest(source, origin, reason) {
-        this.rejected = true;
-        this.logger.error(reason);
-        const rejection = {
-            glue42core: {
-                type: this.messages.connectionRejected.name
-            }
-        };
-        source.postMessage(rejection, origin);
     }
     requestConnectionPermissionFromExt() {
         return this.waitForContentScript()
@@ -8899,7 +9354,7 @@ class WebPlatformTransport {
                 }
             };
             this.logger.debug("permission request to the extension content script was sent");
-            window.postMessage(message, this.defaultTargetString);
+            window.postMessage(message, window.origin);
         }, this.parentPingTimeout, "Cannot initialize glue, because this app was not opened or created by a Glue Client and the request for extension connection timed out"));
     }
     handleExtConnectionResponse(event) {
@@ -9962,7 +10417,10 @@ class Logger {
                                 stack: error.stack ?? ""
                             };
                         }
-                        interop.invoke(Logger.InteropMethodName, args);
+                        interop.invoke(Logger.InteropMethodName, args)
+                            .catch((e) => {
+                            this.logFn.error(`Unable to send log message to the platform: ${e.message}`, e);
+                        });
                     }
                 }
                 catch {
@@ -10040,7 +10498,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.5.2";
+var version = "6.6.0";
 
 function prepareConfig (configuration, ext, glue42gd) {
     let nodeStartingContext;
@@ -12927,6 +13385,832 @@ function rejectAfter(ms = 0, promise, error) {
     });
 }
 
+/**
+ * Wraps values in an `Ok` type.
+ *
+ * Example: `ok(5) // => {ok: true, result: 5}`
+ */
+var ok = function (result) { return ({ ok: true, result: result }); };
+/**
+ * Wraps errors in an `Err` type.
+ *
+ * Example: `err('on fire') // => {ok: false, error: 'on fire'}`
+ */
+var err = function (error) { return ({ ok: false, error: error }); };
+/**
+ * Create a `Promise` that either resolves with the result of `Ok` or rejects
+ * with the error of `Err`.
+ */
+var asPromise = function (r) {
+    return r.ok === true ? Promise.resolve(r.result) : Promise.reject(r.error);
+};
+/**
+ * Unwraps a `Result` and returns either the result of an `Ok`, or
+ * `defaultValue`.
+ *
+ * Example:
+ * ```
+ * Result.withDefault(5, number().run(json))
+ * ```
+ *
+ * It would be nice if `Decoder` had an instance method that mirrored this
+ * function. Such a method would look something like this:
+ * ```
+ * class Decoder<A> {
+ *   runWithDefault = (defaultValue: A, json: any): A =>
+ *     Result.withDefault(defaultValue, this.run(json));
+ * }
+ *
+ * number().runWithDefault(5, json)
+ * ```
+ * Unfortunately, the type of `defaultValue: A` on the method causes issues
+ * with type inference on  the `object` decoder in some situations. While these
+ * inference issues can be solved by providing the optional type argument for
+ * `object`s, the extra trouble and confusion doesn't seem worth it.
+ */
+var withDefault = function (defaultValue, r) {
+    return r.ok === true ? r.result : defaultValue;
+};
+/**
+ * Return the successful result, or throw an error.
+ */
+var withException = function (r) {
+    if (r.ok === true) {
+        return r.result;
+    }
+    else {
+        throw r.error;
+    }
+};
+/**
+ * Apply `f` to the result of an `Ok`, or pass the error through.
+ */
+var map = function (f, r) {
+    return r.ok === true ? ok(f(r.result)) : r;
+};
+/**
+ * Apply `f` to the result of two `Ok`s, or pass an error through. If both
+ * `Result`s are errors then the first one is returned.
+ */
+var map2 = function (f, ar, br) {
+    return ar.ok === false ? ar :
+        br.ok === false ? br :
+            ok(f(ar.result, br.result));
+};
+/**
+ * Apply `f` to the error of an `Err`, or pass the success through.
+ */
+var mapError = function (f, r) {
+    return r.ok === true ? r : err(f(r.error));
+};
+/**
+ * Chain together a sequence of computations that may fail, similar to a
+ * `Promise`. If the first computation fails then the error will propagate
+ * through. If it succeeds, then `f` will be applied to the value, returning a
+ * new `Result`.
+ */
+var andThen = function (f, r) {
+    return r.ok === true ? f(r.result) : r;
+};
+
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+
+
+var __assign = function() {
+    __assign = Object.assign || function __assign(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+
+function __rest(s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+}
+
+function isEqual(a, b) {
+    if (a === b) {
+        return true;
+    }
+    if (a === null && b === null) {
+        return true;
+    }
+    if (typeof (a) !== typeof (b)) {
+        return false;
+    }
+    if (typeof (a) === 'object') {
+        // Array
+        if (Array.isArray(a)) {
+            if (!Array.isArray(b)) {
+                return false;
+            }
+            if (a.length !== b.length) {
+                return false;
+            }
+            for (var i = 0; i < a.length; i++) {
+                if (!isEqual(a[i], b[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        // Hash table
+        var keys = Object.keys(a);
+        if (keys.length !== Object.keys(b).length) {
+            return false;
+        }
+        for (var i = 0; i < keys.length; i++) {
+            if (!b.hasOwnProperty(keys[i])) {
+                return false;
+            }
+            if (!isEqual(a[keys[i]], b[keys[i]])) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+/*
+ * Helpers
+ */
+var isJsonArray = function (json) { return Array.isArray(json); };
+var isJsonObject = function (json) {
+    return typeof json === 'object' && json !== null && !isJsonArray(json);
+};
+var typeString = function (json) {
+    switch (typeof json) {
+        case 'string':
+            return 'a string';
+        case 'number':
+            return 'a number';
+        case 'boolean':
+            return 'a boolean';
+        case 'undefined':
+            return 'undefined';
+        case 'object':
+            if (json instanceof Array) {
+                return 'an array';
+            }
+            else if (json === null) {
+                return 'null';
+            }
+            else {
+                return 'an object';
+            }
+        default:
+            return JSON.stringify(json);
+    }
+};
+var expectedGot = function (expected, got) {
+    return "expected " + expected + ", got " + typeString(got);
+};
+var printPath = function (paths) {
+    return paths.map(function (path) { return (typeof path === 'string' ? "." + path : "[" + path + "]"); }).join('');
+};
+var prependAt = function (newAt, _a) {
+    var at = _a.at, rest = __rest(_a, ["at"]);
+    return (__assign({ at: newAt + (at || '') }, rest));
+};
+/**
+ * Decoders transform json objects with unknown structure into known and
+ * verified forms. You can create objects of type `Decoder<A>` with either the
+ * primitive decoder functions, such as `boolean()` and `string()`, or by
+ * applying higher-order decoders to the primitives, such as `array(boolean())`
+ * or `dict(string())`.
+ *
+ * Each of the decoder functions are available both as a static method on
+ * `Decoder` and as a function alias -- for example the string decoder is
+ * defined at `Decoder.string()`, but is also aliased to `string()`. Using the
+ * function aliases exported with the library is recommended.
+ *
+ * `Decoder` exposes a number of 'run' methods, which all decode json in the
+ * same way, but communicate success and failure in different ways. The `map`
+ * and `andThen` methods modify decoders without having to call a 'run' method.
+ *
+ * Alternatively, the main decoder `run()` method returns an object of type
+ * `Result<A, DecoderError>`. This library provides a number of helper
+ * functions for dealing with the `Result` type, so you can do all the same
+ * things with a `Result` as with the decoder methods.
+ */
+var Decoder = /** @class */ (function () {
+    /**
+     * The Decoder class constructor is kept private to separate the internal
+     * `decode` function from the external `run` function. The distinction
+     * between the two functions is that `decode` returns a
+     * `Partial<DecoderError>` on failure, which contains an unfinished error
+     * report. When `run` is called on a decoder, the relevant series of `decode`
+     * calls is made, and then on failure the resulting `Partial<DecoderError>`
+     * is turned into a `DecoderError` by filling in the missing information.
+     *
+     * While hiding the constructor may seem restrictive, leveraging the
+     * provided decoder combinators and helper functions such as
+     * `andThen` and `map` should be enough to build specialized decoders as
+     * needed.
+     */
+    function Decoder(decode) {
+        var _this = this;
+        this.decode = decode;
+        /**
+         * Run the decoder and return a `Result` with either the decoded value or a
+         * `DecoderError` containing the json input, the location of the error, and
+         * the error message.
+         *
+         * Examples:
+         * ```
+         * number().run(12)
+         * // => {ok: true, result: 12}
+         *
+         * string().run(9001)
+         * // =>
+         * // {
+         * //   ok: false,
+         * //   error: {
+         * //     kind: 'DecoderError',
+         * //     input: 9001,
+         * //     at: 'input',
+         * //     message: 'expected a string, got 9001'
+         * //   }
+         * // }
+         * ```
+         */
+        this.run = function (json) {
+            return mapError(function (error) { return ({
+                kind: 'DecoderError',
+                input: json,
+                at: 'input' + (error.at || ''),
+                message: error.message || ''
+            }); }, _this.decode(json));
+        };
+        /**
+         * Run the decoder as a `Promise`.
+         */
+        this.runPromise = function (json) { return asPromise(_this.run(json)); };
+        /**
+         * Run the decoder and return the value on success, or throw an exception
+         * with a formatted error string.
+         */
+        this.runWithException = function (json) { return withException(_this.run(json)); };
+        /**
+         * Construct a new decoder that applies a transformation to the decoded
+         * result. If the decoder succeeds then `f` will be applied to the value. If
+         * it fails the error will propagated through.
+         *
+         * Example:
+         * ```
+         * number().map(x => x * 5).run(10)
+         * // => {ok: true, result: 50}
+         * ```
+         */
+        this.map = function (f) {
+            return new Decoder(function (json) { return map(f, _this.decode(json)); });
+        };
+        /**
+         * Chain together a sequence of decoders. The first decoder will run, and
+         * then the function will determine what decoder to run second. If the result
+         * of the first decoder succeeds then `f` will be applied to the decoded
+         * value. If it fails the error will propagate through.
+         *
+         * This is a very powerful method -- it can act as both the `map` and `where`
+         * methods, can improve error messages for edge cases, and can be used to
+         * make a decoder for custom types.
+         *
+         * Example of adding an error message:
+         * ```
+         * const versionDecoder = valueAt(['version'], number());
+         * const infoDecoder3 = object({a: boolean()});
+         *
+         * const decoder = versionDecoder.andThen(version => {
+         *   switch (version) {
+         *     case 3:
+         *       return infoDecoder3;
+         *     default:
+         *       return fail(`Unable to decode info, version ${version} is not supported.`);
+         *   }
+         * });
+         *
+         * decoder.run({version: 3, a: true})
+         * // => {ok: true, result: {a: true}}
+         *
+         * decoder.run({version: 5, x: 'abc'})
+         * // =>
+         * // {
+         * //   ok: false,
+         * //   error: {... message: 'Unable to decode info, version 5 is not supported.'}
+         * // }
+         * ```
+         *
+         * Example of decoding a custom type:
+         * ```
+         * // nominal type for arrays with a length of at least one
+         * type NonEmptyArray<T> = T[] & { __nonEmptyArrayBrand__: void };
+         *
+         * const nonEmptyArrayDecoder = <T>(values: Decoder<T>): Decoder<NonEmptyArray<T>> =>
+         *   array(values).andThen(arr =>
+         *     arr.length > 0
+         *       ? succeed(createNonEmptyArray(arr))
+         *       : fail(`expected a non-empty array, got an empty array`)
+         *   );
+         * ```
+         */
+        this.andThen = function (f) {
+            return new Decoder(function (json) {
+                return andThen(function (value) { return f(value).decode(json); }, _this.decode(json));
+            });
+        };
+        /**
+         * Add constraints to a decoder _without_ changing the resulting type. The
+         * `test` argument is a predicate function which returns true for valid
+         * inputs. When `test` fails on an input, the decoder fails with the given
+         * `errorMessage`.
+         *
+         * ```
+         * const chars = (length: number): Decoder<string> =>
+         *   string().where(
+         *     (s: string) => s.length === length,
+         *     `expected a string of length ${length}`
+         *   );
+         *
+         * chars(5).run('12345')
+         * // => {ok: true, result: '12345'}
+         *
+         * chars(2).run('HELLO')
+         * // => {ok: false, error: {... message: 'expected a string of length 2'}}
+         *
+         * chars(12).run(true)
+         * // => {ok: false, error: {... message: 'expected a string, got a boolean'}}
+         * ```
+         */
+        this.where = function (test, errorMessage) {
+            return _this.andThen(function (value) { return (test(value) ? Decoder.succeed(value) : Decoder.fail(errorMessage)); });
+        };
+    }
+    /**
+     * Decoder primitive that validates strings, and fails on all other input.
+     */
+    Decoder.string = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'string'
+                ? ok(json)
+                : err({ message: expectedGot('a string', json) });
+        });
+    };
+    /**
+     * Decoder primitive that validates numbers, and fails on all other input.
+     */
+    Decoder.number = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'number'
+                ? ok(json)
+                : err({ message: expectedGot('a number', json) });
+        });
+    };
+    /**
+     * Decoder primitive that validates booleans, and fails on all other input.
+     */
+    Decoder.boolean = function () {
+        return new Decoder(function (json) {
+            return typeof json === 'boolean'
+                ? ok(json)
+                : err({ message: expectedGot('a boolean', json) });
+        });
+    };
+    Decoder.constant = function (value) {
+        return new Decoder(function (json) {
+            return isEqual(json, value)
+                ? ok(value)
+                : err({ message: "expected " + JSON.stringify(value) + ", got " + JSON.stringify(json) });
+        });
+    };
+    Decoder.object = function (decoders) {
+        return new Decoder(function (json) {
+            if (isJsonObject(json) && decoders) {
+                var obj = {};
+                for (var key in decoders) {
+                    if (decoders.hasOwnProperty(key)) {
+                        var r = decoders[key].decode(json[key]);
+                        if (r.ok === true) {
+                            // tslint:disable-next-line:strict-type-predicates
+                            if (r.result !== undefined) {
+                                obj[key] = r.result;
+                            }
+                        }
+                        else if (json[key] === undefined) {
+                            return err({ message: "the key '" + key + "' is required but was not present" });
+                        }
+                        else {
+                            return err(prependAt("." + key, r.error));
+                        }
+                    }
+                }
+                return ok(obj);
+            }
+            else if (isJsonObject(json)) {
+                return ok(json);
+            }
+            else {
+                return err({ message: expectedGot('an object', json) });
+            }
+        });
+    };
+    Decoder.array = function (decoder) {
+        return new Decoder(function (json) {
+            if (isJsonArray(json) && decoder) {
+                var decodeValue_1 = function (v, i) {
+                    return mapError(function (err$$1) { return prependAt("[" + i + "]", err$$1); }, decoder.decode(v));
+                };
+                return json.reduce(function (acc, v, i) {
+                    return map2(function (arr, result) { return arr.concat([result]); }, acc, decodeValue_1(v, i));
+                }, ok([]));
+            }
+            else if (isJsonArray(json)) {
+                return ok(json);
+            }
+            else {
+                return err({ message: expectedGot('an array', json) });
+            }
+        });
+    };
+    Decoder.tuple = function (decoders) {
+        return new Decoder(function (json) {
+            if (isJsonArray(json)) {
+                if (json.length !== decoders.length) {
+                    return err({
+                        message: "expected a tuple of length " + decoders.length + ", got one of length " + json.length
+                    });
+                }
+                var result = [];
+                for (var i = 0; i < decoders.length; i++) {
+                    var nth = decoders[i].decode(json[i]);
+                    if (nth.ok) {
+                        result[i] = nth.result;
+                    }
+                    else {
+                        return err(prependAt("[" + i + "]", nth.error));
+                    }
+                }
+                return ok(result);
+            }
+            else {
+                return err({ message: expectedGot("a tuple of length " + decoders.length, json) });
+            }
+        });
+    };
+    Decoder.union = function (ad, bd) {
+        var decoders = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            decoders[_i - 2] = arguments[_i];
+        }
+        return Decoder.oneOf.apply(Decoder, [ad, bd].concat(decoders));
+    };
+    Decoder.intersection = function (ad, bd) {
+        var ds = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            ds[_i - 2] = arguments[_i];
+        }
+        return new Decoder(function (json) {
+            return [ad, bd].concat(ds).reduce(function (acc, decoder) { return map2(Object.assign, acc, decoder.decode(json)); }, ok({}));
+        });
+    };
+    /**
+     * Escape hatch to bypass validation. Always succeeds and types the result as
+     * `any`. Useful for defining decoders incrementally, particularly for
+     * complex objects.
+     *
+     * Example:
+     * ```
+     * interface User {
+     *   name: string;
+     *   complexUserData: ComplexType;
+     * }
+     *
+     * const userDecoder: Decoder<User> = object({
+     *   name: string(),
+     *   complexUserData: anyJson()
+     * });
+     * ```
+     */
+    Decoder.anyJson = function () { return new Decoder(function (json) { return ok(json); }); };
+    /**
+     * Decoder identity function which always succeeds and types the result as
+     * `unknown`.
+     */
+    Decoder.unknownJson = function () {
+        return new Decoder(function (json) { return ok(json); });
+    };
+    /**
+     * Decoder for json objects where the keys are unknown strings, but the values
+     * should all be of the same type.
+     *
+     * Example:
+     * ```
+     * dict(number()).run({chocolate: 12, vanilla: 10, mint: 37});
+     * // => {ok: true, result: {chocolate: 12, vanilla: 10, mint: 37}}
+     * ```
+     */
+    Decoder.dict = function (decoder) {
+        return new Decoder(function (json) {
+            if (isJsonObject(json)) {
+                var obj = {};
+                for (var key in json) {
+                    if (json.hasOwnProperty(key)) {
+                        var r = decoder.decode(json[key]);
+                        if (r.ok === true) {
+                            obj[key] = r.result;
+                        }
+                        else {
+                            return err(prependAt("." + key, r.error));
+                        }
+                    }
+                }
+                return ok(obj);
+            }
+            else {
+                return err({ message: expectedGot('an object', json) });
+            }
+        });
+    };
+    /**
+     * Decoder for values that may be `undefined`. This is primarily helpful for
+     * decoding interfaces with optional fields.
+     *
+     * Example:
+     * ```
+     * interface User {
+     *   id: number;
+     *   isOwner?: boolean;
+     * }
+     *
+     * const decoder: Decoder<User> = object({
+     *   id: number(),
+     *   isOwner: optional(boolean())
+     * });
+     * ```
+     */
+    Decoder.optional = function (decoder) {
+        return new Decoder(function (json) { return (json === undefined || json === null ? ok(undefined) : decoder.decode(json)); });
+    };
+    /**
+     * Decoder that attempts to run each decoder in `decoders` and either succeeds
+     * with the first successful decoder, or fails after all decoders have failed.
+     *
+     * Note that `oneOf` expects the decoders to all have the same return type,
+     * while `union` creates a decoder for the union type of all the input
+     * decoders.
+     *
+     * Examples:
+     * ```
+     * oneOf(string(), number().map(String))
+     * oneOf(constant('start'), constant('stop'), succeed('unknown'))
+     * ```
+     */
+    Decoder.oneOf = function () {
+        var decoders = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            decoders[_i] = arguments[_i];
+        }
+        return new Decoder(function (json) {
+            var errors = [];
+            for (var i = 0; i < decoders.length; i++) {
+                var r = decoders[i].decode(json);
+                if (r.ok === true) {
+                    return r;
+                }
+                else {
+                    errors[i] = r.error;
+                }
+            }
+            var errorsList = errors
+                .map(function (error) { return "at error" + (error.at || '') + ": " + error.message; })
+                .join('", "');
+            return err({
+                message: "expected a value matching one of the decoders, got the errors [\"" + errorsList + "\"]"
+            });
+        });
+    };
+    /**
+     * Decoder that always succeeds with either the decoded value, or a fallback
+     * default value.
+     */
+    Decoder.withDefault = function (defaultValue, decoder) {
+        return new Decoder(function (json) {
+            return ok(withDefault(defaultValue, decoder.decode(json)));
+        });
+    };
+    /**
+     * Decoder that pulls a specific field out of a json structure, instead of
+     * decoding and returning the full structure. The `paths` array describes the
+     * object keys and array indices to traverse, so that values can be pulled out
+     * of a nested structure.
+     *
+     * Example:
+     * ```
+     * const decoder = valueAt(['a', 'b', 0], string());
+     *
+     * decoder.run({a: {b: ['surprise!']}})
+     * // => {ok: true, result: 'surprise!'}
+     *
+     * decoder.run({a: {x: 'cats'}})
+     * // => {ok: false, error: {... at: 'input.a.b[0]' message: 'path does not exist'}}
+     * ```
+     *
+     * Note that the `decoder` is ran on the value found at the last key in the
+     * path, even if the last key is not found. This allows the `optional`
+     * decoder to succeed when appropriate.
+     * ```
+     * const optionalDecoder = valueAt(['a', 'b', 'c'], optional(string()));
+     *
+     * optionalDecoder.run({a: {b: {c: 'surprise!'}}})
+     * // => {ok: true, result: 'surprise!'}
+     *
+     * optionalDecoder.run({a: {b: 'cats'}})
+     * // => {ok: false, error: {... at: 'input.a.b.c' message: 'expected an object, got "cats"'}
+     *
+     * optionalDecoder.run({a: {b: {z: 1}}})
+     * // => {ok: true, result: undefined}
+     * ```
+     */
+    Decoder.valueAt = function (paths, decoder) {
+        return new Decoder(function (json) {
+            var jsonAtPath = json;
+            for (var i = 0; i < paths.length; i++) {
+                if (jsonAtPath === undefined) {
+                    return err({
+                        at: printPath(paths.slice(0, i + 1)),
+                        message: 'path does not exist'
+                    });
+                }
+                else if (typeof paths[i] === 'string' && !isJsonObject(jsonAtPath)) {
+                    return err({
+                        at: printPath(paths.slice(0, i + 1)),
+                        message: expectedGot('an object', jsonAtPath)
+                    });
+                }
+                else if (typeof paths[i] === 'number' && !isJsonArray(jsonAtPath)) {
+                    return err({
+                        at: printPath(paths.slice(0, i + 1)),
+                        message: expectedGot('an array', jsonAtPath)
+                    });
+                }
+                else {
+                    jsonAtPath = jsonAtPath[paths[i]];
+                }
+            }
+            return mapError(function (error) {
+                return jsonAtPath === undefined
+                    ? { at: printPath(paths), message: 'path does not exist' }
+                    : prependAt(printPath(paths), error);
+            }, decoder.decode(jsonAtPath));
+        });
+    };
+    /**
+     * Decoder that ignores the input json and always succeeds with `fixedValue`.
+     */
+    Decoder.succeed = function (fixedValue) {
+        return new Decoder(function (json) { return ok(fixedValue); });
+    };
+    /**
+     * Decoder that ignores the input json and always fails with `errorMessage`.
+     */
+    Decoder.fail = function (errorMessage) {
+        return new Decoder(function (json) { return err({ message: errorMessage }); });
+    };
+    /**
+     * Decoder that allows for validating recursive data structures. Unlike with
+     * functions, decoders assigned to variables can't reference themselves
+     * before they are fully defined. We can avoid prematurely referencing the
+     * decoder by wrapping it in a function that won't be called until use, at
+     * which point the decoder has been defined.
+     *
+     * Example:
+     * ```
+     * interface Comment {
+     *   msg: string;
+     *   replies: Comment[];
+     * }
+     *
+     * const decoder: Decoder<Comment> = object({
+     *   msg: string(),
+     *   replies: lazy(() => array(decoder))
+     * });
+     * ```
+     */
+    Decoder.lazy = function (mkDecoder) {
+        return new Decoder(function (json) { return mkDecoder().decode(json); });
+    };
+    return Decoder;
+}());
+
+/* tslint:disable:variable-name */
+/** See `Decoder.string` */
+var string = Decoder.string;
+/** See `Decoder.number` */
+var number = Decoder.number;
+/** See `Decoder.boolean` */
+var boolean = Decoder.boolean;
+/** See `Decoder.anyJson` */
+var anyJson = Decoder.anyJson;
+/** See `Decoder.unknownJson` */
+Decoder.unknownJson;
+/** See `Decoder.constant` */
+var constant = Decoder.constant;
+/** See `Decoder.object` */
+var object = Decoder.object;
+/** See `Decoder.array` */
+var array = Decoder.array;
+/** See `Decoder.tuple` */
+Decoder.tuple;
+/** See `Decoder.dict` */
+Decoder.dict;
+/** See `Decoder.optional` */
+var optional = Decoder.optional;
+/** See `Decoder.oneOf` */
+Decoder.oneOf;
+/** See `Decoder.union` */
+var union = Decoder.union;
+/** See `Decoder.intersection` */
+Decoder.intersection;
+/** See `Decoder.withDefault` */
+Decoder.withDefault;
+/** See `Decoder.valueAt` */
+Decoder.valueAt;
+/** See `Decoder.succeed` */
+Decoder.succeed;
+/** See `Decoder.fail` */
+var fail = Decoder.fail;
+/** See `Decoder.lazy` */
+Decoder.lazy;
+
+const functionCheck = (input, propDescription) => {
+    const providedType = typeof input;
+    return providedType === "function" ?
+        anyJson() :
+        fail(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
+};
+const nonEmptyStringDecoder = string().where((s) => s.length > 0, "Expected a non-empty string");
+const nonNegativeNumberDecoder = number().where((num) => num >= 0, "Expected a non-negative number or 0");
+const positiveNumberDecoder = number().where((num) => num > 0, "Expected a positive number");
+const methodDefinitionDecoder = object({
+    name: nonEmptyStringDecoder,
+    objectTypes: optional(array(nonEmptyStringDecoder)),
+    displayName: optional(nonEmptyStringDecoder),
+    accepts: optional(nonEmptyStringDecoder),
+    returns: optional(nonEmptyStringDecoder),
+    description: optional(nonEmptyStringDecoder),
+    version: optional(nonNegativeNumberDecoder),
+    supportsStreaming: optional(boolean()),
+    flags: optional(object()),
+    getServers: optional(anyJson().andThen((result) => functionCheck(result, "method definition getServers")))
+});
+const methodFilterDecoder = union(nonEmptyStringDecoder, methodDefinitionDecoder);
+const instanceDecoder = object({
+    application: optional(nonEmptyStringDecoder),
+    applicationName: optional(nonEmptyStringDecoder),
+    pid: optional(nonNegativeNumberDecoder),
+    machine: optional(nonEmptyStringDecoder),
+    user: optional(nonEmptyStringDecoder),
+    environment: optional(nonEmptyStringDecoder),
+    region: optional(nonEmptyStringDecoder),
+    service: optional(nonEmptyStringDecoder),
+    instance: optional(nonEmptyStringDecoder),
+    windowId: optional(nonEmptyStringDecoder),
+    peerId: optional(nonEmptyStringDecoder),
+    isLocal: optional(boolean()),
+    api: optional(nonEmptyStringDecoder),
+    getMethods: optional(anyJson().andThen((result) => functionCheck(result, "instance getMethods"))),
+    getStreams: optional(anyJson().andThen((result) => functionCheck(result, "instance getStreams")))
+});
+const targetDecoder = union(constant("best"), constant("all"), constant("skipMine"), instanceDecoder, array(instanceDecoder));
+const invokeOptionsDecoder = object({
+    waitTimeoutMs: optional(positiveNumberDecoder),
+    methodResponseTimeoutMs: optional(positiveNumberDecoder)
+});
+
 var InvokeStatus;
 (function (InvokeStatus) {
     InvokeStatus[InvokeStatus["Success"] = 0] = "Success";
@@ -12956,7 +14240,7 @@ class Client {
                 reject(err);
             };
             if (!method) {
-                reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
+                reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
                 return;
             }
             let methodDef;
@@ -12967,7 +14251,7 @@ class Client {
                 methodDef = method;
             }
             if (!methodDef.name) {
-                reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
+                reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
                 return;
             }
             if (options === undefined) {
@@ -13069,27 +14353,42 @@ class Client {
     }
     async invoke(methodFilter, argumentObj, target, additionalOptions, success, error) {
         const getInvokePromise = async () => {
-            let methodDefinition;
-            if (typeof methodFilter === "string") {
-                methodDefinition = { name: methodFilter };
-            }
-            else {
-                methodDefinition = { ...methodFilter };
-            }
-            if (!methodDefinition.name) {
-                return Promise.reject(`Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.`);
-            }
+            const methodDefinition = typeof methodFilter === "string" ? { name: methodFilter } : { ...methodFilter };
             if (!argumentObj) {
                 argumentObj = {};
             }
             if (!target) {
                 target = "best";
             }
-            if (typeof target === "string" && target !== "all" && target !== "best" && target !== "skipMine") {
-                return Promise.reject(new Error(`"${target}" is not a valid target. Valid targets are "all" and "best".`));
-            }
             if (!additionalOptions) {
                 additionalOptions = {};
+            }
+            const methodFilterDecoderResult = methodFilterDecoder.run(methodDefinition);
+            if (!methodFilterDecoderResult.ok) {
+                const message = `The provided 'method' argument is invalid. Error: ${JSON.stringify(methodFilterDecoderResult.error)}.`;
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
+            }
+            if (typeof argumentObj !== "object") {
+                const message = "The provided 'argumentObj' argument is invalid. Error: The argumentObj should be an instance of an object";
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
+            }
+            const targetDecoderResult = targetDecoder.run(target);
+            if (!targetDecoderResult.ok) {
+                const message = `The provided 'target' argument is invalid. Error: ${JSON.stringify(targetDecoderResult.error)}.`;
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
+            }
+            const invokeOptionsDecoderResult = invokeOptionsDecoder.run(additionalOptions);
+            if (!invokeOptionsDecoderResult.ok) {
+                const message = `The provided 'options' argument is invalid. Error: ${JSON.stringify(invokeOptionsDecoderResult.error)}.`;
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
+            }
+            if (success && typeof success !== "function") {
+                const message = "The provided 'success' function is invalid. Error: The success should be a valid function";
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
+            }
+            if (error && typeof error !== "function") {
+                const message = "The provided 'error' function is invalid. Error: The error should be a valid function";
+                return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
             }
             if (additionalOptions.methodResponseTimeoutMs === undefined) {
                 additionalOptions.methodResponseTimeoutMs = additionalOptions.method_response_timeout;
@@ -13103,34 +14402,14 @@ class Client {
                     additionalOptions.waitTimeoutMs = this.configuration.waitTimeoutMs;
                 }
             }
-            if (additionalOptions.waitTimeoutMs !== undefined && typeof additionalOptions.waitTimeoutMs !== "number") {
-                return Promise.reject(new Error(`"${additionalOptions.waitTimeoutMs}" is not a valid number for "waitTimeoutMs" `));
-            }
-            if (typeof argumentObj !== "object") {
-                return Promise.reject(new Error(`The method arguments must be an object. method: ${methodDefinition.name}`));
-            }
             let serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
             if (serversMethodMap.length === 0) {
                 try {
                     serversMethodMap = await this.tryToAwaitForMethods(methodDefinition, target, additionalOptions);
                 }
                 catch (err) {
-                    const method = {
-                        ...methodDefinition,
-                        getServers: () => [],
-                        supportsStreaming: false,
-                        objectTypes: methodDefinition.objectTypes ?? [],
-                        flags: methodDefinition.flags?.metadata ?? {}
-                    };
-                    const errorObj = {
-                        method,
-                        called_with: argumentObj,
-                        message: `Can not find a method matching ${JSON.stringify(methodFilter)} with server filter ${JSON.stringify(target)}`,
-                        executed_by: undefined,
-                        returned: undefined,
-                        status: undefined,
-                    };
-                    return Promise.reject(errorObj);
+                    const message = `Can not find a method matching ${JSON.stringify(methodFilter)} with server filter ${JSON.stringify(target)}`;
+                    return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
                 }
             }
             const timeout = additionalOptions.methodResponseTimeoutMs;
@@ -13158,6 +14437,21 @@ class Client {
             return results;
         };
         return promisify(getInvokePromise(), success, error);
+    }
+    generateInvalidInputInvocationResult(message, methodDefinition, argumentObj) {
+        const method = {
+            ...methodDefinition,
+            getServers: () => [],
+            supportsStreaming: false,
+            objectTypes: methodDefinition.objectTypes ?? [],
+            flags: methodDefinition.flags?.metadata ?? {}
+        };
+        const invokeResultMessage = {
+            invocationId: nanoid(10),
+            status: InvokeStatus.Error,
+            message
+        };
+        return this.getInvocationResultObj([invokeResultMessage], method, argumentObj);
     }
     getInvocationResultObj(invocationResults, method, calledWith) {
         const all_return_values = invocationResults
@@ -15634,26 +16928,6 @@ if (typeof window !== "undefined") {
 }
 IOConnectCoreFactory.version = version;
 IOConnectCoreFactory.default = IOConnectCoreFactory;
-
-const setupGlobalSystem = () => {
-    return {
-        getContainerInfo: async () => {
-            if (window === window.parent) {
-                return;
-            }
-            if (window.name.includes("#wsp")) {
-                return {
-                    workspaceFrame: {
-                        id: "N/A"
-                    }
-                };
-            }
-            return window.parent === window.top ?
-                { top: {} } :
-                { parent: {} };
-        }
-    };
-};
 
 const iOConnectBrowserFactory = createFactoryFunction(IOConnectCoreFactory);
 if (typeof window !== "undefined") {

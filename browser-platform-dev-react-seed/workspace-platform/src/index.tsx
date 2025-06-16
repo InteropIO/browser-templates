@@ -7,11 +7,45 @@ import { IOConnectProvider } from "@interopio/react-hooks";
 import IODesktop, { IOConnectDesktop } from "@interopio/desktop";
 import IOBrowserPlatform, { IOConnectBrowserPlatform } from "@interopio/browser-platform";
 import IOWorkspaces from "@interopio/workspaces-api";
+import IOModals from '@interopio/modals-api';
 import config from "./config.json";
+
+const browserPlatformConfig = {
+    ...config.browserPlatform,
+    modals: {
+        sources: {
+            bundle: `${process.env.PUBLIC_URL}/resources/modals/io-browser-modals-ui.es.js`,
+            styles: [`${process.env.PUBLIC_URL}/resources/modals/styles.css`],
+            fonts: [`${process.env.PUBLIC_URL}/resources/modals/fonts.css`],
+        },
+    },
+    intentResolver: {
+        sources: {
+            bundle: `${process.env.PUBLIC_URL}/resources/intent-resolver/io-browser-intent-resolver-ui.es.js`,
+            styles: [`${process.env.PUBLIC_URL}/resources/intent-resolver/styles.css`],
+            fonts: [`${process.env.PUBLIC_URL}/resources/intent-resolver/fonts.css`],
+        },
+    },
+    browser: {
+        libraries: [IOWorkspaces, IOModals],
+        serviceWorker: { url: "/service-worker.js" },
+        modals: {
+            alerts: {
+                enabled: true,
+            },
+            dialogs: {
+                enabled: true,
+            }
+        },
+        intentResolver: {
+            enable: true
+        }
+    },
+}
 
 const settings = {
     browserPlatform: {
-        config: Object.assign({}, config.browserPlatform, { browser: { libraries: [IOWorkspaces] }, serviceWorker: { url: "/service-worker.js" } }) as IOConnectBrowserPlatform.Config,
+        config: browserPlatformConfig as IOConnectBrowserPlatform.Config,
         factory: IOBrowserPlatform
     },
     desktop: {

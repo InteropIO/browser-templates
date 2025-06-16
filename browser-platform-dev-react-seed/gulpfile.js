@@ -5,7 +5,7 @@ const rimraf = require("rimraf");
 const path = require("path");
 
 const clientsSources = ["workspace-platform/", "react-client/"];
-const builtClients = ["intents-resolver-ui/"];
+const builtClients = [];
 
 const originalStdoutWrite = process.stdout.write.bind(process.stdout);
 
