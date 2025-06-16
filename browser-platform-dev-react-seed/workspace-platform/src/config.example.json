@@ -206,6 +206,20 @@
                     }
                 }
             ]
+        },
+        "modals": {
+            "sources": {
+                "bundle": "/resources/modals/io-browser-modals-ui.es.js",
+                "styles": ["/resources/modals/styles.css"],
+                "fonts": ["/resources/modals/fonts.css"]
+            }
+        },
+        "intentResolver": {
+            "sources": {
+                "bundle": "/resources/intent-resolver/io-browser-intent-resolver-ui.es.js",
+                "styles": ["/resources/intent-resolver/styles.css"],
+                "fonts": ["/resources/intent-resolver/fonts.css"]
+            }
         }
     }
 }
