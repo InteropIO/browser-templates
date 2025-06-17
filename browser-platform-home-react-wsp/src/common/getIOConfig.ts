@@ -7,20 +7,6 @@ import config from "../config.json";
 export const getIOConfig = () => {
     const platformConfig: IOConnectBrowserPlatform.Config = {
         ...config,
-        modals: {
-            sources: {
-                bundle: `${process.env.PUBLIC_URL}/resources/modals/io-browser-modals-ui.es.js`,
-                styles: [`${process.env.PUBLIC_URL}/resources/modals/styles.css`],
-                fonts: [`${process.env.PUBLIC_URL}/resources/modals/fonts.css`],
-            },
-        },
-        intentResolver: {
-            sources: {
-                bundle: `${process.env.PUBLIC_URL}/resources/intent-resolver/io-browser-intent-resolver-ui.es.js`,
-                styles: [`${process.env.PUBLIC_URL}/resources/intent-resolver/styles.css`],
-                fonts: [`${process.env.PUBLIC_URL}/resources/intent-resolver/fonts.css`],
-            },
-        },
         browser: {
             libraries: [IOWorkspaces, IOModals],
             modals: {
