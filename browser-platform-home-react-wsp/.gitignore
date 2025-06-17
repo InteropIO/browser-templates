@@ -1,6 +1,8 @@
 node_modules
 /build
-/src/config.json# Vite build artifacts
+/src/config.json
+
+# Vite build artifacts
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
