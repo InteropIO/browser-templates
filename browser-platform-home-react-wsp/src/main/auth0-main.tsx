@@ -9,10 +9,10 @@ export const Auth0Main = () => {
             login: {
                 type: 'auth0',
                 providerOptions: {
-                    domain: process.env.REACT_APP_AUTH_DOMAIN as string,
-                    clientId: process.env.REACT_APP_AUTH_CLIENT_ID as string,
+                    domain: import.meta.env.VITE_AUTH_DOMAIN as string,
+                    clientId: import.meta.env.VITE_AUTH_CLIENT_ID as string,
                     authorizationParams: {
-                        redirect_uri: process.env.REACT_APP_AUTH_REDIRECT_URL,
+                        redirect_uri: import.meta.env.VITE_AUTH_REDIRECT_URL,
                     },
                 },
             }

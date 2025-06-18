@@ -1,6 +1,6 @@
 # io.Connect Browser Client Template
 
-This is a React template (created with Create React App) for building an io.Connect [Browser Client](https://docs.interop.io/browser/developers/browser-client/overview/index.html) app.
+This is a React template (built with Vite) for building an io.Connect [Browser Client](https://docs.interop.io/browser/developers/browser-client/overview/index.html) app.
 
 ## Usage
 
@@ -16,7 +16,7 @@ To start the Browser Client app, execute the following command:
 npm start
 ```
 
-By default, the Browser Client app will be hosted at `http://localhost:3000`. You can change the port from the `"start"` script in the `package.json` file in the root directory of the project, or by creating a `.env` file. You can now start modifying the template to build your custom Browser Client app.
+By default, the Browser Client app will be hosted at `http://localhost:3000`. You can change the port in the `vite.config.ts` file by modifying the `server.port` setting, or by creating a `.env` file. You can now start modifying the template to build your custom Browser Client app.
 
 ## Template Structure
 
@@ -24,8 +24,9 @@ The created template contains standard package files and the following directori
 
 | Directory/File | Description |
 |----------------|-------------|
-| `/public` | Contains standard React app files, including the main `index.html` file of the app. |
-| `/src` | Contains standard React app files, including the main `index.tsx` file of the app where the [`@interopio/browser`](https://www.npmjs.com/package/@interopio/browser) library is initialized, and the main app component in the `App.tsx`. |
+| `/public` | Contains static assets for the app. |
+| `/src` | Contains the main React app files, including the main `index.tsx` file where the [`@interopio/browser`](https://www.npmjs.com/package/@interopio/browser) library is initialized, and the main app component in `App.tsx`. |
+| `index.html` | The main HTML template file located in the project root (Vite convention). |
 
 ## Modifying the Template
 
