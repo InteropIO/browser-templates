@@ -1903,7 +1903,7 @@ const v2LocalizedDefinitionDecoder = object$1({
 });
 const v2DefinitionDecoder = object$1({
     appId: nonEmptyStringDecoder$3,
-    name: nonEmptyStringDecoder$3,
+    name: optional$1(nonEmptyStringDecoder$3),
     type: v2TypeDecoder,
     details: v2DetailsDecoder,
     version: optional$1(nonEmptyStringDecoder$3),
@@ -2295,23 +2295,6 @@ const intentDefinitionDecoder = object$2({
     displayName: optional$2(string$2()),
     contexts: optional$2(array$2(string$2())),
     customConfig: optional$2(object$2())
-});
-object$2({
-    name: nonEmptyStringDecoder$2,
-    title: optional$2(nonEmptyStringDecoder$2),
-    version: optional$2(nonEmptyStringDecoder$2),
-    appId: optional$2(nonEmptyStringDecoder$2),
-    manifest: nonEmptyStringDecoder$2,
-    manifestType: nonEmptyStringDecoder$2,
-    tooltip: optional$2(nonEmptyStringDecoder$2),
-    description: optional$2(nonEmptyStringDecoder$2),
-    contactEmail: optional$2(nonEmptyStringDecoder$2),
-    supportEmail: optional$2(nonEmptyStringDecoder$2),
-    publisher: optional$2(nonEmptyStringDecoder$2),
-    images: optional$2(array$2(object$2({ url: optional$2(nonEmptyStringDecoder$2) }))),
-    icons: optional$2(array$2(object$2({ icon: optional$2(nonEmptyStringDecoder$2) }))),
-    customConfig: anyJson$2(),
-    intents: optional$2(array$2(intentDefinitionDecoder))
 });
 const applicationDefinitionDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -7536,7 +7519,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.0.0";
+var version$1 = "4.0.2";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
