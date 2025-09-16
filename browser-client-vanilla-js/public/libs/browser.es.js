@@ -926,6 +926,7 @@ const defaultWidgetConfig = {
     awaitFactory: true,
     enable: false,
     timeout: 5 * 1000,
+    restoreLastKnownPosition: true,
 };
 const defaultModalsConfig = {
     alerts: {
@@ -961,6 +962,11 @@ const REQUEST_WIDGET_READY = "requestWidgetFactoryReady";
 const REQUEST_MODALS_UI_FACTORY_READY = "requestModalsUIFactoryReady";
 const MAX_SET_TIMEOUT_DELAY = 2147483647;
 const REQUEST_INTENT_RESOLVER_UI_FACTORY_READY = "requestIntentResolverUIFactoryReady";
+const READONLY_PROPERTY_DESCRIPTOR = {
+    configurable: false,
+    enumerable: true,
+    writable: false,
+};
 
 const extractErrorMsg = (error) => {
     if (typeof error === "string") {
@@ -2177,7 +2183,7 @@ const nonEmptyStringDecoder$2 = string$2().where((s) => s.length > 0, "Expected 
 const nonNegativeNumberDecoder$2 = number$2().where((num) => num >= 0, "Expected a non-negative number");
 const optionalNonEmptyStringDecoder = optional$2(nonEmptyStringDecoder$2);
 const libDomainDecoder = oneOf$1(constant$2("system"), constant$2("windows"), constant$2("appManager"), constant$2("layouts"), constant$2("intents"), constant$2("notifications"), constant$2("channels"), constant$2("extension"), constant$2("themes"), constant$2("prefs"), constant$2("ui"));
-const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("operationCheck"));
+const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("setZoomFactor"), constant$2("zoomFactorChange"), constant$2("refresh"), constant$2("operationCheck"));
 const appManagerOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("appDirectoryStateChange"), constant$2("instanceStarted"), constant$2("instanceStopped"), constant$2("applicationStart"), constant$2("instanceStop"), constant$2("clear"), constant$2("operationCheck"));
 const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
 const notificationsOperationTypesDecoder = oneOf$1(constant$2("raiseNotification"), constant$2("requestPermission"), constant$2("notificationShow"), constant$2("notificationClick"), constant$2("getPermission"), constant$2("list"), constant$2("notificationRaised"), constant$2("notificationClosed"), constant$2("click"), constant$2("clear"), constant$2("clearAll"), constant$2("configure"), constant$2("getConfiguration"), constant$2("configurationChanged"), constant$2("setState"), constant$2("clearOld"), constant$2("activeCountChange"), constant$2("stateChange"), constant$2("operationCheck"), constant$2("getActiveCount"));
@@ -2255,6 +2261,10 @@ const frameWindowBoundsResultDecoder = object$2({
 const windowUrlResultDecoder = object$2({
     windowId: nonEmptyStringDecoder$2,
     url: nonEmptyStringDecoder$2
+});
+const windowZoomFactorConfigDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    factorIndex: nonNegativeNumberDecoder$2
 });
 const anyDecoder = anyJson$2();
 const boundsDecoder = object$2({
@@ -2369,7 +2379,8 @@ const windowComponentStateDecoder = object$2({
     restoreSettings: object$2({
         groupId: optional$2(nonEmptyStringDecoder$2),
         groupZOrder: optional$2(number$2())
-    })
+    }),
+    channelId: optional$2(nonEmptyStringDecoder$2),
 });
 const windowLayoutComponentDecoder = object$2({
     type: constant$2("window"),
@@ -2911,9 +2922,18 @@ const getWindowIdsOnChannelDataDecoder = object$2({
 const getWindowIdsOnChannelResultDecoder = object$2({
     windowIds: array$2(nonEmptyStringDecoder$2)
 });
-const channelsOperationTypesDecoder = oneOf$1(constant$2("addChannel"), constant$2("getMyChannel"), constant$2("getWindowIdsOnChannel"), constant$2("getWindowIdsWithChannels"), constant$2("joinChannel"), constant$2("restrict"), constant$2("getRestrictions"), constant$2("restrictAll"), constant$2("notifyChannelsChanged"), constant$2("leaveChannel"), constant$2("getMode"), constant$2("operationCheck"));
+const channelsOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("addChannel"), constant$2("getMyChannel"), constant$2("getWindowIdsOnChannel"), constant$2("getWindowIdsWithChannels"), constant$2("joinChannel"), constant$2("restrict"), constant$2("getRestrictions"), constant$2("restrictAll"), constant$2("notifyChannelsChanged"), constant$2("leaveChannel"), constant$2("getMode"), constant$2("operationCheck"));
+const modeDecoder = oneOf$1(constant$2("single"), constant$2("multi"));
 const getChannelsModeDecoder = object$2({
-    mode: oneOf$1(constant$2("single"), constant$2("multi"))
+    mode: modeDecoder
+});
+const channelsAppHelloDataDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2
+});
+const channelsAppHelloSuccessDecoder = object$2({
+    mode: modeDecoder,
+    channels: array$2(nonEmptyStringDecoder$2),
+    restrictions: array$2(channelRestrictionsDecoder)
 });
 const getMyChanelResultDecoder = object$2({
     channel: optional$2(nonEmptyStringDecoder$2)
@@ -2978,6 +2998,7 @@ const getAllPrefsResultDecoder = object$2({
 });
 const subscriberRegisterConfigDecoder = object$2({
     interopId: nonEmptyStringDecoder$2,
+    appName: optional$2(nonEmptyStringDecoder$2)
 });
 const changePrefsDataDecoder = object$2({
     app: nonEmptyStringDecoder$2,
@@ -3018,8 +3039,7 @@ const channelSelectorDecoder = object$2({
     type: optional$2(channelSelectorTypeDecoder),
     enable: optional$2(boolean$2())
 });
-const positionDecoder = oneOf$1(constant$2("top"), constant$2("bottom"), constant$2("left"), constant$2("right"));
-const modeDecoder = oneOf$1(constant$2("default"), constant$2("compact"));
+const positionDecoder = oneOf$1(constant$2("top-left"), constant$2("top-center"), constant$2("top-right"), constant$2("center-left"), constant$2("center-right"), constant$2("bottom-left"), constant$2("bottom-center"), constant$2("bottom-right"));
 const displayModeDecoder = oneOf$1(constant$2("all"), constant$2("fdc3"));
 const widgetChannelsDecoder = object$2({
     selector: optional$2(channelSelectorDecoder),
@@ -3028,8 +3048,8 @@ const widgetChannelsDecoder = object$2({
 const platformWidgetDefaultConfigDecoder = object$2({
     channels: optional$2(widgetChannelsDecoder),
     position: optional$2(positionDecoder),
-    mode: optional$2(modeDecoder),
-    displayInWorkspace: optional$2(boolean$2())
+    displayInWorkspace: optional$2(boolean$2()),
+    restoreLastKnownPosition: optional$2(boolean$2()),
 });
 const widgetConfigDecoder = object$2({
     enable: boolean$2(),
@@ -3037,8 +3057,8 @@ const widgetConfigDecoder = object$2({
     timeout: optional$2(nonNegativeNumberDecoder$1),
     channels: optional$2(widgetChannelsDecoder),
     position: optional$2(positionDecoder),
-    mode: optional$2(modeDecoder),
-    displayInWorkspace: optional$2(boolean$2())
+    displayInWorkspace: optional$2(boolean$2()),
+    restoreLastKnownPosition: optional$2(boolean$2()),
 });
 const modalsConfigDecoder = object$2({
     alerts: optional$2(object$2({
@@ -3272,6 +3292,9 @@ const operations$a = {
     focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder },
     getChannel: { name: "getChannel", dataDecoder: simpleWindowDecoder, resultDecoder: windowChannelResultDecoder },
     notifyChannelsChanged: { name: "notifyChannelsChanged", dataDecoder: channelsChangedDataDecoder },
+    setZoomFactor: { name: "setZoomFactor", dataDecoder: windowZoomFactorConfigDecoder },
+    zoomFactorChange: { name: "zoomFactorChange", dataDecoder: windowZoomFactorConfigDecoder },
+    refresh: { name: "refresh", dataDecoder: simpleWindowDecoder },
     operationCheck: { name: "operationCheck" }
 };
 
@@ -3395,18 +3418,41 @@ var lib$1 = createRegistry$1;
 
 var CallbackRegistryFactory$1 = /*@__PURE__*/getDefaultExportFromCjs$1(lib$1);
 
+const ZOOM_FACTORS = Object.freeze({
+    0: 24,
+    1: 33,
+    2: 50,
+    3: 67,
+    4: 75,
+    5: 80,
+    6: 90,
+    7: 100,
+    8: 110,
+    9: 125,
+    10: 150,
+    11: 175,
+    12: 200,
+    13: 250,
+    14: 300,
+    15: 400,
+    16: 500
+});
+
 class WebWindowModel {
     _id;
     _name;
     _bridge;
+    _logger;
     registry = CallbackRegistryFactory$1();
     myCtxKey;
     ctxUnsubscribe;
+    zoomFactorIndex = 7;
     me;
-    constructor(_id, _name, _bridge) {
+    constructor(_id, _name, _bridge, _logger) {
         this._id = _id;
         this._name = _name;
         this._bridge = _bridge;
+        this._logger = _logger;
         this.myCtxKey = `___window___${this.id}`;
     }
     get id() {
@@ -3414,6 +3460,9 @@ class WebWindowModel {
     }
     get name() {
         return this._name.slice();
+    }
+    get zoomFactor() {
+        return ZOOM_FACTORS[this.zoomFactorIndex];
     }
     clean() {
         if (this.ctxUnsubscribe) {
@@ -3427,12 +3476,17 @@ class WebWindowModel {
     processChannelsChangedEvent(channelNames) {
         this.registry.execute("channels-changed", channelNames);
     }
+    processSelfZoomFactorChangedEvent(factorIndex) {
+        this.zoomFactorIndex = factorIndex;
+        this.registry.execute("zoom-factor-changed", this.me);
+    }
     async toApi() {
         this.ctxUnsubscribe = await this._bridge.contextLib.subscribe(this.myCtxKey, (data) => this.registry.execute("context-updated", data));
         this.me = {
             id: this.id,
             name: this.name,
             isFocused: false,
+            zoomFactor: this.zoomFactor,
             getURL: this.getURL.bind(this),
             moveResize: this.moveResize.bind(this),
             resizeTo: this.resizeTo.bind(this),
@@ -3445,11 +3499,26 @@ class WebWindowModel {
             getContext: this.getContext.bind(this),
             updateContext: this.updateContext.bind(this),
             setContext: this.setContext.bind(this),
+            refresh: this.refresh.bind(this),
             onContextUpdated: this.onContextUpdated.bind(this),
             onFocusChanged: this.onFocusChanged.bind(this),
             getChannel: this.getChannel.bind(this),
             onChannelsChanged: this.onChannelsChanged.bind(this),
+            zoomIn: this.zoomIn.bind(this),
+            zoomOut: this.zoomOut.bind(this),
+            setZoomFactor: this.setZoomFactor.bind(this),
+            onZoomFactorChanged: this.onZoomFactorChanged.bind(this),
         };
+        Object.defineProperties(this.me, {
+            id: READONLY_PROPERTY_DESCRIPTOR,
+            name: READONLY_PROPERTY_DESCRIPTOR,
+            zoomFactor: {
+                get: () => {
+                    return this.zoomFactor;
+                },
+                enumerable: true,
+            },
+        });
         return this.me;
     }
     async getURL() {
@@ -3555,6 +3624,47 @@ class WebWindowModel {
     }
     onChannelsChanged(callback) {
         return this.registry.add("channels-changed", callback);
+    }
+    getClosestZoomFactorIndex(factor) {
+        const closestIndex = Object.entries(ZOOM_FACTORS).reduce((closestIndex, [currentIndex, currentValue]) => {
+            return (Math.abs(currentValue - factor) <= Math.abs(ZOOM_FACTORS[closestIndex] - factor) ? parseInt(currentIndex) : closestIndex);
+        }, 0);
+        const closestFactor = ZOOM_FACTORS[closestIndex];
+        if (closestFactor !== factor) {
+            this._logger.warn(`Zoom factor ${factor} is not available, using closest value ${closestFactor} instead.`);
+        }
+        return closestIndex;
+    }
+    async zoom(factorIndex) {
+        if (factorIndex === this.zoomFactorIndex || !(factorIndex in ZOOM_FACTORS)) {
+            return;
+        }
+        await this._bridge.send("windows", operations$a.setZoomFactor, { windowId: this.id, factorIndex }, undefined, { includeOperationCheck: true });
+        this.zoomFactorIndex = factorIndex;
+    }
+    async zoomIn() {
+        await this.zoom(this.zoomFactorIndex + 1);
+        return this.me;
+    }
+    async zoomOut() {
+        await this.zoom(this.zoomFactorIndex - 1);
+        return this.me;
+    }
+    async setZoomFactor(factor) {
+        const targetZoomFactor = runDecoderWithIOError(number$2(), factor);
+        const closestZoomFactorIndex = this.getClosestZoomFactorIndex(targetZoomFactor);
+        await this.zoom(closestZoomFactorIndex);
+        return this.me;
+    }
+    onZoomFactorChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to zoom factor changes, because the provided callback is not a function!");
+        }
+        return this.registry.add("zoom-factor-changed", callback);
+    }
+    async refresh() {
+        await this._bridge.send("windows", operations$a.refresh, { windowId: this.id }, undefined, { includeOperationCheck: true });
+        return this.me;
     }
 }
 
@@ -3704,6 +3814,9 @@ class WindowsController {
         operations$a.setTitle.execute = this.handleSetTitle.bind(this);
         operations$a.getChannel.execute = this.handleGetChannel.bind(this);
         operations$a.notifyChannelsChanged.execute = this.handleChannelsChanged.bind(this);
+        operations$a.setZoomFactor.execute = this.handleSetZoomFactor.bind(this);
+        operations$a.zoomFactorChange.execute = this.handleZoomFactorChanged.bind(this);
+        operations$a.refresh.execute = this.handleRefresh.bind(this);
         operations$a.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
         this.supportedOperationsNames = getSupportedOperationsNames(operations$a);
     }
@@ -3749,13 +3862,13 @@ class WindowsController {
                 const windowsInfo = windows.map(w => `${w.windowId}:${w.name}`).join(", ");
                 return ioError.raiseError(`Cannot initialize the window library, because I received no information about me -> id: ${this.publicWindowId} name: ${window.name} from the platform: known windows: ${windowsInfo}`);
             }
-            const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name);
+            const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name, this.logger);
             this.me = myProjection.api;
             this.allWindowProjections.push(myProjection);
         }
         const currentWindows = await Promise.all(windows
             .filter((w) => w.windowId !== this.publicWindowId)
-            .map((w) => this.ioc.buildWebWindow(w.windowId, w.name)));
+            .map((w) => this.ioc.buildWebWindow(w.windowId, w.name, this.logger)));
         this.logger.trace("all windows projections are completed, building the list collection");
         this.allWindowProjections.push(...currentWindows);
     }
@@ -3772,7 +3885,7 @@ class WindowsController {
         if (this.allWindowProjections.some((projection) => projection.id === data.windowId)) {
             return;
         }
-        const webWindowProjection = await this.ioc.buildWebWindow(data.windowId, data.name);
+        const webWindowProjection = await this.ioc.buildWebWindow(data.windowId, data.name, this.logger);
         this.allWindowProjections.push(webWindowProjection);
         this.registry.execute("window-added", webWindowProjection.api);
     }
@@ -3889,16 +4002,37 @@ class WindowsController {
     }
     async handleGetChannel() {
         if (!this.me) {
-            return ioError.raiseError("This window cannot report it's channel, because it is not a Glue Window, most likely because it is an iframe");
+            return ioError.raiseError("This window cannot report its channel, because it is not a ioConnect Window, most likely because it is an iframe");
         }
         const channel = this.channelsController.my();
         return {
             ...(channel ? { channel } : {}),
         };
     }
+    async handleRefresh() {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot refresh, because it is not an ioConnect Window, most likely because it is an iframe");
+        }
+        setTimeout(() => {
+            window.location.reload();
+        }, 0);
+    }
     async handleChannelsChanged(data) {
         const windowProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
         windowProjection?.model.processChannelsChangedEvent(data.channelNames);
+    }
+    async handleSetZoomFactor(config) {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot change its zoom factor, because it is not an ioConnect Window, most likely because it is an iframe");
+        }
+        document.body.style.zoom = `${ZOOM_FACTORS[config.factorIndex]}%`;
+    }
+    async handleZoomFactorChanged(data) {
+        const foundProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
+        if (!foundProjection) {
+            return;
+        }
+        foundProjection.model.processSelfZoomFactorChangedEvent(data.factorIndex);
     }
 }
 
@@ -4103,8 +4237,8 @@ class AppManagerController {
     platformRegistration;
     logger;
     channelsController;
-    sessionController;
     interop;
+    initialChannelId;
     handlePlatformShutdown() {
         this.registry.clear();
         this.applications = [];
@@ -4119,13 +4253,18 @@ class AppManagerController {
         this.ioc = ioc;
         this.bridge = ioc.bridge;
         this.channelsController = ioc.channelsController;
-        this.sessionController = ioc.sessionController;
         this.interop = coreGlue.interop;
         this.platformRegistration = this.registerWithPlatform();
         await this.platformRegistration;
         this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
         const api = this.toApi();
         coreGlue.appManager = api;
+    }
+    async postStart() {
+        if (!this.initialChannelId) {
+            return;
+        }
+        await this.channelsController.handleAppManagerInitialChannelId(this.initialChannelId);
     }
     async handleBridgeMessage(args) {
         await this.platformRegistration;
@@ -4355,14 +4494,6 @@ class AppManagerController {
     getApplications() {
         return this.applications.slice();
     }
-    async joinInitialChannel(initialChannelId) {
-        try {
-            await this.channelsController.join(initialChannelId);
-        }
-        catch (error) {
-            this.logger.warn(`Application instance ${this.me} was unable to join the ${initialChannelId} channel. Reason: ${JSON.stringify(error)}`);
-        }
-    }
     async registerWithPlatform() {
         const result = await this.bridge.send("appManager", operations$9.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
         this.logger.trace("the platform responded to the hello message with a full list of apps");
@@ -4373,12 +4504,7 @@ class AppManagerController {
         }, []);
         this.me = this.findMyInstance();
         this.logger.trace(`all applications were parsed and saved. I am ${this.me ? "NOT a" : "a"} valid instance`);
-        const { channels: channelsStorageData } = this.sessionController.getWindowData();
-        const channels = channelsStorageData ? channelsStorageData.currentNames : [result.initialChannelId];
-        if (!channels?.length) {
-            return;
-        }
-        await Promise.all(channels.map((channel) => channel ? this.joinInitialChannel(channel) : Promise.resolve()));
+        this.initialChannelId = result.initialChannelId;
     }
     findMyInstance() {
         for (const app of this.applications) {
@@ -5453,6 +5579,7 @@ class IntentsController {
 }
 
 const operations$5 = {
+    appHello: { name: "appHello", dataDecoder: channelsAppHelloDataDecoder, resultDecoder: channelsAppHelloSuccessDecoder },
     addChannel: { name: "addChannel", dataDecoder: channelDefinitionDecoder },
     removeChannel: { name: "removeChannel", dataDecoder: removeChannelDataDecoder },
     getMyChannel: { name: "getMyChannel", resultDecoder: getMyChanelResultDecoder },
@@ -5466,7 +5593,7 @@ const operations$5 = {
     leaveChannel: { name: "leaveChannel", dataDecoder: leaveChannelDataDecoder },
     requestChannelSelector: { name: "requestChannelSelector", dataDecoder: requestChannelSelectorConfigDecoder },
     getMode: { name: "getMode", resultDecoder: getChannelsModeDecoder },
-    operationCheck: { name: "operationCheck" }
+    operationCheck: { name: "operationCheck" },
 };
 
 const DEFAULT_MODE = "single";
@@ -5474,6 +5601,8 @@ const CHANNELS_PREFIX = "___channel___";
 const SUBS_KEY = "subs";
 const CHANGED_KEY = "changed";
 const CHANNELS_CHANGED = "channels_changed";
+const STORAGE_NAMESPACE = "io_connect_channels";
+const DEFAULT_STORAGE_MODE = "inMemory";
 
 class ChannelsController {
     supportedOperationsNames = [];
@@ -5483,20 +5612,20 @@ class ChannelsController {
     interop;
     bridge;
     windowsController;
-    sessionController;
     _mode;
-    currentChannels = [];
-    unsubscribeDict = {};
+    myWindowId;
+    storage;
     handlePlatformShutdown() {
         this.registry.clear();
+        this.storage.clear();
     }
     addOperationsExecutors() {
         operations$5.getMyChannel.execute = this.handleGetMyChannel.bind(this);
         operations$5.joinChannel.execute = this.handleJoinChannel.bind(this);
         operations$5.leaveChannel.execute = this.handleLeaveChannel.bind(this);
-        operations$5.restrict.execute = ({ config }) => this.restrict(config);
+        operations$5.restrict.execute = this.handleRestrict.bind(this);
         operations$5.getRestrictions.execute = ({ windowId }) => this.getRestrictions(windowId);
-        operations$5.restrictAll.execute = ({ restrictions }) => this.restrictAll(restrictions);
+        operations$5.restrictAll.execute = this.handleRestrictAll.bind(this);
         operations$5.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
         this.supportedOperationsNames = getSupportedOperationsNames(operations$5);
     }
@@ -5508,9 +5637,10 @@ class ChannelsController {
         this.addOperationsExecutors();
         this.bridge = ioc.bridge;
         this.windowsController = ioc.windowsController;
-        this.sessionController = ioc.sessionController;
+        this.storage = ioc.channelsStorage;
         this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
-        this._mode = await this.getPlatformChannelsMode();
+        this.myWindowId = this.windowsController.my().id ?? this.interop.instance.instance;
+        await this.initialize();
         const api = this.toApi();
         coreGlue.channels = api;
     }
@@ -5550,17 +5680,14 @@ class ChannelsController {
         const channelNames = this.getAllChannelNames();
         runDecoderWithIOError(channelNameDecoder(channelNames), name);
         runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
-        const forAnotherClient = windowId && windowId !== this.interop.instance.instance;
-        if (forAnotherClient) {
-            return await this.bridge.send("channels", operations$5.joinChannel, { channel: name, windowId }, undefined, { includeOperationCheck: true });
-        }
-        if (this._mode === "single") {
-            return this.switchToChannel(name);
-        }
-        return this.joinAdditionalChannel(name);
+        const joinData = { channel: name, windowId: windowId ?? this.myWindowId };
+        await this.bridge.send("channels", operations$5.joinChannel, joinData, undefined, { includeOperationCheck: true });
     }
-    handleJoinChannel({ channel, windowId }) {
-        return this.join(channel, windowId);
+    handleJoinChannel({ channel }) {
+        if (this._mode === "single") {
+            return this.switchToChannel(channel);
+        }
+        return this.joinAdditionalChannel(channel);
     }
     onChanged(callback) {
         return this.changed(callback);
@@ -5571,21 +5698,24 @@ class ChannelsController {
             const channelNames = this.getAllChannelNames();
             runDecoderWithIOError(channelNameDecoder(channelNames), config.channel);
         }
-        const forAnotherClient = config.windowId && config.windowId !== this.interop.instance.instance;
-        if (config.windowId && forAnotherClient) {
-            const leaveData = { windowId: config.windowId, channelName: config.channel };
-            await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
+        const leaveData = { channelName: config.channel, windowId: config.windowId ?? this.myWindowId };
+        await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
+    }
+    async handleAppManagerInitialChannelId(channel) {
+        if (this.storage.mode === "inMemory") {
             return;
         }
-        const channelNamesToLeave = config.channel ? [config.channel] : this.currentChannels;
-        channelNamesToLeave.forEach((name) => this.unsubscribe(name));
-        this.currentChannels = this.currentChannels.filter((channelName) => !channelNamesToLeave.includes(channelName));
-        this.sessionController.setWindowData({ currentNames: this.currentChannels }, "channels");
+        if (this.storage.getSessionStorageData()) {
+            return;
+        }
+        return this.handleJoinChannel({ channel, windowId: this.myWindowId });
+    }
+    async handleLeaveChannel({ channelName }) {
+        const channelNamesToLeave = channelName ? [channelName] : this.storage.channels;
+        channelNamesToLeave.forEach((name) => this.storage.invokeUnsubscribes(name));
+        this.storage.channels = this.storage.channels.filter((channelName) => !channelNamesToLeave.includes(channelName));
         this.executeChangedEvents();
         await this.notifyChannelsChanged();
-    }
-    handleLeaveChannel(data) {
-        return this.leave({ channel: data.channelName });
     }
     toApi() {
         const api = {
@@ -5629,47 +5759,36 @@ class ChannelsController {
         return channelNames;
     }
     async joinAdditionalChannel(name) {
-        if (this.currentChannels.includes(name)) {
+        if (this.storage.channels.includes(name)) {
             return;
         }
-        this.currentChannels = [...this.currentChannels, name];
+        this.storage.channels = [...this.storage.channels, name];
         const contextName = this.createContextName(name);
         const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
             this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
         });
-        this.unsubscribeDict[name] = unsub;
+        this.storage.addUnsubscribe(name, unsub);
         this.executeChangedEvents(name);
-        this.sessionController.setWindowData({ currentNames: this.currentChannels }, "channels");
         await this.notifyChannelsChanged();
     }
     async switchToChannel(name) {
-        const currentChannel = this.currentChannels[0];
+        const currentChannel = this.storage.channels[0];
         if (name === currentChannel) {
             return;
         }
-        this.unsubscribe(currentChannel);
-        this.currentChannels = [name];
+        this.storage.invokeUnsubscribes(currentChannel);
+        this.storage.channels = [name];
         const contextName = this.createContextName(name);
         const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
             this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
         });
-        this.unsubscribeDict[name] = unsub;
+        this.storage.addUnsubscribe(name, unsub);
         this.executeChangedEvents(name);
-        this.sessionController.setWindowData({ currentNames: this.currentChannels }, "channels");
         await this.notifyChannelsChanged();
-    }
-    unsubscribe(channelName) {
-        if (channelName) {
-            this.unsubscribeDict[channelName]?.();
-            delete this.unsubscribeDict[channelName];
-            return;
-        }
-        Object.values(this.unsubscribeDict).forEach((unsub) => unsub());
-        this.unsubscribeDict = {};
     }
     executeChangedEvents(name) {
         this.registry.execute(CHANGED_KEY, name);
-        this.registry.execute(CHANNELS_CHANGED, this.currentChannels);
+        this.registry.execute(CHANNELS_CHANGED, this.storage.channels);
     }
     async notifyChannelsChanged() {
         const windowId = this.windowsController.my().id;
@@ -5677,7 +5796,7 @@ class ChannelsController {
             return;
         }
         try {
-            await this.bridge.send("channels", operations$5.notifyChannelsChanged, { channelNames: this.currentChannels, windowId }, undefined, { includeOperationCheck: true });
+            await this.bridge.send("channels", operations$5.notifyChannelsChanged, { channelNames: this.storage.channels, windowId }, undefined, { includeOperationCheck: true });
         }
         catch (error) {
             this.logger.warn(`Failed to notify channel changed: ${extractErrorMsg(error)}`);
@@ -5760,10 +5879,10 @@ class ChannelsController {
             const channelNames = this.getAllChannelNames();
             runDecoderWithIOError(channelNameDecoder(channelNames), options);
         }
-        if (!options && this.currentChannels.length > 1) {
+        if (!options && this.storage.channels.length > 1) {
             return this.publishOnMultipleChannels(data);
         }
-        const channelName = typeof options === "string" ? options : this.currentChannels[0];
+        const channelName = typeof options === "string" ? options : this.storage.channels[0];
         if (!channelName) {
             return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
         }
@@ -5794,13 +5913,13 @@ class ChannelsController {
         return channelContext;
     }
     async getMyChannels() {
-        return Promise.all(this.currentChannels.map((channelName) => {
+        return Promise.all(this.storage.channels.map((channelName) => {
             const contextName = this.createContextName(channelName);
             return this.contexts.get(contextName);
         }));
     }
     myChannels() {
-        return this.currentChannels;
+        return this.storage.channels;
     }
     getContextForFdc3Type(channelContext, searchedType) {
         const encodedType = `fdc3_${searchedType.split(".").join("&")}`;
@@ -5834,7 +5953,7 @@ class ChannelsController {
         return context;
     }
     current() {
-        return this.currentChannels[0];
+        return this.storage.channels[0];
     }
     changed(callback) {
         if (typeof callback !== "function") {
@@ -5878,13 +5997,13 @@ class ChannelsController {
             .catch(err => this.logger.trace(err));
     };
     async getMy(options) {
-        if (!this.currentChannels.length) {
+        if (!this.storage.channels.length) {
             return;
         }
         if (options) {
             runDecoderWithIOError(fdc3OptionsDecoder, options);
         }
-        return this.get(this.currentChannels[this.currentChannels.length - 1], options);
+        return this.get(this.storage.channels[this.storage.channels.length - 1], options);
     }
     async getWindowsOnChannel(channel) {
         const channelNames = this.getAllChannelNames();
@@ -5918,19 +6037,36 @@ class ChannelsController {
         runDecoderWithIOError(channelRestrictionsDecoder, config);
         const channelNames = this.getAllChannelNames();
         runDecoderWithIOError(channelNameDecoder(channelNames), config.name);
-        const forAnotherClient = config.windowId && config.windowId !== this.interop.instance.instance;
-        if (forAnotherClient) {
-            return this.bridge.send("channels", operations$5.restrict, { config }, undefined, { includeOperationCheck: true });
-        }
-        const sessionStorageData = this.sessionController.getWindowData();
-        const restrictions = sessionStorageData?.restrictions ? { ...sessionStorageData.restrictions, [config.name]: config } : { [config.name]: config };
+        const configData = {
+            config: {
+                ...config,
+                windowId: config.windowId ?? this.myWindowId
+            }
+        };
+        await this.bridge.send("channels", operations$5.restrict, configData, undefined, { includeOperationCheck: true });
+    }
+    async handleRestrict({ config }) {
         const currentChannel = await this.getMy();
-        const prevReadAllowed = this.checkPreviousReadAllowed(currentChannel?.name);
-        this.sessionController.setWindowData(restrictions, "restrictions");
-        if (!currentChannel || prevReadAllowed || !config.read || currentChannel.name !== config.name) {
+        if (!currentChannel) {
+            return this.updateRestriction(config);
+        }
+        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
+        this.updateRestriction(config);
+        const isForCurrentChannel = config.name === currentChannel.name;
+        if (!isForCurrentChannel || prevReadAllowed || !config.read) {
             return;
         }
         this.replaySubscribeCallback(config.name);
+    }
+    updateRestriction(config) {
+        const exists = this.storage.restrictions.some((r) => r.name === config.name);
+        this.storage.restrictions = exists
+            ? this.storage.restrictions.map((restriction) => restriction.name === config.name ? config : restriction)
+            : this.storage.restrictions.concat(config);
+    }
+    updateAllRestrictions(config) {
+        const allChannelNames = this.getAllChannelNames();
+        this.storage.restrictions = allChannelNames.map((name) => ({ name, ...config }));
     }
     async getRestrictions(windowId) {
         runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
@@ -5938,23 +6074,26 @@ class ChannelsController {
         if (windowId && forAnotherClient) {
             return this.bridge.send("channels", operations$5.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
         }
-        return this.getMyRestrictions();
+        return { channels: this.storage.restrictions };
     }
     async restrictAll(restrictions) {
         runDecoderWithIOError(restrictionsConfigDecoder, restrictions);
-        const allChannelNames = this.getAllChannelNames();
-        const forAnotherClient = restrictions.windowId && restrictions.windowId !== this.interop.instance.instance;
-        if (forAnotherClient) {
-            return this.bridge.send("channels", operations$5.restrictAll, { restrictions }, undefined, { includeOperationCheck: true });
-        }
-        const allRestrictions = {};
-        allChannelNames.forEach((name) => {
-            allRestrictions[name] = { ...restrictions, name };
-        });
+        const configData = {
+            restrictions: {
+                ...restrictions,
+                windowId: restrictions.windowId ?? this.myWindowId
+            }
+        };
+        return this.bridge.send("channels", operations$5.restrictAll, configData, undefined, { includeOperationCheck: true });
+    }
+    async handleRestrictAll({ restrictions }) {
         const currentChannel = await this.getMy();
-        const prevReadAllowed = this.checkPreviousReadAllowed(currentChannel?.name);
-        this.sessionController.setWindowData(allRestrictions, "restrictions");
-        if (!currentChannel || prevReadAllowed || !restrictions.read) {
+        if (!currentChannel) {
+            return this.updateAllRestrictions(restrictions);
+        }
+        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
+        this.updateAllRestrictions(restrictions);
+        if (prevReadAllowed || !restrictions.read) {
             return;
         }
         this.replaySubscribeCallback(currentChannel.name);
@@ -5970,7 +6109,7 @@ class ChannelsController {
         await this.handleSetPaths("setPaths", dataPaths, name);
     }
     async handleSetPaths(operation, paths, name) {
-        const channelNamesToUpdate = name ? [name] : this.currentChannels;
+        const channelNamesToUpdate = name ? [name] : this.storage.channels;
         if (!channelNamesToUpdate.length) {
             return ioError.raiseError(`Cannot complete ${operation} operation, because channel is not specified. Either join one or pass a channel name as second argument!`);
         }
@@ -6004,17 +6143,8 @@ class ChannelsController {
         }, { allowed: [], forbidden: [] });
     }
     isAllowedByRestrictions(channelName, action) {
-        const { channels } = this.getMyRestrictions();
-        if (!channels?.length) {
-            return true;
-        }
-        const restriction = channels.find((restriction) => restriction.name === channelName);
+        const restriction = this.storage.restrictions.find((restriction) => restriction.name === channelName);
         return restriction ? restriction[action] : true;
-    }
-    getMyRestrictions() {
-        const sessionStorageData = this.sessionController.getWindowData();
-        const restrictions = Object.values(sessionStorageData?.restrictions || {});
-        return { channels: restrictions };
     }
     replaySubscribeCallback(channelName) {
         const contextName = this.createContextName(channelName);
@@ -6026,26 +6156,16 @@ class ChannelsController {
             }
         }).catch(err => this.logger.error(err));
     }
-    checkPreviousReadAllowed(channelName) {
-        if (!channelName) {
-            return true;
-        }
-        const prevRestrictions = this.sessionController.getWindowData().restrictions;
-        if (!prevRestrictions?.[channelName]) {
-            return true;
-        }
-        return prevRestrictions[channelName].read;
-    }
     async publishWithOptions(data, options) {
         if (options.name) {
             const channelNames = this.getAllChannelNames();
             runDecoderWithIOError(channelNameDecoder(channelNames), options.name);
         }
-        const publishOnMultipleChannels = options.name ? false : this.currentChannels.length > 1;
+        const publishOnMultipleChannels = options.name ? false : this.storage.channels.length > 1;
         if (publishOnMultipleChannels) {
             return this.publishOnMultipleChannels(data, options.fdc3);
         }
-        const channelName = options.name || this.currentChannels[0];
+        const channelName = options.name || this.storage.channels[0];
         if (!channelName) {
             return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
         }
@@ -6059,9 +6179,9 @@ class ChannelsController {
         return this.publishFdc3Data(channelName, data);
     }
     async publishOnMultipleChannels(data, isFdc3) {
-        const { allowed, forbidden } = this.groupChannelsByPermission("write", this.currentChannels);
-        if (this.currentChannels.length === forbidden.length) {
-            return ioError.raiseError(`Cannot complete 'publish' operation due to write restrictions to all joined channels: ${this.currentChannels.join(", ")}`);
+        const { allowed, forbidden } = this.groupChannelsByPermission("write", this.storage.channels);
+        if (this.storage.channels.length === forbidden.length) {
+            return ioError.raiseError(`Cannot complete 'publish' operation due to write restrictions to all joined channels: ${this.storage.channels.join(", ")}`);
         }
         if (forbidden.length) {
             this.logger.warn(`Data on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} won't be published due to write restrictions`);
@@ -6137,10 +6257,8 @@ class ChannelsController {
         if (!myAppDetails?.channelSelector?.enabled) {
             return;
         }
-        const { channels: channelsStorageData } = this.sessionController.getWindowData();
         const windowId = myInstance.id;
-        const channelsNames = channelsStorageData?.currentNames || [];
-        const requestChannelSelectorConfig = { windowId, channelsNames };
+        const requestChannelSelectorConfig = { windowId, channelsNames: this.storage.channels };
         await this.bridge.send("channels", operations$5.requestChannelSelector, requestChannelSelectorConfig, undefined, { includeOperationCheck: true });
     }
     async getPlatformChannelsMode() {
@@ -6158,6 +6276,46 @@ class ChannelsController {
             return ioError.raiseError("Cannot subscribe to channels changed, because the provided callback is not a function");
         }
         return this.registry.add(CHANNELS_CHANGED, callback);
+    }
+    async initialize() {
+        const isAppHelloSupported = await this.checkIfAppHelloSupported();
+        if (!isAppHelloSupported) {
+            return this.handleAppHelloFailure("Platform does not support 'appHello' operation and channel state persistence by windowId. Setting 'sessionStorage' mode for tracking channels and restrictions");
+        }
+        const { success, error } = await this.sendAppHello();
+        if (error) {
+            return this.handleAppHelloFailure(error);
+        }
+        this.logger.trace(`Received 'appHelloSuccess' message. Setting initial channels state to: ${JSON.stringify(success)}`);
+        const { mode, channels, restrictions } = success;
+        this.storage.mode = "inMemory";
+        this._mode = mode;
+        this.storage.channels = channels;
+        this.storage.restrictions = restrictions;
+    }
+    async handleAppHelloFailure(errorMsg) {
+        this.logger.trace(errorMsg);
+        this.storage.mode = "sessionStorage";
+        this._mode = await this.getPlatformChannelsMode();
+    }
+    async sendAppHello() {
+        try {
+            const result = await this.bridge.send("channels", operations$5.appHello, { windowId: this.myWindowId }, undefined, { includeOperationCheck: true });
+            return { success: result, error: undefined };
+        }
+        catch (error) {
+            return { error: `Failed to get initial state from platform. Error: ${extractErrorMsg(error)}`, success: undefined };
+        }
+    }
+    async checkIfAppHelloSupported() {
+        try {
+            const { isSupported } = await this.bridge.send("channels", operations$5.operationCheck, { operation: operations$5.appHello.name }, undefined, { includeOperationCheck: true });
+            return isSupported;
+        }
+        catch (error) {
+            this.logger.trace(`Platform does not support 'appHello' operation and channel state persistence by windowId. Error: ${extractErrorMsg(error)}`);
+            return false;
+        }
     }
 }
 
@@ -6766,31 +6924,84 @@ class ThemesController {
     }
 }
 
-class SessionStorageController {
+class ChannelsStorage {
     sessionStorage = window.sessionStorage;
-    windowId;
-    get allNamespaces() {
-        return [{ namespace: this.windowNamespace, defaultValue: {} }];
+    _mode = DEFAULT_STORAGE_MODE;
+    inMemoryChannels = [];
+    inMemoryRestrictions = [];
+    _unsubscribeDict = {};
+    clear() {
+        this._mode = DEFAULT_STORAGE_MODE;
+        this.inMemoryChannels = [];
+        this.inMemoryRestrictions = [];
+        this._unsubscribeDict = {};
+        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify([]));
     }
-    configure(config) {
-        this.windowId = config.windowId;
-        this.allNamespaces.forEach(({ namespace, defaultValue }) => {
-            const data = this.sessionStorage.getItem(namespace);
-            if (!data) {
-                this.sessionStorage.setItem(namespace, JSON.stringify(defaultValue));
-            }
-        });
+    get mode() {
+        return this._mode;
     }
-    get windowNamespace() {
-        return `io_connect_window_${this.windowId}`;
+    set mode(mode) {
+        this._mode = mode;
     }
-    getWindowData() {
-        return JSON.parse(this.sessionStorage.getItem(this.windowNamespace));
+    get channels() {
+        if (this.mode === "inMemory") {
+            return this.inMemoryChannels.slice();
+        }
+        return this.getSessionStorageData()?.channels ?? [];
     }
-    setWindowData(data, key) {
-        const allData = this.getWindowData();
-        allData[key] = data;
-        this.sessionStorage.setItem(this.windowNamespace, JSON.stringify(allData));
+    set channels(channels) {
+        if (this.mode === "inMemory") {
+            this.inMemoryChannels = channels;
+        }
+        this.setSessionStorageChannels(channels);
+    }
+    get restrictions() {
+        if (this.mode === "inMemory") {
+            return this.inMemoryRestrictions.slice();
+        }
+        return this.getSessionStorageData()?.restrictions ?? [];
+    }
+    set restrictions(restrictions) {
+        if (this.mode === "inMemory") {
+            this.inMemoryRestrictions = restrictions;
+        }
+        this.setSessionStorageRestrictions(restrictions);
+    }
+    getSessionStorageData() {
+        return JSON.parse(this.sessionStorage.getItem(STORAGE_NAMESPACE) || "null");
+    }
+    addUnsubscribe(channel, unsubscribe) {
+        this._unsubscribeDict[channel] = unsubscribe;
+    }
+    invokeUnsubscribes(channel) {
+        if (channel) {
+            this._unsubscribeDict[channel]?.();
+            delete this._unsubscribeDict[channel];
+            return;
+        }
+        Object.values(this._unsubscribeDict).forEach((unsub) => unsub());
+        this._unsubscribeDict = {};
+    }
+    setSessionStorageChannels(channels) {
+        const data = this.getSessionStorageData();
+        if (data?.channels) {
+            data.channels = channels;
+            return this.setSessionStorageData(data);
+        }
+        const newData = { channels, restrictions: data?.restrictions ?? [] };
+        return this.setSessionStorageData(newData);
+    }
+    setSessionStorageRestrictions(restrictions) {
+        const data = this.getSessionStorageData();
+        if (data?.restrictions) {
+            data.restrictions = restrictions;
+            return this.setSessionStorageData(data);
+        }
+        const newData = { channels: data?.channels ?? [], restrictions };
+        return this.setSessionStorageData(newData);
+    }
+    setSessionStorageData(data) {
+        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify(data));
     }
 }
 
@@ -6925,7 +7136,7 @@ class PrefsController {
             return ioError.raiseError("Cannot subscribe to prefs, because the provided callback is not a function!");
         }
         if (!this.signaledSubscription) {
-            this.bridge.send("prefs", operations$1.registerSubscriber, { interopId: this.interopId }, undefined, { includeOperationCheck: true })
+            this.bridge.send("prefs", operations$1.registerSubscriber, { interopId: this.interopId, appName: verifiedApp }, undefined, { includeOperationCheck: true })
                 .catch((error) => {
                 this.logger.warn("Failed to register subscriber for prefs");
                 this.logger.error(error);
@@ -7376,7 +7587,7 @@ class IoC {
     _bridgeInstance;
     _eventsDispatcher;
     _preferredConnectionController;
-    _sessionController;
+    _channelsStorage;
     _prefsControllerInstance;
     _uiController;
     controllers = {
@@ -7482,11 +7693,11 @@ class IoC {
         }
         return this._preferredConnectionController;
     }
-    get sessionController() {
-        if (!this._sessionController) {
-            this._sessionController = new SessionStorageController();
+    get channelsStorage() {
+        if (!this._channelsStorage) {
+            this._channelsStorage = new ChannelsStorage();
         }
-        return this._sessionController;
+        return this._channelsStorage;
     }
     get config() {
         return this._webConfig;
@@ -7500,8 +7711,8 @@ class IoC {
     defineConfig(config) {
         this._webConfig = config;
     }
-    async buildWebWindow(id, name) {
-        const model = new WebWindowModel(id, name, this.bridge);
+    async buildWebWindow(id, name, logger) {
+        const model = new WebWindowModel(id, name, this.bridge, logger);
         const api = await model.toApi();
         return { id, model, api };
     }
@@ -7519,7 +7730,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.0.2";
+var version$1 = "4.1.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
@@ -7555,7 +7766,6 @@ const createFactoryFunction = (coreFactoryFunction) => {
         const glue = await PromiseWrap(() => coreFactoryFunction(config, { version: version$1 }), 30000, "Glue Web initialization timed out, because core didn't resolve");
         const logger = glue.logger.subLogger("web.main.controller");
         ioc.defineGlue(glue);
-        ioc.sessionController.configure({ windowId: glue.interop.instance.instance });
         await ioc.preferredConnectionController.start(config);
         await ioc.bridge.start(ioc.controllers);
         ioc.defineConfig(config);
@@ -8939,6 +9149,7 @@ class WebPlatformTransport {
     logger;
     identity;
     isPreferredActivated;
+    _connectionProtocolVersion;
     _communicationId;
     publicWindowId;
     selfAssignedWindowId;
@@ -9154,23 +9365,33 @@ class WebPlatformTransport {
             return;
         }
         window.addEventListener("beforeunload", () => {
-            if (this.extContentConnected) {
+            if (this._connectionProtocolVersion) {
                 return;
             }
-            const message = {
-                glue42core: {
-                    type: this.messages.clientUnload.name,
-                    data: {
-                        clientId: this.myClientId,
-                        ownWindowId: this.identity?.windowId
-                    }
-                }
-            };
-            if (this.parent) {
-                this.parent.postMessage(message, this.defaultTargetString);
-            }
-            this.port?.postMessage(message);
+            this.signalClientDisappearing();
         });
+        window.addEventListener("pagehide", () => {
+            if (!this._connectionProtocolVersion) {
+                return;
+            }
+            this.signalClientDisappearing();
+        });
+    }
+    signalClientDisappearing() {
+        if (this.extContentConnected) {
+            return;
+        }
+        const message = {
+            glue42core: {
+                type: this.messages.clientUnload.name,
+                data: {
+                    clientId: this.myClientId,
+                    ownWindowId: this.identity?.windowId
+                }
+            }
+        };
+        this.parent?.postMessage(message, this.defaultTargetString);
+        this.port?.postMessage(message);
     }
     handlePlatformReady(event) {
         this.logger.debug("the web platform gave the ready signal");
@@ -9203,6 +9424,7 @@ class WebPlatformTransport {
             this.logger.error("cannot set up my connection, because I was not provided with a port");
             return;
         }
+        this._connectionProtocolVersion = data.connectionProtocolVersion;
         this.publicWindowId = this.getMyWindowId();
         if (this.identity) {
             this.identity.windowId = this.publicWindowId;
@@ -9682,7 +9904,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
                     resolve(successMsg);
                 },
                 error: (errorMsg) => {
-                    logger.warn(`Gateway error - ${JSON.stringify(errorMsg)}`);
+                    console.warn(`Gateway error - ${JSON.stringify(errorMsg)}`);
                     delete requestsMap[requestId];
                     errorMsg._tag = tag;
                     reject(errorMsg);
@@ -10437,7 +10659,12 @@ class Logger {
                     this.logFn.warn(toPrint);
                     break;
                 case "error":
-                    this.logFn.error(toPrint, error);
+                    if (error) {
+                        this.logFn.error(toPrint, error);
+                    }
+                    else {
+                        this.logFn.error(toPrint);
+                    }
                     break;
             }
         }
@@ -10481,7 +10708,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.6.0";
+var version = "6.7.0";
 
 function prepareConfig (configuration, ext, glue42gd) {
     let nodeStartingContext;
@@ -10623,9 +10850,10 @@ function prepareConfig (configuration, ext, glue42gd) {
                 gatewayToken: nodeStartingContext.gwToken
             };
         }
-        if (configuration.gateway?.webPlatform || configuration.gateway?.inproc || configuration.gateway?.sharedWorker) {
+        if (configuration.gateway?.webPlatform) {
             return {
-                username: "glue42", password: "glue42"
+                username: "glue42",
+                password: ""
             };
         }
     }
@@ -12569,15 +12797,20 @@ function deepEqual(x, y) {
 }
 function setValueToPath(obj, value, path) {
     const pathArr = path.split(".");
+    const forbiddenKeys = ["__proto__", "constructor", "prototype"];
     let i;
     for (i = 0; i < pathArr.length - 1; i++) {
-        if (!obj[pathArr[i]]) {
-            obj[pathArr[i]] = {};
+        const key = pathArr[i];
+        if (forbiddenKeys.includes(key)) {
+            throw new Error(`The provided path ${path} is invalid. It cannot contain segment/key that is equal to one of the following values: ${forbiddenKeys}.`);
         }
-        if (typeof obj[pathArr[i]] !== "object") {
-            obj[pathArr[i]] = {};
+        if (!obj[key]) {
+            obj[key] = {};
         }
-        obj = obj[pathArr[i]];
+        if (typeof obj[key] !== "object") {
+            obj[key] = {};
+        }
+        obj = obj[key];
     }
     obj[pathArr[i]] = value;
 }
