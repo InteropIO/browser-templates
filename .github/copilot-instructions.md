@@ -189,6 +189,113 @@ Templates requiring license keys:
 5. Test changes using validation scenarios above
 6. Build for production using `npm run build`
 
+## Updating Dependencies
+
+When new @interopio packages are released, all projects in this repository need to be updated. Follow these steps:
+
+### Step 1: Update Package Dependencies
+Go through all project directories and update all `@interopio/*` dependencies to the latest versions:
+
+```bash
+# For each template directory (browser-client-react, browser-client-vanilla-js, etc.)
+cd <template-directory>
+
+# Update all @interopio dependencies in package.json to latest versions
+# Example: "@interopio/browser": "^4.0.2" -> "@interopio/browser": "^4.1.0"
+```
+
+**Templates with @interopio dependencies:**
+- `browser-client-react`: @interopio/browser, @interopio/react-hooks
+- `browser-platform-home-react-wsp`: @interopio/browser-platform, @interopio/browser-worker, @interopio/home-ui-react, @interopio/modals-api, @interopio/react-hooks, @interopio/workspaces-api, @interopio/workspaces-ui-react
+- `browser-platform-wsp-frame`: @interopio/browser-platform, @interopio/modals-api, @interopio/react-hooks, @interopio/workspaces-api, @interopio/workspaces-ui-react
+- `browser-platform-dev-react-seed/workspace-platform`: Check package.json for @interopio dependencies
+- `browser-platform-dev-react-seed/react-client`: Check package.json for @interopio dependencies
+
+### Step 2: Update Package Versions
+Update the `version` field in each `package.json` file to match the new io.Connect Browser version:
+
+```bash
+# Example: "version": "4.0.0" -> "version": "4.1.0"
+```
+
+Update all package.json files:
+- `browser-client-react/package.json`
+- `browser-client-vanilla-js/package.json`
+- `browser-platform-dev-react-seed/package.json`
+- `browser-platform-dev-react-seed/workspace-platform/package.json`
+- `browser-platform-dev-react-seed/react-client/package.json`
+- `browser-platform-home-react-wsp/package.json`
+- `browser-platform-vanilla-js/package.json`
+- `browser-platform-wsp-frame/package.json`
+
+### Step 3: Update package-lock.json Files
+Regenerate all `package-lock.json` files with the new dependency versions:
+
+```bash
+# For each template directory
+cd <template-directory>
+rm -f package-lock.json
+npm install                    # NEVER CANCEL - set timeout 300+ seconds
+
+# For browser-platform-dev-react-seed, also update subdirectories
+cd browser-platform-dev-react-seed/workspace-platform
+rm -f package-lock.json
+npm install
+
+cd ../react-client
+rm -f package-lock.json
+npm install
+```
+
+### Step 4: Replace .es.js Files for Vanilla JavaScript Projects
+For vanilla JavaScript projects, download and replace the corresponding .es.js library files:
+
+**browser-client-vanilla-js:**
+- Download latest `browser.es.js` and `browser.es.js.map` from npm package @interopio/browser
+- Replace files in `browser-client-vanilla-js/public/libs/`
+
+**browser-platform-vanilla-js:**
+- Download latest `browser.platform.es.js` from npm package @interopio/browser-platform
+- Replace file in `browser-platform-vanilla-js/public/libs/`
+
+**React templates with public resources:**
+For templates with public resources directories (browser-platform-dev-react-seed, browser-platform-home-react-wsp, browser-platform-wsp-frame):
+- Update `io-browser-modals-ui.es.js` and `io-browser-modals-ui-react.es.js` in `/public/resources/modals/`
+- Update `io-browser-intent-resolver-ui.es.js` in `/public/resources/intent-resolver/`
+
+### Step 5: Update manifest.json
+Update the repository `manifest.json` file with the new version information:
+
+```json
+{
+    "ioCb": {
+        "versions": [
+            "latest",
+            "3.0",
+            "3.1",
+            "3.2",
+            "3.3",
+            "3.4",
+            "3.5",
+            "4.0",
+            "4.1"    // Add new version
+        ],
+        "latestVersion": "4.1"  // Update latest version
+    }
+}
+```
+
+### Step 6: Validation
+After updating dependencies, validate all templates:
+
+```bash
+# Test each template following the Template-Specific Instructions
+# Ensure all templates build and start successfully
+# Document any breaking changes or migration notes
+```
+
+**IMPORTANT**: Always run `npm install` and test builds after updating dependencies. Set timeouts of 300+ seconds and NEVER CANCEL builds.
+
 ## Troubleshooting
 - **Port conflicts**: Templates auto-switch ports when default ports are occupied
 - **Connection errors**: Expected for Browser Clients when run without Browser Platform
