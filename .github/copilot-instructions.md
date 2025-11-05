@@ -278,12 +278,14 @@ Update the repository `manifest.json` file with the new version information:
             "3.4",
             "3.5",
             "4.0",
-            "4.1"    // Add new version
+            "4.1"    // Add previous version to array
         ],
-        "latestVersion": "4.1"  // Update latest version
+        "latestVersion": "4.2"  // Set to new latest version
     }
 }
 ```
+
+**Note**: When releasing version 4.2, add 4.1 (the previous version) to the `versions` array, and set `latestVersion` to 4.2 (the new version). The latest version should not be included in the `versions` array.
 
 ### Step 6: Validation
 After updating dependencies, validate all templates:
