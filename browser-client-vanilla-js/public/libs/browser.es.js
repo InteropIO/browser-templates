@@ -1804,6 +1804,9 @@ Decoder$1.lazy;
 
 const nonEmptyStringDecoder$3 = string$1().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder$3 = number$1().where((num) => num >= 0, "Expected a non-negative number");
+const regexDecoder = anyJson$1().andThen((value) => {
+    return value instanceof RegExp ? anyJson$1() : fail(`expected a regex, got a ${typeof value}`);
+});
 
 const intentDefinitionDecoder$1 = object$1({
     name: nonEmptyStringDecoder$3,
@@ -2130,7 +2133,8 @@ class FDC3Service {
 const decoders$1 = {
     common: {
         nonEmptyStringDecoder: nonEmptyStringDecoder$3,
-        nonNegativeNumberDecoder: nonNegativeNumberDecoder$3
+        nonNegativeNumberDecoder: nonNegativeNumberDecoder$3,
+        regexDecoder
     },
     fdc3: {
         allDefinitionsDecoder,
@@ -2304,7 +2308,8 @@ const intentDefinitionDecoder = object$2({
     name: nonEmptyStringDecoder$2,
     displayName: optional$2(string$2()),
     contexts: optional$2(array$2(string$2())),
-    customConfig: optional$2(object$2())
+    customConfig: optional$2(object$2()),
+    resultType: optional$2(string$2())
 });
 const applicationDefinitionDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2319,11 +2324,6 @@ const applicationDefinitionDecoder = object$2({
     hidden: optional$2(boolean$2()),
     fdc3: optional$2(decoders.fdc3.v2DefinitionDecoder)
 });
-const allApplicationDefinitionsDecoder = oneOf$1(applicationDefinitionDecoder, decoders.fdc3.v2DefinitionDecoder, decoders.fdc3.v1DefinitionDecoder);
-object$2({
-    definitions: array$2(allApplicationDefinitionsDecoder),
-    mode: oneOf$1(constant$2("replace"), constant$2("merge"))
-});
 const appRemoveConfigDecoder = object$2({
     name: nonEmptyStringDecoder$2
 });
@@ -2337,7 +2337,7 @@ const applicationDataDecoder = object$2({
     userProperties: optional$2(anyJson$2()),
     title: optional$2(nonEmptyStringDecoder$2),
     version: optional$2(nonEmptyStringDecoder$2),
-    icon: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(string$2()),
     caption: optional$2(nonEmptyStringDecoder$2)
 });
 const baseApplicationDataDecoder = object$2({
@@ -2346,7 +2346,7 @@ const baseApplicationDataDecoder = object$2({
     userProperties: anyJson$2(),
     title: optional$2(nonEmptyStringDecoder$2),
     version: optional$2(nonEmptyStringDecoder$2),
-    icon: optional$2(nonEmptyStringDecoder$2),
+    icon: optional$2(string$2()),
     caption: optional$2(nonEmptyStringDecoder$2)
 });
 const appDirectoryStateChangeDecoder = object$2({
@@ -2464,7 +2464,8 @@ const newLayoutOptionsDecoder = object$2({
     context: optional$2(anyJson$2()),
     metadata: optional$2(anyJson$2()),
     instances: optional$2(array$2(nonEmptyStringDecoder$2)),
-    ignoreInstances: optional$2(array$2(nonEmptyStringDecoder$2))
+    ignoreInstances: optional$2(array$2(nonEmptyStringDecoder$2)),
+    setAsCurrent: optional$2(boolean$2())
 });
 const restoreOptionsDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2537,7 +2538,8 @@ const intentHandlerDecoder = object$2({
     contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
     instanceId: optional$2(string$2()),
     instanceTitle: optional$2(string$2()),
-    resultType: optional$2(string$2())
+    resultType: optional$2(string$2()),
+    customConfig: optional$2(object$2())
 });
 object$2({
     applicationName: string$2(),
@@ -2623,6 +2625,13 @@ const resolverConfigDecoder = object$2({
     appName: nonEmptyStringDecoder$2,
     waitResponseTimeout: number$2()
 });
+const handlerExclusionCriteriaApplicationNameDecoder = object$2({
+    applicationName: nonEmptyStringDecoder$2
+});
+const handlerExclusionCriteriaInstanceIdDecoder = object$2({
+    instanceId: nonEmptyStringDecoder$2
+});
+const handlerExclusionCriteriaDecoder = oneOf$1(handlerExclusionCriteriaApplicationNameDecoder, handlerExclusionCriteriaInstanceIdDecoder);
 const handlerFilterDecoder = object$2({
     title: optional$2(nonEmptyStringDecoder$2),
     openResolver: optional$2(boolean$2()),
@@ -2630,7 +2639,8 @@ const handlerFilterDecoder = object$2({
     intent: optional$2(nonEmptyStringDecoder$2),
     contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
     resultType: optional$2(nonEmptyStringDecoder$2),
-    applicationNames: optional$2(array$2(nonEmptyStringDecoder$2))
+    applicationNames: optional$2(array$2(nonEmptyStringDecoder$2)),
+    excludeList: optional$2(array$2(handlerExclusionCriteriaDecoder))
 });
 const embeddedResolverConfigDecoder = object$2({
     enabled: boolean$2(),
@@ -2660,7 +2670,8 @@ const AddIntentListenerRequestDecoder = object$2({
     displayName: optional$2(string$2()),
     icon: optional$2(string$2()),
     description: optional$2(string$2()),
-    resultType: optional$2(string$2())
+    resultType: optional$2(string$2()),
+    customConfig: optional$2(object$2())
 });
 const AddIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder$2, AddIntentListenerRequestDecoder);
 const intentInfoDecoder = object$2({
@@ -3244,6 +3255,7 @@ const parseConfig = (config = {}) => {
         ...config,
         isPlatformInternal,
         logger: config.systemLogger?.level ?? "info",
+        customLogger: config.systemLogger?.customLogger,
         widget: deepmerge$1(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
         modals: deepmerge$1(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
         intentResolver: deepmerge$1(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
@@ -5417,7 +5429,8 @@ class IntentsController {
             applicationTitle: app.title,
             contextTypes: intent.contexts,
             displayName: intent.displayName,
-            resultType: intent.resultType
+            resultType: intent.resultType,
+            customConfig: intent.customConfig
         };
         return handler;
     }
@@ -5439,7 +5452,8 @@ class IntentsController {
             contextTypes: info?.contextTypes || appIntent?.contexts,
             instanceTitle: title,
             displayName: info?.displayName || appIntent?.displayName,
-            resultType: info?.resultType || appIntent?.resultType
+            resultType: info?.resultType || appIntent?.resultType,
+            customConfig: info?.customConfig
         };
         return handler;
     }
@@ -7730,7 +7744,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.1.0";
+var version$1 = "4.2.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
@@ -8017,7 +8031,10 @@ function gw3 (connection, config) {
                 type: "define",
                 metrics: [rootStateMetric],
             };
-            session.send(defineRootMetricsMsg);
+            session.sendFireAndForget(defineRootMetricsMsg)
+                .catch((err) => {
+                config.logger.warn(`Failed to send define for root state metric: ${JSON.stringify(err)}`);
+            });
             if (reconnect) {
                 replayRepo(repo);
             }
@@ -8065,7 +8082,10 @@ function gw3 (connection, config) {
             type: "define",
             metrics: [metric],
         };
-        session.send(createMetricsMsg);
+        session.sendFireAndForget(createMetricsMsg)
+            .catch((err) => {
+            config.logger.warn(`Failed to send define for system state metric of ${system.name}: ${JSON.stringify(err)}`);
+        });
     };
     const updateSystem = async (system, state) => {
         await joinPromise;
@@ -8080,7 +8100,10 @@ function gw3 (connection, config) {
                     timestamp: Date.now(),
                 }],
         };
-        session.send(shadowedUpdateMetric);
+        session.sendFireAndForget(shadowedUpdateMetric)
+            .catch((err) => {
+            config.logger.warn(`Failed to send update for system state metric of ${system.name}: ${JSON.stringify(err)}`);
+        });
         const stateObj = composeMsgForRootStateMetric(system);
         const rootMetric = {
             type: "publish",
@@ -8094,7 +8117,10 @@ function gw3 (connection, config) {
                     timestamp: Date.now(),
                 }],
         };
-        session.send(rootMetric);
+        session.sendFireAndForget(rootMetric)
+            .catch((err) => {
+            config.logger.warn(`Failed to send update for root state metric of ${system.name}: ${JSON.stringify(err)}`);
+        });
     };
     const createMetric = async (metric) => {
         const metricClone = cloneMetric(metric);
@@ -8104,7 +8130,10 @@ function gw3 (connection, config) {
             type: "define",
             metrics: [m],
         };
-        session.send(createMetricsMsg);
+        session.sendFireAndForget(createMetricsMsg)
+            .catch((err) => {
+            config.logger.warn(`Failed to send define for metric ${metric.name}: ${JSON.stringify(err)}`);
+        });
         if (typeof metricClone.value !== "undefined") {
             updateMetricCore(metricClone);
         }
@@ -8125,7 +8154,10 @@ function gw3 (connection, config) {
                         timestamp: Date.now(),
                     }],
             };
-            return session.sendFireAndForget(publishMetricsMsg);
+            return session.sendFireAndForget(publishMetricsMsg)
+                .catch((err) => {
+                config.logger.warn(`Failed to publish metric ${metric.name}: ${JSON.stringify(err)}`);
+            });
         }
         return Promise.resolve();
     };
@@ -8992,8 +9024,9 @@ class WS {
         const pw = new PromiseWrapper();
         this.logger.debug(`initiating ws to ${this.settings.ws}...`);
         this.ws = new WebSocketConstructor(this.settings.ws ?? "");
+        let wasOpen = false;
         this.ws.onerror = (err) => {
-            let reason = "";
+            let reason;
             try {
                 reason = JSON.stringify(err);
             }
@@ -9006,23 +9039,39 @@ class WS {
                         }
                         seen.add(value);
                     }
+                    if (value instanceof Error) {
+                        return {
+                            message: value.message,
+                            name: value.name,
+                            stack: value.stack
+                        };
+                    }
                     return value;
                 };
                 reason = JSON.stringify(err, replacer);
             }
             this.logger.info(`ws error - reason: ${reason}`);
             pw.reject("error");
+            if (wasOpen) {
+                wasOpen = false;
+                this.notifyForSocketState("error");
+            }
             this.notifyStatusChanged(false, reason);
         };
         this.ws.onclose = (err) => {
             this.logger.info(`ws closed - code: ${err?.code} reason: ${err?.reason}`);
             pw.reject("closed");
+            if (wasOpen) {
+                wasOpen = false;
+                this.notifyForSocketState("closed");
+            }
             this.notifyStatusChanged(false);
         };
         this.ws.onopen = () => {
             this.startupTimer.mark("ws-opened");
             this.logger.info(`ws opened ${this.settings.identity?.application}`);
             pw.resolve();
+            wasOpen = true;
             this.notifyStatusChanged(true);
         };
         this.ws.onmessage = (message) => {
@@ -9241,6 +9290,7 @@ class WebPlatformTransport {
         this.notifyStatusChanged(true);
     }
     close() {
+        this.logger.debug(`closing connection - clientId: ${this.myClientId}, windowId: ${this.identity?.windowId || "unknown"}, client connected: ${this.iAmConnected}`);
         const message = {
             glue42core: {
                 type: this.messages.gatewayDisconnect.name,
@@ -9313,7 +9363,7 @@ class WebPlatformTransport {
                     selfAssignedWindowId: this.selfAssignedWindowId
                 }
             };
-            this.logger.debug("sending connection request");
+            this.logger.debug(`sending connection request - clientId: ${this.myClientId}`);
             if (this.extContentConnecting) {
                 request.glue42core.clientType = "child";
                 request.glue42core.bridgeInstanceId = this.myClientId;
@@ -9340,6 +9390,7 @@ class WebPlatformTransport {
             this.logger.debug("skipping generic message listener, because this is an internal client");
             return;
         }
+        this.logger.debug("setting up window message listener");
         window.addEventListener("message", (event) => {
             const data = event.data?.glue42core;
             if (!data || this.rejected) {
@@ -9364,6 +9415,7 @@ class WebPlatformTransport {
             this.logger.debug("skipping unload event listener, because this is an internal client");
             return;
         }
+        this.logger.debug("setting up unload event listeners");
         window.addEventListener("beforeunload", () => {
             if (this._connectionProtocolVersion) {
                 return;
@@ -9381,6 +9433,7 @@ class WebPlatformTransport {
         if (this.extContentConnected) {
             return;
         }
+        this.logger.debug(`signaling client disappearing for clientId: ${this.myClientId}`);
         const message = {
             glue42core: {
                 type: this.messages.clientUnload.name,
@@ -9515,6 +9568,7 @@ class WebPlatformTransport {
         source.postMessage(message, event.origin);
     }
     setupPlatformUnloadListener() {
+        this.logger.debug("setting up platform unload listener");
         this.onMessage((msg) => {
             if (msg.type === "platformUnload") {
                 this.logger.debug("detected a web platform unload");
@@ -9524,6 +9578,7 @@ class WebPlatformTransport {
         });
     }
     handleManualUnload() {
+        this.logger.debug("handling manual unload");
         const message = {
             glue42core: {
                 type: this.messages.clientUnload.name,
@@ -9542,6 +9597,7 @@ class WebPlatformTransport {
         return;
     }
     notifyStatusChanged(status, reason) {
+        this.logger.debug(`status changed - connected: ${status}, reason: ${reason || "none"}`);
         this.iAmConnected = status;
         this.registry.execute("onConnectedChanged", status, reason);
     }
@@ -9810,17 +9866,31 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         callbacks.execute("onJoined", wasReconnect);
     }
     function handleConnectionDisconnected() {
-        _connectionOn = false;
         logger.debug("connection is down");
+        _connectionOn = false;
         isJoined = false;
         tryReconnecting = true;
+        Object.keys(requestsMap).forEach(requestId => {
+            const request = requestsMap[requestId];
+            if (request) {
+                logger.trace(`failing pending request ${requestId} due to connection lost`);
+                request.error({
+                    err: "Connection lost - gateway connection was disconnected"
+                });
+            }
+        });
         callbacks.execute("onLeft", { disconnected: true });
     }
-    function handleConnectionLoggedIn() {
+    async function handleConnectionLoggedIn() {
         _connectionOn = true;
         if (tryReconnecting) {
             logger.debug("connection is now up - trying to reconnect...");
-            join(_latestOptions);
+            try {
+                await join(_latestOptions);
+            }
+            catch {
+                logger.trace(`failed to reconnect`);
+            }
         }
     }
     function onJoined(callback) {
@@ -9913,7 +9983,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
             connection
                 .send(msg, options)
                 .catch((err) => {
-                requestsMap[requestId].error({ err });
+                requestsMap[requestId]?.error({ err });
             });
         });
     }
@@ -9992,6 +10062,7 @@ class Connection {
     initialLogin = true;
     initialLoginAttempts = 3;
     loginConfig;
+    loginRetryInProgress = false;
     constructor(settings, logger) {
         this.settings = settings;
         this.logger = logger;
@@ -10105,6 +10176,7 @@ class Connection {
         return this.registry.add("disconnected", callback);
     }
     async login(authRequest, reconnect) {
+        this.logger.debug(`Login initiated - reconnect: ${reconnect}, transport: ${this.transport.name()}`);
         if (!this._defaultAuth) {
             this._defaultAuth = authRequest;
         }
@@ -10113,19 +10185,18 @@ class Connection {
             const newAuth = this.transportSwap();
             authRequest = newAuth ?? authRequest;
         }
-        this.logger.trace(`Starting login for transport: ${this.transport.name()} and auth ${JSON.stringify(authRequest)}`);
         try {
             await this.transport.open();
-            this.logger.trace(`Transport: ${this.transport.name()} opened, logging in`);
+            this.logger.debug(`Transport: ${this.transport.name()} opened, logging in`);
             timer("connection").mark("transport-opened");
             const identity = await this.loginCore(authRequest, reconnect);
-            this.logger.trace(`Logged in with identity: ${JSON.stringify(identity)}`);
+            this.logger.debug(`Logged in with identity: ${JSON.stringify(identity)}`);
             timer("connection").mark("protocol-logged-in");
             return identity;
         }
         catch (error) {
             if (this._switchInProgress) {
-                this.logger.trace("An error while logging in after a transport swap, preparing a default swap.");
+                this.logger.debug("An error while logging in after a transport swap, preparing a default swap.");
                 this.prepareDefaultSwap();
             }
             throw new Error(error);
@@ -10168,6 +10239,7 @@ class Connection {
     setLoggedIn(value) {
         this._isLoggedIn = value;
         if (this._isLoggedIn) {
+            this.initialLogin = false;
             this.registry.execute("onLoggedIn");
         }
     }
@@ -10194,8 +10266,10 @@ class Connection {
     }
     handleConnectionChanged(connected) {
         if (this._connected === connected) {
+            this.logger.trace("connection state unchanged, skipping");
             return;
         }
+        this.logger.info(`connection state changed to ${connected ? "connected" : "disconnected"}`);
         this._connected = connected;
         if (connected) {
             if (this.settings?.replaySpecs?.length) {
@@ -10205,28 +10279,44 @@ class Connection {
             this.registry.execute("connected");
         }
         else {
-            this.handleDisconnected();
+            this.setLoggedIn(false);
+            if (this.shouldTryLogin) {
+                this.attemptLoginWithRetry();
+            }
             this.registry.execute("disconnected");
         }
     }
-    handleDisconnected() {
-        this.setLoggedIn(false);
-        const tryToLogin = this.shouldTryLogin;
-        if (tryToLogin && this.initialLogin) {
+    async attemptLoginWithRetry() {
+        if (!this.loginConfig) {
+            throw new Error("no login info");
+        }
+        if (this.loginRetryInProgress) {
+            this.logger.debug("login attempt already in progress, ignoring request...");
+            return;
+        }
+        if (this._isLoggedIn) {
+            this.logger.debug("already logged in, ignoring request...");
+            return;
+        }
+        if (this.initialLogin) {
+            this.logger.debug(`initial login attempt failed, ${this.initialLoginAttempts} attempts remaining...`);
             if (this.initialLoginAttempts <= 0) {
+                this.logger.info("maximum initial login attempts reached, will not try to login again");
                 return;
             }
             this.initialLoginAttempts--;
         }
-        this.logger.debug("disconnected - will try new login?" + this.shouldTryLogin);
-        if (this.shouldTryLogin) {
-            if (!this.loginConfig) {
-                throw new Error("no login info");
-            }
-            this.login(this.loginConfig, true)
-                .catch(() => {
-                setTimeout(this.handleDisconnected.bind(this), this.settings.reconnectInterval || 1000);
-            });
+        try {
+            this.logger.debug(`will try a new login... ${this.loginRetryInProgress}`);
+            this.loginRetryInProgress = true;
+            await this.login(this.loginConfig, true);
+        }
+        catch (e) {
+            this.logger.error(`error trying to login: ${e?.message}`, e);
+            setTimeout(this.attemptLoginWithRetry.bind(this), this.settings.reconnectInterval ?? 1000);
+        }
+        finally {
+            this.loginRetryInProgress = false;
         }
     }
     handleTransportMessage(msg) {
@@ -10353,7 +10443,6 @@ class Connection {
         return message;
     }
     async loginCore(config, reconnect) {
-        this.logger.info("logging in...");
         this.loginConfig = config;
         if (!this.loginConfig) {
             this.loginConfig = { username: "", password: "" };
@@ -10368,11 +10457,13 @@ class Connection {
         if (config.sessionId) {
             helloMsg.request_id = config.sessionId;
         }
-        this.globalDomain = domainSession("global", this, this.logger.subLogger("global-domain"), [
-            "welcome",
-            "token",
-            "authentication-request"
-        ]);
+        if (!this.globalDomain) {
+            this.globalDomain = domainSession("global", this, this.logger.subLogger("global-domain"), [
+                "welcome",
+                "token",
+                "authentication-request"
+            ]);
+        }
         const sendOptions = { skipPeerId: true };
         if (this.initialLogin) {
             sendOptions.retryInterval = this.settings.reconnectInterval;
@@ -10380,7 +10471,6 @@ class Connection {
         }
         try {
             const welcomeMsg = await this.tryAuthenticate(this.globalDomain, helloMsg, sendOptions, config);
-            this.initialLogin = false;
             this.logger.info("login successful with peerId " + welcomeMsg.peer_id);
             this.peerId = welcomeMsg.peer_id;
             this.resolvedIdentity = welcomeMsg.resolved_identity;
@@ -10477,13 +10567,13 @@ class Connection {
         return authentication;
     }
     async logoutCore() {
-        this.logger.debug("logging out...");
+        this.logger.debug("core logging out...");
         this.shouldTryLogin = false;
         if (this.pingTimer) {
             clearTimeout(this.pingTimer);
         }
         const promises = this.sessions.map((session) => {
-            session.leave();
+            return session.leave();
         });
         await Promise.all(promises);
     }
@@ -10708,7 +10798,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.7.0";
+var version = "6.8.0";
 
 function prepareConfig (configuration, ext, glue42gd) {
     let nodeStartingContext;
@@ -10803,14 +10893,20 @@ function prepareConfig (configuration, ext, glue42gd) {
         };
     }
     function getContexts() {
+        const defaultConfig = {
+            reAnnounceKnownContexts: true,
+            subscribeOnUpdate: true,
+            subscribeOnGet: true,
+            onlyReAnnounceSubscribedContexts: true
+        };
         if (typeof configuration.contexts === "undefined") {
-            return { reAnnounceKnownContexts: true };
+            return defaultConfig;
         }
         if (typeof configuration.contexts === "boolean" && configuration.contexts) {
-            return { reAnnounceKnownContexts: true };
+            return defaultConfig;
         }
         if (typeof configuration.contexts === "object") {
-            return Object.assign({}, { reAnnounceKnownContexts: true }, configuration.contexts);
+            return { ...defaultConfig, ...configuration.contexts };
         }
         return false;
     }
@@ -10905,17 +11001,33 @@ class GW3ContextData {
     contextId;
     context;
     isAnnounced;
+    createdByUs;
     joinedActivity;
     updateCallbacks = {};
     activityId;
     sentExplicitSubscription;
-    hasReceivedSnapshot;
+    get hasReceivedSnapshot() {
+        return this.snapshotPromiseWrapper.resolved;
+    }
+    set hasReceivedSnapshot(has) {
+        if (has) {
+            this.snapshotPromiseWrapper.resolve();
+        }
+        else {
+            this.snapshotPromiseWrapper = new PromiseWrapper();
+        }
+    }
+    get snapshotPromise() {
+        return this.snapshotPromiseWrapper.promise;
+    }
+    snapshotPromiseWrapper;
     constructor(contextId, name, isAnnounced, activityId) {
         this.contextId = contextId;
         this.name = name;
         this.isAnnounced = isAnnounced;
         this.activityId = activityId;
         this.context = {};
+        this.snapshotPromiseWrapper = new PromiseWrapper();
     }
     hasCallbacks() {
         return Object.keys(this.updateCallbacks).length > 0;
@@ -12835,10 +12947,15 @@ function deletePath(obj, path) {
 }
 
 class GW3Bridge {
+    ERROR_URI_FAILURE = "global.errors.failure";
+    ERROR_URI_INVALID_CONTEXT = "global.errors.invalid_context";
     _logger;
     _connection;
     _trackAllContexts;
     _reAnnounceKnownContexts;
+    _subscribeOnUpdate;
+    _subscribeOnGet;
+    _onlyReAnnounceSubscribedContexts;
     _gw3Session;
     _contextNameToData = {};
     _gw3Subscriptions = [];
@@ -12865,6 +12982,9 @@ class GW3Bridge {
         this._logger = config.logger;
         this._trackAllContexts = config.trackAllContexts;
         this._reAnnounceKnownContexts = config.reAnnounceKnownContexts;
+        this._subscribeOnUpdate = config.subscribeOnUpdate ?? true;
+        this._subscribeOnGet = config.subscribeOnGet ?? true;
+        this._onlyReAnnounceSubscribedContexts = config.onlyReAnnounceSubscribedContexts ?? true;
         this._gw3Session = this._connection.domain("global", [
             GW_MESSAGE_CONTEXT_CREATED,
             GW_MESSAGE_SUBSCRIBED_CONTEXT,
@@ -12877,9 +12997,14 @@ class GW3Bridge {
                 return;
             }
             if (!this._reAnnounceKnownContexts) {
+                this._contextsTempCache = {};
                 return this._connection.setLibReAnnounced({ name: "contexts" });
             }
-            this.reInitiateState().then(() => this._connection.setLibReAnnounced({ name: "contexts" }));
+            this.reInitiateState()
+                .then(() => this._connection.setLibReAnnounced({ name: "contexts" }))
+                .catch((err) => {
+                this._logger.warn(`Error while re-announcing contexts: ${JSON.stringify(err)}`);
+            });
         });
         this.subscribeToContextCreatedMessages();
         this.subscribeToContextUpdatedMessages();
@@ -12940,6 +13065,9 @@ class GW3Bridge {
                 contextData.hasReceivedSnapshot = true;
                 this._contextNameToData[name] = contextData;
                 delete this._creationPromises[name];
+                contextData.sentExplicitSubscription = true;
+                contextData.createdByUs = true;
+                this.subscribe(name, () => { });
                 return createContextMsg.context_id;
             });
         return this._creationPromises[name];
@@ -12957,12 +13085,10 @@ class GW3Bridge {
         }
         const contextData = this._contextNameToData[name];
         if (!contextData || !contextData.isAnnounced) {
-            return this.createContext(name, delta);
+            await this.createContext(name, delta);
+            return;
         }
-        let currentContext = contextData.context;
-        if (!contextData.hasCallbacks()) {
-            currentContext = await this.get(contextData.name);
-        }
+        const currentContext = await this.get(contextData.name);
         const calculatedDelta = this.setPathSupported ?
             this.calculateContextDeltaV2(currentContext, delta) :
             this.calculateContextDeltaV1(currentContext, delta);
@@ -12972,18 +13098,26 @@ class GW3Bridge {
             && !calculatedDelta.commands?.length) {
             return Promise.resolve();
         }
-        return this._gw3Session
+        const gwResponse = await this._gw3Session
             .send({
             type: GW_MESSAGE_UPDATE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
             delta: calculatedDelta,
-        }, {}, { skipPeerId: false })
-            .then((gwResponse) => {
+        }, {}, { skipPeerId: false });
+        if (this._subscribeOnUpdate &&
+            !contextData.sentExplicitSubscription &&
+            !contextData.activityId) {
+            this.subscribe(name, () => { });
+        }
+        if (this._subscribeOnUpdate ||
+            contextData.sentExplicitSubscription ||
+            contextData.activityId) {
+            await contextData.snapshotPromise;
             this.handleUpdated(contextData, calculatedDelta, {
                 updaterId: gwResponse.peer_id
             });
-        });
+        }
     }
     async set(name, data) {
         if (data) {
@@ -12996,14 +13130,21 @@ class GW3Bridge {
         if (!contextData || !contextData.isAnnounced) {
             return this.createContext(name, data);
         }
-        return this._gw3Session
+        const gwResponse = await this._gw3Session
             .send({
             type: GW_MESSAGE_UPDATE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
             delta: { reset: data },
-        }, {}, { skipPeerId: false })
-            .then((gwResponse) => {
+        }, {}, { skipPeerId: false });
+        if (this._subscribeOnUpdate &&
+            !contextData.sentExplicitSubscription &&
+            !contextData.activityId) {
+            this.subscribe(name, () => { });
+        }
+        if (this._subscribeOnUpdate ||
+            contextData.sentExplicitSubscription ||
+            contextData.activityId) {
             this.handleUpdated(contextData, {
                 reset: data,
                 added: {},
@@ -13012,7 +13153,7 @@ class GW3Bridge {
             }, {
                 updaterId: gwResponse.peer_id
             });
-        });
+        }
     }
     setPath(name, path, value) {
         if (!this.setPathSupported) {
@@ -13047,14 +13188,22 @@ class GW3Bridge {
                 commands.push({ type: "set", path: pathValue.path, value: pathValue.value });
             }
         }
-        return this._gw3Session
+        const gwResponse = await this._gw3Session
             .send({
             type: GW_MESSAGE_UPDATE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
             delta: { commands }
-        }, {}, { skipPeerId: false })
-            .then((gwResponse) => {
+        }, {}, { skipPeerId: false });
+        if (this._subscribeOnUpdate &&
+            !contextData.sentExplicitSubscription &&
+            !contextData.activityId) {
+            this.subscribe(name, () => { });
+        }
+        if (this._subscribeOnUpdate ||
+            contextData.sentExplicitSubscription ||
+            contextData.activityId) {
+            await contextData.snapshotPromise;
             this.handleUpdated(contextData, {
                 added: {},
                 removed: [],
@@ -13063,7 +13212,7 @@ class GW3Bridge {
             }, {
                 updaterId: gwResponse.peer_id
             });
-        });
+        }
     }
     async get(name) {
         if (name in this._creationPromises) {
@@ -13071,18 +13220,34 @@ class GW3Bridge {
         }
         const contextData = this._contextNameToData[name];
         if (!contextData || !contextData.isAnnounced) {
+            if (!contextData && this._subscribeOnGet) {
+                this.subscribe(name, () => { });
+            }
             return Promise.resolve({});
         }
-        if (contextData && (!contextData.hasCallbacks() || !contextData.hasReceivedSnapshot)) {
-            return new Promise((resolve) => {
+        if (contextData && !contextData.sentExplicitSubscription) {
+            return new Promise((resolve, reject) => {
                 this.subscribe(name, (data, _d, _r, un) => {
-                    this.unsubscribe(un);
+                    if (!this._subscribeOnGet) {
+                        this.unsubscribe(un);
+                    }
                     resolve(data);
+                }).catch((e) => {
+                    if (this.isInvalidContextError(e)) {
+                        resolve({});
+                        return;
+                    }
+                    reject(e);
                 });
             });
         }
+        await contextData.snapshotPromise;
         const context = contextData?.context ?? {};
         return Promise.resolve(deepClone(context));
+    }
+    isInvalidContextError(e) {
+        return e.reason_uri === this.ERROR_URI_INVALID_CONTEXT
+            || (e.reason_uri === this.ERROR_URI_FAILURE && e.reason?.startsWith("Unable to find context with id"));
     }
     async subscribe(name, callback, subscriptionKey) {
         if (name in this._creationPromises) {
@@ -13091,8 +13256,6 @@ class GW3Bridge {
         const thisCallbackSubscriptionNumber = typeof subscriptionKey === "undefined" ? this._nextCallbackSubscriptionNumber : subscriptionKey;
         if (typeof subscriptionKey === "undefined") {
             this._nextCallbackSubscriptionNumber += 1;
-        }
-        if (this._contextsSubscriptionsCache.every((subscription) => subscription.subKey !== this._nextCallbackSubscriptionNumber)) {
             this._contextsSubscriptionsCache.push({ contextName: name, subKey: thisCallbackSubscriptionNumber, callback });
         }
         let contextData = this._contextNameToData[name];
@@ -13106,19 +13269,22 @@ class GW3Bridge {
         const hadCallbacks = contextData.hasCallbacks();
         contextData.updateCallbacks[thisCallbackSubscriptionNumber] = callback;
         if (!hadCallbacks) {
-            if (!contextData.joinedActivity) {
+            if (!contextData.joinedActivity && !contextData.createdByUs) {
                 if (contextData.context && contextData.sentExplicitSubscription) {
-                    if (contextData.hasReceivedSnapshot) {
+                    if (contextData.hasReceivedSnapshot && !subscriptionKey) {
                         const clone = deepClone(contextData.context);
                         callback(clone, clone, [], thisCallbackSubscriptionNumber);
                     }
                     return Promise.resolve(thisCallbackSubscriptionNumber);
                 }
                 return this.sendSubscribe(contextData)
-                    .then(() => thisCallbackSubscriptionNumber);
+                    .then(() => thisCallbackSubscriptionNumber, () => {
+                    this.unsubscribe(thisCallbackSubscriptionNumber, true);
+                    return thisCallbackSubscriptionNumber;
+                });
             }
             else {
-                if (contextData.hasReceivedSnapshot) {
+                if (contextData.hasReceivedSnapshot && !subscriptionKey) {
                     const clone = deepClone(contextData.context);
                     callback(clone, clone, [], thisCallbackSubscriptionNumber);
                 }
@@ -13126,19 +13292,21 @@ class GW3Bridge {
             }
         }
         else {
-            if (contextData.hasReceivedSnapshot) {
+            if (contextData.hasReceivedSnapshot && !subscriptionKey) {
                 const clone = deepClone(contextData.context);
                 callback(clone, clone, [], thisCallbackSubscriptionNumber);
             }
             return Promise.resolve(thisCallbackSubscriptionNumber);
         }
     }
-    unsubscribe(subscriptionKey) {
-        this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter((subscription) => subscription.subKey !== subscriptionKey);
+    unsubscribe(subscriptionKey, keepInSubscriptionsCache) {
+        if (!keepInSubscriptionsCache) {
+            this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter(x => x.subKey !== subscriptionKey);
+        }
         for (const name of Object.keys(this._contextNameToData)) {
             const contextData = this._contextNameToData[name];
             if (!contextData) {
-                return;
+                continue;
             }
             const hadCallbacks = contextData.hasCallbacks();
             delete contextData.updateCallbacks[subscriptionKey];
@@ -13146,11 +13314,17 @@ class GW3Bridge {
                 hadCallbacks &&
                 !contextData.hasCallbacks() &&
                 contextData.sentExplicitSubscription) {
+                contextData.hasReceivedSnapshot = false;
+                contextData.context = {};
                 this.sendUnsubscribe(contextData).catch(() => { });
             }
             if (!contextData.isAnnounced &&
                 !contextData.hasCallbacks()) {
                 delete this._contextNameToData[name];
+                delete this._contextNameToId[name];
+                if (contextData.contextId) {
+                    delete this._contextIdToName[contextData.contextId];
+                }
             }
         }
     }
@@ -13159,7 +13333,8 @@ class GW3Bridge {
             await this._creationPromises[name];
         }
         const contextData = this._contextNameToData[name];
-        if (!contextData) {
+        const contextId = contextData?.contextId;
+        if (!contextData || !contextId) {
             return Promise.reject(`context with ${name} does not exist`);
         }
         return this._gw3Session
@@ -13167,12 +13342,11 @@ class GW3Bridge {
             type: GW_MESSAGE_DESTROY_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
-        }).then((_) => undefined);
+        }).then(() => undefined);
     }
     handleUpdated(contextData, delta, extraData) {
         const oldContext = contextData.context;
         contextData.context = applyContextDelta(contextData.context, delta, this._logger);
-        contextData.hasReceivedSnapshot = true;
         if (this._contextNameToData[contextData.name] === contextData &&
             !deepEqual(oldContext, contextData.context)) {
             this.invokeUpdateCallbacks(contextData, delta, extraData);
@@ -13220,7 +13394,7 @@ class GW3Bridge {
                 contextData.contextId = contextCreatedMsg.context_id;
                 contextData.activityId = contextCreatedMsg.activity_id;
                 if (!contextData.sentExplicitSubscription) {
-                    this.sendSubscribe(contextData);
+                    this.sendSubscribe(contextData).catch(() => { });
                 }
             }
         }
@@ -13280,10 +13454,10 @@ class GW3Bridge {
         const oldContext = contextData.context;
         contextData.hasReceivedSnapshot = true;
         if (updatedMessageType === GW_MESSAGE_SUBSCRIBED_CONTEXT) {
-            contextData.context = contextUpdatedMsg.data || {};
+            contextData.context = contextUpdatedMsg.data ?? {};
         }
         else if (updatedMessageType === GW_MESSAGE_JOINED_ACTIVITY) {
-            contextData.context = contextUpdatedMsg.context_snapshot || {};
+            contextData.context = contextUpdatedMsg.context_snapshot ?? {};
         }
         else if (updatedMessageType === GW_MESSAGE_CONTEXT_UPDATED) {
             contextData.context = applyContextDelta(contextData.context, contextUpdatedMsg.delta, this._logger);
@@ -13365,23 +13539,36 @@ class GW3Bridge {
             return;
         }
     }
-    sendSubscribe(contextData) {
+    async sendSubscribe(contextData) {
         contextData.sentExplicitSubscription = true;
-        return this._gw3Session
-            .send({
-            type: GW_MESSAGE_SUBSCRIBE_CONTEXT,
-            domain: "global",
-            context_id: contextData.contextId,
-        }).then((_) => undefined);
+        try {
+            await this._gw3Session.send({
+                type: GW_MESSAGE_SUBSCRIBE_CONTEXT,
+                domain: "global",
+                context_id: contextData.contextId,
+            });
+            return;
+        }
+        catch (error) {
+            contextData.sentExplicitSubscription = false;
+            throw error;
+        }
     }
-    sendUnsubscribe(contextData) {
+    async sendUnsubscribe(contextData) {
+        const prev = contextData.sentExplicitSubscription;
         contextData.sentExplicitSubscription = false;
-        return this._gw3Session
-            .send({
-            type: GW_MESSAGE_UNSUBSCRIBE_CONTEXT,
-            domain: "global",
-            context_id: contextData.contextId,
-        }).then((_) => undefined);
+        try {
+            await this._gw3Session.send({
+                type: GW_MESSAGE_UNSUBSCRIBE_CONTEXT,
+                domain: "global",
+                context_id: contextData.contextId,
+            });
+            return;
+        }
+        catch (error) {
+            contextData.sentExplicitSubscription = prev;
+            throw error;
+        }
     }
     calculateContextDeltaV1(from, to) {
         const delta = { added: {}, updated: {}, removed: [], reset: undefined };
@@ -13426,7 +13613,7 @@ class GW3Bridge {
             this._connection.off(sub);
         }
         if (this._systemContextsSubKey) {
-            this.unsubscribe(this._systemContextsSubKey);
+            this.unsubscribe(this._systemContextsSubKey, true);
             delete this._systemContextsSubKey;
         }
         this._gw3Subscriptions = [];
@@ -13434,7 +13621,11 @@ class GW3Bridge {
         this._contextIdToName = {};
         delete this._protocolVersion;
         this._contextsTempCache = Object.keys(this._contextNameToData).reduce((cacheSoFar, ctxName) => {
-            cacheSoFar[ctxName] = this._contextNameToData[ctxName].context;
+            const contextData = this._contextNameToData[ctxName];
+            const addToCache = !this._onlyReAnnounceSubscribedContexts || contextData.hasReceivedSnapshot;
+            if (addToCache) {
+                cacheSoFar[ctxName] = this._contextNameToData[ctxName].context;
+            }
             return cacheSoFar;
         }, {});
         this._contextNameToData = {};
@@ -14378,7 +14569,7 @@ Decoder.valueAt;
 /** See `Decoder.succeed` */
 Decoder.succeed;
 /** See `Decoder.fail` */
-var fail = Decoder.fail;
+var fail$1 = Decoder.fail;
 /** See `Decoder.lazy` */
 Decoder.lazy;
 
@@ -14386,7 +14577,7 @@ const functionCheck = (input, propDescription) => {
     const providedType = typeof input;
     return providedType === "function" ?
         anyJson() :
-        fail(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
+        fail$1(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
 };
 const nonEmptyStringDecoder = string().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder = number().where((num) => num >= 0, "Expected a non-negative number or 0");
@@ -15624,13 +15815,15 @@ class ServerStreaming {
     session;
     repository;
     serverRepository;
+    logger;
     ERR_URI_SUBSCRIPTION_FAILED = "com.tick42.agm.errors.subscription.failure";
     callbacks = CallbackRegistryFactory();
     nextStreamId = 0;
-    constructor(session, repository, serverRepository) {
+    constructor(session, repository, serverRepository, logger) {
         this.session = session;
         this.repository = repository;
         this.serverRepository = serverRepository;
+        this.logger = logger;
         session.on("add-interest", (msg) => {
             this.handleAddInterest(msg);
         });
@@ -15663,6 +15856,8 @@ class ServerStreaming {
             type: "accepted",
             subscription_id: key,
             stream_id: streamId,
+        }).catch((err) => {
+            this.logger.warn(`Failed to send accepted message for subscription ${key}: ${JSON.stringify(err)}`);
         });
         this.callbacks.execute(SUBSCRIPTION_ADDED, subscription, streamingMethod);
     }
@@ -15700,7 +15895,10 @@ class ServerStreaming {
                 stream_id: streamId,
                 data,
             };
-            this.session.sendFireAndForget(publishMessage);
+            this.session.sendFireAndForget(publishMessage)
+                .catch((err) => {
+                this.logger.warn(`Failed to send publish message for stream ${streamId}: ${JSON.stringify(err)}`);
+            });
         });
     }
     pushDataToSingle(method, subscription, data) {
@@ -15712,7 +15910,10 @@ class ServerStreaming {
             subscription_id: subscription.id,
             data,
         };
-        this.session.sendFireAndForget(postMessage);
+        this.session.sendFireAndForget(postMessage)
+            .catch((err) => {
+            this.logger.warn(`Failed to send post message for subscription ${subscription.id}: ${JSON.stringify(err)}`);
+        });
     }
     closeSingleSubscription(streamingMethod, subscription) {
         if (streamingMethod.protocolState.subscriptionsMap) {
@@ -15723,7 +15924,10 @@ class ServerStreaming {
             subscription_id: subscription.id,
             reason: "Server dropping a single subscription",
         };
-        this.session.sendFireAndForget(dropSubscriptionMessage);
+        this.session.sendFireAndForget(dropSubscriptionMessage)
+            .catch((err) => {
+            this.logger.warn(`Failed to send drop-subscription message for subscription ${subscription.id}: ${JSON.stringify(err)}`);
+        });
         subscription.instance;
         this.callbacks.execute(SUBSCRIPTION_REMOVED, subscription, streamingMethod);
     }
@@ -15751,7 +15955,10 @@ class ServerStreaming {
                 subscription_id: subscription.id,
                 reason: "Server dropping all subscriptions on stream_id: " + subscription.streamId,
             };
-            this.session.sendFireAndForget(drop);
+            this.session.sendFireAndForget(drop)
+                .catch((err) => {
+                this.logger.warn(`Failed to send drop-subscription message for subscription ${subscription.id}: ${JSON.stringify(err)}`);
+            });
         });
     }
     getSubscriptionList(streamingMethod, branchKey) {
@@ -15860,7 +16067,10 @@ class ServerStreaming {
             reason,
             request_id: subscriptionId,
         };
-        this.session.sendFireAndForget(errorMessage);
+        this.session.sendFireAndForget(errorMessage)
+            .catch((err) => {
+            this.logger.warn(`Failed to send subscription failed message for subscription ${subscriptionId}: ${JSON.stringify(err)}`);
+        });
     }
     getStreamId(streamingMethod, branchKey) {
         if (typeof branchKey !== "string") {
@@ -15893,7 +16103,7 @@ class ServerProtocol {
         this.clientRepository = clientRepository;
         this.serverRepository = serverRepository;
         this.logger = logger;
-        this.streaming = new ServerStreaming(session, clientRepository, serverRepository);
+        this.streaming = new ServerStreaming(session, clientRepository, serverRepository, logger.subLogger("streaming"));
         this.session.on("invoke", (msg) => this.handleInvokeMessage(msg));
     }
     createStream(repoMethod) {
@@ -15952,7 +16162,10 @@ class ServerProtocol {
                 request_id: undefined,
             };
         }
-        this.session.sendFireAndForget(msg);
+        this.session.sendFireAndForget(msg)
+            .catch((error => {
+            this.logger.warn(`Failed to send method invocation result for method ${method.definition.name} invocation ${invocationId} - ${JSON.stringify(error)}`);
+        }));
     }
     async unregister(method) {
         const msg = {
@@ -16412,6 +16625,8 @@ class ClientStreaming {
                 subscription_id: server.subscriptionId,
                 reason_uri: "",
                 reason: ON_CLOSE_MSG_CLIENT_INIT,
+            }).catch((err) => {
+                this.logger.warn(`Error sending unsubscribe for subscription id ${server.subscriptionId}: ${JSON.stringify(err)}`);
             });
             delete this.subscriptionIdToLocalKeyMap[server.subscriptionId];
         });
@@ -16751,7 +16966,10 @@ class MessageBus {
             routing_key: routingKey,
             target_identity: target
         });
-        this.session.send(args);
+        this.session.send(args)
+            .catch((err) => {
+            this.logger.error(`Failed to publish message to topic ${topic} with routing key ${routingKey} for ${JSON.stringify(target)}: ${JSON.stringify(err)}`);
+        });
     };
     subscribe = (topic, callback, options) => {
         return new Promise((resolve, reject) => {
@@ -16769,8 +16987,12 @@ class MessageBus {
                 this.subscriptions.push({ subscription_id, topic, callback, source: target });
                 resolve({
                     unsubscribe: () => {
-                        this.session.send({ type: "unsubscribe", subscription_id, peer_id: this.peerId });
-                        this.subscriptions = this.subscriptions.filter((s) => s.subscription_id !== subscription_id);
+                        this.session.send({ type: "unsubscribe", subscription_id, peer_id: this.peerId })
+                            .then(() => {
+                            this.subscriptions = this.subscriptions.filter((s) => s.subscription_id !== subscription_id);
+                        }).catch((err) => {
+                            this.logger.warn(`Failed to send unsubscribe request for ${subscription_id}: ${JSON.stringify(err)}`);
+                        });
                         return Promise.resolve();
                     }
                 });
@@ -16968,10 +17190,12 @@ const IOConnectCoreFactory = (userConfig, ext) => {
                 connection: _connection,
                 logger: _logger.subLogger("contexts"),
                 trackAllContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.trackAllContexts : false,
-                reAnnounceKnownContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.reAnnounceKnownContexts : false
+                reAnnounceKnownContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.reAnnounceKnownContexts : false,
+                subscribeOnGet: typeof internalConfig.contexts === "object" ? internalConfig.contexts.subscribeOnGet : true,
+                subscribeOnUpdate: typeof internalConfig.contexts === "object" ? internalConfig.contexts.subscribeOnUpdate : true,
+                onlyReAnnounceSubscribedContexts: typeof internalConfig.contexts === "object" ? internalConfig.contexts.onlyReAnnounceSubscribedContexts : true
             });
             registerLib("contexts", _contexts, initTimer);
-            return _contexts;
         }
         else {
             const replayer = _connection.replayer;
@@ -16979,6 +17203,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
                 replayer.drain(ContextMessageReplaySpec.name);
             }
         }
+        return Promise.resolve();
     }
     async function setupBus() {
         if (!internalConfig.bus) {
