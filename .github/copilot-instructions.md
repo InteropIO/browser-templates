@@ -193,25 +193,39 @@ Templates requiring license keys:
 
 When new @interopio packages are released, all projects in this repository need to be updated. Follow these steps:
 
-### Step 1: Update Package Dependencies
-Go through all project directories and update all `@interopio/*` dependencies to the latest versions:
+### Step 1: Create New Branch
+
+Before making any changes, create a new branch from origin:
 
 ```bash
-# For each template directory (browser-client-react, browser-client-vanilla-js, etc.)
-cd <template-directory>
+# User must specify the version number (e.g., 4.3)
+git checkout -b cb-next-<version> origin/master
 
-# Update all @interopio dependencies in package.json to latest versions
-# Example: "@interopio/browser": "^4.0.2" -> "@interopio/browser": "^4.1.0"
+# Example: git checkout -b cb-next-4.3 origin/master
 ```
 
-**Templates with @interopio dependencies:**
-- `browser-client-react`: @interopio/browser, @interopio/react-hooks
-- `browser-platform-home-react-wsp`: @interopio/browser-platform, @interopio/browser-worker, @interopio/home-ui-react, @interopio/modals-api, @interopio/react-hooks, @interopio/workspaces-api, @interopio/workspaces-ui-react
-- `browser-platform-wsp-frame`: @interopio/browser-platform, @interopio/modals-api, @interopio/react-hooks, @interopio/workspaces-api, @interopio/workspaces-ui-react
-- `browser-platform-dev-react-seed/workspace-platform`: Check package.json for @interopio dependencies
-- `browser-platform-dev-react-seed/react-client`: Check package.json for @interopio dependencies
+**IMPORTANT**: Always ask the user for the version number if not provided. The branch name format is `cb-next-<version>` where `<version>` is the new io.Connect Browser version being released (e.g., 4.2, 4.3, 5.0).
 
-### Step 2: Update Package Versions
+### Step 2: Update Package Dependencies
+**CRITICAL**: Update ALL `@interopio/*` dependencies to their latest versions, regardless of major version number. Always verify actual latest versions using `npm view <package> version` before updating.
+
+**All @interopio packages used across templates:**
+- `@interopio/browser` - Used in browser-client-react
+- `@interopio/browser-platform` - Used in workspace-platform, home-react-wsp, wsp-frame
+- `@interopio/browser-worker` - Used in home-react-wsp
+- `@interopio/desktop` - Used in workspace-platform (different major version)
+- `@interopio/home-ui-react` - Used in home-react-wsp (different major version)
+- `@interopio/modals-api` - Used in workspace-platform, react-client, home-react-wsp, wsp-frame (different major version)
+- `@interopio/react-hooks` - Used in all React templates
+- `@interopio/workspaces-api` - Used in workspace-platform, react-client, home-react-wsp, wsp-frame
+- `@interopio/workspaces-ui-react` - Used in workspace-platform, home-react-wsp, wsp-frame
+
+**Process:**
+1. For each package, check latest version: `npm view @interopio/<package> version`
+2. Update package.json files with the latest versions found
+3. Don't assume version numbers - always verify with npm
+
+### Step 3: Update Package Versions
 Update the `version` field in each `package.json` file to match the new io.Connect Browser version:
 
 ```bash
@@ -228,7 +242,7 @@ Update all package.json files:
 - `browser-platform-vanilla-js/package.json`
 - `browser-platform-wsp-frame/package.json`
 
-### Step 3: Update package-lock.json Files
+### Step 4: Update package-lock.json Files
 Regenerate all `package-lock.json` files with the new dependency versions:
 
 ```bash
@@ -247,23 +261,63 @@ rm -f package-lock.json
 npm install
 ```
 
-### Step 4: Replace .es.js Files for Vanilla JavaScript Projects
-For vanilla JavaScript projects, download and replace the corresponding .es.js library files:
+### Step 5: Replace .es.js Files for Vanilla JavaScript Projects
+For vanilla JavaScript projects, download and replace the corresponding .es.js library files **including .map files**:
 
 **browser-client-vanilla-js:**
-- Download latest `browser.es.js` and `browser.es.js.map` from npm package @interopio/browser
-- Replace files in `browser-client-vanilla-js/public/libs/`
+- Download `browser.es.js` and `browser.es.js.map` from npm package @interopio/browser
+- Replace both files in `browser-client-vanilla-js/public/libs/`
 
 **browser-platform-vanilla-js:**
-- Download latest `browser.platform.es.js` from npm package @interopio/browser-platform
-- Replace file in `browser-platform-vanilla-js/public/libs/`
+- Download `browser.platform.es.js` and `browser.platform.es.js.map` from npm package @interopio/browser-platform
+- Replace both files in `browser-platform-vanilla-js/public/libs/`
 
 **React templates with public resources:**
-For templates with public resources directories (browser-platform-dev-react-seed, browser-platform-home-react-wsp, browser-platform-wsp-frame):
-- Update `io-browser-modals-ui.es.js` and `io-browser-modals-ui-react.es.js` in `/public/resources/modals/`
-- Update `io-browser-intent-resolver-ui.es.js` in `/public/resources/intent-resolver/`
+`
 
-### Step 5: Update manifest.json
+### Step 6: Update public resources for React templates
+
+`browser-platform-dev-react-seed/workspace-platform`, `browser-platform-home-react-wsp` and `browser-platform-wsp-frame` use shared public resources for Intent Resolver and Modals. These need to be updated to the latest versions from the respective `@interopio/*` npm packages. 
+
+**CRITICAL**: Always DELETE all existing files in the resource directories before copying new ones to avoid mixed versions.
+
+**Process:**
+```bash
+# Create temp directory for downloads
+cd browser-templates
+mkdir temp-ui-update
+cd temp-ui-update
+
+# Download and extract intent-resolver-ui
+npm pack @interopio/intent-resolver-ui@latest
+tar -xzf interopio-intent-resolver-ui-*.tgz
+
+# Update each template (repeat for all 3 templates)
+Remove-Item "path/to/template/public/resources/intent-resolver/*" -Force
+Copy-Item -Recurse "package/dist/*" "path/to/template/public/resources/intent-resolver/" -Force
+
+# Download and extract modals-ui
+rm -rf package
+npm pack @interopio/modals-ui@latest
+tar -xzf interopio-modals-ui-*.tgz
+
+# Update each template (repeat for all 3 templates)
+Remove-Item "path/to/template/public/resources/modals/*" -Force
+Copy-Item -Recurse "package/dist/*" "path/to/template/public/resources/modals/" -Force
+
+# Clean up
+cd ..
+Remove-Item -Recurse -Force temp-ui-update
+```
+
+**Templates to update:**
+- `browser-platform-dev-react-seed/workspace-platform/public/resources/`
+- `browser-platform-home-react-wsp/public/resources/`
+- `browser-platform-wsp-frame/public/resources/`
+
+**Note**: Package structures may change between versions (e.g., files may be added/removed). Always use the `-Recurse` flag to copy all files from dist folders. Verify files after copying to ensure no old files remain.
+
+### Step 7: Update manifest.json
 Update the repository `manifest.json` file with the new version information:
 
 ```json
@@ -287,16 +341,33 @@ Update the repository `manifest.json` file with the new version information:
 
 **Note**: When releasing version 4.2, add 4.1 (the previous version) to the `versions` array, and set `latestVersion` to 4.2 (the new version). The latest version should not be included in the `versions` array.
 
-### Step 6: Validation
+### Step 8: Validation
 After updating dependencies, validate all templates:
 
 ```bash
 # Test each template following the Template-Specific Instructions
 # Ensure all templates build and start successfully
+# Verify all @interopio packages are updated (check with grep or file search)
 # Document any breaking changes or migration notes
 ```
 
+**Validation Checklist:**
+- [ ] All package.json version fields updated to new version
+- [ ] All @interopio/* dependencies updated (including different major versions like @interopio/desktop, @interopio/home-ui-react, @interopio/modals-api)
+- [ ] All package-lock.json files regenerated
+- [ ] Vanilla JS .es.js and .es.js.map files replaced
+- [ ] Old files removed from resources directories before copying new ones
+- [ ] Intent Resolver and Modals resources updated in all 3 React platform templates
+- [ ] Verify files in resources directories are current (check file counts match package dist contents)
+- [ ] manifest.json updated with new version
+- [ ] All templates build successfully
+
 **IMPORTANT**: Always run `npm install` and test builds after updating dependencies. Set timeouts of 300+ seconds and NEVER CANCEL builds.
+
+**Common Issues:**
+- Mixed versions: If old and new files exist together, remove all files first before copying
+- Package structure changes: UI packages may change between versions (files added/removed/renamed)
+- File timestamps: npm packages may have unusual timestamps; verify by checking file names match dist contents
 
 ## Troubleshooting
 - **Port conflicts**: Templates auto-switch ports when default ports are occupied
