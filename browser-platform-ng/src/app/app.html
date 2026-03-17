@@ -1,0 +1,9 @@
+<body>
+    <h1>io.Connect Browser Platform</h1>
+    <header [ngClass]="ioConnectStatus()">{{ ioConnectStatus().charAt(0).toUpperCase() + ioConnectStatus().slice(1) }}</header>
+    @if (ioConnectInitError()) {
+        <footer>{{ ioConnectInitError() }}</footer>
+    } @else {
+        <footer>API version: {{ apiVersion() }} | Platform version: {{ platformVersion() }}</footer>
+    }
+</body>

@@ -1,6 +1,6 @@
 # io.Connect Browser Templates Repository
 
-io.Connect Browser Templates is a collection of 6 production-ready templates for building io.Connect Browser applications. This repository contains React and Vanilla JavaScript templates for both Browser Client apps and Browser Platform apps (Main apps).
+io.Connect Browser Templates is a collection of 8 production-ready templates for building io.Connect Browser applications. This repository contains Angular, React, and Vanilla JavaScript templates for both Browser Client apps and Browser Platform apps (Main apps).
 
 **ALWAYS reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.**
 
@@ -19,6 +19,25 @@ To quickly validate all templates are working:
 
 ## Template-Specific Instructions
 
+### browser-client-ng (Angular Browser Client)
+**Location**: `/browser-client-ng`
+**Purpose**: Angular template for io.Connect Browser Client apps
+**Development server**: `http://localhost:4201`
+
+```bash
+cd browser-client-ng
+npm install                    # ~10-15 seconds
+npm run build                  # ~5-15 seconds - NEVER CANCEL, set timeout 300+ seconds
+npm start                      # Starts Angular dev server - NEVER CANCEL
+```
+
+**Test command**: `npm test` (placeholder - no need to run; there are no tests)
+**Notes**:
+- Uses Angular CLI
+- Source code in `/src`
+- Main integration points are `src/app/app.ts` and `src/app/io-connect.service.ts`
+- Expected to show connection errors when run standalone (needs Browser Platform to connect to)
+
 ### browser-client-react (React Browser Client)
 **Location**: `/browser-client-react`
 **Purpose**: React template (Vite) for io.Connect Browser Client apps
@@ -32,7 +51,7 @@ npm start                      # Starts dev server - NEVER CANCEL
 ```
 
 **Test command**: `npm test` (placeholder - returns success)
-**Notes**: 
+**Notes**:
 - Uses Vite for fast development
 - Expected to show connection errors when run standalone (needs Browser Platform to connect to)
 - Build produces optimized production bundle in `/dist`
@@ -57,7 +76,7 @@ npm start                      # Starts http-server - NEVER CANCEL
 ### browser-platform-dev-react-seed (Development Seed Project)
 **Location**: `/browser-platform-dev-react-seed`
 **Purpose**: Complete multi-app development environment with workspace platform + React client
-**Development servers**: 
+**Development servers**:
 - Workspace Platform: `http://localhost:3002`
 - React Client: `http://localhost:3001`
 
@@ -89,11 +108,30 @@ npm start                      # Starts dev server - NEVER CANCEL
 ```
 
 **Test command**: `npm test` (placeholder - returns success)
-**Notes**: 
+**Notes**:
 - Progressive Web App (PWA) template
 - **Requires license key** in src/config.json
 - Includes Auth0 authentication components
 - Uses .env file for configuration
+
+### browser-platform-ng (Angular Browser Platform)
+**Location**: `/browser-platform-ng`
+**Purpose**: Angular template for io.Connect Browser Platform apps
+**Development server**: `http://localhost:4200`
+
+```bash
+cd browser-platform-ng
+npm install                    # ~10-15 seconds
+npm run build                  # ~5-15 seconds - NEVER CANCEL, set timeout 300+ seconds
+npm start                      # Starts Angular dev server - NEVER CANCEL
+```
+
+**Test command**: `npm test` (placeholder - no need to run; there are no tests)
+**Notes**:
+- Uses Angular CLI
+- Source code in `/src`
+- **Requires license key** in `src/config.json`
+- Main integration points are `src/app/app.ts`, `src/app/app.config.ts`, and `src/app/io-connect.service.ts`
 
 ### browser-platform-vanilla-js (Vanilla JS Browser Platform)
 **Location**: `/browser-platform-vanilla-js`
@@ -124,7 +162,7 @@ npm run lint                   # <1 second - runs ESLint
 npm start                      # Starts dev server - NEVER CANCEL
 ```
 
-**Notes**: 
+**Notes**:
 - Includes comprehensive linting with ESLint
 - Auto-detects port conflicts and switches ports
 - **Requires license key** in src/config.json for full functionality
@@ -133,7 +171,7 @@ npm start                      # Starts dev server - NEVER CANCEL
 
 ### Build Timeouts and Timing
 - **npm install**: 1-15 seconds depending on template
-- **npm run build**: 4-10 seconds for most templates
+- **npm run build**: 4-15 seconds for most templates
 - **npm run bootstrap** (seed project): ~6 seconds
 - **CRITICAL**: Set minimum timeout of 300 seconds for all build commands
 - **NEVER CANCEL** any build or start command - they may appear to hang but are processing
@@ -150,22 +188,23 @@ After making changes to any template:
 1. **Build validation**: Run `npm run build` and verify it completes without errors
 2. **Start validation**: Run `npm start` and verify the development server starts
 3. **Browser validation**: Open the localhost URL and verify the app loads (errors about licensing/connection are expected)
-4. **Lint validation** (for React templates): Run `npm run lint` if available
+4. **Lint validation** (for templates that support it): Run `npm run lint` if available
 
 ### Common File Locations
-```
+```text
 # Repository structure (all templates follow similar patterns)
 browser-[type]-[framework]/
-├── package.json           # Dependencies and scripts
-├── README.md             # Template-specific documentation  
-├── src/                  # Source code (React templates)
-├── public/               # Static assets / source (Vanilla JS)
-├── config.json           # io.Connect configuration (Platform templates)
-└── dist/                 # Build output (after npm run build)
+|-- package.json           # Dependencies and scripts
+|-- README.md              # Template-specific documentation
+|-- src/                   # Source code (Angular/React templates)
+|-- public/                # Static assets / source
+|-- config.json            # io.Connect configuration (some Platform templates)
+`-- dist/                  # Build output (after npm run build)
 ```
 
 ### License Key Requirements
 Templates requiring license keys:
+- browser-platform-ng (src/config.json)
 - browser-platform-dev-react-seed (workspace-platform/src/config.json)
 - browser-platform-home-react-wsp (src/config.json)
 - browser-platform-wsp-frame (src/config.json)
@@ -180,8 +219,8 @@ Templates requiring license keys:
 
 ## Development Workflow
 1. Choose appropriate template based on your needs:
-   - **Browser Client**: Use browser-client-react or browser-client-vanilla-js
-   - **Browser Platform**: Use browser-platform-* templates
+   - **Browser Client**: Use browser-client-ng, browser-client-react, or browser-client-vanilla-js
+   - **Browser Platform**: Use browser-platform-* templates, including browser-platform-ng
    - **Full Development Environment**: Use browser-platform-dev-react-seed
 2. Follow template-specific setup instructions above
 3. For Platform templates, add license key to config.json for full functionality
@@ -210,6 +249,7 @@ git checkout -b cb-next-<version> origin/master
 **CRITICAL**: Update ALL `@interopio/*` dependencies to their latest versions, regardless of major version number. Always verify actual latest versions using `npm view <package> version` before updating.
 
 **All @interopio packages used across templates:**
+- `@interopio/ng` - Used in browser-client-ng and browser-platform-ng
 - `@interopio/browser` - Used in browser-client-react
 - `@interopio/browser-platform` - Used in workspace-platform, home-react-wsp, wsp-frame
 - `@interopio/browser-worker` - Used in home-react-wsp
@@ -233,12 +273,14 @@ Update the `version` field in each `package.json` file to match the new io.Conne
 ```
 
 Update all package.json files:
+- `browser-client-ng/package.json`
 - `browser-client-react/package.json`
 - `browser-client-vanilla-js/package.json`
 - `browser-platform-dev-react-seed/package.json`
 - `browser-platform-dev-react-seed/workspace-platform/package.json`
 - `browser-platform-dev-react-seed/react-client/package.json`
 - `browser-platform-home-react-wsp/package.json`
+- `browser-platform-ng/package.json`
 - `browser-platform-vanilla-js/package.json`
 - `browser-platform-wsp-frame/package.json`
 
@@ -277,7 +319,7 @@ For vanilla JavaScript projects, download and replace the corresponding .es.js l
 
 ### Step 6: Update public resources for React templates
 
-`browser-platform-dev-react-seed/workspace-platform`, `browser-platform-home-react-wsp` and `browser-platform-wsp-frame` use shared public resources for Intent Resolver and Modals. These need to be updated to the latest versions from the respective `@interopio/*` npm packages. 
+`browser-platform-dev-react-seed/workspace-platform`, `browser-platform-home-react-wsp` and `browser-platform-wsp-frame` use shared public resources for Intent Resolver and Modals. These need to be updated to the latest versions from the respective `@interopio/*` npm packages.
 
 **CRITICAL**: Always DELETE all existing files in the resource directories before copying new ones to avoid mixed versions.
 
@@ -314,6 +356,7 @@ Remove-Item -Recurse -Force temp-ui-update
 - `browser-platform-dev-react-seed/workspace-platform/public/resources/`
 - `browser-platform-home-react-wsp/public/resources/`
 - `browser-platform-wsp-frame/public/resources/`
+- `browser-platform-ng/public/resources/`
 
 **Note**: Package structures may change between versions (e.g., files may be added/removed). Always use the `-Recurse` flag to copy all files from dist folders. Verify files after copying to ensure no old files remain.
 
@@ -382,3 +425,4 @@ After updating dependencies, validate all templates:
 - `README.md` - Template-specific documentation
 - `.env` - Environment variables (where present)
 - `vite.config.ts` - Vite configuration (React templates)
+- `angular.json` - Angular CLI configuration (Angular templates)
