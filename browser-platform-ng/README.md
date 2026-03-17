@@ -1,59 +1,87 @@
-# BrowserPlatformNg
+# io.Connect Browser Platform Template
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.5.
+This is an Angular template for building an io.Connect [Browser Platform](https://docs.interop.io/browser/developers/browser-platform/overview/index.html) app - the Main app in an **io.Connect Browser** project.
 
-## Development server
+## Usage
 
-To start a local development server, run:
+Go to the project directory and install the necessary dependencies:
 
-```bash
-ng serve
+```cmd
+npm install
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Go to the `config.json` file in the `/src` directory and provide your valid license key for using the **io.Connect Browser** platform:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```json
+{
+    "licenseKey": "my-license-key"
+}
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+To start the Main app, execute the following command:
 
-```bash
-ng generate --help
+```cmd
+npm start
 ```
 
-## Building
+By default, the Main app will be hosted at `http://localhost:4200`. You can change the port in the `angular.json` file by adding or modifying the `projects.browser-platform-ng.architect.serve.options.port` setting. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
 
-To build the project run:
+## Template Structure
 
-```bash
-ng build
+The created template contains standard Angular package files and the following directories and files:
+
+| Directory/File | Description |
+|----------------|-------------|
+| `/public` | Contains static assets for the app. |
+| `/src` | Contains the Angular app source files, including the main `main.ts` entry point, the root app component files, and the `io-connect.service.ts` file for accessing the initialized [`@interopio/browser-platform`](https://www.npmjs.com/package/@interopio/browser-platform) instance. |
+| `src/config.example.json` | Example [configuration for initializing the Main app](https://docs.interop.io/browser/developers/browser-platform/setup/index.html#configuration). |
+| `src/config.json` | Contains the actual configuration that will be used for initializing the Main app. You must provide a valid license key. Use this file to customize the configuration for the Main app. |
+| `src/index.html` | The main HTML template file of the app. |
+
+## Modifying the Template
+
+To modify the [configuration for initializing the Main app](https://docs.interop.io/browser/developers/browser-platform/setup/index.html#configuration), use the `config.json` file in the `/src` directory. There you can define apps, Layouts, Channels, and more:
+
+```json
+{
+    "licenseKey": "my-license-key",
+    "applications": {
+        "local": [
+            {
+                "name": "my-app",
+                "type": "window",
+                "title": "My App",
+                "details": {
+                    "url": "https://my-domain.com/my-app"
+                }
+            }
+        ]
+    }
+}
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+To modify the Main app UI and functionalities, use the root component and Angular service files in the `/src/app` directory:
 
-## Running unit tests
+```typescript
+// In `app.ts`.
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { IOConnectService } from './io-connect.service';
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.html'
+})
+export class App implements OnInit {
+  private readonly ioConnectService = inject(IOConnectService);
 
-```bash
-ng test
+  public ioConnectStatus = signal<'connected' | 'disconnected'>('disconnected');
+
+  ngOnInit(): void {
+    this.ioConnectStatus.set(this.ioConnectService.connectionStatus);
+  }
+
+  platformVersion(): string {
+    return this.ioConnectService.io.webPlatform?.version || 'N/A';
+  }
+}
 ```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
