@@ -247,6 +247,7 @@ git checkout -b cb-next-<version> origin/master
 
 ### Step 2: Update Package Dependencies
 **CRITICAL**: Update ALL `@interopio/*` dependencies to their latest versions, regardless of major version number. Always verify actual latest versions using `npm view <package> version` before updating.
+**NEVER** install new dependencies, remove existing dependencies, or otherwise change the dependency list while doing this step. Only update the version values of the existing `@interopio/*` entries that are already declared in each `package.json`.
 
 **All @interopio packages used across templates:**
 - `@interopio/ng` - Used in browser-client-ng and browser-platform-ng
@@ -262,8 +263,9 @@ git checkout -b cb-next-<version> origin/master
 
 **Process:**
 1. For each package, check latest version: `npm view @interopio/<package> version`
-2. Update package.json files with the latest versions found
-3. Don't assume version numbers - always verify with npm
+2. Update the existing `@interopio/*` entries in `package.json` files with the latest versions found
+3. Do not add new packages, remove packages, or rename dependencies as part of this update
+4. Don't assume version numbers - always verify with npm
 
 ### Step 3: Update Package Versions
 Update the `version` field in each `package.json` file to match the new io.Connect Browser version:
@@ -285,22 +287,22 @@ Update all package.json files:
 - `browser-platform-wsp-frame/package.json`
 
 ### Step 4: Update package-lock.json Files
-Regenerate all `package-lock.json` files with the new dependency versions:
+Regenerate all `package-lock.json` files with the new dependency versions, without changing the declared dependency set:
 
 ```bash
 # For each template directory
 cd <template-directory>
 rm -f package-lock.json
-npm install                    # NEVER CANCEL - set timeout 300+ seconds
+npm install                    # Recreate lockfile only; do NOT add or remove dependencies. NEVER CANCEL - set timeout 300+ seconds
 
 # For browser-platform-dev-react-seed, also update subdirectories
 cd browser-platform-dev-react-seed/workspace-platform
 rm -f package-lock.json
-npm install
+npm install                    # Recreate lockfile only; do NOT add or remove dependencies
 
 cd ../react-client
 rm -f package-lock.json
-npm install
+npm install                    # Recreate lockfile only; do NOT add or remove dependencies
 ```
 
 ### Step 5: Replace .es.js Files for Vanilla JavaScript Projects
