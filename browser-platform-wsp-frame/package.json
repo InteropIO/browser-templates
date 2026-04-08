@@ -1,7 +1,7 @@
 {
     "name": "wsp-frame",
     "private": true,
-    "version": "4.2.0",
+    "version": "4.3.0",
     "scripts": {
         "start": "vite",
         "build": "tsc -b && vite build",
@@ -9,11 +9,11 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@interopio/browser-platform": "^4.2.0",
-        "@interopio/modals-api": "^1.2.0",
-        "@interopio/react-hooks": "^4.2.0",
-        "@interopio/workspaces-api": "^4.2.0",
-        "@interopio/workspaces-ui-react": "^4.2.0",
+        "@interopio/browser-platform": "^4.3.0",
+        "@interopio/modals-api": "^4.3.0",
+        "@interopio/react-hooks": "^4.3.0",
+        "@interopio/workspaces-api": "^4.3.0",
+        "@interopio/workspaces-ui-react": "^4.3.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },
