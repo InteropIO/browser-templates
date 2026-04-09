@@ -2,56 +2,56 @@ function getDefaultExportFromCjs$1 (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
 
-var isMergeableObject = function isMergeableObject(value) {
-	return isNonNullObject(value)
-		&& !isSpecial(value)
+var isMergeableObject$1 = function isMergeableObject(value) {
+	return isNonNullObject$1(value)
+		&& !isSpecial$1(value)
 };
 
-function isNonNullObject(value) {
+function isNonNullObject$1(value) {
 	return !!value && typeof value === 'object'
 }
 
-function isSpecial(value) {
+function isSpecial$1(value) {
 	var stringValue = Object.prototype.toString.call(value);
 
 	return stringValue === '[object RegExp]'
 		|| stringValue === '[object Date]'
-		|| isReactElement(value)
+		|| isReactElement$1(value)
 }
 
 // see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
-var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+var canUseSymbol$1 = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE$1 = canUseSymbol$1 ? Symbol.for('react.element') : 0xeac7;
 
-function isReactElement(value) {
-	return value.$$typeof === REACT_ELEMENT_TYPE
+function isReactElement$1(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE$1
 }
 
-function emptyTarget(val) {
+function emptyTarget$1(val) {
 	return Array.isArray(val) ? [] : {}
 }
 
-function cloneUnlessOtherwiseSpecified(value, options) {
+function cloneUnlessOtherwiseSpecified$1(value, options) {
 	return (options.clone !== false && options.isMergeableObject(value))
-		? deepmerge(emptyTarget(value), value, options)
+		? deepmerge$1(emptyTarget$1(value), value, options)
 		: value
 }
 
-function defaultArrayMerge(target, source, options) {
+function defaultArrayMerge$1(target, source, options) {
 	return target.concat(source).map(function(element) {
-		return cloneUnlessOtherwiseSpecified(element, options)
+		return cloneUnlessOtherwiseSpecified$1(element, options)
 	})
 }
 
-function getMergeFunction(key, options) {
+function getMergeFunction$1(key, options) {
 	if (!options.customMerge) {
-		return deepmerge
+		return deepmerge$1
 	}
 	var customMerge = options.customMerge(key);
-	return typeof customMerge === 'function' ? customMerge : deepmerge
+	return typeof customMerge === 'function' ? customMerge : deepmerge$1
 }
 
-function getEnumerableOwnPropertySymbols(target) {
+function getEnumerableOwnPropertySymbols$1(target) {
 	return Object.getOwnPropertySymbols
 		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
 			return Object.propertyIsEnumerable.call(target, symbol)
@@ -59,11 +59,11 @@ function getEnumerableOwnPropertySymbols(target) {
 		: []
 }
 
-function getKeys(target) {
-	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
+function getKeys$1(target) {
+	return Object.keys(target).concat(getEnumerableOwnPropertySymbols$1(target))
 }
 
-function propertyIsOnObject(object, property) {
+function propertyIsOnObject$1(object, property) {
 	try {
 		return property in object
 	} catch(_) {
@@ -72,69 +72,69 @@ function propertyIsOnObject(object, property) {
 }
 
 // Protects from prototype poisoning and unexpected merging up the prototype chain.
-function propertyIsUnsafe(target, key) {
-	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+function propertyIsUnsafe$1(target, key) {
+	return propertyIsOnObject$1(target, key) // Properties are safe to merge if they don't exist in the target yet,
 		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
 			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
 }
 
-function mergeObject(target, source, options) {
+function mergeObject$1(target, source, options) {
 	var destination = {};
 	if (options.isMergeableObject(target)) {
-		getKeys(target).forEach(function(key) {
-			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+		getKeys$1(target).forEach(function(key) {
+			destination[key] = cloneUnlessOtherwiseSpecified$1(target[key], options);
 		});
 	}
-	getKeys(source).forEach(function(key) {
-		if (propertyIsUnsafe(target, key)) {
+	getKeys$1(source).forEach(function(key) {
+		if (propertyIsUnsafe$1(target, key)) {
 			return
 		}
 
-		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
-			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+		if (propertyIsOnObject$1(target, key) && options.isMergeableObject(source[key])) {
+			destination[key] = getMergeFunction$1(key, options)(target[key], source[key], options);
 		} else {
-			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+			destination[key] = cloneUnlessOtherwiseSpecified$1(source[key], options);
 		}
 	});
 	return destination
 }
 
-function deepmerge(target, source, options) {
+function deepmerge$1(target, source, options) {
 	options = options || {};
-	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
-	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
+	options.arrayMerge = options.arrayMerge || defaultArrayMerge$1;
+	options.isMergeableObject = options.isMergeableObject || isMergeableObject$1;
 	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
 	// implementations can use it. The caller may not replace it.
-	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
+	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified$1;
 
 	var sourceIsArray = Array.isArray(source);
 	var targetIsArray = Array.isArray(target);
 	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
 
 	if (!sourceAndTargetTypesMatch) {
-		return cloneUnlessOtherwiseSpecified(source, options)
+		return cloneUnlessOtherwiseSpecified$1(source, options)
 	} else if (sourceIsArray) {
 		return options.arrayMerge(target, source, options)
 	} else {
-		return mergeObject(target, source, options)
+		return mergeObject$1(target, source, options)
 	}
 }
 
-deepmerge.all = function deepmergeAll(array, options) {
+deepmerge$1.all = function deepmergeAll(array, options) {
 	if (!Array.isArray(array)) {
 		throw new Error('first argument should be an array')
 	}
 
 	return array.reduce(function(prev, next) {
-		return deepmerge(prev, next, options)
+		return deepmerge$1(prev, next, options)
 	}, {})
 };
 
-var deepmerge_1 = deepmerge;
+var deepmerge_1$1 = deepmerge$1;
 
-var cjs = deepmerge_1;
+var cjs$1 = deepmerge_1$1;
 
-var deepmerge$1 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs);
+var deepmerge$2 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs$1);
 
 /**
  * Wraps values in an `Ok` type.
@@ -1807,6 +1807,15 @@ const nonNegativeNumberDecoder$3 = number$1().where((num) => num >= 0, "Expected
 const regexDecoder = anyJson$1().andThen((value) => {
     return value instanceof RegExp ? anyJson$1() : fail(`expected a regex, got a ${typeof value}`);
 });
+const urlDecoder = nonEmptyStringDecoder$3.andThen((url) => {
+    try {
+        new URL(url);
+        return nonEmptyStringDecoder$3;
+    }
+    catch {
+        return fail("Should be a valid URL");
+    }
+});
 
 const intentDefinitionDecoder$1 = object$1({
     name: nonEmptyStringDecoder$3,
@@ -2134,7 +2143,8 @@ const decoders$1 = {
     common: {
         nonEmptyStringDecoder: nonEmptyStringDecoder$3,
         nonNegativeNumberDecoder: nonNegativeNumberDecoder$3,
-        regexDecoder
+        regexDecoder,
+        urlDecoder
     },
     fdc3: {
         allDefinitionsDecoder,
@@ -2338,7 +2348,8 @@ const applicationDataDecoder = object$2({
     title: optional$2(nonEmptyStringDecoder$2),
     version: optional$2(nonEmptyStringDecoder$2),
     icon: optional$2(string$2()),
-    caption: optional$2(nonEmptyStringDecoder$2)
+    caption: optional$2(nonEmptyStringDecoder$2),
+    fdc3: optional$2(anyJson$2())
 });
 const baseApplicationDataDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2347,7 +2358,8 @@ const baseApplicationDataDecoder = object$2({
     title: optional$2(nonEmptyStringDecoder$2),
     version: optional$2(nonEmptyStringDecoder$2),
     icon: optional$2(string$2()),
-    caption: optional$2(nonEmptyStringDecoder$2)
+    caption: optional$2(nonEmptyStringDecoder$2),
+    fdc3: optional$2(anyJson$2())
 });
 const appDirectoryStateChangeDecoder = object$2({
     appsAdded: array$2(baseApplicationDataDecoder),
@@ -2397,7 +2409,8 @@ const windowLayoutItemDecoder = object$2({
         allowExtract: optional$2(boolean$2()),
         allowReorder: optional$2(boolean$2()),
         showCloseButton: optional$2(boolean$2()),
-        isMaximized: optional$2(boolean$2())
+        isMaximized: optional$2(boolean$2()),
+        instanceId: optional$2(nonEmptyStringDecoder$2)
     })
 });
 const groupLayoutItemDecoder = object$2({
@@ -2465,7 +2478,8 @@ const newLayoutOptionsDecoder = object$2({
     metadata: optional$2(anyJson$2()),
     instances: optional$2(array$2(nonEmptyStringDecoder$2)),
     ignoreInstances: optional$2(array$2(nonEmptyStringDecoder$2)),
-    setAsCurrent: optional$2(boolean$2())
+    setAsCurrent: optional$2(boolean$2()),
+    ignoreContexts: optional$2(boolean$2())
 });
 const restoreOptionsDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -3020,6 +3034,7 @@ const prefsHelloSuccessDecoder = object$2({
         app: nonEmptyStringDecoder$2,
     }),
     validNonExistentApps: optional$2(array$2(nonEmptyStringDecoder$2)),
+    isAppValidationEnabled: optional$2(boolean$2()),
 });
 const clientErrorDataDecoder = object$2({
     message: nonEmptyStringDecoder$2
@@ -3256,9 +3271,9 @@ const parseConfig = (config = {}) => {
         isPlatformInternal,
         logger: config.systemLogger?.level ?? "info",
         customLogger: config.systemLogger?.customLogger,
-        widget: deepmerge$1(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
-        modals: deepmerge$1(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
-        intentResolver: deepmerge$1(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
+        widget: deepmerge$2(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
+        modals: deepmerge$2(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
+        intentResolver: deepmerge$2(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
     };
     return combined;
 };
@@ -4129,7 +4144,7 @@ class GlueBridge {
             return ioError.raiseError(error);
         }
     }
-    async createNotificationsSteam() {
+    async createThemesSubscription() {
         const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
         if (!streamExists) {
             return ioError.raiseError("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
@@ -4581,6 +4596,7 @@ class ApplicationModel {
             userProperties: this.data.userProperties,
             instances: this.instances,
             start: this.start.bind(this),
+            getConfiguration: this.getConfiguration.bind(this),
             onInstanceStarted: this.onInstanceStarted.bind(this),
             onInstanceStopped: this.onInstanceStopped.bind(this)
         };
@@ -4611,6 +4627,30 @@ class ApplicationModel {
         const verifiedContext = runDecoderWithIOError(startApplicationContextDecoder, context);
         const verifiedOptions = runDecoderWithIOError(startApplicationOptionsDecoder, options);
         return this.controller.startApplication(this.data.name, verifiedContext, verifiedOptions);
+    }
+    async getConfiguration() {
+        const { details, intents, hidden, ...customProperties } = this.data.userProperties;
+        const definition = {
+            name: this.data.name,
+            type: this.data.type,
+            details,
+            customProperties
+        };
+        const optionalProperties = {
+            title: this.data.title,
+            version: this.data.version,
+            icon: this.data.icon,
+            caption: this.data.caption,
+            intents,
+            hidden,
+            fdc3: this.data.fdc3
+        };
+        for (const [key, value] of Object.entries(optionalProperties)) {
+            if (value !== undefined) {
+                definition[key] = value;
+            }
+        }
+        return definition;
     }
 }
 
@@ -6855,18 +6895,18 @@ class ThemesController {
     bridge;
     registry = CallbackRegistryFactory$1();
     themesSubscription;
-    activeThemeSubs = 0;
     async start(coreGlue, ioc) {
         this.logger = coreGlue.logger.subLogger("themes.controller.web");
         this.logger.trace("starting the web themes controller");
         this.bridge = ioc.bridge;
+        await this.setupSubscription();
+        this.logger.trace("themes subscription is ready");
         const api = this.toApi();
         coreGlue.themes = api;
         this.logger.trace("themes are ready");
     }
     handlePlatformShutdown() {
         this.registry.clear();
-        this.activeThemeSubs = 0;
         this.themesSubscription?.close();
         delete this.themesSubscription;
     }
@@ -6893,47 +6933,30 @@ class ThemesController {
         runDecoderWithIOError(nonEmptyStringDecoder$2, name);
         await this.bridge.send("themes", operations$2.select, { name }, undefined, { includeOperationCheck: true });
     }
-    async onChanged(callback) {
+    onChanged(callback) {
         if (typeof callback !== "function") {
             return ioError.raiseError("onChanged requires a callback of type function");
         }
-        const subReady = this.themesSubscription ?
-            Promise.resolve() :
-            this.configureThemeSubscription();
-        await subReady;
-        ++this.activeThemeSubs;
-        const unsubFunc = this.registry.add("on-theme-change", callback);
-        return () => this.themeUnsub(unsubFunc);
+        return this.registry.add("on-theme-change", callback);
     }
-    async configureThemeSubscription() {
-        if (this.themesSubscription) {
+    async setupSubscription() {
+        this.themesSubscription = await this.bridge.createThemesSubscription();
+        this.themesSubscription.onData(this.handleStreamData.bind(this));
+        this.themesSubscription.onClosed(this.handleStreamClosure.bind(this));
+    }
+    handleStreamData(data) {
+        const eventData = data.data;
+        const validation = simpleThemeResponseDecoder.run(eventData);
+        if (!validation.ok) {
+            this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
             return;
         }
-        this.themesSubscription = await this.bridge.createNotificationsSteam();
-        this.themesSubscription.onData((data) => {
-            const eventData = data.data;
-            const validation = simpleThemeResponseDecoder.run(eventData);
-            if (!validation.ok) {
-                this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
-                return;
-            }
-            const themeChanged = validation.result;
-            this.registry.execute("on-theme-change", themeChanged.theme);
-        });
-        this.themesSubscription.onClosed(() => {
-            this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
-            this.registry.clear();
-            this.activeThemeSubs = 0;
-            delete this.themesSubscription;
-        });
+        const themeChanged = validation.result;
+        this.registry.execute("on-theme-change", themeChanged.theme);
     }
-    themeUnsub(registryUnsub) {
-        registryUnsub();
-        --this.activeThemeSubs;
-        if (this.activeThemeSubs) {
-            return;
-        }
-        this.themesSubscription?.close();
+    handleStreamClosure() {
+        this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
+        this.registry.clear();
         delete this.themesSubscription;
     }
 }
@@ -7043,6 +7066,7 @@ class PrefsController {
     validNonExistentApps;
     signaledSubscription = false;
     interopId;
+    isAppValidationEnabled;
     handlePlatformShutdown() {
         this.registry.clear();
     }
@@ -7058,6 +7082,7 @@ class PrefsController {
             const prefsHelloSuccess = await this.bridge.send("prefs", operations$1.prefsHello, undefined, undefined, { includeOperationCheck: true });
             this.platformAppName = prefsHelloSuccess.platform.app;
             this.validNonExistentApps = prefsHelloSuccess.validNonExistentApps ?? [];
+            this.isAppValidationEnabled = prefsHelloSuccess.isAppValidationEnabled ?? true;
         }
         catch (error) {
             this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
@@ -7142,7 +7167,9 @@ class PrefsController {
     subscribeFor(app, callback) {
         const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
         const applications = this.appManagerController.getApplications();
-        const isValidApp = verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp) || this.validNonExistentApps.includes(verifiedApp);
+        const isValidApp = this.isAppValidationEnabled
+            ? verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp) || this.validNonExistentApps.includes(verifiedApp)
+            : true;
         if (!isValidApp) {
             return ioError.raiseError(`The provided app name "${app}" is not valid.`);
         }
@@ -7214,6 +7241,7 @@ class UIController {
     widgetResources;
     modalsResources;
     intentResolverResources;
+    rootElements = [];
     modalsUiApi;
     isDialogOpen = false;
     intentResolverUiApi;
@@ -7251,6 +7279,7 @@ class UIController {
         const initializeWidgetPromise = this.widgetResources ? this.initializeWidget(io, this.widgetResources) : Promise.resolve();
         const initializeModalsPromise = this.modalsResources ? this.initializeModalsUi(io, this.modalsResources) : Promise.resolve();
         const initializeIntentResolverPromise = this.intentResolverResources ? this.initializeIntentResolverUI(io, this.intentResolverResources) : Promise.resolve();
+        this.subscribeForThemeChanges(io);
         await Promise.all([
             this.config.widget.awaitFactory ? initializeWidgetPromise : Promise.resolve(),
             this.config.modals.awaitFactory ? initializeModalsPromise : Promise.resolve(),
@@ -7455,9 +7484,9 @@ class UIController {
     async initializeWidget(io, resources) {
         this.logger.trace("Initializing IOBrowserWidget.");
         const { rootElement } = this.appendWidgetResources(resources);
-        this.subscribeForThemeChanges(io, rootElement);
+        this.rootElements.push(rootElement);
         const config = {
-            ...deepmerge$1(resources.config, this.config.widget),
+            ...deepmerge$2(resources.config, this.config.widget),
             rootElement
         };
         return PromiseWrap(async () => {
@@ -7470,7 +7499,7 @@ class UIController {
     async initializeModalsUi(io, resources) {
         this.logger.trace("Initializing IOBrowserModalsUI.");
         const { rootElement } = this.appendModalsResources(resources);
-        this.subscribeForThemeChanges(io, rootElement);
+        this.rootElements.push(rootElement);
         const config = {
             ...this.config.modals,
             rootElement
@@ -7485,7 +7514,7 @@ class UIController {
     async initializeIntentResolverUI(io, resources) {
         this.logger.trace("Initializing IOBrowserIntentResolverUI.");
         const { rootElement } = this.appendIntentResolverResources(resources);
-        this.subscribeForThemeChanges(io, rootElement);
+        this.rootElements.push(rootElement);
         const config = {
             ...this.config.intentResolver,
             rootElement
@@ -7566,21 +7595,24 @@ class UIController {
         }
         this.intentResolverResources = resources;
     }
-    subscribeForThemeChanges(io, element) {
+    subscribeForThemeChanges(io) {
         const themesApi = io.themes;
         if (!themesApi) {
             return;
         }
         const changeTheme = async (theme) => {
-            if (element.classList.contains(theme.name)) {
-                return;
-            }
-            const allThemes = await themesApi.list();
-            element.classList.remove(...allThemes.map(({ name }) => name));
-            element.classList.add(theme.name);
+            await Promise.all(this.rootElements.map((element) => this.applyThemeToElement(element, themesApi, theme)));
         };
         themesApi.onChanged(changeTheme);
         themesApi.getCurrent().then(changeTheme);
+    }
+    async applyThemeToElement(element, themesApi, theme) {
+        if (element.classList.contains(theme.name)) {
+            return;
+        }
+        const allThemes = await themesApi.list();
+        element.classList.remove(...allThemes.map(({ name }) => name));
+        element.classList.add(theme.name);
     }
 }
 
@@ -7744,7 +7776,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.2.0";
+var version$1 = "4.3.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
@@ -8839,6 +8871,9 @@ class Utils {
         return Utils._isNode;
     }
     static _isNode;
+    static getMethodName(method) {
+        return typeof method === "string" ? method : method?.name;
+    }
 }
 
 class PromiseWrapper {
@@ -10798,7 +10833,1976 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.8.0";
+var version = "6.10.0";
+
+/*!
+ * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+function isObject$1(o) {
+    return Object.prototype.toString.call(o) === '[object Object]';
+}
+function isPlainObject$2(o) {
+    let ctor;
+    let prot;
+    if (isObject$1(o) === false)
+        return false;
+    ctor = o.constructor;
+    if (ctor === undefined)
+        return true;
+    prot = ctor.prototype;
+    if (isObject$1(prot) === false)
+        return false;
+    if (prot.hasOwnProperty('isPrototypeOf') === false) {
+        return false;
+    }
+    return true;
+}
+
+var isMergeableObject = function isMergeableObject(value) {
+	return isNonNullObject(value)
+		&& !isSpecial(value)
+};
+
+function isNonNullObject(value) {
+	return !!value && typeof value === 'object'
+}
+
+function isSpecial(value) {
+	var stringValue = Object.prototype.toString.call(value);
+
+	return stringValue === '[object RegExp]'
+		|| stringValue === '[object Date]'
+		|| isReactElement(value)
+}
+
+// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
+var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+
+function isReactElement(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE
+}
+
+function emptyTarget(val) {
+	return Array.isArray(val) ? [] : {}
+}
+
+function cloneUnlessOtherwiseSpecified(value, options) {
+	return (options.clone !== false && options.isMergeableObject(value))
+		? deepmerge(emptyTarget(value), value, options)
+		: value
+}
+
+function defaultArrayMerge(target, source, options) {
+	return target.concat(source).map(function(element) {
+		return cloneUnlessOtherwiseSpecified(element, options)
+	})
+}
+
+function getMergeFunction(key, options) {
+	if (!options.customMerge) {
+		return deepmerge
+	}
+	var customMerge = options.customMerge(key);
+	return typeof customMerge === 'function' ? customMerge : deepmerge
+}
+
+function getEnumerableOwnPropertySymbols(target) {
+	return Object.getOwnPropertySymbols
+		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
+			return Object.propertyIsEnumerable.call(target, symbol)
+		})
+		: []
+}
+
+function getKeys(target) {
+	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
+}
+
+function propertyIsOnObject(object, property) {
+	try {
+		return property in object
+	} catch(_) {
+		return false
+	}
+}
+
+// Protects from prototype poisoning and unexpected merging up the prototype chain.
+function propertyIsUnsafe(target, key) {
+	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
+			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
+}
+
+function mergeObject(target, source, options) {
+	var destination = {};
+	if (options.isMergeableObject(target)) {
+		getKeys(target).forEach(function(key) {
+			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+		});
+	}
+	getKeys(source).forEach(function(key) {
+		if (propertyIsUnsafe(target, key)) {
+			return
+		}
+
+		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
+			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+		} else {
+			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+		}
+	});
+	return destination
+}
+
+function deepmerge(target, source, options) {
+	options = options || {};
+	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
+	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
+	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
+	// implementations can use it. The caller may not replace it.
+	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
+
+	var sourceIsArray = Array.isArray(source);
+	var targetIsArray = Array.isArray(target);
+	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
+
+	if (!sourceAndTargetTypesMatch) {
+		return cloneUnlessOtherwiseSpecified(source, options)
+	} else if (sourceIsArray) {
+		return options.arrayMerge(target, source, options)
+	} else {
+		return mergeObject(target, source, options)
+	}
+}
+
+deepmerge.all = function deepmergeAll(array, options) {
+	if (!Array.isArray(array)) {
+		throw new Error('first argument should be an array')
+	}
+
+	return array.reduce(function(prev, next) {
+		return deepmerge(prev, next, options)
+	}, {})
+};
+
+var deepmerge_1 = deepmerge;
+
+var cjs = deepmerge_1;
+
+var deepMerge = /*@__PURE__*/getDefaultExportFromCjs(cjs);
+
+var dist = {};
+
+var builder$3 = {};
+
+var builder$2 = {};
+
+var nullMetricsManager = {};
+
+var nullManager$1 = {};
+
+Object.defineProperty(nullManager$1, "__esModule", { value: true });
+nullManager$1.NullManager = void 0;
+class NullManager {
+    constructor() {
+        this.started = false;
+    }
+    waitForFinalExport(timeoutMs) {
+        return Promise.resolve();
+    }
+    get settings() {
+        return {};
+    }
+    start() {
+        this.started = true;
+        return Promise.resolve();
+    }
+    stop() {
+        this.started = false;
+        return Promise.resolve();
+    }
+}
+nullManager$1.NullManager = NullManager;
+
+var safeStringify$1 = {};
+
+var isPlainObject$1 = {};
+
+// https://github.com/jonschlinkert/is-plain-object/blob/master/is-plain-object.js
+// cf204a3
+Object.defineProperty(isPlainObject$1, "__esModule", { value: true });
+isPlainObject$1.isPlainObject = void 0;
+/*!
+ * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+ *
+ * Copyright (c) 2014-2017, Jon Schlinkert.
+ * Released under the MIT License.
+ */
+function isObject(o) {
+    return Object.prototype.toString.call(o) === '[object Object]';
+}
+function isPlainObject(o) {
+    let ctor;
+    let prot;
+    if (isObject(o) === false)
+        return false;
+    // If has modified constructor
+    ctor = o.constructor;
+    if (ctor === undefined)
+        return true;
+    // If has modified prototype
+    prot = ctor.prototype;
+    if (isObject(prot) === false)
+        return false;
+    // If constructor does not have an Object-specific method
+    if (prot.hasOwnProperty('isPrototypeOf') === false) {
+        return false;
+    }
+    // Most likely a plain Object
+    return true;
+}
+isPlainObject$1.isPlainObject = isPlainObject;
+
+Object.defineProperty(safeStringify$1, "__esModule", { value: true });
+safeStringify$1.safeStringify = void 0;
+const is_plain_object_1 = isPlainObject$1;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeStringify(obj) {
+    if (!obj) {
+        return JSON.stringify(obj);
+    }
+    return JSON.stringify(obj, (k, v) => {
+        if (!v || typeof v !== "object")
+            return v;
+        if (!(0, is_plain_object_1.isPlainObject)(v))
+            return Object.prototype.toString.call(v);
+        return v;
+    });
+}
+safeStringify$1.safeStringify = safeStringify;
+
+var _null$1 = {};
+
+Object.defineProperty(_null$1, "__esModule", { value: true });
+_null$1.NullMetric = void 0;
+class NullMetric {
+    constructor(settings, logger) {
+        this.settings = settings;
+        this.logger = logger;
+        this.started = false;
+    }
+    start() {
+        var _a;
+        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been started instead of ${this.settings.type} one`);
+        this.started = true;
+        return Promise.resolve();
+    }
+    stop() {
+        var _a;
+        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been stopped instead of ${this.settings.type} one`);
+        this.started = false;
+        return Promise.resolve();
+    }
+    add() { }
+    record() { }
+}
+_null$1.NullMetric = NullMetric;
+
+Object.defineProperty(nullMetricsManager, "__esModule", { value: true });
+nullMetricsManager.NullMetricsManager = void 0;
+const nullManager_1$2 = nullManager$1;
+const safe_stringify_1$2 = safeStringify$1;
+const null_1 = _null$1;
+class NullMetricsManager extends nullManager_1$2.NullManager {
+    constructor(settings, otelSettings, logger) {
+        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
+            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullMetrcsManager with settings ${(0, safe_stringify_1$2.safeStringify)(settings)}`);
+        }
+        super();
+    }
+    waitForFinalExport(timeoutMs) {
+        return Promise.resolve();
+    }
+    getFromSettings(settings) {
+        return new null_1.NullMetric(settings);
+    }
+    get(type) {
+        return new null_1.NullMetric({ name: type, type, enabled: false, description: type });
+    }
+}
+nullMetricsManager.NullMetricsManager = NullMetricsManager;
+
+var hasRequiredBuilder$3;
+
+function requireBuilder$3 () {
+	if (hasRequiredBuilder$3) return builder$2;
+	hasRequiredBuilder$3 = 1;
+	Object.defineProperty(builder$2, "__esModule", { value: true });
+	builder$2.MetricsManagerBuilder = void 0;
+	const nullMetricsManager_1 = nullMetricsManager;
+	const __1 = requireDist();
+	class MetricsManagerBuilder {
+	    withLogger(logger) {
+	        this.logger = logger;
+	        return this;
+	    }
+	    withSettings(settings) {
+	        this.settings = settings;
+	        return this;
+	    }
+	    withMeterProvider(meterProviderCreateFunc) {
+	        this.meterProviderCreateFunc = meterProviderCreateFunc;
+	        return this;
+	    }
+	    withDependencyContainer(container) {
+	        this.dependencyContainer = container;
+	        return this;
+	    }
+	    build() {
+	        var _a, _b, _c, _d;
+	        if (((_a = globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.metrics) &&
+	            ((_b = this.settings) === null || _b === void 0 ? void 0 : _b.definitiveInstance) !== true) {
+	            return globalThis.ioInsightsInternals.metrics;
+	        }
+	        const toReturn = this.buildCore();
+	        globalThis.ioInsightsInternals = (_c = globalThis.ioInsightsInternals) !== null && _c !== void 0 ? _c : {};
+	        if (!globalThis.ioInsightsInternals.metrics ||
+	            ((_d = this.settings) === null || _d === void 0 ? void 0 : _d.definitiveInstance)) {
+	            globalThis.ioInsightsInternals.metrics = toReturn;
+	        }
+	        return toReturn;
+	    }
+	    buildCore() {
+	        var _a, _b, _c, _d;
+	        let metricsPlugin;
+	        if (((_a = this.settings) === null || _a === void 0 ? void 0 : _a.enabled) !== true ||
+	            ((_c = (_b = this.settings) === null || _b === void 0 ? void 0 : _b.metrics) === null || _c === void 0 ? void 0 : _c.enabled) !== true ||
+	            !(metricsPlugin = (0, __1.loadInsightsPlugin)("metrics", this.logger))) {
+	            return new nullMetricsManager_1.NullMetricsManager((_d = this.settings) === null || _d === void 0 ? void 0 : _d.metrics, this.settings, this.logger);
+	        }
+	        const manager = metricsPlugin.newMetricsManager(this.settings, this.dependencyContainer, this.meterProviderCreateFunc, this.logger);
+	        return manager;
+	    }
+	}
+	builder$2.MetricsManagerBuilder = MetricsManagerBuilder;
+	
+	return builder$2;
+}
+
+var builder$1 = {};
+
+var nullTracesManager = {};
+
+var nullTracingState = {};
+
+Object.defineProperty(nullTracingState, "__esModule", { value: true });
+class NullTracingState {
+    constructor(source, propagationInfo, disablePropagation) {
+        this.source = source;
+        this.propagationInfo = propagationInfo;
+        this.disablePropagation = disablePropagation;
+        this.currentSpanStatus = { code: 0 /*SpanStatusCode.UNSET*/ };
+        this.level = "OFF";
+    }
+    endSpan() {
+        return Promise.resolve();
+    }
+    get enabled() {
+        return false;
+    }
+    get id() {
+        return undefined;
+    }
+    get traceId() {
+        return undefined;
+    }
+    set status(status) {
+        this.currentSpanStatus = Object.assign({}, status);
+    }
+    get status() {
+        return this.currentSpanStatus;
+    }
+    addEvent(name, attributesOrStartTime, startTime) {
+        return this;
+    }
+    recordException(exception, time) { }
+    isRecording() {
+        return false;
+    }
+    updateName(name) {
+        return this;
+    }
+    spanContext() {
+        return undefined;
+    }
+    addData(level, data) {
+    }
+    end() { }
+    getPropagationInfo() {
+        if (this.propagationInfo) {
+            return this.propagationInfo;
+        }
+        return null;
+        // // todo vnikolov: should we use otel's own context management at all?
+        // const propagationInfo = { };
+        // propagation.inject(context.active(), propagationInfo);
+        // return propagationInfo;
+    }
+    injectPropagationInfo(carrier) {
+        if (this.propagationInfo && !this.disablePropagation) {
+            carrier.__interopIOTracePropagationInfo = this.propagationInfo;
+        }
+    }
+}
+nullTracingState.default = NullTracingState;
+
+var traces = {};
+
+var otelUtils = {};
+
+var container = {};
+
+var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(container, "__esModule", { value: true });
+container.Container = void 0;
+const safe_stringify_1$1 = safeStringify$1;
+class Container {
+    static get instance() {
+        var _a, _b;
+        return (_a = Container._instance) !== null && _a !== void 0 ? _a : (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.instance;
+    }
+    static get settings() {
+        var _a;
+        return (_a = Container._settings) !== null && _a !== void 0 ? _a : Container.instance.settings;
+    }
+    static set settings(value) {
+        Container._settings = value;
+    }
+    static errorless(callback, defaultValue) {
+        try {
+            if (typeof callback !== "function") {
+                return callback;
+            }
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            const toReturn = callback();
+            return toReturn;
+        }
+        catch (err) {
+            return Container.handleErrorlessMode(err, defaultValue);
+        }
+    }
+    static errorlessDefined(callback, defaultValue) {
+        try {
+            if (typeof callback !== "function") {
+                return callback;
+            }
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            const toReturn = callback();
+            return toReturn;
+        }
+        catch (err) {
+            return Container.handleErrorlessMode(err, defaultValue);
+        }
+    }
+    static errorlessAsync(callback, defaultValue) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (typeof callback !== "function") {
+                    return callback;
+                }
+                // eslint-disable-next-line @typescript-eslint/ban-types
+                const toReturn = (yield callback)();
+                return toReturn;
+            }
+            catch (err) {
+                return Container.handleErrorlessMode(err, defaultValue);
+            }
+        });
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static handleErrorlessMode(err, defaultValue) {
+        var _a, _b, _c, _d, _e;
+        let message = undefined;
+        try {
+            if (err === null || err === void 0 ? void 0 : err.message) {
+                message = (err === null || err === void 0 ? void 0 : err.message) + " " + ((_a = err === null || err === void 0 ? void 0 : err.stack) !== null && _a !== void 0 ? _a : new Error().stack);
+            }
+            if (!message) {
+                try {
+                    message = (0, safe_stringify_1$1.safeStringify)(err) + " " + new Error().stack;
+                }
+                catch ( /*silent catch*/_f) { /*silent catch*/ }
+            }
+            if (!message) {
+                try {
+                    message = (err === null || err === void 0 ? void 0 : err.toString()) + " " + new Error().stack;
+                }
+                catch ( /*silent catch*/_g) { /*silent catch*/ }
+            }
+        }
+        catch ( /*silent catch*/_h) { /*silent catch*/ }
+        if (!message) {
+            message = "unknown " + new Error().stack;
+        }
+        try {
+            if (!((_c = (_b = Container.instance) === null || _b === void 0 ? void 0 : _b.settings) === null || _c === void 0 ? void 0 : _c.errorlessMode)) {
+                (_d = Container.instance.logger) === null || _d === void 0 ? void 0 : _d.error("Observed error " + message);
+                throw err;
+            }
+        }
+        catch (_j) {
+            throw err;
+        }
+        try {
+            (_e = Container.instance.logger) === null || _e === void 0 ? void 0 : _e.warn("Caught error " + message);
+            return defaultValue;
+        }
+        catch (_k) {
+            return defaultValue;
+        }
+    }
+    constructor(_settings, _traces, metrics, logs, logger) {
+        var _a;
+        this._settings = _settings;
+        this._traces = _traces;
+        this.metrics = metrics;
+        this.logs = logs;
+        this.logger = logger;
+        this.started = false;
+        Container._instance = this;
+        globalThis.ioInsightsInternals = (_a = globalThis.ioInsightsInternals) !== null && _a !== void 0 ? _a : {};
+        globalThis.ioInsightsInternals.instance = this;
+    }
+    get traces() {
+        var _a, _b;
+        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) {
+            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.traces;
+        }
+        return this._traces;
+    }
+    waitForFinalExport(timeoutMs) {
+        var _a, _b, _c;
+        return Promise.allSettled([
+            (_a = this.traces) === null || _a === void 0 ? void 0 : _a.waitForFinalExport(timeoutMs),
+            (_b = this.metrics) === null || _b === void 0 ? void 0 : _b.waitForFinalExport(timeoutMs),
+            (_c = this.logs) === null || _c === void 0 ? void 0 : _c.waitForFinalExport(timeoutMs)
+        ]);
+    }
+    get settings() {
+        return this._settings;
+    }
+    start() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // vnikolov TODO: maybe log this? don't silently refuse to start
+            const metricsPromise = this.metrics.settings.enabled ? this.metrics.start() : Promise.resolve();
+            const tracesPromise = this.traces.settings.enabled ? this.traces.start() : Promise.resolve();
+            const logsPromise = this.logs.settings.enabled ? this.logs.start() : Promise.resolve();
+            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+            this.started = true;
+        });
+    }
+    stop() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const metricsPromise = this.metrics.started ? this.metrics.stop() : Promise.resolve();
+            const tracesPromise = this.traces.started ? this.traces.stop() : Promise.resolve();
+            const logsPromise = this.logs.started ? this.logs.stop() : Promise.resolve();
+            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+            this.started = false;
+        });
+    }
+}
+container.Container = Container;
+
+(function (exports$1) {
+	Object.defineProperty(exports$1, "__esModule", { value: true });
+	exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
+	const container_1 = container;
+	/* eslint-disable @typescript-eslint/no-explicit-any */
+	const flattenOtelAtributes = (data, maxDepth) => {
+	    if (data === undefined ||
+	        data === null) {
+	        return {};
+	    }
+	    if (typeof data !== "object") {
+	        data = { unknownAttribute: data };
+	    }
+	    const toReturn = {};
+	    for (const [key, value] of Object.entries(data)) {
+	        const otelValues = (0, exports$1.getOTELData)(key, value, 0, maxDepth);
+	        for (const [otelKey, otelValue] of otelValues) {
+	            toReturn[otelKey] = otelValue;
+	        }
+	    }
+	    return toReturn;
+	};
+	exports$1.flattenOtelAtributes = flattenOtelAtributes;
+	const getOTELData = (key, value, depth, maxDepth) => {
+	    depth += 1;
+	    if (depth > maxDepth) {
+	        return [[key, "<depth exceeded>"]];
+	    }
+	    const isObject = Boolean(value && typeof value === "object");
+	    const isValidPrimitiveValue = typeof value === "number" || typeof value === "string" || typeof value === "boolean";
+	    if (isValidPrimitiveValue) {
+	        return [[key, value]];
+	    }
+	    if (isAttributeArray(value)) {
+	        return [[key, value]].concat(flatten(key, value, depth, maxDepth));
+	    }
+	    else if (isObject) {
+	        return flatten(key, value, depth, maxDepth);
+	    }
+	    else if (typeof value === "function") {
+	        return [];
+	    }
+	    else if (value) {
+	        return [[key, value + ""]];
+	    }
+	    else {
+	        return [];
+	    }
+	};
+	exports$1.getOTELData = getOTELData;
+	const flatten = (key, obj, depth, maxDepth) => {
+	    const toReturn = [];
+	    for (const [key2, val2] of Object.entries(obj)) {
+	        for (const [key3, val3] of (0, exports$1.getOTELData)(key2, val2, depth, maxDepth)) {
+	            toReturn.push([key + "." + key3, val3]);
+	        }
+	    }
+	    return toReturn;
+	};
+	const isAttributeArray = (value) => {
+	    if (!Array.isArray(value)) {
+	        return false;
+	    }
+	    return value.every((item) => item === null ||
+	        item === undefined ||
+	        typeof item === "string" ||
+	        typeof item === "number" ||
+	        typeof item === "boolean");
+	};
+	// todo vnikolov: document all the places where deep_value is used in the spec, as well
+	// as the regex matches
+	const deep_value = function (obj, path) {
+	    // eslint-disable-next-line no-var
+	    if (!path) {
+	        return null;
+	    }
+	    // eslint-disable-next-line no-var
+	    for (var i = 0, path = path.split("."), len = path.length; i < len; i++) {
+	        if (obj === null || obj === undefined) {
+	            return undefined;
+	        }
+	        obj = obj[path[i]];
+	    }
+	    return obj;
+	};
+	exports$1.deep_value = deep_value;
+	// https://stackoverflow.com/a/8817473
+	const extractFilteringContextFromArgs = (template, args, that) => {
+	    let filteringContext = {};
+	    if (typeof template.thisMapping === "function") {
+	        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.thisMapping.apply(that, [that])));
+	    }
+	    else {
+	        Object.keys(template.thisMapping || {}).forEach((keyOrPath) => {
+	            if (!keyOrPath || !template.thisMapping) {
+	                return;
+	            }
+	            const filteringContextKey = template.thisMapping[keyOrPath];
+	            filteringContext[filteringContextKey] = (0, exports$1.deep_value)(that, keyOrPath);
+	        });
+	    }
+	    if (typeof template.argMapping === "function") {
+	        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.argMapping.apply(that, args)));
+	    }
+	    else {
+	        Object.keys(template.argMapping || {}).forEach((keyOrPath) => {
+	            if (!keyOrPath || !template.argMapping) {
+	                return;
+	            }
+	            const filteringContextKey = template.argMapping[keyOrPath];
+	            const value = (0, exports$1.deep_value)(args, keyOrPath);
+	            if (typeof value === "string" ||
+	                typeof value === "number") {
+	                filteringContext[filteringContextKey] = value;
+	            }
+	        });
+	    }
+	    return filteringContext;
+	};
+	exports$1.extractFilteringContextFromArgs = extractFilteringContextFromArgs;
+	
+} (otelUtils));
+
+var hasRequiredTraces;
+
+function requireTraces () {
+	if (hasRequiredTraces) return traces;
+	hasRequiredTraces = 1;
+	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+	    return new (P || (P = Promise))(function (resolve, reject) {
+	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+	        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+	        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+	        step((generator = generator.apply(thisArg, _arguments || [])).next());
+	    });
+	};
+	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(traces, "__esModule", { value: true });
+	traces.withSpan = void 0;
+	const otelUtils_1 = otelUtils;
+	const nullTracesManager_1 = requireNullTracesManager();
+	const nullTracingState_1 = __importDefault(nullTracingState);
+	/**
+	 * Null-safe singleton class that can be invoked even if you haven't initialized
+	 * the library (yet?), or if you don't have access to the current manager instance.
+	 */
+	class Traces {
+	    static get instance() {
+	        var _a, _b;
+	        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) {
+	            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.traces;
+	        }
+	        if (!Traces._instance) {
+	            Traces._instance = new nullTracesManager_1.NullTracesManager(undefined, undefined, undefined);
+	        }
+	        return Traces._instance;
+	    }
+	    static set instance(value) {
+	        Traces._instance = value;
+	    }
+	    static get currentTracingState() {
+	        var _a;
+	        return ((_a = Traces.instance) === null || _a === void 0 ? void 0 : _a.currentTracingState) || new nullTracingState_1.default("unknown", null, true);
+	    }
+	    static set currentTracingState(value) {
+	        if (Traces.instance) {
+	            Traces.instance.currentTracingState = value;
+	        }
+	    }
+	    static removePropagationInfo(propagationInfoCarrier) {
+	        Traces.extractPropagationInfo(propagationInfoCarrier, true);
+	        return propagationInfoCarrier;
+	    }
+	    static extractPropagationInfo(propagationInfoCarrier, deleteProperty) {
+	        if (propagationInfoCarrier === null || propagationInfoCarrier === void 0 ? void 0 : propagationInfoCarrier.traceparent) {
+	            return propagationInfoCarrier;
+	        }
+	        const nestedPropagationInfo = propagationInfoCarrier === null || propagationInfoCarrier === void 0 ? void 0 : propagationInfoCarrier.__interopIOTracePropagationInfo;
+	        if (nestedPropagationInfo) {
+	            if (deleteProperty === true) {
+	                delete propagationInfoCarrier.__interopIOTracePropagationInfo;
+	            }
+	            return nestedPropagationInfo;
+	        }
+	        else {
+	            return null;
+	        }
+	    }
+	    withSequenceSpanEx(source, traceName, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            return Traces.instance.withSequenceSpanEx(source, traceName, filteringContextOrCallback, optionsOrCallback, callback);
+	        });
+	    }
+	    withSequenceSpan(source, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            return Traces.instance.withSequenceSpan(source, filteringContextOrCallback, optionsOrCallback, callback);
+	        });
+	    }
+	    static withSpan(source, filteringContextOrDecoratorOptionsOrCallback, propagationInfoOrCallback, optionsOrCallback, callback) {
+	        // decorator or wrapping a function
+	        if (!(filteringContextOrDecoratorOptionsOrCallback instanceof Function) &&
+	            (!filteringContextOrDecoratorOptionsOrCallback ||
+	                filteringContextOrDecoratorOptionsOrCallback.argMapping ||
+	                filteringContextOrDecoratorOptionsOrCallback.thisMapping ||
+	                filteringContextOrDecoratorOptionsOrCallback.defaults) &&
+	            !propagationInfoOrCallback &&
+	            !optionsOrCallback &&
+	            !callback) {
+	            return function (target, propertyKey, descriptor) {
+	                let originalFn;
+	                if (descriptor) {
+	                    // decorator
+	                    originalFn = descriptor.value;
+	                }
+	                else {
+	                    // wrapping function directly
+	                    originalFn = target;
+	                }
+	                let tracedFunction = function (...args) {
+	                    return Traces.withSpan(source, filteringContextOrDecoratorOptionsOrCallback
+	                        ? (0, otelUtils_1.extractFilteringContextFromArgs)(filteringContextOrDecoratorOptionsOrCallback, args, this)
+	                        : {}, null, filteringContextOrDecoratorOptionsOrCallback, () => {
+	                        return originalFn.apply(this, args);
+	                    });
+	                };
+	                if (Traces.isAsyncFunction(originalFn)) {
+	                    // fix for interception API using toString() to check for async functions
+	                    const inner = tracedFunction;
+	                    tracedFunction = function __insightsAsyncTracedFunction(...args) {
+	                        return inner.apply(this, args);
+	                    };
+	                    Object.defineProperty(tracedFunction, Symbol.toStringTag, {
+	                        value: "AsyncFunction",
+	                        configurable: true,
+	                    });
+	                }
+	                if (descriptor) {
+	                    descriptor.value = tracedFunction;
+	                }
+	                else {
+	                    return tracedFunction;
+	                }
+	            };
+	        }
+	        return Traces.instance.withSpan(source, filteringContextOrDecoratorOptionsOrCallback, propagationInfoOrCallback, optionsOrCallback, callback);
+	    }
+	    static isAsyncFunction(value) {
+	        return value && {}.toString.call(value) === '[object AsyncFunction]';
+	    }
+	    static withSpans(tracingMap, objectToTrace) {
+	        for (const tracingMapPropertyName in tracingMap) {
+	            if (typeof objectToTrace[tracingMapPropertyName] === "function") {
+	                const originalMethod = objectToTrace[tracingMapPropertyName];
+	                const tracingMapPropertyValue = tracingMap[tracingMapPropertyName];
+	                if (!tracingMapPropertyValue) {
+	                    continue;
+	                }
+	                let wrapperMaker;
+	                if (typeof tracingMapPropertyValue === "string") {
+	                    wrapperMaker = Traces.withSpan(tracingMapPropertyValue);
+	                }
+	                else {
+	                    wrapperMaker = Traces.withSpan(tracingMapPropertyValue.source, tracingMapPropertyValue.decoratorOptions);
+	                }
+	                objectToTrace[tracingMapPropertyName] = wrapperMaker(originalMethod);
+	            }
+	        }
+	        return objectToTrace;
+	    }
+	}
+	traces.default = Traces;
+	traces.withSpan = Traces.withSpan;
+	
+	return traces;
+}
+
+var hasRequiredNullTracesManager;
+
+function requireNullTracesManager () {
+	if (hasRequiredNullTracesManager) return nullTracesManager;
+	hasRequiredNullTracesManager = 1;
+	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+	    return new (P || (P = Promise))(function (resolve, reject) {
+	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+	        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+	        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+	        step((generator = generator.apply(thisArg, _arguments || [])).next());
+	    });
+	};
+	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(nullTracesManager, "__esModule", { value: true });
+	nullTracesManager.NullTracesManager = void 0;
+	const nullTracingState_1 = __importDefault(nullTracingState);
+	const traces_1 = __importDefault(requireTraces());
+	const nullManager_1 = nullManager$1;
+	const safe_stringify_1 = safeStringify$1;
+	class NullTracesManager extends nullManager_1.NullManager {
+	    get settings() {
+	        return this._settings || {};
+	    }
+	    set settings(value) {
+	        this._settings = value;
+	    }
+	    constructor(_settings, otelSettings, logger) {
+	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullTracesManager with settings ${(0, safe_stringify_1.safeStringify)(_settings)}`);
+	        }
+	        super();
+	        this._settings = _settings;
+	        this.logger = logger;
+	    }
+	    withSequenceSpan(source, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            return this.withSequenceSpanEx(source, source + ".start", filteringContextOrCallback, optionsOrCallback, callback);
+	        });
+	    }
+	    withSequenceSpanEx(source, traceName, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            return this.withSpan(source, filteringContextOrCallback, null, optionsOrCallback, callback);
+	        });
+	    }
+	    get currentTracingState() {
+	        return new nullTracingState_1.default("nullTracingState", null, true);
+	    }
+	    set currentTracingState(ts) {
+	    }
+	    waitForFinalExport(timeoutMs) {
+	        return Promise.resolve();
+	    }
+	    withSpan(source, filteringContextOrCallback, propagationInfoOrCallback, optionsOrCallback, callback) {
+	        const actualCallback = 
+	        // eslint-disable-next-line no-nested-ternary
+	        typeof filteringContextOrCallback === "function"
+	            ? filteringContextOrCallback
+	            : typeof propagationInfoOrCallback === "function"
+	                ? propagationInfoOrCallback
+	                : typeof optionsOrCallback === "function"
+	                    ? optionsOrCallback
+	                    : callback;
+	        if (!actualCallback) {
+	            throw new Error("callback must be provided");
+	        }
+	        if (typeof actualCallback !== "function") {
+	            throw new Error("Callback must be a function, received " + typeof actualCallback);
+	        }
+	        // ! DO NOT log in this method, danger of infinite loop with
+	        // interop log publishing
+	        //
+	        // this.logger?.debug("nullTracesManager.withSpan: " + source);
+	        // ! a null manager means no propagation
+	        //
+	        // let extractedPI: PropagationInfo | null = null;
+	        // if (propagationInfoOrCallback) {
+	        //   let propagationInfoCarrier = {};
+	        //   if (!isFunctionType(propagationInfoOrCallback)) {
+	        //     propagationInfoCarrier = { ...propagationInfoOrCallback };
+	        //   }
+	        //   extractedPI = Traces.extractPropagationInfo(propagationInfoCarrier);
+	        // } else {
+	        //   extractedPI = Traces.currentTracingState?.getPropagationInfo() || null;
+	        // }
+	        // const nts = new NullTracingState(source, extractedPI);
+	        const nts = new nullTracingState_1.default(source, null, true);
+	        traces_1.default.currentTracingState = nts;
+	        try {
+	            return actualCallback(nts);
+	        }
+	        finally {
+	            traces_1.default.currentTracingState = null;
+	        }
+	    }
+	    setFilterConfig(filters) {
+	    }
+	    get startupTraceFinished() {
+	        return (() => { });
+	    }
+	    get userJourneyMarker() {
+	        return (() => { });
+	    }
+	    setUserJourneyMarker(userJourneyMarker) {
+	    }
+	    get clickstreamMarker() {
+	        return (() => { });
+	    }
+	}
+	nullTracesManager.NullTracesManager = NullTracesManager;
+	
+	return nullTracesManager;
+}
+
+var hasRequiredBuilder$2;
+
+function requireBuilder$2 () {
+	if (hasRequiredBuilder$2) return builder$1;
+	hasRequiredBuilder$2 = 1;
+	Object.defineProperty(builder$1, "__esModule", { value: true });
+	builder$1.TracesManagerBuilder = void 0;
+	const nullTracesManager_1 = requireNullTracesManager();
+	const __1 = requireDist();
+	class TracesManagerBuilder {
+	    constructor() {
+	        this.traceLogger = null;
+	    }
+	    withLogger(logger) {
+	        this.logger = logger;
+	        return this;
+	    }
+	    withTraceLogger(traceLogger) {
+	        this.traceLogger = traceLogger;
+	        return this;
+	    }
+	    withSettings(settings) {
+	        this.settings = settings;
+	        return this;
+	    }
+	    withMetrics(metrics) {
+	        this.metrics = metrics;
+	        return this;
+	    }
+	    withTracerProvider(tracerProvider) {
+	        this.tracerProvider = tracerProvider;
+	        return this;
+	    }
+	    withContextManager(contextManager) {
+	        var _a, _b;
+	        this.settings = (_a = this.settings) !== null && _a !== void 0 ? _a : { enabled: false };
+	        this.settings.traces = (_b = this.settings.traces) !== null && _b !== void 0 ? _b : { enabled: false };
+	        this.settings.traces.contextManager = () => contextManager;
+	        this.settings.traces.useOTELContextManager = true;
+	        return this;
+	    }
+	    withPropagationInfoStorage(store, read) {
+	        this.store = store;
+	        this.read = read;
+	        return this;
+	    }
+	    build() {
+	        var _a, _b, _c, _d;
+	        if (((_a = globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) &&
+	            ((_b = this.settings) === null || _b === void 0 ? void 0 : _b.definitiveInstance) !== true) {
+	            return globalThis.ioInsightsInternals.traces;
+	        }
+	        const toReturn = this.buildCore();
+	        globalThis.ioInsightsInternals = (_c = globalThis.ioInsightsInternals) !== null && _c !== void 0 ? _c : {};
+	        if (!globalThis.ioInsightsInternals.traces ||
+	            ((_d = this.settings) === null || _d === void 0 ? void 0 : _d.definitiveInstance)) {
+	            globalThis.ioInsightsInternals.traces = toReturn;
+	        }
+	        return toReturn;
+	    }
+	    buildCore() {
+	        var _a, _b, _c, _d, _e, _f, _g, _h;
+	        this.settings.traces = (_a = this.settings.traces) !== null && _a !== void 0 ? _a : { enabled: false };
+	        this.settings.traces.otlpExporterConfig = (_b = this.settings.traces.exporterSettings) !== null && _b !== void 0 ? _b : this.settings.traces.otlpExporterConfig;
+	        this.settings.traces.exporterSettings = (_c = this.settings.traces.exporterSettings) !== null && _c !== void 0 ? _c : this.settings.traces.otlpExporterConfig;
+	        let tracePlugin;
+	        if (((_d = this.settings) === null || _d === void 0 ? void 0 : _d.enabled) !== true ||
+	            ((_f = (_e = this.settings) === null || _e === void 0 ? void 0 : _e.traces) === null || _f === void 0 ? void 0 : _f.enabled) !== true ||
+	            !(tracePlugin = (0, __1.loadInsightsPlugin)("traces", this.logger))) {
+	            return new nullTracesManager_1.NullTracesManager((_g = this.settings) === null || _g === void 0 ? void 0 : _g.traces, this.settings, this.logger);
+	        }
+	        const manager = tracePlugin.newTracesManager(this.logger, this.settings, (_h = this.traceLogger) !== null && _h !== void 0 ? _h : this.logger, this.metrics, this.store, this.read);
+	        return manager;
+	    }
+	}
+	builder$1.TracesManagerBuilder = TracesManagerBuilder;
+	
+	return builder$1;
+}
+
+var _null = {};
+
+Object.defineProperty(_null, "__esModule", { value: true });
+_null.NullLogger = void 0;
+class NullLogger {
+    get level() {
+        return 60 /* IOInsights.LoggerLogLevel.INFO */;
+    }
+    error() {
+        // do nothing
+    }
+    warn() {
+        // do nothing
+    }
+    info() {
+        // do nothing
+    }
+    debug() {
+        // do nothing
+    }
+    verbose() {
+        // do nothing
+    }
+}
+_null.NullLogger = NullLogger;
+
+var nullManager = {};
+
+Object.defineProperty(nullManager, "__esModule", { value: true });
+nullManager.NullLogsManager = void 0;
+const nullManager_1$1 = nullManager$1;
+const safe_stringify_1 = safeStringify$1;
+class NullLogsManager extends nullManager_1$1.NullManager {
+    constructor(settings, otelSettings, logger) {
+        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
+            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullLogsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
+        }
+        super();
+    }
+    emit(logRecord) {
+        return null;
+    }
+}
+nullManager.NullLogsManager = NullLogsManager;
+
+var constants = {};
+
+Object.defineProperty(constants, "__esModule", { value: true });
+constants.Defaults = void 0;
+constants.Defaults = {
+    DEFAULT_USER: "unknown-user",
+    DEFAULT_SERVICE_NAME: "unknown-service-name",
+    DEFAULT_SERVICE_ID: "unknown-service-id",
+    DEFAULT_SERVICE_VERSION: "unknown-service-version",
+    DEFAULT_PLATFORM_VERSION: "unknown-platform-version",
+};
+
+var logWrapper = {};
+
+Object.defineProperty(logWrapper, "__esModule", { value: true });
+logWrapper.LogWrapper = void 0;
+// wraps an OTEL library logger into an OTEL library logger
+// allows filtering messages etc
+class LogWrapper {
+    constructor(logger, dropLog) {
+        this.logger = logger;
+        this.dropLog = dropLog;
+    }
+    get level() {
+        var _a;
+        return (_a = this.logger.level) !== null && _a !== void 0 ? _a : 0 /* IOInsights.LoggerLogLevel.NONE */;
+    }
+    error(message, ...args) {
+        var _a;
+        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
+            return;
+        }
+        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
+        // we can do that since otel impl is not considered critical
+        this.logger.warn(message, ...args);
+    }
+    warn(message, ...args) {
+        var _a;
+        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
+            return;
+        }
+        this.logger.warn(message, ...args);
+    }
+    info(message, ...args) {
+        var _a;
+        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 60 /* IOInsights.LoggerLogLevel.INFO */, message)) {
+            return;
+        }
+        this.logger.info(message, ...args);
+    }
+    debug(message, ...args) {
+        var _a;
+        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 70 /* IOInsights.LoggerLogLevel.DEBUG */, message)) {
+            return;
+        }
+        this.logger.debug(message, ...args);
+    }
+    verbose(message, ...args) {
+        var _a;
+        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 80 /* IOInsights.LoggerLogLevel.VERBOSE */, message)) {
+            return;
+        }
+        this.logger.verbose(message, ...args);
+    }
+}
+logWrapper.LogWrapper = LogWrapper;
+
+var builder = {};
+
+var hasRequiredBuilder$1;
+
+function requireBuilder$1 () {
+	if (hasRequiredBuilder$1) return builder;
+	hasRequiredBuilder$1 = 1;
+	Object.defineProperty(builder, "__esModule", { value: true });
+	builder.LogsManagerBuilder = void 0;
+	const __1 = requireDist();
+	const nullManager_1 = nullManager;
+	class LogsManagerBuilder {
+	    withLogger(logger) {
+	        this.logger = logger;
+	        return this;
+	    }
+	    withSettings(settings) {
+	        this.settings = settings;
+	        return this;
+	    }
+	    build() {
+	        var _a, _b, _c, _d;
+	        if (((_a = globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.logs) &&
+	            ((_b = this.settings) === null || _b === void 0 ? void 0 : _b.definitiveInstance) !== true) {
+	            return globalThis.ioInsightsInternals.logs;
+	        }
+	        const toReturn = this.buildCore();
+	        globalThis.ioInsightsInternals = (_c = globalThis.ioInsightsInternals) !== null && _c !== void 0 ? _c : {};
+	        if (!globalThis.ioInsightsInternals.logs ||
+	            ((_d = this.settings) === null || _d === void 0 ? void 0 : _d.definitiveInstance)) {
+	            globalThis.ioInsightsInternals.logs = toReturn;
+	        }
+	        return toReturn;
+	    }
+	    buildCore() {
+	        var _a, _b, _c, _d;
+	        let logsPlugin;
+	        if (((_a = this.settings) === null || _a === void 0 ? void 0 : _a.enabled) !== true ||
+	            ((_c = (_b = this.settings) === null || _b === void 0 ? void 0 : _b.logs) === null || _c === void 0 ? void 0 : _c.enabled) !== true ||
+	            !(logsPlugin = (0, __1.loadInsightsPlugin)("logs", this.logger))) {
+	            return new nullManager_1.NullLogsManager((_d = this.settings) === null || _d === void 0 ? void 0 : _d.logs, this.settings, this.logger);
+	        }
+	        const logs = logsPlugin.newLogsManager(this.logger, this.settings.logs, this.settings);
+	        return logs;
+	    }
+	}
+	builder.LogsManagerBuilder = LogsManagerBuilder;
+	
+	return builder;
+}
+
+var hasRequiredBuilder;
+
+function requireBuilder () {
+	if (hasRequiredBuilder) return builder$3;
+	hasRequiredBuilder = 1;
+	Object.defineProperty(builder$3, "__esModule", { value: true });
+	builder$3.Builder = void 0;
+	const builder_1 = requireBuilder$3();
+	const builder_2 = requireBuilder$2();
+	const null_1 = _null;
+	const container_1 = container;
+	const nullMetricsManager_1 = nullMetricsManager;
+	const nullTracesManager_1 = requireNullTracesManager();
+	const nullManager_1 = nullManager;
+	const constants_1 = constants;
+	const logWrapper_1 = logWrapper;
+	const _1 = requireDist();
+	const safe_stringify_1 = safeStringify$1;
+	const builder_3 = requireBuilder$1();
+	class Builder {
+	    constructor() {
+	        this.logger = new null_1.NullLogger();
+	    }
+	    // these methods must be invoked...
+	    withLogger(loggerArg) {
+	        var _a;
+	        if (loggerArg) {
+	            this.logger = new logWrapper_1.LogWrapper(loggerArg, (_, msg) => {
+	                var _a, _b, _c;
+	                if (((_a = this.settings) === null || _a === void 0 ? void 0 : _a.suppressDoubleInitializationWarnings) &&
+	                    ~(msg + "").indexOf("@opentelemetry/api: Attempted duplicate registration of API")) {
+	                    return true;
+	                }
+	                if (((_b = this.settings) === null || _b === void 0 ? void 0 : _b.suppressDoubleInitializationWarnings) &&
+	                    ~(msg + "").indexOf("Current logger will overwrite one already registered")) {
+	                    return true;
+	                }
+	                if (((_c = this.settings) === null || _c === void 0 ? void 0 : _c.suppressDoubleInitializationWarnings) &&
+	                    ~(msg + "").indexOf("Current logger will be overwritten")) {
+	                    return true;
+	                }
+	                return false;
+	            });
+	        }
+	        const basePlugin = (0, _1.loadInsightsPlugin)("base", this.logger);
+	        if (basePlugin) {
+	            if (this.logger.level) {
+	                const level = (_a = this.logger.level) === null || _a === void 0 ? void 0 : _a.valueOf();
+	                basePlugin.diag.setLogger(this.logger, level);
+	            }
+	            else {
+	                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	                basePlugin.diag.setLogger(this.logger, 70 /* IOInsights.LoggerLogLevel.DEBUG */);
+	            }
+	        }
+	        return this;
+	    }
+	    withSettings(settings) {
+	        this.settings = settings;
+	        container_1.Container.settings = settings;
+	        return this;
+	    }
+	    // ...before these methods
+	    withMetrics() {
+	        this.metricsBuilder = new builder_1.MetricsManagerBuilder();
+	        this.metricsBuilder.withLogger(this.logger);
+	        this.metricsBuilder.withSettings(Object.assign({ enabled: false }, this.settings));
+	        return this.metricsBuilder;
+	    }
+	    withTraces() {
+	        this.tracesBuilder = new builder_2.TracesManagerBuilder();
+	        this.tracesBuilder.withLogger(this.logger);
+	        this.tracesBuilder.withSettings(Object.assign({ enabled: false }, this.settings));
+	        return this.tracesBuilder;
+	    }
+	    withLogs() {
+	        this.logsBuilder = new builder_3.LogsManagerBuilder();
+	        this.logsBuilder.withLogger(this.logger);
+	        this.logsBuilder.withSettings(Object.assign({ enabled: false }, this.settings));
+	        return this.logsBuilder;
+	    }
+	    build() {
+	        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
+	        this.settings = (_a = this.settings) !== null && _a !== void 0 ? _a : { enabled: false };
+	        const nonPartialSettings = Object.assign({ enabled: false }, this.settings);
+	        if (((_b = this.settings) === null || _b === void 0 ? void 0 : _b.logSettingsOnStartup) !== false) {
+	            this.logger.info(`Starting interop.io OTEL with settings ${(0, safe_stringify_1.safeStringify)(this.settings)}`);
+	        }
+	        if (((_c = this.settings) === null || _c === void 0 ? void 0 : _c.enabled) == false ||
+	            !((0, _1.loadInsightsPlugin)("base", this.logger))) {
+	            return new container_1.Container(nonPartialSettings, new nullTracesManager_1.NullTracesManager(this.settings.traces, nonPartialSettings, this.logger), new nullMetricsManager_1.NullMetricsManager(this.settings.metrics, nonPartialSettings, this.logger), new nullManager_1.NullLogsManager(this.settings.logs, nonPartialSettings, this.logger), this.logger);
+	        }
+	        if (((_e = (_d = this.settings) === null || _d === void 0 ? void 0 : _d.metrics) === null || _e === void 0 ? void 0 : _e.enabled) &&
+	            ((_f = this.settings) === null || _f === void 0 ? void 0 : _f.metrics.platformMetricsEnabled) &&
+	            !this.metricsBuilder) {
+	            throw new Error("metrics.platformMetricsEnabled is true, but .withMetrics() method not called.");
+	        }
+	        const providedAdditionalResourceAttributes = this.settings.additionalResourceAttributes;
+	        this.settings.additionalResourceAttributes = () => {
+	            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
+	            const evaluatedAdditionalResourceAttributes = (_a = container_1.Container.errorlessDefined(providedAdditionalResourceAttributes, {})) !== null && _a !== void 0 ? _a : {};
+	            return Object.assign(Object.assign({}, evaluatedAdditionalResourceAttributes), { user: (_e = (_d = (_b = evaluatedAdditionalResourceAttributes.userId) !== null && _b !== void 0 ? _b : (_c = this.settings) === null || _c === void 0 ? void 0 : _c.userId) !== null && _d !== void 0 ? _d : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _e !== void 0 ? _e : constants_1.Defaults.DEFAULT_USER, "user.id": (_j = (_h = (_f = evaluatedAdditionalResourceAttributes.userId) !== null && _f !== void 0 ? _f : (_g = this.settings) === null || _g === void 0 ? void 0 : _g.userId) !== null && _h !== void 0 ? _h : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _j !== void 0 ? _j : constants_1.Defaults.DEFAULT_USER, "service.name": (_o = (_m = (_k = evaluatedAdditionalResourceAttributes.serviceName) !== null && _k !== void 0 ? _k : (_l = this.settings) === null || _l === void 0 ? void 0 : _l.serviceName) !== null && _m !== void 0 ? _m : evaluatedAdditionalResourceAttributes["service.name"]) !== null && _o !== void 0 ? _o : constants_1.Defaults.DEFAULT_SERVICE_NAME, "service.instance.id": (_s = (_r = (_p = evaluatedAdditionalResourceAttributes.serviceId) !== null && _p !== void 0 ? _p : (_q = this.settings) === null || _q === void 0 ? void 0 : _q.serviceId) !== null && _r !== void 0 ? _r : evaluatedAdditionalResourceAttributes["service.instance.id"]) !== null && _s !== void 0 ? _s : constants_1.Defaults.DEFAULT_SERVICE_ID, "service.version": (_w = (_v = (_t = evaluatedAdditionalResourceAttributes.serviceVersion) !== null && _t !== void 0 ? _t : (_u = this.settings) === null || _u === void 0 ? void 0 : _u.serviceVersion) !== null && _v !== void 0 ? _v : evaluatedAdditionalResourceAttributes["service.version"]) !== null && _w !== void 0 ? _w : constants_1.Defaults.DEFAULT_SERVICE_VERSION, platformVersion: (_z = (_x = evaluatedAdditionalResourceAttributes.platformVersion) !== null && _x !== void 0 ? _x : (_y = this.settings) === null || _y === void 0 ? void 0 : _y.platformVersion) !== null && _z !== void 0 ? _z : constants_1.Defaults.DEFAULT_PLATFORM_VERSION });
+	        };
+	        Builder.maybeAddResourceAttributesToAttributes(this.settings);
+	        Builder.maybeAddResourceAttributesToAttributes(this.settings.logs);
+	        Builder.maybeAddResourceAttributesToAttributes(this.settings.metrics);
+	        Builder.maybeAddResourceAttributesToAttributes(this.settings.traces);
+	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.logs);
+	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.metrics);
+	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.traces);
+	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.logs);
+	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.metrics);
+	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.traces);
+	        Builder.propagateAttributesDown("headers", this.settings, this.settings.logs);
+	        Builder.propagateAttributesDown("headers", this.settings, this.settings.metrics);
+	        Builder.propagateAttributesDown("headers", this.settings, this.settings.traces);
+	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.logs);
+	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.logs);
+	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.metrics);
+	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.metrics);
+	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.traces);
+	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.traces);
+	        const metricsBuilder = (_g = this.metricsBuilder) !== null && _g !== void 0 ? _g : this.withMetrics();
+	        const metrics = metricsBuilder
+	            .withLogger(this.logger)
+	            .withSettings(this.settings)
+	            .build();
+	        const tracesBuilder = (_h = this.tracesBuilder) !== null && _h !== void 0 ? _h : this.withTraces();
+	        const traces = tracesBuilder
+	            .withLogger(this.logger)
+	            .withSettings(this.settings)
+	            .withMetrics(metrics)
+	            .build();
+	        _1.Traces.instance = traces;
+	        const logsBuilder = (_j = this.logsBuilder) !== null && _j !== void 0 ? _j : this.withLogs();
+	        const logs = logsBuilder
+	            .withLogger(this.logger)
+	            .withSettings(this.settings)
+	            .build();
+	        _1.Logs.instance = logs;
+	        return new container_1.Container(nonPartialSettings, traces, metrics, logs, this.logger);
+	    }
+	    static propagateAttributeDown(k, otelSettings, settings) {
+	        var _a;
+	        if (!settings) {
+	            return;
+	        }
+	        settings[k] = (_a = settings[k]) !== null && _a !== void 0 ? _a : otelSettings[k];
+	    }
+	    static propagateAttributesDown(k, otelSettings, settings) {
+	        var _a, _b;
+	        if (!settings) {
+	            return;
+	        }
+	        const providedOtel = (_a = otelSettings[k]) !== null && _a !== void 0 ? _a : {};
+	        const provided = (_b = settings[k]) !== null && _b !== void 0 ? _b : {};
+	        settings[k] = () => (Object.assign(Object.assign({}, container_1.Container.errorless(providedOtel)), container_1.Container.errorless(provided)));
+	    }
+	    static maybeAddResourceAttributesToAttributes(settings) {
+	        if (settings === null || settings === void 0 ? void 0 : settings.addResourceAttributesToAttributes) {
+	            const providedAdditionalResourceAttributes = settings.additionalResourceAttributes;
+	            const providedAdditionalAttributes = settings.additionalAttributes;
+	            settings.additionalAttributes = () => (Object.assign(Object.assign({}, container_1.Container.errorless(providedAdditionalResourceAttributes)), container_1.Container.errorless(providedAdditionalAttributes)));
+	        }
+	    }
+	}
+	builder$3.Builder = Builder;
+	
+	return builder$3;
+}
+
+var log4jsWrapper = {};
+
+Object.defineProperty(log4jsWrapper, "__esModule", { value: true });
+log4jsWrapper.Log4jsWrapper = void 0;
+// wraps a log4js wrapper into an OTEL library logger
+class Log4jsWrapper {
+    constructor(logger) {
+        this.logger = logger;
+    }
+    get level() {
+        return this.convert("level" in this.logger ? this.logger.level : this.logger.publishLevel());
+    }
+    error(message, ...args) {
+        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
+        // we can do that since otel impl is not considered critical
+        this.logger.warn(message, ...args);
+    }
+    warn(message, ...args) {
+        this.logger.warn(message, ...args);
+    }
+    info(message, ...args) {
+        this.logger.info(message, ...args);
+    }
+    debug(message, ...args) {
+        this.logger.debug(message, ...args);
+    }
+    verbose(message, ...args) {
+        this.logger.trace(message, ...args);
+    }
+    convert(level) {
+        if (level === undefined) {
+            return 60 /* IOInsights.LoggerLogLevel.INFO */;
+        }
+        const currentLevel = typeof level !== "string" ? level.levelStr.toLowerCase() : level.toLowerCase();
+        switch (currentLevel) {
+            case "off": {
+                return 0 /* IOInsights.LoggerLogLevel.NONE */;
+            }
+            case "error": {
+                return 30 /* IOInsights.LoggerLogLevel.ERROR */;
+            }
+            case "warn": {
+                return 50 /* IOInsights.LoggerLogLevel.WARN */;
+            }
+            case "info": {
+                return 60 /* IOInsights.LoggerLogLevel.INFO */;
+            }
+            case "debug": {
+                return 70 /* IOInsights.LoggerLogLevel.DEBUG */;
+            }
+            case "trace": {
+                return 80 /* IOInsights.LoggerLogLevel.VERBOSE */;
+            }
+            default: {
+                return 60 /* IOInsights.LoggerLogLevel.INFO */;
+            }
+        }
+    }
+}
+log4jsWrapper.Log4jsWrapper = Log4jsWrapper;
+
+var metricsDependencyBuilder = {};
+
+var nullPerfProvider = {};
+
+Object.defineProperty(nullPerfProvider, "__esModule", { value: true });
+nullPerfProvider.NullPerformanceProvider = void 0;
+class NullPerformanceProvider {
+    getAppsCPU() {
+        return Promise.resolve(undefined);
+    }
+    getAppsMemory() {
+        return Promise.resolve(undefined);
+    }
+    getSystemCPU() {
+        return Promise.resolve(undefined);
+    }
+    getSystemMemory() {
+        return Promise.resolve(undefined);
+    }
+}
+nullPerfProvider.NullPerformanceProvider = NullPerformanceProvider;
+
+Object.defineProperty(metricsDependencyBuilder, "__esModule", { value: true });
+metricsDependencyBuilder.MetricsDependencyBuilder = void 0;
+const nullPerfProvider_1 = nullPerfProvider;
+class MetricsDependencyBuilder {
+    constructor() {
+        this.performanceProvider = new nullPerfProvider_1.NullPerformanceProvider();
+        this.instanceFocusedHandler = () => () => { };
+        this.instanceStartedHandler = () => () => { };
+        this.instanceStoppedHandler = () => () => { };
+        this.instanceReadyHandler = () => () => { };
+        this.instanceErrorHandler = () => () => { };
+        this.instanceCrashHandler = () => () => { };
+        this.layoutRestoredHandler = () => () => { };
+        this.platformStartedHandler = () => () => { };
+        this.platformErrorHandler = () => () => { };
+        this.workspaceLoadedHandler = () => () => { };
+        this.workspaceRestoredHandler = () => () => { };
+        this.workspaceSavedHandler = () => () => { };
+        this.workspaceStoppedHandler = () => () => { };
+        this.workspaceSelectedHandler = () => () => { };
+        this.workspaceStartedHandler = () => () => { };
+        this.workspaceFrameCreatedHandler = () => () => { };
+        this.workspaceFrameInitHandler = () => () => { };
+        this.workspaceFramePageLoadHandler = () => () => { };
+        this.workspaceFrameWorkspaceRenderHandler = () => () => { };
+        this.workspaceComponentCreatedHandler = () => () => { };
+        this.workspaceAppsStartedHandler = () => () => { };
+        this.workspaceStartupHandler = () => () => { };
+    }
+    build() {
+        const container = {
+            performanceProvider: this.performanceProvider,
+            instanceStartedHandler: this.instanceStartedHandler,
+            instanceStoppedHandler: this.instanceStoppedHandler,
+            instanceReadyHandler: this.instanceReadyHandler,
+            instanceFocusedHandler: this.instanceFocusedHandler,
+            instanceErrorHandler: this.instanceErrorHandler,
+            instanceCrashHandler: this.instanceCrashHandler,
+            layoutRestoredHandler: this.layoutRestoredHandler,
+            platformStartedHandler: this.platformStartedHandler,
+            platformErrorHandler: this.platformErrorHandler,
+            workspaceLoadedHandler: this.workspaceLoadedHandler,
+            workspaceSavedHandler: this.workspaceSavedHandler,
+            workspaceStoppedHandler: this.workspaceStoppedHandler,
+            workspaceSelectedHandler: this.workspaceSelectedHandler,
+            workspaceRestoredHandler: this.workspaceRestoredHandler,
+            workspaceStartedHandler: this.workspaceStartedHandler,
+            workspaceStartupHandler: this.workspaceStartupHandler,
+            workspaceFrameCreatedHandler: this.workspaceFrameCreatedHandler,
+            workspaceFrameInitHandler: this.workspaceFrameInitHandler,
+            workspaceFramePageLoadHandler: this.workspaceFramePageLoadHandler,
+            workspaceFrameWorkspaceRenderHandler: this.workspaceFrameWorkspaceRenderHandler,
+            workspaceComponentCreatedHandler: this.workspaceComponentCreatedHandler,
+            workspaceAppsStartedHandler: this.workspaceAppsStartedHandler,
+        };
+        return container;
+    }
+    withInstanceStartedHandler(instanceStartedHandler) {
+        this.instanceStartedHandler = instanceStartedHandler;
+        return this;
+    }
+    withInstanceStoppedHandler(instanceStoppedHandler) {
+        this.instanceStoppedHandler = instanceStoppedHandler;
+        return this;
+    }
+    withInstanceReadyHandler(instanceReadyHandler) {
+        this.instanceReadyHandler = instanceReadyHandler;
+        return this;
+    }
+    withInstanceFocusedHandler(instanceFocusedHandler) {
+        this.instanceFocusedHandler = instanceFocusedHandler;
+        return this;
+    }
+    withInstanceErrorHandler(instanceErrorHandler) {
+        this.instanceErrorHandler = instanceErrorHandler;
+        return this;
+    }
+    withInstanceCrashHandler(instanceCrashHandler) {
+        this.instanceCrashHandler = instanceCrashHandler;
+        return this;
+    }
+    withLayoutRestoredHandler(layoutRestoredHandler) {
+        this.layoutRestoredHandler = layoutRestoredHandler;
+        return this;
+    }
+    withWorkspaceLoadedHandler(workspaceLoadedHandler) {
+        this.workspaceLoadedHandler = workspaceLoadedHandler;
+        return this;
+    }
+    withWorkspaceSavedHandler(workspaceSavedHandler) {
+        this.workspaceSavedHandler = workspaceSavedHandler;
+        return this;
+    }
+    withWorkspaceStartedHandler(workspaceStartedHandler) {
+        this.workspaceRestoredHandler = () => () => { };
+        this.workspaceStartedHandler = workspaceStartedHandler;
+        return this;
+    }
+    withWorkspaceStoppedHandler(workspaceStoppedHandler) {
+        this.workspaceStoppedHandler = workspaceStoppedHandler;
+        return this;
+    }
+    withWorkspaceSelectedHandler(workspaceSelectedHandler) {
+        this.workspaceSelectedHandler = workspaceSelectedHandler;
+        return this;
+    }
+    withPlatformStartedHandler(platformStartedHandler) {
+        this.platformStartedHandler = platformStartedHandler;
+        return this;
+    }
+    withPlatformErrorHandler(platformErrorHandler) {
+        this.platformErrorHandler = platformErrorHandler;
+        return this;
+    }
+    withPerfProvider(perfProvider) {
+        this.performanceProvider = perfProvider;
+        return this;
+    }
+    withWorkspaceRestoredHandler(workspaceRestoredHandler) {
+        this.workspaceRestoredHandler = workspaceRestoredHandler;
+        this.workspaceStartedHandler = () => () => { };
+        return this;
+    }
+    withWorkspaceStartupHandler(workspaceStartupHandler) {
+        this.workspaceStartupHandler = workspaceStartupHandler;
+        return this;
+    }
+    withWorkspaceFrameCreatedHandler(workspaceFrameCreatedHandler) {
+        this.workspaceFrameCreatedHandler = workspaceFrameCreatedHandler;
+        return this;
+    }
+    withWorkspaceFrameInitHandler(workspaceFrameInitHandler) {
+        this.workspaceFrameInitHandler = workspaceFrameInitHandler;
+        return this;
+    }
+    withWorkspaceFramePageLoadHandler(workspaceFramePageLoadHandler) {
+        this.workspaceFramePageLoadHandler = workspaceFramePageLoadHandler;
+        return this;
+    }
+    withWorkspaceFrameWorkspaceRenderHandler(workspaceFrameWorkspaceRenderHandler) {
+        this.workspaceFrameWorkspaceRenderHandler = workspaceFrameWorkspaceRenderHandler;
+        return this;
+    }
+    withWorkspaceComponentCreatedHandler(workspaceComponentCreatedHandler) {
+        this.workspaceComponentCreatedHandler = workspaceComponentCreatedHandler;
+        return this;
+    }
+    withWorkspaceAppsStartedHandler(workspaceAppsStartedHandler) {
+        this.workspaceAppsStartedHandler = workspaceAppsStartedHandler;
+        return this;
+    }
+}
+metricsDependencyBuilder.MetricsDependencyBuilder = MetricsDependencyBuilder;
+
+var logs = {};
+
+Object.defineProperty(logs, "__esModule", { value: true });
+logs.Logs = void 0;
+const nullManager_1 = nullManager;
+class Logs {
+    static get instance() {
+        var _a, _b;
+        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.logs) {
+            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.logs;
+        }
+        if (!Logs._instance) {
+            Logs._instance = new nullManager_1.NullLogsManager(undefined, undefined, undefined);
+        }
+        return Logs._instance;
+    }
+    static set instance(value) {
+        Logs._instance = value;
+    }
+    static emit(record) {
+        return Logs.instance.emit(record);
+    }
+}
+logs.Logs = Logs;
+
+var pluginLoader = {};
+
+Object.defineProperty(pluginLoader, "__esModule", { value: true });
+pluginLoader.registerInsightsPlugin = pluginLoader.loadInsightsPlugin = void 0;
+const returnedPlugins = new Map();
+function loadInsightsPlugin(name, logger) {
+    if (returnedPlugins.get(name) !== undefined) {
+        return returnedPlugins.get(name);
+    }
+    if (typeof globalThis.ioInsightsPlugins === "undefined") {
+        return null;
+    }
+    let plugin = globalThis.ioInsightsPlugins[name];
+    if (!plugin) {
+        return null;
+    }
+    if (typeof plugin === "function") {
+        try {
+            plugin = plugin();
+        }
+        catch (err) {
+            logger === null || logger === void 0 ? void 0 : logger.error(`Error loading io.Insights plugin ${name}`, err);
+            returnedPlugins.set(name, null);
+            return null;
+        }
+    }
+    returnedPlugins.set(name, plugin);
+    return plugin;
+}
+pluginLoader.loadInsightsPlugin = loadInsightsPlugin;
+function registerInsightsPlugin(name, pluginOrFactoryFunc) {
+    if (typeof globalThis.ioInsightsPlugins === "undefined") {
+        globalThis.ioInsightsPlugins = {};
+    }
+    globalThis.ioInsightsPlugins[name] = pluginOrFactoryFunc;
+}
+pluginLoader.registerInsightsPlugin = registerInsightsPlugin;
+
+var isNode$1 = {};
+
+Object.defineProperty(isNode$1, "__esModule", { value: true });
+isNode$1.isNode = void 0;
+let _isNode;
+function isNode() {
+    if (typeof _isNode !== "undefined") {
+        return _isNode;
+    }
+    if (typeof window !== "undefined") {
+        _isNode = false;
+        return false;
+    }
+    // Only Node.JS has a process variable that is of [[Class]] process
+    try {
+        _isNode = Object.prototype.toString.call(commonjsGlobal.process) === "[object process]";
+    }
+    catch (e) {
+        _isNode = false;
+    }
+    return _isNode;
+}
+isNode$1.isNode = isNode;
+
+var hasRequiredDist;
+
+function requireDist () {
+	if (hasRequiredDist) return dist;
+	hasRequiredDist = 1;
+	(function (exports$1) {
+		var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    var desc = Object.getOwnPropertyDescriptor(m, k);
+		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+		      desc = { enumerable: true, get: function() { return m[k]; } };
+		    }
+		    Object.defineProperty(o, k2, desc);
+		}) : (function(o, m, k, k2) {
+		    if (k2 === undefined) k2 = k;
+		    o[k2] = m[k];
+		}));
+		var __setModuleDefault = (commonjsGlobal && commonjsGlobal.__setModuleDefault) || (Object.create ? (function(o, v) {
+		    Object.defineProperty(o, "default", { enumerable: true, value: v });
+		}) : function(o, v) {
+		    o["default"] = v;
+		});
+		var __importStar = (commonjsGlobal && commonjsGlobal.__importStar) || function (mod) {
+		    if (mod && mod.__esModule) return mod;
+		    var result = {};
+		    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+		    __setModuleDefault(result, mod);
+		    return result;
+		};
+		var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+		    return (mod && mod.__esModule) ? mod : { "default": mod };
+		};
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.SpanStatusCode = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.Logs = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
+		var builder_1 = requireBuilder();
+		Object.defineProperty(exports$1, "Builder", { enumerable: true, get: function () { return builder_1.Builder; } });
+		var log4jsWrapper_1 = log4jsWrapper;
+		Object.defineProperty(exports$1, "Log4jsWrapper", { enumerable: true, get: function () { return log4jsWrapper_1.Log4jsWrapper; } });
+		var container_1 = container;
+		Object.defineProperty(exports$1, "Container", { enumerable: true, get: function () { return container_1.Container; } });
+		var null_1 = _null$1;
+		Object.defineProperty(exports$1, "NullMetric", { enumerable: true, get: function () { return null_1.NullMetric; } });
+		var metricsDependencyBuilder_1 = metricsDependencyBuilder;
+		Object.defineProperty(exports$1, "MetricsDependencyBuilder", { enumerable: true, get: function () { return metricsDependencyBuilder_1.MetricsDependencyBuilder; } });
+		const traces_1 = __importStar(requireTraces());
+		exports$1.Traces = traces_1.default;
+		Object.defineProperty(exports$1, "withSpan", { enumerable: true, get: function () { return traces_1.withSpan; } });
+		exports$1.OTEL_PI_KEY = "__interopIOTracePropagationInfo";
+		const nullTracingState_1 = __importDefault(nullTracingState);
+		exports$1.NullTracingState = nullTracingState_1.default;
+		var logs_1 = logs;
+		Object.defineProperty(exports$1, "Logs", { enumerable: true, get: function () { return logs_1.Logs; } });
+		const pluginLoader_1 = pluginLoader;
+		Object.defineProperty(exports$1, "registerInsightsPlugin", { enumerable: true, get: function () { return pluginLoader_1.registerInsightsPlugin; } });
+		Object.defineProperty(exports$1, "loadInsightsPlugin", { enumerable: true, get: function () { return pluginLoader_1.loadInsightsPlugin; } });
+		const isNode_1 = isNode$1;
+		Object.defineProperty(exports$1, "isNode", { enumerable: true, get: function () { return isNode_1.isNode; } });
+		const safe_stringify_1 = safeStringify$1;
+		Object.defineProperty(exports$1, "safeStringify", { enumerable: true, get: function () { return safe_stringify_1.safeStringify; } });
+		const otelUtils_1 = otelUtils;
+		Object.defineProperty(exports$1, "getOTELData", { enumerable: true, get: function () { return otelUtils_1.getOTELData; } });
+		Object.defineProperty(exports$1, "flattenOtelAtributes", { enumerable: true, get: function () { return otelUtils_1.flattenOtelAtributes; } });
+		Object.defineProperty(exports$1, "extractFilteringContextFromArgs", { enumerable: true, get: function () { return otelUtils_1.extractFilteringContextFromArgs; } });
+		Object.defineProperty(exports$1, "deep_value", { enumerable: true, get: function () { return otelUtils_1.deep_value; } });
+		if (typeof Promise !== "undefined") {
+		    Promise.allSettled = Promise.allSettled || ((promises) => Promise.all(promises.map((p) => p
+		        .then((value) => ({
+		        status: "fulfilled",
+		        value
+		    }))
+		        .catch((reason) => ({
+		        status: "rejected",
+		        reason
+		    })))));
+		}
+		var SpanStatusCode;
+		(function (SpanStatusCode) {
+		    /**
+		     * The default status.
+		     */
+		    SpanStatusCode[SpanStatusCode["UNSET"] = 0] = "UNSET";
+		    /**
+		     * The operation has been validated by an Application developer or
+		     * Operator to have completed successfully.
+		     */
+		    SpanStatusCode[SpanStatusCode["OK"] = 1] = "OK";
+		    /**
+		     * The operation contains an error.
+		     */
+		    SpanStatusCode[SpanStatusCode["ERROR"] = 2] = "ERROR";
+		})(SpanStatusCode || (SpanStatusCode = {}));
+		exports$1.SpanStatusCode = SpanStatusCode;
+		
+	} (dist));
+	return dist;
+}
+
+var distExports = requireDist();
+
+function setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext) {
+    let applicationName = settings.applicationName ?? "unknown-app";
+    if (glue42gd) {
+        applicationName = settings.applicationName ?? glue42gd?.appName ?? applicationName;
+    }
+    if (nodeStartingContext) {
+        applicationName = settings.applicationName ?? nodeStartingContext.applicationConfig.name ?? applicationName;
+    }
+    settings.applicationName = applicationName;
+    if (settings.traces?.closeTrace) {
+        glue42gd?.addCloseHandler(() => distExports.Traces.withSpan("interopio.api.application.close", () => { }));
+    }
+    const sid = glue42gd?.sid;
+    const user = glue42gd?.user;
+    const osUser = (Utils.isNode() && process?.env?.USERNAME) ?? glue42gd?.env?.windowsUserName;
+    const machine = (Utils.isNode() && process?.env?.COMPUTERNAME) ?? glue42gd?.env?.machineName;
+    const env = nodeStartingContext?.env ?? glue42gd?.env?.env;
+    const region = nodeStartingContext?.region ?? glue42gd?.env?.region;
+    const appInstanceId = nodeStartingContext?.instanceId ?? glue42gd?.appInstanceId ?? "";
+    const windowId = glue42gd?.windowId;
+    const extraInsightsContext = {
+        interopioCoreVersion: version,
+        interopioLibVersion: ext.version || version,
+        host: "io.api",
+        tracingAppName: applicationName,
+        tracingAppInstanceId: appInstanceId,
+        user,
+        osUser,
+        machine,
+        env,
+        region,
+        windowId,
+        sid
+    };
+    let providedAdditionalResourceAttributesFunc = settings.additionalResourceAttributes;
+    if (typeof providedAdditionalResourceAttributesFunc !== "function") {
+        const providedAdditionalResourceAttributes = settings.additionalResourceAttributes;
+        providedAdditionalResourceAttributesFunc = () => providedAdditionalResourceAttributes;
+    }
+    settings.additionalResourceAttributes = () => ({
+        ...extraInsightsContext,
+        ...providedAdditionalResourceAttributesFunc(),
+    });
+}
+function setDefaultTraceFilters(settings) {
+    if (!settings.traces) {
+        return;
+    }
+    settings.traces.defaultFilters ??= [];
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.instrumentation.fetch",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.instrumentation.xhr",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.prefs",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.layouts",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.windows",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "stream": "#^t42[.].*"
+        },
+        "canBeRoot": false,
+        "enabled": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "stream": "apps.event"
+        },
+        "canBeRoot": false,
+        "enabled": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "name": "#^t42[.].*"
+        },
+        "canBeRoot": false,
+        "enabled": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "name": "apps.event"
+        },
+        "canBeRoot": false,
+        "enabled": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "method": "apps.command"
+        },
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.interop",
+        "context": {
+            "method": "#^t42[.].*"
+        },
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.contexts",
+        "context": {
+            "context": "___insights_pi_storage___"
+        },
+        "enabled": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.contexts",
+        "context": {
+            "context": "#^t42[.].*"
+        },
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.contexts",
+        "context": {
+            "context": "#^__.*"
+        },
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.appManager",
+        "canBeRoot": false
+    });
+    settings.traces.defaultFilters.push({
+        "source": "interopio.api.notifications",
+        "canBeRoot": false
+    });
+}
 
 function prepareConfig (configuration, ext, glue42gd) {
     let nodeStartingContext;
@@ -10932,6 +12936,52 @@ function prepareConfig (configuration, ext, glue42gd) {
         }
         return uid;
     }
+    async function getInsights(iodesktop, interop, logger) {
+        const configProp = configuration.insights;
+        if (typeof configProp !== "object" && typeof configProp !== "boolean" && typeof configProp !== "undefined") {
+            throw new Error("insights/otel property should be boolean, object or unspecified");
+        }
+        if (configProp === false) {
+            return { enabled: false };
+        }
+        let gdConfig;
+        if (iodesktop) {
+            gdConfig = iodesktop.insights;
+        }
+        else if (Utils.isNode() && (configuration?.insights !== false &&
+            configuration?.insights?.enabled !== false &&
+            configuration?.insights?.requestSettings !== false)) {
+            gdConfig = (await interop?.invoke("T42.Otel.GetConfig", undefined, nodeStartingContext ? { environment: nodeStartingContext.env, region: nodeStartingContext.region } : undefined, { waitTimeoutMs: 0 })
+                .then(result => result.returned)
+                .catch(err => logger?.warn("Unable to retrieve base io.Insights settings: " +
+                (err?.message ?? err))));
+        }
+        if (gdConfig &&
+            (iodesktop ||
+                nodeStartingContext ||
+                (Utils.isNode() && (typeof configProp === "boolean" || !configProp?.platformInstance)))) {
+            gdConfig = {
+                ...gdConfig,
+                metrics: {
+                    ...gdConfig?.metrics,
+                    enabled: !!gdConfig?.metrics?.enabled,
+                    platformMetricsEnabled: false
+                }
+            };
+        }
+        let settings;
+        if (configProp === true || typeof configProp === "undefined") {
+            settings = gdConfig ?? { enabled: false };
+        }
+        else {
+            settings = deepMerge(gdConfig || {}, configProp, { isMergeableObject: isPlainObject$2 });
+        }
+        setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext);
+        if (settings.traces?.enabled) {
+            setDefaultTraceFilters(settings);
+        }
+        return settings;
+    }
     function getAuth() {
         if (typeof configuration.auth === "string") {
             return {
@@ -10992,9 +13042,39 @@ function prepareConfig (configuration, ext, glue42gd) {
         contexts: getContexts(),
         version: ext.version || version,
         libs: ext.libs ?? [],
-        customLogger: configuration.customLogger
+        customLogger: configuration.customLogger,
+        getInsights
     };
 }
+
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+
+function __decorate(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
+};
 
 class GW3ContextData {
     name;
@@ -11058,7 +13138,7 @@ var lodash_clonedeep = {exports: {}};
  */
 lodash_clonedeep.exports;
 
-(function (module, exports) {
+(function (module, exports$1) {
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
 
@@ -11139,7 +13219,7 @@ lodash_clonedeep.exports;
 	var root = freeGlobal || freeSelf || Function('return this')();
 
 	/** Detect free variable `exports`. */
-	var freeExports = exports && !exports.nodeType && exports;
+	var freeExports = exports$1 && !exports$1.nodeType && exports$1;
 
 	/** Detect free variable `module`. */
 	var freeModule = freeExports && 'object' == 'object' && module && !module.nodeType && module;
@@ -12839,6 +14919,7 @@ function applyContextDelta(context, delta, logger) {
                 delete context[key];
             });
         }
+        distExports.Traces.removePropagationInfo(context);
         return context;
     }
     catch (e) {
@@ -13045,6 +15126,11 @@ class GW3Bridge {
         if (name in this._creationPromises) {
             return this._creationPromises[name];
         }
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { context: name });
+        ts.addData("DIAGNOSTIC", { data });
+        data = deepClone(data);
+        ts.injectPropagationInfo(data);
         this._creationPromises[name] =
             this._gw3Session
                 .send({
@@ -13080,15 +15166,21 @@ class GW3Bridge {
         if (delta) {
             delta = deepClone(delta);
         }
+        const ts = distExports.Traces.currentTracingState;
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
+        ts.addData("DIAGNOSTIC", { data: contextData });
+        ts.addData("DEBUG", { delta });
         if (!contextData || !contextData.isAnnounced) {
             await this.createContext(name, delta);
             return;
         }
         const currentContext = await this.get(contextData.name);
+        distExports.Traces.currentTracingState = ts;
+        distExports.Traces.removePropagationInfo(currentContext);
         const calculatedDelta = this.setPathSupported ?
             this.calculateContextDeltaV2(currentContext, delta) :
             this.calculateContextDeltaV1(currentContext, delta);
@@ -13098,13 +15190,16 @@ class GW3Bridge {
             && !calculatedDelta.commands?.length) {
             return Promise.resolve();
         }
+        const calculatedDeltaWithPropagationInfo = deepClone(calculatedDelta);
+        ts.injectPropagationInfo(calculatedDeltaWithPropagationInfo);
         const gwResponse = await this._gw3Session
             .send({
             type: GW_MESSAGE_UPDATE_CONTEXT,
             domain: "global",
             context_id: contextData.contextId,
-            delta: calculatedDelta,
+            delta: calculatedDeltaWithPropagationInfo,
         }, {}, { skipPeerId: false });
+        distExports.Traces.currentTracingState = ts;
         if (this._subscribeOnUpdate &&
             !contextData.sentExplicitSubscription &&
             !contextData.activityId) {
@@ -13114,6 +15209,7 @@ class GW3Bridge {
             contextData.sentExplicitSubscription ||
             contextData.activityId) {
             await contextData.snapshotPromise;
+            distExports.Traces.currentTracingState = ts;
             this.handleUpdated(contextData, calculatedDelta, {
                 updaterId: gwResponse.peer_id
             });
@@ -13123,10 +15219,14 @@ class GW3Bridge {
         if (data) {
             data = deepClone(data);
         }
+        const ts = distExports.Traces.currentTracingState;
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
+        ts.addData("DIAGNOSTIC", { data: contextData });
+        ts.injectPropagationInfo(data);
         if (!contextData || !contextData.isAnnounced) {
             return this.createContext(name, data);
         }
@@ -13137,6 +15237,7 @@ class GW3Bridge {
             context_id: contextData.contextId,
             delta: { reset: data },
         }, {}, { skipPeerId: false });
+        distExports.Traces.currentTracingState = ts;
         if (this._subscribeOnUpdate &&
             !contextData.sentExplicitSubscription &&
             !contextData.activityId) {
@@ -13157,21 +15258,30 @@ class GW3Bridge {
     }
     setPath(name, path, value) {
         if (!this.setPathSupported) {
-            return Promise.reject("glue.contexts.setPath operation is not supported, use Glue42 3.10 or later");
+            return Promise.reject(new Error("contexts.setPath operation is not supported, use version 3.10 or later"));
         }
         return this.setPaths(name, [{ path, value }]);
     }
     async setPaths(name, pathValues) {
         if (!this.setPathSupported) {
-            return Promise.reject("glue.contexts.setPaths operation is not supported, use Glue42 3.10 or later");
+            return Promise.reject(new Error("contexts.setPaths operation is not supported, use version 3.10 or later"));
         }
         if (pathValues) {
             pathValues = deepClone(pathValues);
         }
+        const ts = distExports.Traces.currentTracingState;
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
+        ts.addData("DIAGNOSTIC", { data: contextData });
+        ts.addData("DEBUG", { pathValues });
+        const injectionCarrier = { [distExports.OTEL_PI_KEY]: undefined };
+        ts.injectPropagationInfo(injectionCarrier);
+        if (injectionCarrier[distExports.OTEL_PI_KEY]) {
+            pathValues.push({ path: distExports.OTEL_PI_KEY, value: injectionCarrier[distExports.OTEL_PI_KEY] });
+        }
         if (!contextData || !contextData.isAnnounced) {
             const obj = {};
             for (const pathValue of pathValues) {
@@ -13195,6 +15305,7 @@ class GW3Bridge {
             context_id: contextData.contextId,
             delta: { commands }
         }, {}, { skipPeerId: false });
+        distExports.Traces.currentTracingState = ts;
         if (this._subscribeOnUpdate &&
             !contextData.sentExplicitSubscription &&
             !contextData.activityId) {
@@ -13204,6 +15315,7 @@ class GW3Bridge {
             contextData.sentExplicitSubscription ||
             contextData.activityId) {
             await contextData.snapshotPromise;
+            distExports.Traces.currentTracingState = ts;
             this.handleUpdated(contextData, {
                 added: {},
                 removed: [],
@@ -13215,19 +15327,23 @@ class GW3Bridge {
         }
     }
     async get(name) {
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { context: name });
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
         if (!contextData || !contextData.isAnnounced) {
             if (!contextData && this._subscribeOnGet) {
-                this.subscribe(name, () => { });
+                this.subscribeInner(name, () => { });
             }
             return Promise.resolve({});
         }
         if (contextData && !contextData.sentExplicitSubscription) {
             return new Promise((resolve, reject) => {
-                this.subscribe(name, (data, _d, _r, un) => {
+                this.subscribeInner(name, (data, _d, _r, un) => {
+                    distExports.Traces.removePropagationInfo(data);
                     if (!this._subscribeOnGet) {
                         this.unsubscribe(un);
                     }
@@ -13243,15 +15359,18 @@ class GW3Bridge {
         }
         await contextData.snapshotPromise;
         const context = contextData?.context ?? {};
+        distExports.Traces.removePropagationInfo(context);
         return Promise.resolve(deepClone(context));
     }
     isInvalidContextError(e) {
         return e.reason_uri === this.ERROR_URI_INVALID_CONTEXT
             || (e.reason_uri === this.ERROR_URI_FAILURE && e.reason?.startsWith("Unable to find context with id"));
     }
-    async subscribe(name, callback, subscriptionKey) {
+    async subscribeInner(name, callback, subscriptionKey) {
+        const ts = distExports.Traces.currentTracingState;
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const thisCallbackSubscriptionNumber = typeof subscriptionKey === "undefined" ? this._nextCallbackSubscriptionNumber : subscriptionKey;
         if (typeof subscriptionKey === "undefined") {
@@ -13299,6 +15418,23 @@ class GW3Bridge {
             return Promise.resolve(thisCallbackSubscriptionNumber);
         }
     }
+    async subscribe(name, callback, subscriptionKey) {
+        const contextExists = this.all().includes(name);
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { context: name, contextExists });
+        const wrappedCallback = async (...args) => {
+            return distExports.withSpan("interopio.api.contexts.bridge.subscribe.callback", { context: name }, args?.[5], (cbts) => {
+                distExports.Traces.removePropagationInfo(args?.[0]);
+                distExports.Traces.removePropagationInfo(args?.[1]);
+                cbts.addData("INFO", { context: name });
+                cbts.addData("DEBUG", { delta: args?.[1] });
+                cbts.addData("DEBUG", { removed: args?.[2] });
+                cbts.addData("DIAGNOSTIC", { data: args?.[0] });
+                return callback(args?.[0], args?.[1], args?.[2], args?.[3], args?.[4]);
+            });
+        };
+        return this.subscribeInner(name, wrappedCallback, subscriptionKey);
+    }
     unsubscribe(subscriptionKey, keepInSubscriptionsCache) {
         if (!keepInSubscriptionsCache) {
             this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter(x => x.subKey !== subscriptionKey);
@@ -13329,8 +15465,11 @@ class GW3Bridge {
         }
     }
     async destroy(name) {
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { context: name });
         if (name in this._creationPromises) {
             await this._creationPromises[name];
+            distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
         const contextId = contextData?.contextId;
@@ -13468,7 +15607,7 @@ class GW3Bridge {
         if (justSeen ||
             !deepEqual(contextData.context, oldContext) ||
             updatedMessageType === GW_MESSAGE_SUBSCRIBED_CONTEXT) {
-            this.invokeUpdateCallbacks(contextData, contextUpdatedMsg.delta, { updaterId: contextUpdatedMsg.updater_id });
+            this.invokeUpdateCallbacks(contextData, contextUpdatedMsg.delta ?? contextUpdatedMsg.data, { updaterId: contextUpdatedMsg.updater_id });
         }
     }
     invokeUpdateCallbacks(contextData, delta, extraData) {
@@ -13492,7 +15631,12 @@ class GW3Bridge {
             if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
                 try {
                     const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
-                    updateCallback(deepClone(contextData.context), deepClone(Object.assign({}, delta.added || {}, delta.updated || {}, delta.reset || {})), delta.removed, parseInt(updateCallbackIndex, 10), extraData);
+                    const deltaArg = deepClone({
+                        ...delta.added,
+                        ...delta.updated,
+                        ...delta.reset
+                    });
+                    updateCallback(deepClone(contextData.context), deltaArg, delta.removed, parseInt(updateCallbackIndex, 10), extraData, distExports.Traces.extractPropagationInfo(delta));
                 }
                 catch (err) {
                     this._logger.debug("callback error: " + JSON.stringify(err));
@@ -13672,6 +15816,27 @@ class GW3Bridge {
         return new Promise((resolve) => setTimeout(() => resolve(), 0));
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.create", { argMapping: ["context"] })
+], GW3Bridge.prototype, "createContext", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.update", { argMapping: ["context"] })
+], GW3Bridge.prototype, "update", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.set", { argMapping: ["context"] })
+], GW3Bridge.prototype, "set", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.setPaths", { argMapping: ["context"] })
+], GW3Bridge.prototype, "setPaths", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.get", { argMapping: ["context"] })
+], GW3Bridge.prototype, "get", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.subscribe", { argMapping: ["context"] })
+], GW3Bridge.prototype, "subscribe", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.bridge.destroy", { argMapping: ["context"] })
+], GW3Bridge.prototype, "destroy", null);
 
 class ContextsModule {
     initTime;
@@ -13759,6 +15924,21 @@ class ContextsModule {
         }
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.contexts.module.update", { argMapping: ["context"] })
+], ContextsModule.prototype, "update", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.module.set", { argMapping: ["context"] })
+], ContextsModule.prototype, "set", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.module.setPaths", { argMapping: ["context"] })
+], ContextsModule.prototype, "setPaths", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.module.subscribe", { argMapping: ["context"] })
+], ContextsModule.prototype, "subscribe", null);
+__decorate([
+    distExports.withSpan("interopio.api.contexts.module.destroy", { argMapping: ["context"] })
+], ContextsModule.prototype, "destroy", null);
 
 function promisify (promise, successCallback, errorCallback) {
     if (typeof successCallback !== "function" && typeof errorCallback !== "function") {
@@ -14577,11 +16757,10 @@ const functionCheck = (input, propDescription) => {
     const providedType = typeof input;
     return providedType === "function" ?
         anyJson() :
-        fail$1(`The provided argument as ${propDescription} should be of type function, provided: ${typeof providedType}`);
+        fail$1(`The provided argument as ${propDescription} should be of type function, provided: ${providedType}`);
 };
 const nonEmptyStringDecoder = string().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder = number().where((num) => num >= 0, "Expected a non-negative number or 0");
-const positiveNumberDecoder = number().where((num) => num > 0, "Expected a positive number");
 const methodDefinitionDecoder = object({
     name: nonEmptyStringDecoder,
     objectTypes: optional(array(nonEmptyStringDecoder)),
@@ -14614,8 +16793,8 @@ const instanceDecoder = object({
 });
 const targetDecoder = union(constant("best"), constant("all"), constant("skipMine"), instanceDecoder, array(instanceDecoder));
 const invokeOptionsDecoder = object({
-    waitTimeoutMs: optional(positiveNumberDecoder),
-    methodResponseTimeoutMs: optional(positiveNumberDecoder)
+    waitTimeoutMs: optional(nonNegativeNumberDecoder),
+    methodResponseTimeoutMs: optional(nonNegativeNumberDecoder)
 });
 
 var InvokeStatus;
@@ -14635,6 +16814,9 @@ class Client {
         this.configuration = configuration;
     }
     subscribe(method, options, successCallback, errorCallback, existingSub) {
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { stream: Utils.getMethodName(method) });
+        ts.addData("INFO", { options });
         const callProtocolSubscribe = (targetServers, stream, successProxy, errorProxy) => {
             options.methodResponseTimeout = options.methodResponseTimeout ?? options.waitTimeoutMs;
             this.protocol.client.subscribe(stream, options, targetServers, successProxy, errorProxy, existingSub);
@@ -14759,6 +16941,10 @@ class Client {
         });
     }
     async invoke(methodFilter, argumentObj, target, additionalOptions, success, error) {
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { method: Utils.getMethodName(methodFilter) });
+        ts.addData("INFO", { target, additionalOptions });
+        ts.addData("DIAGNOSTIC", { arguments: argumentObj });
         const getInvokePromise = async () => {
             const methodDefinition = typeof methodFilter === "string" ? { name: methodFilter } : { ...methodFilter };
             if (!argumentObj) {
@@ -14819,23 +17005,10 @@ class Client {
                     return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
                 }
             }
-            const timeout = additionalOptions.methodResponseTimeoutMs;
+            const timeout = additionalOptions.methodResponseTimeoutMs ?? 30000;
             const additionalOptionsCopy = additionalOptions;
-            const invokePromises = serversMethodMap.map((serversMethodPair) => {
-                const invId = nanoid(10);
-                const method = serversMethodPair.methods[0];
-                const server = serversMethodPair.server;
-                const invokePromise = this.protocol.client.invoke(invId, method, argumentObj, server, additionalOptionsCopy);
-                return Promise.race([
-                    invokePromise,
-                    rejectAfter(timeout, invokePromise, {
-                        invocationId: invId,
-                        message: `Invocation timeout (${timeout} ms) reached for method name: ${method?.name}, target instance: ${JSON.stringify(server.instance)}, options: ${JSON.stringify(additionalOptionsCopy)}`,
-                        status: InvokeStatus.Error,
-                    })
-                ]);
-            });
-            const invocationMessages = await Promise.all(invokePromises);
+            const serverInvokePromises = serversMethodMap.map((smp) => this.getServerInvokePromise(smp.methods[0], smp.server, argumentObj, additionalOptionsCopy, timeout));
+            const invocationMessages = await Promise.all(serverInvokePromises);
             const results = this.getInvocationResultObj(invocationMessages, methodDefinition, argumentObj);
             const allRejected = invocationMessages.every((result) => result.status === InvokeStatus.Error);
             if (allRejected) {
@@ -14844,6 +17017,27 @@ class Client {
             return results;
         };
         return promisify(getInvokePromise(), success, error);
+    }
+    async getServerInvokePromise(method, server, argumentObj, additionalOptionsCopy, timeout) {
+        const invId = nanoid(10);
+        const ts = distExports.Traces.currentTracingState;
+        if (argumentObj) {
+            argumentObj = deepClone(argumentObj);
+            ts.injectPropagationInfo(argumentObj);
+        }
+        ts.addData("INFO", { "server": server?.id, instance: server?.instance });
+        ts.addData("INFO", { "invocationId": invId });
+        const invokePromise = this.protocol.client.invoke(invId, method, argumentObj, server, additionalOptionsCopy);
+        const returnValue = await Promise.race([
+            invokePromise,
+            rejectAfter(timeout, invokePromise, {
+                invocationId: invId,
+                message: `Invocation timeout (${timeout} ms) reached for method name: ${method?.name}, target instance: ${JSON.stringify(server.instance)}, options: ${JSON.stringify(additionalOptionsCopy)}`,
+                status: InvokeStatus.Error,
+            })
+        ]);
+        ts.addData("DIAGNOSTIC", { returnValue });
+        return returnValue;
     }
     generateInvalidInputInvocationResult(message, methodDefinition, argumentObj) {
         const method = {
@@ -14861,6 +17055,7 @@ class Client {
         return this.getInvocationResultObj([invokeResultMessage], method, argumentObj);
     }
     getInvocationResultObj(invocationResults, method, calledWith) {
+        distExports.Traces.removePropagationInfo(calledWith);
         const all_return_values = invocationResults
             .filter((invokeMessage) => invokeMessage.status === InvokeStatus.Success)
             .reduce((allValues, currentValue) => {
@@ -15064,6 +17259,15 @@ class Client {
         return this.filterByTarget(target, serversMethodMap);
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.interop.stream.subscribe", { argMapping: (methodDefinition) => ({ stream: Utils.getMethodName(methodDefinition) }) })
+], Client.prototype, "subscribe", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.invoke", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
+], Client.prototype, "invoke", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.invoke.server", { argMapping: { "0.name": "method" } })
+], Client.prototype, "getServerInvokePromise", null);
 
 class ServerSubscription {
     protocol;
@@ -15229,9 +17433,9 @@ class ServerStream {
             flags: def2.flags?.metadata,
         };
     }
-    close() {
+    async close() {
         this._protocol.server.closeAllSubscriptions(this._repoMethod);
-        this._server.unregister(this._repoMethod.definition, true);
+        return this._server.unregister(this._repoMethod.definition, true);
     }
     push(data, branches) {
         if (typeof branches !== "string" && !Array.isArray(branches) && branches !== undefined) {
@@ -15240,12 +17444,23 @@ class ServerStream {
         if (typeof data !== "object") {
             throw new Error("Invalid arguments. Data must be an object.");
         }
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { stream: this?.name, branches });
+        ts.addData("DIAGNOSTIC", { data });
+        data = deepClone(data);
+        ts.injectPropagationInfo(data);
         this._protocol.server.pushData(this._repoMethod, data, branches);
     }
     updateRepoMethod(repoMethod) {
         this._repoMethod = repoMethod;
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.interop.stream.close", { thisMapping: { name: "stream" } })
+], ServerStream.prototype, "close", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.stream.push", { thisMapping: { name: "stream" } })
+], ServerStream.prototype, "push", null);
 
 class Server {
     protocol;
@@ -15320,14 +17535,18 @@ class Server {
         if (!methodDefinition) {
             return Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
         }
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { method: Utils.getMethodName(methodDefinition) });
         if (typeof callback !== "function") {
-            return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
+            return Promise.reject(`The second parameter must be a callback function. Method: ${Utils.getMethodName(methodDefinition)}`);
         }
         const wrappedCallbackFunction = async (context, resultCallback) => {
             try {
                 const result = callback(context.args, context.instance);
                 if (result && typeof result.then === "function") {
+                    const cbts = distExports.Traces.currentTracingState;
                     const resultValue = await result;
+                    distExports.Traces.currentTracingState = cbts;
                     resultCallback(undefined, resultValue);
                 }
                 else {
@@ -15345,8 +17564,10 @@ class Server {
         if (!methodDefinition) {
             return Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
         }
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { method: Utils.getMethodName(methodDefinition) });
         if (typeof callback !== "function") {
-            return Promise.reject(`The second parameter must be a callback function. Method: ${typeof methodDefinition === "string" ? methodDefinition : methodDefinition.name}`);
+            return Promise.reject(`The second parameter must be a callback function. Method: ${Utils.getMethodName(methodDefinition)}`);
         }
         const wrappedCallback = async (context, resultCallback) => {
             try {
@@ -15384,6 +17605,8 @@ class Server {
         if (methodFilter === undefined) {
             return Promise.reject("Please, provide either a unique string for a name or an object containing a “name” property.");
         }
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { method: Utils.getMethodName(methodFilter) });
         if (typeof methodFilter === "function") {
             await this.unregisterWithPredicate(methodFilter, forStream);
             return;
@@ -15473,33 +17696,62 @@ class Server {
         });
     }
     onMethodInvoked(methodToExecute, invocationId, invocationArgs) {
-        if (!methodToExecute || !methodToExecute.theFunction) {
-            return;
-        }
-        methodToExecute.theFunction(invocationArgs, (err, result) => {
-            if (err !== undefined && err !== null) {
-                if (err.message && typeof err.message === "string") {
-                    err = err.message;
-                }
-                else if (typeof err !== "string") {
-                    try {
-                        err = JSON.stringify(err);
+        const propagationInfo = distExports.Traces.extractPropagationInfo(invocationArgs.args, true);
+        distExports.withSpan("interopio.api.interop.register.callback", { method: methodToExecute?.definition?.name }, propagationInfo, (ts) => {
+            ts.addData("INFO", { method: methodToExecute?.definition?.name });
+            ts.addData("INFO", { invocationId });
+            ts.addData("INFO", { invoker: invocationArgs?.instance });
+            ts.addData("DIAGNOSTIC", { arguments: invocationArgs?.args });
+            if (!methodToExecute || !methodToExecute.theFunction) {
+                ts.status = { code: distExports.SpanStatusCode.ERROR, message: "Required argument 'methodToExecute' is missing." };
+                return;
+            }
+            let resolveWithSpanCallback;
+            const withSpanCallbackPromise = new Promise(resolve => {
+                resolveWithSpanCallback = resolve;
+            });
+            methodToExecute.theFunction(invocationArgs, (err, result) => {
+                if (err !== undefined && err !== null) {
+                    if (err.message && typeof err.message === "string") {
+                        err = err.message;
                     }
-                    catch (unStrException) {
-                        err = `un-stringifyable error in onMethodInvoked! Top level prop names: ${Object.keys(err)}`;
+                    else if (typeof err !== "string") {
+                        try {
+                            err = JSON.stringify(err);
+                        }
+                        catch (unStrException) {
+                            err = `un-stringifyable error in onMethodInvoked! Top level prop names: ${Object.keys(err)}`;
+                        }
                     }
+                    ts.status = { code: distExports.SpanStatusCode.ERROR, message: err };
+                    ts.recordException(err);
                 }
-            }
-            if (!result) {
-                result = {};
-            }
-            else if (typeof result !== "object" || Array.isArray(result)) {
-                result = { _value: result };
-            }
-            this.protocol.server.methodInvocationResult(methodToExecute, invocationId, err, result);
+                if (!result) {
+                    result = {};
+                }
+                else if (typeof result !== "object" || Array.isArray(result)) {
+                    result = { _value: result };
+                }
+                ts.addData("DIAGNOSTIC", { returnValue: result });
+                this.protocol.server.methodInvocationResult(methodToExecute, invocationId, err, result);
+                resolveWithSpanCallback();
+            });
+            return withSpanCallbackPromise;
         });
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.interop.stream.create", { argMapping: (methodDefinition) => ({ stream: Utils.getMethodName(methodDefinition) }) })
+], Server.prototype, "createStream", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.register", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
+], Server.prototype, "register", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.register.async", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
+], Server.prototype, "registerAsync", null);
+__decorate([
+    distExports.withSpan("interopio.api.interop.unregister", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
+], Server.prototype, "unregister", null);
 
 class InstanceWrapper {
     wrapped = {};
@@ -16336,6 +18588,7 @@ class ClientStreaming {
         session.on("subscription-cancelled", this.handleSubscriptionCancelled);
     }
     subscribe(streamingMethod, params, targetServers, success, error, existingSub) {
+        distExports.Traces.removePropagationInfo(params.arguments);
         if (targetServers.length === 0) {
             error({
                 method: streamingMethod,
@@ -16471,7 +18724,7 @@ class ClientStreaming {
                     "{}";
                 pendingSub.error({
                     message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
-                    called_with: pendingSub.params.arguments,
+                    called_with: distExports.Traces.removePropagationInfo(pendingSub.params.arguments),
                     method: pendingSub.method,
                 });
             }
@@ -16539,7 +18792,7 @@ class ClientStreaming {
         const isPrivateData = msg.oob;
         const sendingServerId = trackedServersFound[0].serverId;
         const server = this.repository.getServerById(sendingServerId);
-        const receivedStreamData = () => {
+        const getReceivedStreamData = () => {
             return {
                 data: msg.data,
                 server: server?.instance ?? {},
@@ -16550,16 +18803,29 @@ class ClientStreaming {
         };
         const onDataHandlers = subscription.handlers.onData;
         const queuedData = subscription.queued.data;
-        if (onDataHandlers.length > 0) {
-            onDataHandlers.forEach((callback) => {
-                if (typeof callback === "function") {
-                    callback(receivedStreamData());
-                }
-            });
-        }
-        else {
-            queuedData.push(receivedStreamData());
-        }
+        const rsd = getReceivedStreamData();
+        const pi = distExports.Traces.extractPropagationInfo(rsd.data, true);
+        const methodName = subscription?.method?.name;
+        distExports.withSpan("interopio.api.interop.stream.onData", {
+            method: methodName,
+            stream: methodName
+        }, pi, () => {
+            const ts = distExports.Traces.currentTracingState;
+            ts.addData("INFO", { method: methodName });
+            ts.addData("INFO", { stream: methodName });
+            ts.addData("INFO", { handlerCount: onDataHandlers?.length });
+            ts.addData("DIAGNOSTIC", { data: rsd });
+            if (onDataHandlers.length > 0) {
+                onDataHandlers.forEach((callback) => {
+                    if (typeof callback === "function") {
+                        callback(deepClone(rsd));
+                    }
+                });
+            }
+            else {
+                queuedData.push(deepClone(rsd));
+            }
+        });
     };
     handleSubscriptionCancelled = (msg) => {
         const subLocalKey = this.subscriptionIdToLocalKeyMap[msg.subscription_id];
@@ -16957,7 +19223,16 @@ class MessageBus {
         return this.readyPromise;
     }
     publish = (topic, data, options) => {
+        this.publishCore(topic, data, options);
+    };
+    publishCore(topic, data, options) {
         const { routingKey, target } = options || {};
+        const ts = distExports.Traces.currentTracingState;
+        ts.addData("INFO", { topic });
+        ts.addData("DIAGNOSTIC", { data });
+        ts.addData("INFO", { routingKey, target });
+        data = deepClone(data);
+        ts.injectPropagationInfo(data);
         const args = this.removeEmptyValues({
             type: "publish",
             topic,
@@ -16970,10 +19245,17 @@ class MessageBus {
             .catch((err) => {
             this.logger.error(`Failed to publish message to topic ${topic} with routing key ${routingKey} for ${JSON.stringify(target)}: ${JSON.stringify(err)}`);
         });
-    };
+    }
+    ;
     subscribe = (topic, callback, options) => {
+        return this.subscribeCore(topic, callback, options);
+    };
+    subscribeCore(topic, callback, options) {
         return new Promise((resolve, reject) => {
             const { routingKey, target } = options || {};
+            const ts = distExports.Traces.currentTracingState;
+            ts.addData("INFO", { topic });
+            ts.addData("INFO", { routingKey, target });
             const args = this.removeEmptyValues({
                 type: "subscribe",
                 topic,
@@ -16984,7 +19266,16 @@ class MessageBus {
             this.session.send(args)
                 .then((response) => {
                 const { subscription_id } = response;
-                this.subscriptions.push({ subscription_id, topic, callback, source: target });
+                ts.addData("INFO", { subscription_id });
+                const tracedCallback = function (...tracedCallbackArgs) {
+                    const propagationInfo = distExports.Traces.extractPropagationInfo(tracedCallbackArgs?.[0], true);
+                    distExports.withSpan("interopio.api.bus.subscribe.callback", { topic }, propagationInfo, (cbts) => {
+                        cbts.addData("INFO", { topic, subscription_id });
+                        cbts.addData("DIAGNOSTIC", { data: tracedCallbackArgs?.[0] });
+                        callback.apply(this, tracedCallbackArgs);
+                    });
+                };
+                this.subscriptions.push({ subscription_id, topic, callback: tracedCallback, source: target });
                 resolve({
                     unsubscribe: () => {
                         this.session.send({ type: "unsubscribe", subscription_id, peer_id: this.peerId })
@@ -16999,7 +19290,8 @@ class MessageBus {
             })
                 .catch((error) => reject(error));
         });
-    };
+    }
+    ;
     watchOnEvent = () => {
         this.session.on("event", (args) => {
             const { data, subscription_id } = args;
@@ -17037,10 +19329,74 @@ class MessageBus {
         return allMatch;
     }
 }
+__decorate([
+    distExports.withSpan("interopio.api.bus.publish", { argMapping: ["topic"] })
+], MessageBus.prototype, "publishCore", null);
+__decorate([
+    distExports.withSpan("interopio.api.bus.subscribe", { argMapping: ["topic"] })
+], MessageBus.prototype, "subscribeCore", null);
+
+function replaceComplexProperties(obj) {
+    if (isPrimitiveOrFunction(obj)) {
+        return;
+    }
+    for (const prop in obj) {
+        if (!obj.hasOwnProperty(prop)) {
+            continue;
+        }
+        const value = obj[prop];
+        if (isPrimitiveOrFunction(value)) {
+            continue;
+        }
+        if (isPlainObject$2(value) || Array.isArray(value)) {
+            replaceComplexProperties(value);
+            continue;
+        }
+        obj[prop] = value?.constructor?.name || value.toString();
+    }
+}
+function isPrimitiveOrFunction(obj) {
+    if (!obj) {
+        return true;
+    }
+    if (obj !== Object(obj)) {
+        return true;
+    }
+    if (typeof obj === "function") {
+        return true;
+    }
+    return false;
+}
+
+async function loadInsightsPlugins(logger, settings) {
+    try {
+        (await import('@interopio/insights-base')).init();
+    }
+    catch {
+        logger.warn("@interopio/insights-base plugin failed to load, insights will be disabled");
+    }
+    if (settings.metrics?.enabled) {
+        try {
+            (await import('@interopio/insights-metrics')).init();
+        }
+        catch {
+            logger.warn("@interopio/insights-metrics plugin failed to load, insights metrics functionality will be disabled");
+        }
+    }
+    if (settings.traces?.enabled) {
+        try {
+            (await import('@interopio/insights-traces')).init();
+        }
+        catch {
+            logger.warn("@interopio/insights-traces plugin failed to load, insights traces functionality will be disabled");
+        }
+    }
+}
 
 const IOConnectCoreFactory = (userConfig, ext) => {
     const iodesktop = typeof window === "object" ? (window.iodesktop ?? window.glue42gd) : undefined;
     const preloadPromise = typeof window === "object" ? (window.gdPreloadPromise ?? Promise.resolve()) : Promise.resolve();
+    const glueReadyPromiseWrapper = new PromiseWrapper();
     const glueInitTimer = timer("glue");
     userConfig = userConfig || {};
     ext = ext || {};
@@ -17051,6 +19407,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
     let _metrics;
     let _contexts;
     let _bus;
+    let _insights;
     let _allowTrace;
     const libs = {};
     function registerLib(name, inner, t) {
@@ -17214,6 +19571,43 @@ const IOConnectCoreFactory = (userConfig, ext) => {
         registerLib("bus", _bus, initTimer);
         return Promise.resolve();
     }
+    async function setupInsights(interop) {
+        const initTimer = timer("insights");
+        const settings = await internalConfig.getInsights(iodesktop, interop, _logger);
+        internalConfig.insights = settings;
+        try {
+            const builder = new distExports.Builder();
+            const insightsLogger = _logger.subLogger("insights");
+            if (settings.enabled) {
+                await loadInsightsPlugins(insightsLogger, settings);
+            }
+            builder.withSettings(settings);
+            builder.withLogger(new distExports.Log4jsWrapper(insightsLogger));
+            builder.withMetrics();
+            const INSIGHTS_PI_STORAGE = "___insights_pi_storage___";
+            builder.withTraces()
+                .withTraceLogger(new distExports.Log4jsWrapper(insightsLogger.subLogger("traces")))
+                .withPropagationInfoStorage((source, pi) => _contexts?.update(INSIGHTS_PI_STORAGE, { [source.replace(/[.]/g, "_!_")]: { pi } }), (source) => _contexts?.get(INSIGHTS_PI_STORAGE)?.then(x => x[source.replace(/[.]/g, "_!_")]?.pi) ?? Promise.resolve(null));
+            const container = builder.build();
+            await container.start();
+            registerLib("insights", container, initTimer);
+            distExports.Traces.withSpan("interopio.api.startup", () => glueReadyPromiseWrapper.promise);
+            _insights = container;
+            return Promise.resolve();
+        }
+        catch (e) {
+            initTimer.stop();
+            _logger?.error("Error initializing insights", e);
+            if (settings.failOnInitError) {
+                throw e;
+            }
+            return Promise.resolve();
+        }
+        finally {
+            replaceComplexProperties(internalConfig?.insights);
+            replaceComplexProperties(userConfig?.insights);
+        }
+    }
     function setupExternalLibs(externalLibs) {
         try {
             externalLibs.forEach((lib) => {
@@ -17261,6 +19655,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             connection: _connection,
             metrics: _metrics,
             contexts: _contexts,
+            insights: _insights,
             bus: _bus,
             version: internalConfig.version,
             userConfig,
@@ -17329,6 +19724,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             agmAny.server_method_aded = deprecatedDecorator(glue.agm.serverMethodAdded, "server_method_aded", "serverMethodAdded");
             agmAny.server_method_removed = deprecatedDecorator(glue.agm.serverMethodRemoved, "server_method_removed", "serverMethodRemoved");
         }
+        glueReadyPromiseWrapper.resolve();
         return glue;
     }
     async function registerInstanceIfNeeded() {
@@ -17352,12 +19748,14 @@ const IOConnectCoreFactory = (userConfig, ext) => {
         .then(() => Promise.all([setupMetrics(), setupInterop(), setupContexts(), setupBus()]))
         .then(() => _interop.readyPromise)
         .then(() => registerInstanceIfNeeded())
+        .then(() => setupInsights(_interop))
         .then(() => {
         return setupExternalLibs(internalConfig.libs || []);
     })
         .then(waitForLibs)
         .then(constructGlueObject)
         .catch((err) => {
+        glueReadyPromiseWrapper.reject({ err });
         return Promise.reject({
             err,
             libs
