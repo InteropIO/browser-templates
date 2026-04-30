@@ -1,6 +1,6 @@
 {
     "name": "browser-client-ng",
-    "version": "4.3.0",
+    "version": "4.4.0",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
@@ -29,9 +29,11 @@
         "@angular/forms": "^21.0.0",
         "@angular/platform-browser": "^21.0.0",
         "@angular/router": "^21.0.0",
-        "@interopio/ng": "^6.2.0",
+        "@interopio/ng": "^6.3.0",
         "rxjs": "~7.8.0",
-        "tslib": "^2.3.0"
+        "tslib": "^2.3.0",
+        "@interopio/browser": "^4.4.0",
+        "@opentelemetry/sdk-metrics": "^2.7.1"
     },
     "devDependencies": {
         "@angular/build": "^21.0.5",

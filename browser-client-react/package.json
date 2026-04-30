@@ -1,13 +1,14 @@
 {
     "name": "browser-client-react",
-    "version": "4.3.0",
+    "version": "4.4.0",
     "private": true,
     "dependencies": {
-        "@interopio/browser": "^4.3.0",
-        "@interopio/react-hooks": "^4.3.0",
+        "@interopio/browser": "^4.4.0",
+        "@interopio/react-hooks": "^4.4.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "web-vitals": "^2.1.4"
+        "web-vitals": "^2.1.4",
+        "@opentelemetry/sdk-metrics": "^2.7.1"
     },
     "devDependencies": {
         "@testing-library/jest-dom": "^5.17.0",
