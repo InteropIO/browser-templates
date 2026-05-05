@@ -4,22 +4,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": [],
-    // Allow importing the checked-in JS browser/browser-platform bundles through the shims.
-    "allowJs": true,
-    "baseUrl": ".",
-    "paths": {
-      "@interopio/browser": [
-        "./shims/interopio-browser.ts"
-      ],
-      "@interopio/browser-platform": [
-        "./shims/interopio-browser-platform.ts"
-      ]
-    }
+    "types": []
   },
   "include": [
-    "src/**/*.ts",
-    "shims/**/*"
+    "src/**/*.ts"
   ],
   "exclude": [
     "src/**/*.spec.ts"

@@ -5,11 +5,6 @@
         "lib": ["ES2020", "DOM", "DOM.Iterable"],
         "module": "ESNext",
         "skipLibCheck": true,
-        "allowJs": true,
-        "baseUrl": ".",
-        "paths": {
-            "@interopio/browser": ["./shims/interopio-browser.ts"]
-        },
 
         /* Bundler mode */
         "moduleResolution": "node",
@@ -25,6 +20,6 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["src", "shims"],
+    "include": ["src"],
     "references": [{ "path": "./tsconfig.node.json" }]
 }
