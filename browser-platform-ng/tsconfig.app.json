@@ -5,6 +5,7 @@
   "compilerOptions": {
     "outDir": "./out-tsc/app",
     "types": [],
+    // Allow importing the checked-in JS browser/browser-platform bundles through the shims.
     "allowJs": true,
     "baseUrl": ".",
     "paths": {

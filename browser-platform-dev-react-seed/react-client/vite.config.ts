@@ -7,6 +7,8 @@ export default defineConfig({
     plugins: [react()],
     build: {
         rollupOptions: {
+            // The 4.4 browser bundle uses optional dynamic imports for insights plugins.
+            // Leaving them external preserves the guarded runtime behavior from the bundle.
             external: [
                 "@interopio/insights-base",
                 "@interopio/insights-metrics",

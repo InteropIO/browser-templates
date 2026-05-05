@@ -7,6 +7,8 @@ export namespace IOConnectBrowserPlatform {
 export type IOConnectBrowserPlatformFactoryFunction = (config?: IOConnectBrowserPlatform.Config) => Promise<unknown>;
 
 const IOBrowserPlatform: IOConnectBrowserPlatformFactoryFunction = async (config) => {
+    // Reuse the checked-in 4.4 browser-platform bundle so this template keeps its original src
+    // imports and dependency list unchanged for the package refresh task.
     const module = await import("../../browser-platform-vanilla-js/public/libs/browser.platform.es.js");
     const factory = module.default as (settings?: IOConnectBrowserPlatform.Config) => Promise<unknown>;
 
