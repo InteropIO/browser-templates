@@ -4,10 +4,21 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/app",
-    "types": []
+    "types": [],
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@interopio/browser": [
+        "./shims/interopio-browser.ts"
+      ],
+      "@interopio/browser-platform": [
+        "./shims/interopio-browser-platform.ts"
+      ]
+    }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "shims/**/*"
   ],
   "exclude": [
     "src/**/*.spec.ts"

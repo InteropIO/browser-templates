@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { IOConnectProvider } from "@interopio/react-hooks";
+import IOBrowser from "@interopio/browser";
 import IOWorkspaces from "@interopio/workspaces-api";
 import IOModals from "@interopio/modals-api";
 
@@ -22,7 +23,8 @@ const settings = {
             intentResolver: {
                 enable: true
             }
-        }
+        },
+        factory: IOBrowser
     }
 };
 
