@@ -2,56 +2,56 @@ function getDefaultExportFromCjs$1 (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
 
-var isMergeableObject$1 = function isMergeableObject(value) {
-	return isNonNullObject$1(value)
-		&& !isSpecial$1(value)
+var isMergeableObject = function isMergeableObject(value) {
+	return isNonNullObject(value)
+		&& !isSpecial(value)
 };
 
-function isNonNullObject$1(value) {
+function isNonNullObject(value) {
 	return !!value && typeof value === 'object'
 }
 
-function isSpecial$1(value) {
+function isSpecial(value) {
 	var stringValue = Object.prototype.toString.call(value);
 
 	return stringValue === '[object RegExp]'
 		|| stringValue === '[object Date]'
-		|| isReactElement$1(value)
+		|| isReactElement(value)
 }
 
 // see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-var canUseSymbol$1 = typeof Symbol === 'function' && Symbol.for;
-var REACT_ELEMENT_TYPE$1 = canUseSymbol$1 ? Symbol.for('react.element') : 0xeac7;
+var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
 
-function isReactElement$1(value) {
-	return value.$$typeof === REACT_ELEMENT_TYPE$1
+function isReactElement(value) {
+	return value.$$typeof === REACT_ELEMENT_TYPE
 }
 
-function emptyTarget$1(val) {
+function emptyTarget(val) {
 	return Array.isArray(val) ? [] : {}
 }
 
-function cloneUnlessOtherwiseSpecified$1(value, options) {
+function cloneUnlessOtherwiseSpecified(value, options) {
 	return (options.clone !== false && options.isMergeableObject(value))
-		? deepmerge$1(emptyTarget$1(value), value, options)
+		? deepmerge(emptyTarget(value), value, options)
 		: value
 }
 
-function defaultArrayMerge$1(target, source, options) {
+function defaultArrayMerge(target, source, options) {
 	return target.concat(source).map(function(element) {
-		return cloneUnlessOtherwiseSpecified$1(element, options)
+		return cloneUnlessOtherwiseSpecified(element, options)
 	})
 }
 
-function getMergeFunction$1(key, options) {
+function getMergeFunction(key, options) {
 	if (!options.customMerge) {
-		return deepmerge$1
+		return deepmerge
 	}
 	var customMerge = options.customMerge(key);
-	return typeof customMerge === 'function' ? customMerge : deepmerge$1
+	return typeof customMerge === 'function' ? customMerge : deepmerge
 }
 
-function getEnumerableOwnPropertySymbols$1(target) {
+function getEnumerableOwnPropertySymbols(target) {
 	return Object.getOwnPropertySymbols
 		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
 			return Object.propertyIsEnumerable.call(target, symbol)
@@ -59,11 +59,11 @@ function getEnumerableOwnPropertySymbols$1(target) {
 		: []
 }
 
-function getKeys$1(target) {
-	return Object.keys(target).concat(getEnumerableOwnPropertySymbols$1(target))
+function getKeys(target) {
+	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
 }
 
-function propertyIsOnObject$1(object, property) {
+function propertyIsOnObject(object, property) {
 	try {
 		return property in object
 	} catch(_) {
@@ -72,69 +72,69 @@ function propertyIsOnObject$1(object, property) {
 }
 
 // Protects from prototype poisoning and unexpected merging up the prototype chain.
-function propertyIsUnsafe$1(target, key) {
-	return propertyIsOnObject$1(target, key) // Properties are safe to merge if they don't exist in the target yet,
+function propertyIsUnsafe(target, key) {
+	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
 		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
 			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
 }
 
-function mergeObject$1(target, source, options) {
+function mergeObject(target, source, options) {
 	var destination = {};
 	if (options.isMergeableObject(target)) {
-		getKeys$1(target).forEach(function(key) {
-			destination[key] = cloneUnlessOtherwiseSpecified$1(target[key], options);
+		getKeys(target).forEach(function(key) {
+			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
 		});
 	}
-	getKeys$1(source).forEach(function(key) {
-		if (propertyIsUnsafe$1(target, key)) {
+	getKeys(source).forEach(function(key) {
+		if (propertyIsUnsafe(target, key)) {
 			return
 		}
 
-		if (propertyIsOnObject$1(target, key) && options.isMergeableObject(source[key])) {
-			destination[key] = getMergeFunction$1(key, options)(target[key], source[key], options);
+		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
+			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
 		} else {
-			destination[key] = cloneUnlessOtherwiseSpecified$1(source[key], options);
+			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
 		}
 	});
 	return destination
 }
 
-function deepmerge$1(target, source, options) {
+function deepmerge(target, source, options) {
 	options = options || {};
-	options.arrayMerge = options.arrayMerge || defaultArrayMerge$1;
-	options.isMergeableObject = options.isMergeableObject || isMergeableObject$1;
+	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
+	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
 	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
 	// implementations can use it. The caller may not replace it.
-	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified$1;
+	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
 
 	var sourceIsArray = Array.isArray(source);
 	var targetIsArray = Array.isArray(target);
 	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
 
 	if (!sourceAndTargetTypesMatch) {
-		return cloneUnlessOtherwiseSpecified$1(source, options)
+		return cloneUnlessOtherwiseSpecified(source, options)
 	} else if (sourceIsArray) {
 		return options.arrayMerge(target, source, options)
 	} else {
-		return mergeObject$1(target, source, options)
+		return mergeObject(target, source, options)
 	}
 }
 
-deepmerge$1.all = function deepmergeAll(array, options) {
+deepmerge.all = function deepmergeAll(array, options) {
 	if (!Array.isArray(array)) {
 		throw new Error('first argument should be an array')
 	}
 
 	return array.reduce(function(prev, next) {
-		return deepmerge$1(prev, next, options)
+		return deepmerge(prev, next, options)
 	}, {})
 };
 
-var deepmerge_1$1 = deepmerge$1;
+var deepmerge_1 = deepmerge;
 
-var cjs$1 = deepmerge_1$1;
+var cjs$1 = deepmerge_1;
 
-var deepmerge$2 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs$1);
+var deepmerge$1 = /*@__PURE__*/getDefaultExportFromCjs$1(cjs$1);
 
 /**
  * Wraps values in an `Ok` type.
@@ -2479,7 +2479,8 @@ const newLayoutOptionsDecoder = object$2({
     instances: optional$2(array$2(nonEmptyStringDecoder$2)),
     ignoreInstances: optional$2(array$2(nonEmptyStringDecoder$2)),
     setAsCurrent: optional$2(boolean$2()),
-    ignoreContexts: optional$2(boolean$2())
+    ignoreContexts: optional$2(boolean$2()),
+    saveWindowContexts: optional$2(boolean$2())
 });
 const restoreOptionsDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -3271,9 +3272,9 @@ const parseConfig = (config = {}) => {
         isPlatformInternal,
         logger: config.systemLogger?.level ?? "info",
         customLogger: config.systemLogger?.customLogger,
-        widget: deepmerge$2(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
-        modals: deepmerge$2(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
-        intentResolver: deepmerge$2(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
+        widget: deepmerge$1(defaultWidgetConfig, decodedWidgetConfigResult.result ?? {}),
+        modals: deepmerge$1(defaultModalsConfig, decodedModalsConfigResult.result ?? {}),
+        intentResolver: deepmerge$1(defaultIntentResolverConfig, decodedIntentResolverConfigResult.result ?? {}),
     };
     return combined;
 };
@@ -3325,7 +3326,7 @@ const operations$a = {
     operationCheck: { name: "operationCheck" }
 };
 
-function createRegistry$1(options) {
+function createRegistry(options) {
     if (options && options.errorHandling
         && typeof options.errorHandling !== "function"
         && options.errorHandling !== "log"
@@ -3439,8 +3440,8 @@ function createRegistry$1(options) {
         clearKey: clearKey
     };
 }
-createRegistry$1.default = createRegistry$1;
-var lib$1 = createRegistry$1;
+createRegistry.default = createRegistry;
+var lib$1 = createRegistry;
 
 
 var CallbackRegistryFactory$1 = /*@__PURE__*/getDefaultExportFromCjs$1(lib$1);
@@ -7486,7 +7487,7 @@ class UIController {
         const { rootElement } = this.appendWidgetResources(resources);
         this.rootElements.push(rootElement);
         const config = {
-            ...deepmerge$2(resources.config, this.config.widget),
+            ...deepmerge$1(resources.config, this.config.widget),
             rootElement
         };
         return PromiseWrap(async () => {
@@ -7776,7 +7777,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.3.0";
+var version$1 = "4.4.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
@@ -8554,7 +8555,11 @@ class PerfTracker {
         }
     }
     collectMemory() {
-        const memory = window.performance.memory;
+        const perf = window.performance;
+        if (!perf || !perf.memory) {
+            return;
+        }
+        const memory = perf.memory;
         this.system.stringMetric("memory", JSON.stringify({
             totalJSHeapSize: memory.totalJSHeapSize,
             usedJSHeapSize: memory.usedJSHeapSize
@@ -8637,125 +8642,134 @@ function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
 }
 
-function createRegistry(options) {
-    if (options && options.errorHandling
-        && typeof options.errorHandling !== "function"
-        && options.errorHandling !== "log"
-        && options.errorHandling !== "silent"
-        && options.errorHandling !== "throw") {
-        throw new Error("Invalid options passed to createRegistry. Prop errorHandling should be [\"log\" | \"silent\" | \"throw\" | (err) => void], but " + typeof options.errorHandling + " was passed");
-    }
-    var _userErrorHandler = options && typeof options.errorHandling === "function" && options.errorHandling;
-    var callbacks = {};
-    function add(key, callback, replayArgumentsArr) {
-        var callbacksForKey = callbacks[key];
-        if (!callbacksForKey) {
-            callbacksForKey = [];
-            callbacks[key] = callbacksForKey;
-        }
-        callbacksForKey.push(callback);
-        if (replayArgumentsArr) {
-            setTimeout(function () {
-                replayArgumentsArr.forEach(function (replayArgument) {
-                    var _a;
-                    if ((_a = callbacks[key]) === null || _a === void 0 ? void 0 : _a.includes(callback)) {
-                        try {
-                            if (Array.isArray(replayArgument)) {
-                                callback.apply(undefined, replayArgument);
-                            }
-                            else {
-                                callback.apply(undefined, [replayArgument]);
-                            }
-                        }
-                        catch (err) {
-                            _handleError(err, key);
-                        }
-                    }
-                });
-            }, 0);
-        }
-        return function () {
-            var allForKey = callbacks[key];
-            if (!allForKey) {
-                return;
-            }
-            allForKey = allForKey.reduce(function (acc, element, index) {
-                if (!(element === callback && acc.length === index)) {
-                    acc.push(element);
-                }
-                return acc;
-            }, []);
-            if (allForKey.length === 0) {
-                delete callbacks[key];
-            }
-            else {
-                callbacks[key] = allForKey;
-            }
-        };
-    }
-    function execute(key) {
-        var argumentsArr = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            argumentsArr[_i - 1] = arguments[_i];
-        }
-        var callbacksForKey = callbacks[key];
-        if (!callbacksForKey || callbacksForKey.length === 0) {
-            return [];
-        }
-        var results = [];
-        callbacksForKey.forEach(function (callback) {
-            try {
-                var result = callback.apply(undefined, argumentsArr);
-                results.push(result);
-            }
-            catch (err) {
-                results.push(undefined);
-                _handleError(err, key);
-            }
-        });
-        return results;
-    }
-    function _handleError(exceptionArtifact, key) {
-        var errParam = exceptionArtifact instanceof Error ? exceptionArtifact : new Error(exceptionArtifact);
-        if (_userErrorHandler) {
-            _userErrorHandler(errParam);
-            return;
-        }
-        var msg = "[ERROR] callback-registry: User callback for key \"" + key + "\" failed: " + errParam.stack;
-        if (options) {
-            switch (options.errorHandling) {
-                case "log":
-                    return console.error(msg);
-                case "silent":
-                    return;
-                case "throw":
-                    throw new Error(msg);
-            }
-        }
-        console.error(msg);
-    }
-    function clear() {
-        callbacks = {};
-    }
-    function clearKey(key) {
-        var callbacksForKey = callbacks[key];
-        if (!callbacksForKey) {
-            return;
-        }
-        delete callbacks[key];
-    }
-    return {
-        add: add,
-        execute: execute,
-        clear: clear,
-        clearKey: clearKey
-    };
+var lib;
+var hasRequiredLib;
+
+function requireLib () {
+	if (hasRequiredLib) return lib;
+	hasRequiredLib = 1;
+	function createRegistry(options) {
+	    if (options && options.errorHandling
+	        && typeof options.errorHandling !== "function"
+	        && options.errorHandling !== "log"
+	        && options.errorHandling !== "silent"
+	        && options.errorHandling !== "throw") {
+	        throw new Error("Invalid options passed to createRegistry. Prop errorHandling should be [\"log\" | \"silent\" | \"throw\" | (err) => void], but " + typeof options.errorHandling + " was passed");
+	    }
+	    var _userErrorHandler = options && typeof options.errorHandling === "function" && options.errorHandling;
+	    var callbacks = {};
+	    function add(key, callback, replayArgumentsArr) {
+	        var callbacksForKey = callbacks[key];
+	        if (!callbacksForKey) {
+	            callbacksForKey = [];
+	            callbacks[key] = callbacksForKey;
+	        }
+	        callbacksForKey.push(callback);
+	        if (replayArgumentsArr) {
+	            setTimeout(function () {
+	                replayArgumentsArr.forEach(function (replayArgument) {
+	                    var _a;
+	                    if ((_a = callbacks[key]) === null || _a === void 0 ? void 0 : _a.includes(callback)) {
+	                        try {
+	                            if (Array.isArray(replayArgument)) {
+	                                callback.apply(undefined, replayArgument);
+	                            }
+	                            else {
+	                                callback.apply(undefined, [replayArgument]);
+	                            }
+	                        }
+	                        catch (err) {
+	                            _handleError(err, key);
+	                        }
+	                    }
+	                });
+	            }, 0);
+	        }
+	        return function () {
+	            var allForKey = callbacks[key];
+	            if (!allForKey) {
+	                return;
+	            }
+	            allForKey = allForKey.reduce(function (acc, element, index) {
+	                if (!(element === callback && acc.length === index)) {
+	                    acc.push(element);
+	                }
+	                return acc;
+	            }, []);
+	            if (allForKey.length === 0) {
+	                delete callbacks[key];
+	            }
+	            else {
+	                callbacks[key] = allForKey;
+	            }
+	        };
+	    }
+	    function execute(key) {
+	        var argumentsArr = [];
+	        for (var _i = 1; _i < arguments.length; _i++) {
+	            argumentsArr[_i - 1] = arguments[_i];
+	        }
+	        var callbacksForKey = callbacks[key];
+	        if (!callbacksForKey || callbacksForKey.length === 0) {
+	            return [];
+	        }
+	        var results = [];
+	        callbacksForKey.forEach(function (callback) {
+	            try {
+	                var result = callback.apply(undefined, argumentsArr);
+	                results.push(result);
+	            }
+	            catch (err) {
+	                results.push(undefined);
+	                _handleError(err, key);
+	            }
+	        });
+	        return results;
+	    }
+	    function _handleError(exceptionArtifact, key) {
+	        var errParam = exceptionArtifact instanceof Error ? exceptionArtifact : new Error(exceptionArtifact);
+	        if (_userErrorHandler) {
+	            _userErrorHandler(errParam);
+	            return;
+	        }
+	        var msg = "[ERROR] callback-registry: User callback for key \"" + key + "\" failed: " + errParam.stack;
+	        if (options) {
+	            switch (options.errorHandling) {
+	                case "log":
+	                    return console.error(msg);
+	                case "silent":
+	                    return;
+	                case "throw":
+	                    throw new Error(msg);
+	            }
+	        }
+	        console.error(msg);
+	    }
+	    function clear() {
+	        callbacks = {};
+	    }
+	    function clearKey(key) {
+	        var callbacksForKey = callbacks[key];
+	        if (!callbacksForKey) {
+	            return;
+	        }
+	        delete callbacks[key];
+	    }
+	    return {
+	        add: add,
+	        execute: execute,
+	        clear: clear,
+	        clearKey: clearKey
+	    };
+	}
+	createRegistry.default = createRegistry;
+	lib = createRegistry;
+	
+	return lib;
 }
-createRegistry.default = createRegistry;
-var lib = createRegistry;
 
-
-var CallbackRegistryFactory = /*@__PURE__*/getDefaultExportFromCjs(lib);
+var libExports = requireLib();
+var CallbackRegistryFactory = /*@__PURE__*/getDefaultExportFromCjs(libExports);
 
 class InProcTransport {
     gw;
@@ -8952,6 +8966,27 @@ function timer (timerName) {
 }
 
 const WebSocketConstructor = Utils.isNode() ? null : window.WebSocket;
+function formatWsErrorReason(err, ws, url, options) {
+    const includeStack = options?.includeStack !== false;
+    const underlying = err instanceof Error ? err : err?.error;
+    if (underlying instanceof Error) {
+        return JSON.stringify({
+            name: underlying.name,
+            message: underlying.message,
+            code: underlying.code,
+            stack: includeStack ? underlying.stack : undefined,
+        });
+    }
+    return JSON.stringify({
+        type: err?.type,
+        readyState: ws?.readyState,
+        url,
+        message: typeof err?.message === "string" ? err.message : undefined,
+    });
+}
+function formatWsCloseReason(ev) {
+    return `code: ${ev?.code} reason: ${ev?.reason || "(none)"} wasClean: ${ev?.wasClean}`;
+}
 class WS {
     ws;
     logger;
@@ -9036,19 +9071,19 @@ class WS {
         if (typeof retriesLeft === "undefined") {
             retriesLeft = this.settings.reconnectAttempts;
         }
-        if (retriesLeft !== undefined) {
-            if (retriesLeft === 0) {
-                this.notifyForSocketState(`wait for socket on ${this.settings.ws} failed - no more retries left`);
-                return;
-            }
-            this.logger.debug(`will retry ${retriesLeft} more times (every ${retryInterval} ms)`);
-        }
         try {
             await this.initiateSocket();
             this.startupTimer.mark("socket-initiated");
             this.notifyForSocketState();
         }
         catch {
+            if (retriesLeft !== undefined && retriesLeft <= 0) {
+                this.notifyForSocketState(`wait for socket on ${this.settings.ws} failed - no more retries left`);
+                return;
+            }
+            if (retriesLeft !== undefined) {
+                this.logger.debug(`will retry ${retriesLeft - 1} more times (every ${retryInterval} ms)`);
+            }
             setTimeout(() => {
                 const retries = retriesLeft === undefined ? undefined : retriesLeft - 1;
                 this.openSocket(retryInterval, retries);
@@ -9061,40 +9096,18 @@ class WS {
         this.ws = new WebSocketConstructor(this.settings.ws ?? "");
         let wasOpen = false;
         this.ws.onerror = (err) => {
-            let reason;
-            try {
-                reason = JSON.stringify(err);
-            }
-            catch (error) {
-                const seen = new WeakSet();
-                const replacer = (key, value) => {
-                    if (typeof value === "object" && value !== null) {
-                        if (seen.has(value)) {
-                            return;
-                        }
-                        seen.add(value);
-                    }
-                    if (value instanceof Error) {
-                        return {
-                            message: value.message,
-                            name: value.name,
-                            stack: value.stack
-                        };
-                    }
-                    return value;
-                };
-                reason = JSON.stringify(err, replacer);
-            }
-            this.logger.info(`ws error - reason: ${reason}`);
+            const reason = formatWsErrorReason(err, this.ws, this.settings.ws);
+            this.logger.info(`ws error - ${reason}`);
             pw.reject("error");
             if (wasOpen) {
                 wasOpen = false;
                 this.notifyForSocketState("error");
             }
-            this.notifyStatusChanged(false, reason);
+            const subscriberReason = formatWsErrorReason(err, this.ws, this.settings.ws, { includeStack: false });
+            this.notifyStatusChanged(false, subscriberReason);
         };
         this.ws.onclose = (err) => {
-            this.logger.info(`ws closed - code: ${err?.code} reason: ${err?.reason}`);
+            this.logger.info(`ws closed - ${formatWsCloseReason(err)}`);
             pw.reject("closed");
             if (wasOpen) {
                 wasOpen = false;
@@ -9876,6 +9889,10 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         if (domain === "global") {
             return Promise.resolve();
         }
+        if (!isJoined) {
+            tryReconnecting = false;
+            return Promise.resolve();
+        }
         logger.debug("stopping session " + domain + "...");
         const leaveMsg = {
             type: "leave",
@@ -10060,6 +10077,65 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
     };
 }
 
+function normalizeError(value) {
+    if (value instanceof Error) {
+        return value;
+    }
+    if (typeof value === "string") {
+        return new Error(value);
+    }
+    const anyVal = value;
+    const msgField = typeof anyVal?.message === "string" ? anyVal.message : undefined;
+    const reasonField = typeof anyVal?.reason === "string" ? anyVal.reason : undefined;
+    if (msgField !== undefined && msgField.length > 0) {
+        return new Error(msgField);
+    }
+    if (reasonField !== undefined && reasonField.length > 0) {
+        return new Error(reasonField);
+    }
+    if (msgField === "" || reasonField === "") {
+        return new Error("");
+    }
+    return new Error(safeStringify$1(value));
+}
+function safeStringify$1(value) {
+    try {
+        const seen = new WeakSet();
+        const json = JSON.stringify(value, (_key, v) => {
+            if (typeof v === "bigint") {
+                return `${v.toString()}n`;
+            }
+            if (typeof v === "function") {
+                return "[Function]";
+            }
+            if (typeof v === "symbol") {
+                return v.toString();
+            }
+            if (typeof v === "object" && v !== null) {
+                if (seen.has(v)) {
+                    return "[Circular]";
+                }
+                seen.add(v);
+            }
+            return v;
+        });
+        if (json !== undefined) {
+            return json;
+        }
+    }
+    catch { }
+    if (value !== null && typeof value === "object") {
+        const ctor = value.constructor?.name ?? "Object";
+        let keys = [];
+        try {
+            keys = Object.keys(value);
+        }
+        catch { }
+        return keys.length > 0 ? `[${ctor} keys=${keys.join(",")}]` : `[${ctor}]`;
+    }
+    return String(value);
+}
+
 class Connection {
     settings;
     logger;
@@ -10092,12 +10168,15 @@ class Connection {
     _isLoggedIn = false;
     shouldTryLogin = true;
     pingTimer;
+    reconnectTimeout;
     sessions = [];
     globalDomain;
     initialLogin = true;
     initialLoginAttempts = 3;
+    remainingReconnectAttempts;
     loginConfig;
     loginRetryInProgress = false;
+    reconnectInProgress = false;
     constructor(settings, logger) {
         this.settings = settings;
         this.logger = logger;
@@ -10234,7 +10313,7 @@ class Connection {
                 this.logger.debug("An error while logging in after a transport swap, preparing a default swap.");
                 this.prepareDefaultSwap();
             }
-            throw new Error(error);
+            throw normalizeError(error);
         }
     }
     async logout() {
@@ -10268,8 +10347,34 @@ class Connection {
             return res.token;
         });
     }
-    reconnect() {
-        return this.transport.reconnect();
+    async reconnect() {
+        if (!this.loginConfig) {
+            throw new Error("Cannot reconnect - no previous login configuration");
+        }
+        if (this.reconnectInProgress) {
+            this.logger.debug("reconnect() already in progress, ignoring");
+            return;
+        }
+        this.reconnectInProgress = true;
+        try {
+            this.shouldTryLogin = false;
+            if (this.reconnectTimeout) {
+                clearTimeout(this.reconnectTimeout);
+                this.reconnectTimeout = undefined;
+            }
+            while (this.loginRetryInProgress) {
+                await new Promise((r) => setTimeout(r, 50));
+            }
+            if (this._isLoggedIn) {
+                this.setLoggedIn(false);
+                this.registry.execute("disconnected");
+            }
+            this.shouldTryLogin = true;
+            await this.login(this.loginConfig, true);
+        }
+        finally {
+            this.reconnectInProgress = false;
+        }
     }
     setLoggedIn(value) {
         this._isLoggedIn = value;
@@ -10316,6 +10421,7 @@ class Connection {
         else {
             this.setLoggedIn(false);
             if (this.shouldTryLogin) {
+                this.remainingReconnectAttempts = this.settings.reconnectAttempts;
                 this.attemptLoginWithRetry();
             }
             this.registry.execute("disconnected");
@@ -10324,6 +10430,10 @@ class Connection {
     async attemptLoginWithRetry() {
         if (!this.loginConfig) {
             throw new Error("no login info");
+        }
+        if (!this.shouldTryLogin) {
+            this.logger.debug("should not try to login, ignoring reconnect attempt...");
+            return;
         }
         if (this.loginRetryInProgress) {
             this.logger.debug("login attempt already in progress, ignoring request...");
@@ -10341,6 +10451,14 @@ class Connection {
             }
             this.initialLoginAttempts--;
         }
+        else if (this.remainingReconnectAttempts !== undefined) {
+            if (this.remainingReconnectAttempts <= 0) {
+                this.logger.info("maximum reconnect attempts reached, will not try to login again");
+                return;
+            }
+            this.logger.debug(`reconnect attempt, ${this.remainingReconnectAttempts} attempts remaining...`);
+            this.remainingReconnectAttempts--;
+        }
         try {
             this.logger.debug(`will try a new login... ${this.loginRetryInProgress}`);
             this.loginRetryInProgress = true;
@@ -10348,7 +10466,9 @@ class Connection {
         }
         catch (e) {
             this.logger.error(`error trying to login: ${e?.message}`, e);
-            setTimeout(this.attemptLoginWithRetry.bind(this), this.settings.reconnectInterval ?? 1000);
+            if (this.shouldTryLogin) {
+                this.reconnectTimeout = setTimeout(this.attemptLoginWithRetry.bind(this), this.settings.reconnectInterval ?? 1000);
+            }
         }
         finally {
             this.loginRetryInProgress = false;
@@ -10482,7 +10602,6 @@ class Connection {
         if (!this.loginConfig) {
             this.loginConfig = { username: "", password: "" };
         }
-        this.shouldTryLogin = true;
         const authentication = await this.setupAuthConfig(config, reconnect);
         const helloMsg = {
             type: "hello",
@@ -10604,8 +10723,13 @@ class Connection {
     async logoutCore() {
         this.logger.debug("core logging out...");
         this.shouldTryLogin = false;
+        this.setLoggedIn(false);
         if (this.pingTimer) {
             clearTimeout(this.pingTimer);
+        }
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = undefined;
         }
         const promises = this.sessions.map((session) => {
             return session.leave();
@@ -10652,7 +10776,6 @@ class Logger {
     constructor(name, parent, logFn) {
         this.name = name;
         this.parent = parent;
-        this.name = name;
         if (parent) {
             this.path = `${parent.path}.${name}`;
         }
@@ -10833,7 +10956,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.10.0";
+var version = "6.10.4";
 
 /*!
  * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
@@ -10841,19 +10964,19 @@ var version = "6.10.0";
  * Copyright (c) 2014-2017, Jon Schlinkert.
  * Released under the MIT License.
  */
-function isObject$1(o) {
+function isObject(o) {
     return Object.prototype.toString.call(o) === '[object Object]';
 }
-function isPlainObject$2(o) {
+function isPlainObject$1(o) {
     let ctor;
     let prot;
-    if (isObject$1(o) === false)
+    if (isObject(o) === false)
         return false;
     ctor = o.constructor;
     if (ctor === undefined)
         return true;
     prot = ctor.prototype;
-    if (isObject$1(prot) === false)
+    if (isObject(prot) === false)
         return false;
     if (prot.hasOwnProperty('isPrototypeOf') === false) {
         return false;
@@ -10861,139 +10984,149 @@ function isPlainObject$2(o) {
     return true;
 }
 
-var isMergeableObject = function isMergeableObject(value) {
-	return isNonNullObject(value)
-		&& !isSpecial(value)
-};
+var cjs;
+var hasRequiredCjs;
 
-function isNonNullObject(value) {
-	return !!value && typeof value === 'object'
-}
+function requireCjs () {
+	if (hasRequiredCjs) return cjs;
+	hasRequiredCjs = 1;
 
-function isSpecial(value) {
-	var stringValue = Object.prototype.toString.call(value);
+	var isMergeableObject = function isMergeableObject(value) {
+		return isNonNullObject(value)
+			&& !isSpecial(value)
+	};
 
-	return stringValue === '[object RegExp]'
-		|| stringValue === '[object Date]'
-		|| isReactElement(value)
-}
-
-// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
-var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
-var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
-
-function isReactElement(value) {
-	return value.$$typeof === REACT_ELEMENT_TYPE
-}
-
-function emptyTarget(val) {
-	return Array.isArray(val) ? [] : {}
-}
-
-function cloneUnlessOtherwiseSpecified(value, options) {
-	return (options.clone !== false && options.isMergeableObject(value))
-		? deepmerge(emptyTarget(value), value, options)
-		: value
-}
-
-function defaultArrayMerge(target, source, options) {
-	return target.concat(source).map(function(element) {
-		return cloneUnlessOtherwiseSpecified(element, options)
-	})
-}
-
-function getMergeFunction(key, options) {
-	if (!options.customMerge) {
-		return deepmerge
+	function isNonNullObject(value) {
+		return !!value && typeof value === 'object'
 	}
-	var customMerge = options.customMerge(key);
-	return typeof customMerge === 'function' ? customMerge : deepmerge
-}
 
-function getEnumerableOwnPropertySymbols(target) {
-	return Object.getOwnPropertySymbols
-		? Object.getOwnPropertySymbols(target).filter(function(symbol) {
-			return Object.propertyIsEnumerable.call(target, symbol)
+	function isSpecial(value) {
+		var stringValue = Object.prototype.toString.call(value);
+
+		return stringValue === '[object RegExp]'
+			|| stringValue === '[object Date]'
+			|| isReactElement(value)
+	}
+
+	// see https://github.com/facebook/react/blob/b5ac963fb791d1298e7f396236383bc955f916c1/src/isomorphic/classic/element/ReactElement.js#L21-L25
+	var canUseSymbol = typeof Symbol === 'function' && Symbol.for;
+	var REACT_ELEMENT_TYPE = canUseSymbol ? Symbol.for('react.element') : 0xeac7;
+
+	function isReactElement(value) {
+		return value.$$typeof === REACT_ELEMENT_TYPE
+	}
+
+	function emptyTarget(val) {
+		return Array.isArray(val) ? [] : {}
+	}
+
+	function cloneUnlessOtherwiseSpecified(value, options) {
+		return (options.clone !== false && options.isMergeableObject(value))
+			? deepmerge(emptyTarget(value), value, options)
+			: value
+	}
+
+	function defaultArrayMerge(target, source, options) {
+		return target.concat(source).map(function(element) {
+			return cloneUnlessOtherwiseSpecified(element, options)
 		})
-		: []
-}
-
-function getKeys(target) {
-	return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
-}
-
-function propertyIsOnObject(object, property) {
-	try {
-		return property in object
-	} catch(_) {
-		return false
 	}
-}
 
-// Protects from prototype poisoning and unexpected merging up the prototype chain.
-function propertyIsUnsafe(target, key) {
-	return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
-		&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
-			&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
-}
+	function getMergeFunction(key, options) {
+		if (!options.customMerge) {
+			return deepmerge
+		}
+		var customMerge = options.customMerge(key);
+		return typeof customMerge === 'function' ? customMerge : deepmerge
+	}
 
-function mergeObject(target, source, options) {
-	var destination = {};
-	if (options.isMergeableObject(target)) {
-		getKeys(target).forEach(function(key) {
-			destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+	function getEnumerableOwnPropertySymbols(target) {
+		return Object.getOwnPropertySymbols
+			? Object.getOwnPropertySymbols(target).filter(function(symbol) {
+				return Object.propertyIsEnumerable.call(target, symbol)
+			})
+			: []
+	}
+
+	function getKeys(target) {
+		return Object.keys(target).concat(getEnumerableOwnPropertySymbols(target))
+	}
+
+	function propertyIsOnObject(object, property) {
+		try {
+			return property in object
+		} catch(_) {
+			return false
+		}
+	}
+
+	// Protects from prototype poisoning and unexpected merging up the prototype chain.
+	function propertyIsUnsafe(target, key) {
+		return propertyIsOnObject(target, key) // Properties are safe to merge if they don't exist in the target yet,
+			&& !(Object.hasOwnProperty.call(target, key) // unsafe if they exist up the prototype chain,
+				&& Object.propertyIsEnumerable.call(target, key)) // and also unsafe if they're nonenumerable.
+	}
+
+	function mergeObject(target, source, options) {
+		var destination = {};
+		if (options.isMergeableObject(target)) {
+			getKeys(target).forEach(function(key) {
+				destination[key] = cloneUnlessOtherwiseSpecified(target[key], options);
+			});
+		}
+		getKeys(source).forEach(function(key) {
+			if (propertyIsUnsafe(target, key)) {
+				return
+			}
+
+			if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
+				destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+			} else {
+				destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+			}
 		});
+		return destination
 	}
-	getKeys(source).forEach(function(key) {
-		if (propertyIsUnsafe(target, key)) {
-			return
-		}
 
-		if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
-			destination[key] = getMergeFunction(key, options)(target[key], source[key], options);
+	function deepmerge(target, source, options) {
+		options = options || {};
+		options.arrayMerge = options.arrayMerge || defaultArrayMerge;
+		options.isMergeableObject = options.isMergeableObject || isMergeableObject;
+		// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
+		// implementations can use it. The caller may not replace it.
+		options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
+
+		var sourceIsArray = Array.isArray(source);
+		var targetIsArray = Array.isArray(target);
+		var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
+
+		if (!sourceAndTargetTypesMatch) {
+			return cloneUnlessOtherwiseSpecified(source, options)
+		} else if (sourceIsArray) {
+			return options.arrayMerge(target, source, options)
 		} else {
-			destination[key] = cloneUnlessOtherwiseSpecified(source[key], options);
+			return mergeObject(target, source, options)
 		}
-	});
-	return destination
-}
-
-function deepmerge(target, source, options) {
-	options = options || {};
-	options.arrayMerge = options.arrayMerge || defaultArrayMerge;
-	options.isMergeableObject = options.isMergeableObject || isMergeableObject;
-	// cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
-	// implementations can use it. The caller may not replace it.
-	options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
-
-	var sourceIsArray = Array.isArray(source);
-	var targetIsArray = Array.isArray(target);
-	var sourceAndTargetTypesMatch = sourceIsArray === targetIsArray;
-
-	if (!sourceAndTargetTypesMatch) {
-		return cloneUnlessOtherwiseSpecified(source, options)
-	} else if (sourceIsArray) {
-		return options.arrayMerge(target, source, options)
-	} else {
-		return mergeObject(target, source, options)
-	}
-}
-
-deepmerge.all = function deepmergeAll(array, options) {
-	if (!Array.isArray(array)) {
-		throw new Error('first argument should be an array')
 	}
 
-	return array.reduce(function(prev, next) {
-		return deepmerge(prev, next, options)
-	}, {})
-};
+	deepmerge.all = function deepmergeAll(array, options) {
+		if (!Array.isArray(array)) {
+			throw new Error('first argument should be an array')
+		}
 
-var deepmerge_1 = deepmerge;
+		return array.reduce(function(prev, next) {
+			return deepmerge(prev, next, options)
+		}, {})
+	};
 
-var cjs = deepmerge_1;
+	var deepmerge_1 = deepmerge;
 
-var deepMerge = /*@__PURE__*/getDefaultExportFromCjs(cjs);
+	cjs = deepmerge_1;
+	return cjs;
+}
+
+var cjsExports = requireCjs();
+var deepMerge = /*@__PURE__*/getDefaultExportFromCjs(cjsExports);
 
 var dist = {};
 
@@ -11005,136 +11138,174 @@ var nullMetricsManager = {};
 
 var nullManager$1 = {};
 
-Object.defineProperty(nullManager$1, "__esModule", { value: true });
-nullManager$1.NullManager = void 0;
-class NullManager {
-    constructor() {
-        this.started = false;
-    }
-    waitForFinalExport(timeoutMs) {
-        return Promise.resolve();
-    }
-    get settings() {
-        return {};
-    }
-    start() {
-        this.started = true;
-        return Promise.resolve();
-    }
-    stop() {
-        this.started = false;
-        return Promise.resolve();
-    }
-}
-nullManager$1.NullManager = NullManager;
+var hasRequiredNullManager$1;
 
-var safeStringify$1 = {};
-
-var isPlainObject$1 = {};
-
-// https://github.com/jonschlinkert/is-plain-object/blob/master/is-plain-object.js
-// cf204a3
-Object.defineProperty(isPlainObject$1, "__esModule", { value: true });
-isPlainObject$1.isPlainObject = void 0;
-/*!
- * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
- *
- * Copyright (c) 2014-2017, Jon Schlinkert.
- * Released under the MIT License.
- */
-function isObject(o) {
-    return Object.prototype.toString.call(o) === '[object Object]';
+function requireNullManager$1 () {
+	if (hasRequiredNullManager$1) return nullManager$1;
+	hasRequiredNullManager$1 = 1;
+	Object.defineProperty(nullManager$1, "__esModule", { value: true });
+	nullManager$1.NullManager = void 0;
+	class NullManager {
+	    constructor() {
+	        this.started = false;
+	    }
+	    waitForFinalExport(timeoutMs) {
+	        return Promise.resolve();
+	    }
+	    get settings() {
+	        return {};
+	    }
+	    start() {
+	        this.started = true;
+	        return Promise.resolve();
+	    }
+	    stop() {
+	        this.started = false;
+	        return Promise.resolve();
+	    }
+	}
+	nullManager$1.NullManager = NullManager;
+	
+	return nullManager$1;
 }
-function isPlainObject(o) {
-    let ctor;
-    let prot;
-    if (isObject(o) === false)
-        return false;
-    // If has modified constructor
-    ctor = o.constructor;
-    if (ctor === undefined)
-        return true;
-    // If has modified prototype
-    prot = ctor.prototype;
-    if (isObject(prot) === false)
-        return false;
-    // If constructor does not have an Object-specific method
-    if (prot.hasOwnProperty('isPrototypeOf') === false) {
-        return false;
-    }
-    // Most likely a plain Object
-    return true;
-}
-isPlainObject$1.isPlainObject = isPlainObject;
 
-Object.defineProperty(safeStringify$1, "__esModule", { value: true });
-safeStringify$1.safeStringify = void 0;
-const is_plain_object_1 = isPlainObject$1;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function safeStringify(obj) {
-    if (!obj) {
-        return JSON.stringify(obj);
-    }
-    return JSON.stringify(obj, (k, v) => {
-        if (!v || typeof v !== "object")
-            return v;
-        if (!(0, is_plain_object_1.isPlainObject)(v))
-            return Object.prototype.toString.call(v);
-        return v;
-    });
+var safeStringify = {};
+
+var isPlainObject = {};
+
+var hasRequiredIsPlainObject;
+
+function requireIsPlainObject () {
+	if (hasRequiredIsPlainObject) return isPlainObject;
+	hasRequiredIsPlainObject = 1;
+	// https://github.com/jonschlinkert/is-plain-object/blob/master/is-plain-object.js
+	// cf204a3
+	Object.defineProperty(isPlainObject, "__esModule", { value: true });
+	isPlainObject.isPlainObject = isPlainObject$1;
+	/*!
+	 * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
+	 *
+	 * Copyright (c) 2014-2017, Jon Schlinkert.
+	 * Released under the MIT License.
+	 */
+	function isObject(o) {
+	    return Object.prototype.toString.call(o) === '[object Object]';
+	}
+	function isPlainObject$1(o) {
+	    let ctor;
+	    let prot;
+	    if (isObject(o) === false)
+	        return false;
+	    // If has modified constructor
+	    ctor = o.constructor;
+	    if (ctor === undefined)
+	        return true;
+	    // If has modified prototype
+	    prot = ctor.prototype;
+	    if (isObject(prot) === false)
+	        return false;
+	    // If constructor does not have an Object-specific method
+	    if (prot.hasOwnProperty('isPrototypeOf') === false) {
+	        return false;
+	    }
+	    // Most likely a plain Object
+	    return true;
+	}
+	
+	return isPlainObject;
 }
-safeStringify$1.safeStringify = safeStringify;
+
+var hasRequiredSafeStringify;
+
+function requireSafeStringify () {
+	if (hasRequiredSafeStringify) return safeStringify;
+	hasRequiredSafeStringify = 1;
+	Object.defineProperty(safeStringify, "__esModule", { value: true });
+	safeStringify.safeStringify = safeStringify$1;
+	const is_plain_object_1 = requireIsPlainObject();
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	function safeStringify$1(obj) {
+	    if (!obj) {
+	        return JSON.stringify(obj);
+	    }
+	    return JSON.stringify(obj, (k, v) => {
+	        if (!v || typeof v !== "object")
+	            return v;
+	        if (!(0, is_plain_object_1.isPlainObject)(v))
+	            return Object.prototype.toString.call(v);
+	        return v;
+	    });
+	}
+	
+	return safeStringify;
+}
 
 var _null$1 = {};
 
-Object.defineProperty(_null$1, "__esModule", { value: true });
-_null$1.NullMetric = void 0;
-class NullMetric {
-    constructor(settings, logger) {
-        this.settings = settings;
-        this.logger = logger;
-        this.started = false;
-    }
-    start() {
-        var _a;
-        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been started instead of ${this.settings.type} one`);
-        this.started = true;
-        return Promise.resolve();
-    }
-    stop() {
-        var _a;
-        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been stopped instead of ${this.settings.type} one`);
-        this.started = false;
-        return Promise.resolve();
-    }
-    add() { }
-    record() { }
-}
-_null$1.NullMetric = NullMetric;
+var hasRequired_null$1;
 
-Object.defineProperty(nullMetricsManager, "__esModule", { value: true });
-nullMetricsManager.NullMetricsManager = void 0;
-const nullManager_1$2 = nullManager$1;
-const safe_stringify_1$2 = safeStringify$1;
-const null_1 = _null$1;
-class NullMetricsManager extends nullManager_1$2.NullManager {
-    constructor(settings, otelSettings, logger) {
-        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
-            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullMetrcsManager with settings ${(0, safe_stringify_1$2.safeStringify)(settings)}`);
-        }
-        super();
-    }
-    waitForFinalExport(timeoutMs) {
-        return Promise.resolve();
-    }
-    getFromSettings(settings) {
-        return new null_1.NullMetric(settings);
-    }
-    get(type) {
-        return new null_1.NullMetric({ name: type, type, enabled: false, description: type });
-    }
+function require_null$1 () {
+	if (hasRequired_null$1) return _null$1;
+	hasRequired_null$1 = 1;
+	Object.defineProperty(_null$1, "__esModule", { value: true });
+	_null$1.NullMetric = void 0;
+	class NullMetric {
+	    constructor(settings, logger) {
+	        this.settings = settings;
+	        this.logger = logger;
+	        this.started = false;
+	    }
+	    start() {
+	        var _a;
+	        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been started instead of ${this.settings.type} one`);
+	        this.started = true;
+	        return Promise.resolve();
+	    }
+	    stop() {
+	        var _a;
+	        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug(`null metric has been stopped instead of ${this.settings.type} one`);
+	        this.started = false;
+	        return Promise.resolve();
+	    }
+	    add() { }
+	    record() { }
+	}
+	_null$1.NullMetric = NullMetric;
+	
+	return _null$1;
 }
-nullMetricsManager.NullMetricsManager = NullMetricsManager;
+
+var hasRequiredNullMetricsManager;
+
+function requireNullMetricsManager () {
+	if (hasRequiredNullMetricsManager) return nullMetricsManager;
+	hasRequiredNullMetricsManager = 1;
+	Object.defineProperty(nullMetricsManager, "__esModule", { value: true });
+	nullMetricsManager.NullMetricsManager = void 0;
+	const nullManager_1 = requireNullManager$1();
+	const safe_stringify_1 = requireSafeStringify();
+	const null_1 = require_null$1();
+	class NullMetricsManager extends nullManager_1.NullManager {
+	    constructor(settings, otelSettings, logger) {
+	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullMetrcsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
+	        }
+	        super();
+	    }
+	    waitForFinalExport(timeoutMs) {
+	        return Promise.resolve();
+	    }
+	    getFromSettings(settings) {
+	        return new null_1.NullMetric(settings);
+	    }
+	    get(type) {
+	        return new null_1.NullMetric({ name: type, type, enabled: false, description: type });
+	    }
+	}
+	nullMetricsManager.NullMetricsManager = NullMetricsManager;
+	
+	return nullMetricsManager;
+}
 
 var hasRequiredBuilder$3;
 
@@ -11143,7 +11314,7 @@ function requireBuilder$3 () {
 	hasRequiredBuilder$3 = 1;
 	Object.defineProperty(builder$2, "__esModule", { value: true });
 	builder$2.MetricsManagerBuilder = void 0;
-	const nullMetricsManager_1 = nullMetricsManager;
+	const nullMetricsManager_1 = requireNullMetricsManager();
 	const __1 = requireDist();
 	class MetricsManagerBuilder {
 	    withLogger(logger) {
@@ -11199,66 +11370,74 @@ var nullTracesManager = {};
 
 var nullTracingState = {};
 
-Object.defineProperty(nullTracingState, "__esModule", { value: true });
-class NullTracingState {
-    constructor(source, propagationInfo, disablePropagation) {
-        this.source = source;
-        this.propagationInfo = propagationInfo;
-        this.disablePropagation = disablePropagation;
-        this.currentSpanStatus = { code: 0 /*SpanStatusCode.UNSET*/ };
-        this.level = "OFF";
-    }
-    endSpan() {
-        return Promise.resolve();
-    }
-    get enabled() {
-        return false;
-    }
-    get id() {
-        return undefined;
-    }
-    get traceId() {
-        return undefined;
-    }
-    set status(status) {
-        this.currentSpanStatus = Object.assign({}, status);
-    }
-    get status() {
-        return this.currentSpanStatus;
-    }
-    addEvent(name, attributesOrStartTime, startTime) {
-        return this;
-    }
-    recordException(exception, time) { }
-    isRecording() {
-        return false;
-    }
-    updateName(name) {
-        return this;
-    }
-    spanContext() {
-        return undefined;
-    }
-    addData(level, data) {
-    }
-    end() { }
-    getPropagationInfo() {
-        if (this.propagationInfo) {
-            return this.propagationInfo;
-        }
-        return null;
-        // // todo vnikolov: should we use otel's own context management at all?
-        // const propagationInfo = { };
-        // propagation.inject(context.active(), propagationInfo);
-        // return propagationInfo;
-    }
-    injectPropagationInfo(carrier) {
-        if (this.propagationInfo && !this.disablePropagation) {
-            carrier.__interopIOTracePropagationInfo = this.propagationInfo;
-        }
-    }
+var hasRequiredNullTracingState;
+
+function requireNullTracingState () {
+	if (hasRequiredNullTracingState) return nullTracingState;
+	hasRequiredNullTracingState = 1;
+	Object.defineProperty(nullTracingState, "__esModule", { value: true });
+	class NullTracingState {
+	    constructor(source, propagationInfo, disablePropagation) {
+	        this.source = source;
+	        this.propagationInfo = propagationInfo;
+	        this.disablePropagation = disablePropagation;
+	        this.currentSpanStatus = { code: 0 /*SpanStatusCode.UNSET*/ };
+	        this.level = "OFF";
+	    }
+	    endSpan() {
+	        return Promise.resolve();
+	    }
+	    get enabled() {
+	        return false;
+	    }
+	    get id() {
+	        return undefined;
+	    }
+	    get traceId() {
+	        return undefined;
+	    }
+	    set status(status) {
+	        this.currentSpanStatus = Object.assign({}, status);
+	    }
+	    get status() {
+	        return this.currentSpanStatus;
+	    }
+	    addEvent(name, attributesOrStartTime, startTime) {
+	        return this;
+	    }
+	    recordException(exception, time) { }
+	    isRecording() {
+	        return false;
+	    }
+	    updateName(name) {
+	        return this;
+	    }
+	    spanContext() {
+	        return undefined;
+	    }
+	    addData(level, data) {
+	    }
+	    end() { }
+	    getPropagationInfo() {
+	        if (this.propagationInfo) {
+	            return this.propagationInfo;
+	        }
+	        return null;
+	        // // todo vnikolov: should we use otel's own context management at all?
+	        // const propagationInfo = { };
+	        // propagation.inject(context.active(), propagationInfo);
+	        // return propagationInfo;
+	    }
+	    injectPropagationInfo(carrier) {
+	        if (this.propagationInfo && !this.disablePropagation) {
+	            carrier.__interopIOTracePropagationInfo = this.propagationInfo;
+	        }
+	    }
+	}
+	nullTracingState.default = NullTracingState;
+	
+	return nullTracingState;
 }
-nullTracingState.default = NullTracingState;
 
 var traces = {};
 
@@ -11266,294 +11445,12 @@ var otelUtils = {};
 
 var container = {};
 
-var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(container, "__esModule", { value: true });
-container.Container = void 0;
-const safe_stringify_1$1 = safeStringify$1;
-class Container {
-    static get instance() {
-        var _a, _b;
-        return (_a = Container._instance) !== null && _a !== void 0 ? _a : (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.instance;
-    }
-    static get settings() {
-        var _a;
-        return (_a = Container._settings) !== null && _a !== void 0 ? _a : Container.instance.settings;
-    }
-    static set settings(value) {
-        Container._settings = value;
-    }
-    static errorless(callback, defaultValue) {
-        try {
-            if (typeof callback !== "function") {
-                return callback;
-            }
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            const toReturn = callback();
-            return toReturn;
-        }
-        catch (err) {
-            return Container.handleErrorlessMode(err, defaultValue);
-        }
-    }
-    static errorlessDefined(callback, defaultValue) {
-        try {
-            if (typeof callback !== "function") {
-                return callback;
-            }
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            const toReturn = callback();
-            return toReturn;
-        }
-        catch (err) {
-            return Container.handleErrorlessMode(err, defaultValue);
-        }
-    }
-    static errorlessAsync(callback, defaultValue) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                if (typeof callback !== "function") {
-                    return callback;
-                }
-                // eslint-disable-next-line @typescript-eslint/ban-types
-                const toReturn = (yield callback)();
-                return toReturn;
-            }
-            catch (err) {
-                return Container.handleErrorlessMode(err, defaultValue);
-            }
-        });
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static handleErrorlessMode(err, defaultValue) {
-        var _a, _b, _c, _d, _e;
-        let message = undefined;
-        try {
-            if (err === null || err === void 0 ? void 0 : err.message) {
-                message = (err === null || err === void 0 ? void 0 : err.message) + " " + ((_a = err === null || err === void 0 ? void 0 : err.stack) !== null && _a !== void 0 ? _a : new Error().stack);
-            }
-            if (!message) {
-                try {
-                    message = (0, safe_stringify_1$1.safeStringify)(err) + " " + new Error().stack;
-                }
-                catch ( /*silent catch*/_f) { /*silent catch*/ }
-            }
-            if (!message) {
-                try {
-                    message = (err === null || err === void 0 ? void 0 : err.toString()) + " " + new Error().stack;
-                }
-                catch ( /*silent catch*/_g) { /*silent catch*/ }
-            }
-        }
-        catch ( /*silent catch*/_h) { /*silent catch*/ }
-        if (!message) {
-            message = "unknown " + new Error().stack;
-        }
-        try {
-            if (!((_c = (_b = Container.instance) === null || _b === void 0 ? void 0 : _b.settings) === null || _c === void 0 ? void 0 : _c.errorlessMode)) {
-                (_d = Container.instance.logger) === null || _d === void 0 ? void 0 : _d.error("Observed error " + message);
-                throw err;
-            }
-        }
-        catch (_j) {
-            throw err;
-        }
-        try {
-            (_e = Container.instance.logger) === null || _e === void 0 ? void 0 : _e.warn("Caught error " + message);
-            return defaultValue;
-        }
-        catch (_k) {
-            return defaultValue;
-        }
-    }
-    constructor(_settings, _traces, metrics, logs, logger) {
-        var _a;
-        this._settings = _settings;
-        this._traces = _traces;
-        this.metrics = metrics;
-        this.logs = logs;
-        this.logger = logger;
-        this.started = false;
-        Container._instance = this;
-        globalThis.ioInsightsInternals = (_a = globalThis.ioInsightsInternals) !== null && _a !== void 0 ? _a : {};
-        globalThis.ioInsightsInternals.instance = this;
-    }
-    get traces() {
-        var _a, _b;
-        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) {
-            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.traces;
-        }
-        return this._traces;
-    }
-    waitForFinalExport(timeoutMs) {
-        var _a, _b, _c;
-        return Promise.allSettled([
-            (_a = this.traces) === null || _a === void 0 ? void 0 : _a.waitForFinalExport(timeoutMs),
-            (_b = this.metrics) === null || _b === void 0 ? void 0 : _b.waitForFinalExport(timeoutMs),
-            (_c = this.logs) === null || _c === void 0 ? void 0 : _c.waitForFinalExport(timeoutMs)
-        ]);
-    }
-    get settings() {
-        return this._settings;
-    }
-    start() {
-        return __awaiter(this, void 0, void 0, function* () {
-            // vnikolov TODO: maybe log this? don't silently refuse to start
-            const metricsPromise = this.metrics.settings.enabled ? this.metrics.start() : Promise.resolve();
-            const tracesPromise = this.traces.settings.enabled ? this.traces.start() : Promise.resolve();
-            const logsPromise = this.logs.settings.enabled ? this.logs.start() : Promise.resolve();
-            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
-            this.started = true;
-        });
-    }
-    stop() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const metricsPromise = this.metrics.started ? this.metrics.stop() : Promise.resolve();
-            const tracesPromise = this.traces.started ? this.traces.stop() : Promise.resolve();
-            const logsPromise = this.logs.started ? this.logs.stop() : Promise.resolve();
-            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
-            this.started = false;
-        });
-    }
-}
-container.Container = Container;
+var hasRequiredContainer;
 
-(function (exports$1) {
-	Object.defineProperty(exports$1, "__esModule", { value: true });
-	exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
-	const container_1 = container;
-	/* eslint-disable @typescript-eslint/no-explicit-any */
-	const flattenOtelAtributes = (data, maxDepth) => {
-	    if (data === undefined ||
-	        data === null) {
-	        return {};
-	    }
-	    if (typeof data !== "object") {
-	        data = { unknownAttribute: data };
-	    }
-	    const toReturn = {};
-	    for (const [key, value] of Object.entries(data)) {
-	        const otelValues = (0, exports$1.getOTELData)(key, value, 0, maxDepth);
-	        for (const [otelKey, otelValue] of otelValues) {
-	            toReturn[otelKey] = otelValue;
-	        }
-	    }
-	    return toReturn;
-	};
-	exports$1.flattenOtelAtributes = flattenOtelAtributes;
-	const getOTELData = (key, value, depth, maxDepth) => {
-	    depth += 1;
-	    if (depth > maxDepth) {
-	        return [[key, "<depth exceeded>"]];
-	    }
-	    const isObject = Boolean(value && typeof value === "object");
-	    const isValidPrimitiveValue = typeof value === "number" || typeof value === "string" || typeof value === "boolean";
-	    if (isValidPrimitiveValue) {
-	        return [[key, value]];
-	    }
-	    if (isAttributeArray(value)) {
-	        return [[key, value]].concat(flatten(key, value, depth, maxDepth));
-	    }
-	    else if (isObject) {
-	        return flatten(key, value, depth, maxDepth);
-	    }
-	    else if (typeof value === "function") {
-	        return [];
-	    }
-	    else if (value) {
-	        return [[key, value + ""]];
-	    }
-	    else {
-	        return [];
-	    }
-	};
-	exports$1.getOTELData = getOTELData;
-	const flatten = (key, obj, depth, maxDepth) => {
-	    const toReturn = [];
-	    for (const [key2, val2] of Object.entries(obj)) {
-	        for (const [key3, val3] of (0, exports$1.getOTELData)(key2, val2, depth, maxDepth)) {
-	            toReturn.push([key + "." + key3, val3]);
-	        }
-	    }
-	    return toReturn;
-	};
-	const isAttributeArray = (value) => {
-	    if (!Array.isArray(value)) {
-	        return false;
-	    }
-	    return value.every((item) => item === null ||
-	        item === undefined ||
-	        typeof item === "string" ||
-	        typeof item === "number" ||
-	        typeof item === "boolean");
-	};
-	// todo vnikolov: document all the places where deep_value is used in the spec, as well
-	// as the regex matches
-	const deep_value = function (obj, path) {
-	    // eslint-disable-next-line no-var
-	    if (!path) {
-	        return null;
-	    }
-	    // eslint-disable-next-line no-var
-	    for (var i = 0, path = path.split("."), len = path.length; i < len; i++) {
-	        if (obj === null || obj === undefined) {
-	            return undefined;
-	        }
-	        obj = obj[path[i]];
-	    }
-	    return obj;
-	};
-	exports$1.deep_value = deep_value;
-	// https://stackoverflow.com/a/8817473
-	const extractFilteringContextFromArgs = (template, args, that) => {
-	    let filteringContext = {};
-	    if (typeof template.thisMapping === "function") {
-	        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.thisMapping.apply(that, [that])));
-	    }
-	    else {
-	        Object.keys(template.thisMapping || {}).forEach((keyOrPath) => {
-	            if (!keyOrPath || !template.thisMapping) {
-	                return;
-	            }
-	            const filteringContextKey = template.thisMapping[keyOrPath];
-	            filteringContext[filteringContextKey] = (0, exports$1.deep_value)(that, keyOrPath);
-	        });
-	    }
-	    if (typeof template.argMapping === "function") {
-	        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.argMapping.apply(that, args)));
-	    }
-	    else {
-	        Object.keys(template.argMapping || {}).forEach((keyOrPath) => {
-	            if (!keyOrPath || !template.argMapping) {
-	                return;
-	            }
-	            const filteringContextKey = template.argMapping[keyOrPath];
-	            const value = (0, exports$1.deep_value)(args, keyOrPath);
-	            if (typeof value === "string" ||
-	                typeof value === "number") {
-	                filteringContext[filteringContextKey] = value;
-	            }
-	        });
-	    }
-	    return filteringContext;
-	};
-	exports$1.extractFilteringContextFromArgs = extractFilteringContextFromArgs;
-	
-} (otelUtils));
-
-var hasRequiredTraces;
-
-function requireTraces () {
-	if (hasRequiredTraces) return traces;
-	hasRequiredTraces = 1;
-	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+function requireContainer () {
+	if (hasRequiredContainer) return container;
+	hasRequiredContainer = 1;
+	var __awaiter = (container && container.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
 	    return new (P || (P = Promise))(function (resolve, reject) {
 	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -11562,14 +11459,311 @@ function requireTraces () {
 	        step((generator = generator.apply(thisArg, _arguments || [])).next());
 	    });
 	};
-	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+	Object.defineProperty(container, "__esModule", { value: true });
+	container.Container = void 0;
+	const safe_stringify_1 = requireSafeStringify();
+	class Container {
+	    static get instance() {
+	        var _a, _b;
+	        return (_a = Container._instance) !== null && _a !== void 0 ? _a : (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.instance;
+	    }
+	    static get settings() {
+	        var _a;
+	        return (_a = Container._settings) !== null && _a !== void 0 ? _a : Container.instance.settings;
+	    }
+	    static set settings(value) {
+	        Container._settings = value;
+	    }
+	    static errorless(callback, defaultValue) {
+	        try {
+	            if (typeof callback !== "function") {
+	                return callback;
+	            }
+	            // eslint-disable-next-line @typescript-eslint/ban-types
+	            const toReturn = callback();
+	            return toReturn;
+	        }
+	        catch (err) {
+	            return Container.handleErrorlessMode(err, defaultValue);
+	        }
+	    }
+	    static errorlessDefined(callback, defaultValue) {
+	        try {
+	            if (typeof callback !== "function") {
+	                return callback;
+	            }
+	            // eslint-disable-next-line @typescript-eslint/ban-types
+	            const toReturn = callback();
+	            return toReturn;
+	        }
+	        catch (err) {
+	            return Container.handleErrorlessMode(err, defaultValue);
+	        }
+	    }
+	    static errorlessAsync(callback, defaultValue) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            try {
+	                if (typeof callback !== "function") {
+	                    return callback;
+	                }
+	                // eslint-disable-next-line @typescript-eslint/ban-types
+	                const toReturn = (yield callback)();
+	                return toReturn;
+	            }
+	            catch (err) {
+	                return Container.handleErrorlessMode(err, defaultValue);
+	            }
+	        });
+	    }
+	    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+	    static handleErrorlessMode(err, defaultValue) {
+	        var _a, _b, _c, _d, _e;
+	        let message = undefined;
+	        try {
+	            if (err === null || err === void 0 ? void 0 : err.message) {
+	                message = (err === null || err === void 0 ? void 0 : err.message) + " " + ((_a = err === null || err === void 0 ? void 0 : err.stack) !== null && _a !== void 0 ? _a : new Error().stack);
+	            }
+	            if (!message) {
+	                try {
+	                    message = (0, safe_stringify_1.safeStringify)(err) + " " + new Error().stack;
+	                }
+	                catch ( /*silent catch*/_f) { /*silent catch*/ }
+	            }
+	            if (!message) {
+	                try {
+	                    message = (err === null || err === void 0 ? void 0 : err.toString()) + " " + new Error().stack;
+	                }
+	                catch ( /*silent catch*/_g) { /*silent catch*/ }
+	            }
+	        }
+	        catch ( /*silent catch*/_h) { /*silent catch*/ }
+	        if (!message) {
+	            message = "unknown " + new Error().stack;
+	        }
+	        try {
+	            if (!((_c = (_b = Container.instance) === null || _b === void 0 ? void 0 : _b.settings) === null || _c === void 0 ? void 0 : _c.errorlessMode)) {
+	                (_d = Container.instance.logger) === null || _d === void 0 ? void 0 : _d.error("Observed error " + message);
+	                throw err;
+	            }
+	        }
+	        catch (_j) {
+	            throw err;
+	        }
+	        try {
+	            (_e = Container.instance.logger) === null || _e === void 0 ? void 0 : _e.warn("Caught error " + message);
+	            return defaultValue;
+	        }
+	        catch (_k) {
+	            return defaultValue;
+	        }
+	    }
+	    constructor(_settings, _traces, metrics, logs, logger) {
+	        var _a;
+	        this._settings = _settings;
+	        this._traces = _traces;
+	        this.metrics = metrics;
+	        this.logs = logs;
+	        this.logger = logger;
+	        this.started = false;
+	        Container._instance = this;
+	        globalThis.ioInsightsInternals = (_a = globalThis.ioInsightsInternals) !== null && _a !== void 0 ? _a : {};
+	        globalThis.ioInsightsInternals.instance = this;
+	    }
+	    get traces() {
+	        var _a, _b;
+	        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) {
+	            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.traces;
+	        }
+	        return this._traces;
+	    }
+	    waitForFinalExport(timeoutMs) {
+	        var _a, _b, _c;
+	        return Promise.allSettled([
+	            (_a = this.traces) === null || _a === void 0 ? void 0 : _a.waitForFinalExport(timeoutMs),
+	            (_b = this.metrics) === null || _b === void 0 ? void 0 : _b.waitForFinalExport(timeoutMs),
+	            (_c = this.logs) === null || _c === void 0 ? void 0 : _c.waitForFinalExport(timeoutMs)
+	        ]);
+	    }
+	    get settings() {
+	        return this._settings;
+	    }
+	    start() {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            // vnikolov TODO: maybe log this? don't silently refuse to start
+	            const metricsPromise = this.metrics.settings.enabled ? this.metrics.start() : Promise.resolve();
+	            const tracesPromise = this.traces.settings.enabled ? this.traces.start() : Promise.resolve();
+	            const logsPromise = this.logs.settings.enabled ? this.logs.start() : Promise.resolve();
+	            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+	            this.started = true;
+	        });
+	    }
+	    stop() {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            const metricsPromise = this.metrics.started ? this.metrics.stop() : Promise.resolve();
+	            const tracesPromise = this.traces.started ? this.traces.stop() : Promise.resolve();
+	            const logsPromise = this.logs.started ? this.logs.stop() : Promise.resolve();
+	            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+	            this.started = false;
+	        });
+	    }
+	}
+	container.Container = Container;
+	
+	return container;
+}
+
+var hasRequiredOtelUtils;
+
+function requireOtelUtils () {
+	if (hasRequiredOtelUtils) return otelUtils;
+	hasRequiredOtelUtils = 1;
+	(function (exports$1) {
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
+		const container_1 = requireContainer();
+		/* eslint-disable @typescript-eslint/no-explicit-any */
+		const flattenOtelAtributes = (data, maxDepth) => {
+		    if (data === undefined ||
+		        data === null) {
+		        return {};
+		    }
+		    if (typeof data !== "object") {
+		        data = { unknownAttribute: data };
+		    }
+		    const toReturn = {};
+		    for (const [key, value] of Object.entries(data)) {
+		        const otelValues = (0, exports$1.getOTELData)(key, value, 0, maxDepth);
+		        for (const [otelKey, otelValue] of otelValues) {
+		            toReturn[otelKey] = otelValue;
+		        }
+		    }
+		    return toReturn;
+		};
+		exports$1.flattenOtelAtributes = flattenOtelAtributes;
+		const getOTELData = (key, value, depth, maxDepth) => {
+		    depth += 1;
+		    if (depth > maxDepth) {
+		        return [[key, "<depth exceeded>"]];
+		    }
+		    const isObject = Boolean(value && typeof value === "object");
+		    const isValidPrimitiveValue = typeof value === "number" || typeof value === "string" || typeof value === "boolean";
+		    if (isValidPrimitiveValue) {
+		        return [[key, value]];
+		    }
+		    if (isAttributeArray(value)) {
+		        return [[key, value]].concat(flatten(key, value, depth, maxDepth));
+		    }
+		    else if (isObject) {
+		        return flatten(key, value, depth, maxDepth);
+		    }
+		    else if (typeof value === "function") {
+		        return [];
+		    }
+		    else if (value) {
+		        return [[key, value + ""]];
+		    }
+		    else {
+		        return [];
+		    }
+		};
+		exports$1.getOTELData = getOTELData;
+		const flatten = (key, obj, depth, maxDepth) => {
+		    const toReturn = [];
+		    for (const [key2, val2] of Object.entries(obj)) {
+		        for (const [key3, val3] of (0, exports$1.getOTELData)(key2, val2, depth, maxDepth)) {
+		            toReturn.push([key + "." + key3, val3]);
+		        }
+		    }
+		    return toReturn;
+		};
+		const isAttributeArray = (value) => {
+		    if (!Array.isArray(value)) {
+		        return false;
+		    }
+		    return value.every((item) => item === null ||
+		        item === undefined ||
+		        typeof item === "string" ||
+		        typeof item === "number" ||
+		        typeof item === "boolean");
+		};
+		// todo vnikolov: document all the places where deep_value is used in the spec, as well
+		// as the regex matches
+		const deep_value = function (obj, path) {
+		    // eslint-disable-next-line no-var
+		    if (!path) {
+		        return null;
+		    }
+		    // eslint-disable-next-line no-var
+		    for (var i = 0, path = path.split("."), len = path.length; i < len; i++) {
+		        if (obj === null || obj === undefined) {
+		            return undefined;
+		        }
+		        obj = obj[path[i]];
+		    }
+		    return obj;
+		};
+		exports$1.deep_value = deep_value;
+		// https://stackoverflow.com/a/8817473
+		const extractFilteringContextFromArgs = (template, args, that) => {
+		    let filteringContext = {};
+		    if (typeof template.thisMapping === "function") {
+		        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.thisMapping.apply(that, [that])));
+		    }
+		    else {
+		        Object.keys(template.thisMapping || {}).forEach((keyOrPath) => {
+		            if (!keyOrPath || !template.thisMapping) {
+		                return;
+		            }
+		            const filteringContextKey = template.thisMapping[keyOrPath];
+		            filteringContext[filteringContextKey] = (0, exports$1.deep_value)(that, keyOrPath);
+		        });
+		    }
+		    if (typeof template.argMapping === "function") {
+		        filteringContext = Object.assign(Object.assign({}, filteringContext), container_1.Container.errorless(() => template.argMapping.apply(that, args)));
+		    }
+		    else {
+		        Object.keys(template.argMapping || {}).forEach((keyOrPath) => {
+		            if (!keyOrPath || !template.argMapping) {
+		                return;
+		            }
+		            const filteringContextKey = template.argMapping[keyOrPath];
+		            const value = (0, exports$1.deep_value)(args, keyOrPath);
+		            if (typeof value === "string" ||
+		                typeof value === "number") {
+		                filteringContext[filteringContextKey] = value;
+		            }
+		        });
+		    }
+		    return filteringContext;
+		};
+		exports$1.extractFilteringContextFromArgs = extractFilteringContextFromArgs;
+		
+	} (otelUtils));
+	return otelUtils;
+}
+
+var hasRequiredTraces;
+
+function requireTraces () {
+	if (hasRequiredTraces) return traces;
+	hasRequiredTraces = 1;
+	var __awaiter = (traces && traces.__awaiter) || function (thisArg, _arguments, P, generator) {
+	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+	    return new (P || (P = Promise))(function (resolve, reject) {
+	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+	        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+	        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+	        step((generator = generator.apply(thisArg, _arguments || [])).next());
+	    });
+	};
+	var __importDefault = (traces && traces.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
 	};
 	Object.defineProperty(traces, "__esModule", { value: true });
 	traces.withSpan = void 0;
-	const otelUtils_1 = otelUtils;
+	const otelUtils_1 = requireOtelUtils();
 	const nullTracesManager_1 = requireNullTracesManager();
-	const nullTracingState_1 = __importDefault(nullTracingState);
+	const nullTracingState_1 = __importDefault(requireNullTracingState());
 	/**
 	 * Null-safe singleton class that can be invoked even if you haven't initialized
 	 * the library (yet?), or if you don't have access to the current manager instance.
@@ -11709,7 +11903,7 @@ var hasRequiredNullTracesManager;
 function requireNullTracesManager () {
 	if (hasRequiredNullTracesManager) return nullTracesManager;
 	hasRequiredNullTracesManager = 1;
-	var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+	var __awaiter = (nullTracesManager && nullTracesManager.__awaiter) || function (thisArg, _arguments, P, generator) {
 	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
 	    return new (P || (P = Promise))(function (resolve, reject) {
 	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
@@ -11718,15 +11912,15 @@ function requireNullTracesManager () {
 	        step((generator = generator.apply(thisArg, _arguments || [])).next());
 	    });
 	};
-	var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+	var __importDefault = (nullTracesManager && nullTracesManager.__importDefault) || function (mod) {
 	    return (mod && mod.__esModule) ? mod : { "default": mod };
 	};
 	Object.defineProperty(nullTracesManager, "__esModule", { value: true });
 	nullTracesManager.NullTracesManager = void 0;
-	const nullTracingState_1 = __importDefault(nullTracingState);
+	const nullTracingState_1 = __importDefault(requireNullTracingState());
 	const traces_1 = __importDefault(requireTraces());
-	const nullManager_1 = nullManager$1;
-	const safe_stringify_1 = safeStringify$1;
+	const nullManager_1 = requireNullManager$1();
+	const safe_stringify_1 = requireSafeStringify();
 	class NullTracesManager extends nullManager_1.NullManager {
 	    get settings() {
 	        return this._settings || {};
@@ -11903,115 +12097,147 @@ function requireBuilder$2 () {
 
 var _null = {};
 
-Object.defineProperty(_null, "__esModule", { value: true });
-_null.NullLogger = void 0;
-class NullLogger {
-    get level() {
-        return 60 /* IOInsights.LoggerLogLevel.INFO */;
-    }
-    error() {
-        // do nothing
-    }
-    warn() {
-        // do nothing
-    }
-    info() {
-        // do nothing
-    }
-    debug() {
-        // do nothing
-    }
-    verbose() {
-        // do nothing
-    }
+var hasRequired_null;
+
+function require_null () {
+	if (hasRequired_null) return _null;
+	hasRequired_null = 1;
+	Object.defineProperty(_null, "__esModule", { value: true });
+	_null.NullLogger = void 0;
+	class NullLogger {
+	    get level() {
+	        return 60 /* IOInsights.LoggerLogLevel.INFO */;
+	    }
+	    error() {
+	        // do nothing
+	    }
+	    warn() {
+	        // do nothing
+	    }
+	    info() {
+	        // do nothing
+	    }
+	    debug() {
+	        // do nothing
+	    }
+	    verbose() {
+	        // do nothing
+	    }
+	}
+	_null.NullLogger = NullLogger;
+	
+	return _null;
 }
-_null.NullLogger = NullLogger;
 
 var nullManager = {};
 
-Object.defineProperty(nullManager, "__esModule", { value: true });
-nullManager.NullLogsManager = void 0;
-const nullManager_1$1 = nullManager$1;
-const safe_stringify_1 = safeStringify$1;
-class NullLogsManager extends nullManager_1$1.NullManager {
-    constructor(settings, otelSettings, logger) {
-        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
-            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullLogsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
-        }
-        super();
-    }
-    emit(logRecord) {
-        return null;
-    }
+var hasRequiredNullManager;
+
+function requireNullManager () {
+	if (hasRequiredNullManager) return nullManager;
+	hasRequiredNullManager = 1;
+	Object.defineProperty(nullManager, "__esModule", { value: true });
+	nullManager.NullLogsManager = void 0;
+	const nullManager_1 = requireNullManager$1();
+	const safe_stringify_1 = requireSafeStringify();
+	class NullLogsManager extends nullManager_1.NullManager {
+	    constructor(settings, otelSettings, logger) {
+	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullLogsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
+	        }
+	        super();
+	    }
+	    emit(logRecord) {
+	        return null;
+	    }
+	}
+	nullManager.NullLogsManager = NullLogsManager;
+	
+	return nullManager;
 }
-nullManager.NullLogsManager = NullLogsManager;
 
 var constants = {};
 
-Object.defineProperty(constants, "__esModule", { value: true });
-constants.Defaults = void 0;
-constants.Defaults = {
-    DEFAULT_USER: "unknown-user",
-    DEFAULT_SERVICE_NAME: "unknown-service-name",
-    DEFAULT_SERVICE_ID: "unknown-service-id",
-    DEFAULT_SERVICE_VERSION: "unknown-service-version",
-    DEFAULT_PLATFORM_VERSION: "unknown-platform-version",
-};
+var hasRequiredConstants;
+
+function requireConstants () {
+	if (hasRequiredConstants) return constants;
+	hasRequiredConstants = 1;
+	Object.defineProperty(constants, "__esModule", { value: true });
+	constants.Defaults = void 0;
+	constants.Defaults = {
+	    DEFAULT_USER: "unknown-user",
+	    DEFAULT_SERVICE_NAME: "unknown-service-name",
+	    DEFAULT_SERVICE_ID: "unknown-service-id",
+	    DEFAULT_SERVICE_VERSION: "unknown-service-version",
+	    DEFAULT_PLATFORM_VERSION: "unknown-platform-version",
+	};
+	
+	return constants;
+}
 
 var logWrapper = {};
 
-Object.defineProperty(logWrapper, "__esModule", { value: true });
-logWrapper.LogWrapper = void 0;
-// wraps an OTEL library logger into an OTEL library logger
-// allows filtering messages etc
-class LogWrapper {
-    constructor(logger, dropLog) {
-        this.logger = logger;
-        this.dropLog = dropLog;
-    }
-    get level() {
-        var _a;
-        return (_a = this.logger.level) !== null && _a !== void 0 ? _a : 0 /* IOInsights.LoggerLogLevel.NONE */;
-    }
-    error(message, ...args) {
-        var _a;
-        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
-            return;
-        }
-        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
-        // we can do that since otel impl is not considered critical
-        this.logger.warn(message, ...args);
-    }
-    warn(message, ...args) {
-        var _a;
-        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
-            return;
-        }
-        this.logger.warn(message, ...args);
-    }
-    info(message, ...args) {
-        var _a;
-        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 60 /* IOInsights.LoggerLogLevel.INFO */, message)) {
-            return;
-        }
-        this.logger.info(message, ...args);
-    }
-    debug(message, ...args) {
-        var _a;
-        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 70 /* IOInsights.LoggerLogLevel.DEBUG */, message)) {
-            return;
-        }
-        this.logger.debug(message, ...args);
-    }
-    verbose(message, ...args) {
-        var _a;
-        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 80 /* IOInsights.LoggerLogLevel.VERBOSE */, message)) {
-            return;
-        }
-        this.logger.verbose(message, ...args);
-    }
+var hasRequiredLogWrapper;
+
+function requireLogWrapper () {
+	if (hasRequiredLogWrapper) return logWrapper;
+	hasRequiredLogWrapper = 1;
+	Object.defineProperty(logWrapper, "__esModule", { value: true });
+	logWrapper.LogWrapper = void 0;
+	// wraps an OTEL library logger into an OTEL library logger
+	// allows filtering messages etc
+	class LogWrapper {
+	    constructor(logger, dropLog) {
+	        this.logger = logger;
+	        this.dropLog = dropLog;
+	    }
+	    get level() {
+	        var _a;
+	        return (_a = this.logger.level) !== null && _a !== void 0 ? _a : 0 /* IOInsights.LoggerLogLevel.NONE */;
+	    }
+	    error(message, ...args) {
+	        var _a;
+	        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
+	            return;
+	        }
+	        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
+	        // we can do that since otel impl is not considered critical
+	        this.logger.warn(message, ...args);
+	    }
+	    warn(message, ...args) {
+	        var _a;
+	        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 50 /* IOInsights.LoggerLogLevel.WARN */, message)) {
+	            return;
+	        }
+	        this.logger.warn(message, ...args);
+	    }
+	    info(message, ...args) {
+	        var _a;
+	        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 60 /* IOInsights.LoggerLogLevel.INFO */, message)) {
+	            return;
+	        }
+	        this.logger.info(message, ...args);
+	    }
+	    debug(message, ...args) {
+	        var _a;
+	        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 70 /* IOInsights.LoggerLogLevel.DEBUG */, message)) {
+	            return;
+	        }
+	        this.logger.debug(message, ...args);
+	    }
+	    verbose(message, ...args) {
+	        var _a;
+	        if ((_a = this.dropLog) === null || _a === void 0 ? void 0 : _a.call(this, 80 /* IOInsights.LoggerLogLevel.VERBOSE */, message)) {
+	            return;
+	        }
+	        this.logger.verbose(message, ...args);
+	    }
+	}
+	logWrapper.LogWrapper = LogWrapper;
+	
+	return logWrapper;
 }
-logWrapper.LogWrapper = LogWrapper;
 
 var builder = {};
 
@@ -12023,7 +12249,7 @@ function requireBuilder$1 () {
 	Object.defineProperty(builder, "__esModule", { value: true });
 	builder.LogsManagerBuilder = void 0;
 	const __1 = requireDist();
-	const nullManager_1 = nullManager;
+	const nullManager_1 = requireNullManager();
 	class LogsManagerBuilder {
 	    withLogger(logger) {
 	        this.logger = logger;
@@ -12073,15 +12299,15 @@ function requireBuilder () {
 	builder$3.Builder = void 0;
 	const builder_1 = requireBuilder$3();
 	const builder_2 = requireBuilder$2();
-	const null_1 = _null;
-	const container_1 = container;
-	const nullMetricsManager_1 = nullMetricsManager;
+	const null_1 = require_null();
+	const container_1 = requireContainer();
+	const nullMetricsManager_1 = requireNullMetricsManager();
 	const nullTracesManager_1 = requireNullTracesManager();
-	const nullManager_1 = nullManager;
-	const constants_1 = constants;
-	const logWrapper_1 = logWrapper;
+	const nullManager_1 = requireNullManager();
+	const constants_1 = requireConstants();
+	const logWrapper_1 = requireLogWrapper();
 	const _1 = requireDist();
-	const safe_stringify_1 = safeStringify$1;
+	const safe_stringify_1 = requireSafeStringify();
 	const builder_3 = requireBuilder$1();
 	class Builder {
 	    constructor() {
@@ -12237,327 +12463,373 @@ function requireBuilder () {
 
 var log4jsWrapper = {};
 
-Object.defineProperty(log4jsWrapper, "__esModule", { value: true });
-log4jsWrapper.Log4jsWrapper = void 0;
-// wraps a log4js wrapper into an OTEL library logger
-class Log4jsWrapper {
-    constructor(logger) {
-        this.logger = logger;
-    }
-    get level() {
-        return this.convert("level" in this.logger ? this.logger.level : this.logger.publishLevel());
-    }
-    error(message, ...args) {
-        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
-        // we can do that since otel impl is not considered critical
-        this.logger.warn(message, ...args);
-    }
-    warn(message, ...args) {
-        this.logger.warn(message, ...args);
-    }
-    info(message, ...args) {
-        this.logger.info(message, ...args);
-    }
-    debug(message, ...args) {
-        this.logger.debug(message, ...args);
-    }
-    verbose(message, ...args) {
-        this.logger.trace(message, ...args);
-    }
-    convert(level) {
-        if (level === undefined) {
-            return 60 /* IOInsights.LoggerLogLevel.INFO */;
-        }
-        const currentLevel = typeof level !== "string" ? level.levelStr.toLowerCase() : level.toLowerCase();
-        switch (currentLevel) {
-            case "off": {
-                return 0 /* IOInsights.LoggerLogLevel.NONE */;
-            }
-            case "error": {
-                return 30 /* IOInsights.LoggerLogLevel.ERROR */;
-            }
-            case "warn": {
-                return 50 /* IOInsights.LoggerLogLevel.WARN */;
-            }
-            case "info": {
-                return 60 /* IOInsights.LoggerLogLevel.INFO */;
-            }
-            case "debug": {
-                return 70 /* IOInsights.LoggerLogLevel.DEBUG */;
-            }
-            case "trace": {
-                return 80 /* IOInsights.LoggerLogLevel.VERBOSE */;
-            }
-            default: {
-                return 60 /* IOInsights.LoggerLogLevel.INFO */;
-            }
-        }
-    }
+var hasRequiredLog4jsWrapper;
+
+function requireLog4jsWrapper () {
+	if (hasRequiredLog4jsWrapper) return log4jsWrapper;
+	hasRequiredLog4jsWrapper = 1;
+	Object.defineProperty(log4jsWrapper, "__esModule", { value: true });
+	log4jsWrapper.Log4jsWrapper = void 0;
+	// wraps a log4js wrapper into an OTEL library logger
+	class Log4jsWrapper {
+	    constructor(logger) {
+	        this.logger = logger;
+	    }
+	    get level() {
+	        return this.convert("level" in this.logger ? this.logger.level : this.logger.publishLevel());
+	    }
+	    error(message, ...args) {
+	        // we log errors as warn because some of our clients stopped the platform if an log error is observed (they consider it as broken state)
+	        // we can do that since otel impl is not considered critical
+	        this.logger.warn(message, ...args);
+	    }
+	    warn(message, ...args) {
+	        this.logger.warn(message, ...args);
+	    }
+	    info(message, ...args) {
+	        this.logger.info(message, ...args);
+	    }
+	    debug(message, ...args) {
+	        this.logger.debug(message, ...args);
+	    }
+	    verbose(message, ...args) {
+	        this.logger.trace(message, ...args);
+	    }
+	    convert(level) {
+	        if (level === undefined) {
+	            return 60 /* IOInsights.LoggerLogLevel.INFO */;
+	        }
+	        const currentLevel = typeof level !== "string" ? level.levelStr.toLowerCase() : level.toLowerCase();
+	        switch (currentLevel) {
+	            case "off": {
+	                return 0 /* IOInsights.LoggerLogLevel.NONE */;
+	            }
+	            case "error": {
+	                return 30 /* IOInsights.LoggerLogLevel.ERROR */;
+	            }
+	            case "warn": {
+	                return 50 /* IOInsights.LoggerLogLevel.WARN */;
+	            }
+	            case "info": {
+	                return 60 /* IOInsights.LoggerLogLevel.INFO */;
+	            }
+	            case "debug": {
+	                return 70 /* IOInsights.LoggerLogLevel.DEBUG */;
+	            }
+	            case "trace": {
+	                return 80 /* IOInsights.LoggerLogLevel.VERBOSE */;
+	            }
+	            default: {
+	                return 60 /* IOInsights.LoggerLogLevel.INFO */;
+	            }
+	        }
+	    }
+	}
+	log4jsWrapper.Log4jsWrapper = Log4jsWrapper;
+	
+	return log4jsWrapper;
 }
-log4jsWrapper.Log4jsWrapper = Log4jsWrapper;
 
 var metricsDependencyBuilder = {};
 
 var nullPerfProvider = {};
 
-Object.defineProperty(nullPerfProvider, "__esModule", { value: true });
-nullPerfProvider.NullPerformanceProvider = void 0;
-class NullPerformanceProvider {
-    getAppsCPU() {
-        return Promise.resolve(undefined);
-    }
-    getAppsMemory() {
-        return Promise.resolve(undefined);
-    }
-    getSystemCPU() {
-        return Promise.resolve(undefined);
-    }
-    getSystemMemory() {
-        return Promise.resolve(undefined);
-    }
-}
-nullPerfProvider.NullPerformanceProvider = NullPerformanceProvider;
+var hasRequiredNullPerfProvider;
 
-Object.defineProperty(metricsDependencyBuilder, "__esModule", { value: true });
-metricsDependencyBuilder.MetricsDependencyBuilder = void 0;
-const nullPerfProvider_1 = nullPerfProvider;
-class MetricsDependencyBuilder {
-    constructor() {
-        this.performanceProvider = new nullPerfProvider_1.NullPerformanceProvider();
-        this.instanceFocusedHandler = () => () => { };
-        this.instanceStartedHandler = () => () => { };
-        this.instanceStoppedHandler = () => () => { };
-        this.instanceReadyHandler = () => () => { };
-        this.instanceErrorHandler = () => () => { };
-        this.instanceCrashHandler = () => () => { };
-        this.layoutRestoredHandler = () => () => { };
-        this.platformStartedHandler = () => () => { };
-        this.platformErrorHandler = () => () => { };
-        this.workspaceLoadedHandler = () => () => { };
-        this.workspaceRestoredHandler = () => () => { };
-        this.workspaceSavedHandler = () => () => { };
-        this.workspaceStoppedHandler = () => () => { };
-        this.workspaceSelectedHandler = () => () => { };
-        this.workspaceStartedHandler = () => () => { };
-        this.workspaceFrameCreatedHandler = () => () => { };
-        this.workspaceFrameInitHandler = () => () => { };
-        this.workspaceFramePageLoadHandler = () => () => { };
-        this.workspaceFrameWorkspaceRenderHandler = () => () => { };
-        this.workspaceComponentCreatedHandler = () => () => { };
-        this.workspaceAppsStartedHandler = () => () => { };
-        this.workspaceStartupHandler = () => () => { };
-    }
-    build() {
-        const container = {
-            performanceProvider: this.performanceProvider,
-            instanceStartedHandler: this.instanceStartedHandler,
-            instanceStoppedHandler: this.instanceStoppedHandler,
-            instanceReadyHandler: this.instanceReadyHandler,
-            instanceFocusedHandler: this.instanceFocusedHandler,
-            instanceErrorHandler: this.instanceErrorHandler,
-            instanceCrashHandler: this.instanceCrashHandler,
-            layoutRestoredHandler: this.layoutRestoredHandler,
-            platformStartedHandler: this.platformStartedHandler,
-            platformErrorHandler: this.platformErrorHandler,
-            workspaceLoadedHandler: this.workspaceLoadedHandler,
-            workspaceSavedHandler: this.workspaceSavedHandler,
-            workspaceStoppedHandler: this.workspaceStoppedHandler,
-            workspaceSelectedHandler: this.workspaceSelectedHandler,
-            workspaceRestoredHandler: this.workspaceRestoredHandler,
-            workspaceStartedHandler: this.workspaceStartedHandler,
-            workspaceStartupHandler: this.workspaceStartupHandler,
-            workspaceFrameCreatedHandler: this.workspaceFrameCreatedHandler,
-            workspaceFrameInitHandler: this.workspaceFrameInitHandler,
-            workspaceFramePageLoadHandler: this.workspaceFramePageLoadHandler,
-            workspaceFrameWorkspaceRenderHandler: this.workspaceFrameWorkspaceRenderHandler,
-            workspaceComponentCreatedHandler: this.workspaceComponentCreatedHandler,
-            workspaceAppsStartedHandler: this.workspaceAppsStartedHandler,
-        };
-        return container;
-    }
-    withInstanceStartedHandler(instanceStartedHandler) {
-        this.instanceStartedHandler = instanceStartedHandler;
-        return this;
-    }
-    withInstanceStoppedHandler(instanceStoppedHandler) {
-        this.instanceStoppedHandler = instanceStoppedHandler;
-        return this;
-    }
-    withInstanceReadyHandler(instanceReadyHandler) {
-        this.instanceReadyHandler = instanceReadyHandler;
-        return this;
-    }
-    withInstanceFocusedHandler(instanceFocusedHandler) {
-        this.instanceFocusedHandler = instanceFocusedHandler;
-        return this;
-    }
-    withInstanceErrorHandler(instanceErrorHandler) {
-        this.instanceErrorHandler = instanceErrorHandler;
-        return this;
-    }
-    withInstanceCrashHandler(instanceCrashHandler) {
-        this.instanceCrashHandler = instanceCrashHandler;
-        return this;
-    }
-    withLayoutRestoredHandler(layoutRestoredHandler) {
-        this.layoutRestoredHandler = layoutRestoredHandler;
-        return this;
-    }
-    withWorkspaceLoadedHandler(workspaceLoadedHandler) {
-        this.workspaceLoadedHandler = workspaceLoadedHandler;
-        return this;
-    }
-    withWorkspaceSavedHandler(workspaceSavedHandler) {
-        this.workspaceSavedHandler = workspaceSavedHandler;
-        return this;
-    }
-    withWorkspaceStartedHandler(workspaceStartedHandler) {
-        this.workspaceRestoredHandler = () => () => { };
-        this.workspaceStartedHandler = workspaceStartedHandler;
-        return this;
-    }
-    withWorkspaceStoppedHandler(workspaceStoppedHandler) {
-        this.workspaceStoppedHandler = workspaceStoppedHandler;
-        return this;
-    }
-    withWorkspaceSelectedHandler(workspaceSelectedHandler) {
-        this.workspaceSelectedHandler = workspaceSelectedHandler;
-        return this;
-    }
-    withPlatformStartedHandler(platformStartedHandler) {
-        this.platformStartedHandler = platformStartedHandler;
-        return this;
-    }
-    withPlatformErrorHandler(platformErrorHandler) {
-        this.platformErrorHandler = platformErrorHandler;
-        return this;
-    }
-    withPerfProvider(perfProvider) {
-        this.performanceProvider = perfProvider;
-        return this;
-    }
-    withWorkspaceRestoredHandler(workspaceRestoredHandler) {
-        this.workspaceRestoredHandler = workspaceRestoredHandler;
-        this.workspaceStartedHandler = () => () => { };
-        return this;
-    }
-    withWorkspaceStartupHandler(workspaceStartupHandler) {
-        this.workspaceStartupHandler = workspaceStartupHandler;
-        return this;
-    }
-    withWorkspaceFrameCreatedHandler(workspaceFrameCreatedHandler) {
-        this.workspaceFrameCreatedHandler = workspaceFrameCreatedHandler;
-        return this;
-    }
-    withWorkspaceFrameInitHandler(workspaceFrameInitHandler) {
-        this.workspaceFrameInitHandler = workspaceFrameInitHandler;
-        return this;
-    }
-    withWorkspaceFramePageLoadHandler(workspaceFramePageLoadHandler) {
-        this.workspaceFramePageLoadHandler = workspaceFramePageLoadHandler;
-        return this;
-    }
-    withWorkspaceFrameWorkspaceRenderHandler(workspaceFrameWorkspaceRenderHandler) {
-        this.workspaceFrameWorkspaceRenderHandler = workspaceFrameWorkspaceRenderHandler;
-        return this;
-    }
-    withWorkspaceComponentCreatedHandler(workspaceComponentCreatedHandler) {
-        this.workspaceComponentCreatedHandler = workspaceComponentCreatedHandler;
-        return this;
-    }
-    withWorkspaceAppsStartedHandler(workspaceAppsStartedHandler) {
-        this.workspaceAppsStartedHandler = workspaceAppsStartedHandler;
-        return this;
-    }
+function requireNullPerfProvider () {
+	if (hasRequiredNullPerfProvider) return nullPerfProvider;
+	hasRequiredNullPerfProvider = 1;
+	Object.defineProperty(nullPerfProvider, "__esModule", { value: true });
+	nullPerfProvider.NullPerformanceProvider = void 0;
+	class NullPerformanceProvider {
+	    getAppsCPU() {
+	        return Promise.resolve(undefined);
+	    }
+	    getAppsMemory() {
+	        return Promise.resolve(undefined);
+	    }
+	    getSystemCPU() {
+	        return Promise.resolve(undefined);
+	    }
+	    getSystemMemory() {
+	        return Promise.resolve(undefined);
+	    }
+	}
+	nullPerfProvider.NullPerformanceProvider = NullPerformanceProvider;
+	
+	return nullPerfProvider;
 }
-metricsDependencyBuilder.MetricsDependencyBuilder = MetricsDependencyBuilder;
+
+var hasRequiredMetricsDependencyBuilder;
+
+function requireMetricsDependencyBuilder () {
+	if (hasRequiredMetricsDependencyBuilder) return metricsDependencyBuilder;
+	hasRequiredMetricsDependencyBuilder = 1;
+	Object.defineProperty(metricsDependencyBuilder, "__esModule", { value: true });
+	metricsDependencyBuilder.MetricsDependencyBuilder = void 0;
+	const nullPerfProvider_1 = requireNullPerfProvider();
+	class MetricsDependencyBuilder {
+	    constructor() {
+	        this.performanceProvider = new nullPerfProvider_1.NullPerformanceProvider();
+	        this.instanceFocusedHandler = () => () => { };
+	        this.instanceStartedHandler = () => () => { };
+	        this.instanceStoppedHandler = () => () => { };
+	        this.instanceReadyHandler = () => () => { };
+	        this.instanceErrorHandler = () => () => { };
+	        this.instanceCrashHandler = () => () => { };
+	        this.layoutRestoredHandler = () => () => { };
+	        this.platformStartedHandler = () => () => { };
+	        this.platformErrorHandler = () => () => { };
+	        this.workspaceLoadedHandler = () => () => { };
+	        this.workspaceRestoredHandler = () => () => { };
+	        this.workspaceSavedHandler = () => () => { };
+	        this.workspaceStoppedHandler = () => () => { };
+	        this.workspaceSelectedHandler = () => () => { };
+	        this.workspaceStartedHandler = () => () => { };
+	        this.workspaceFrameCreatedHandler = () => () => { };
+	        this.workspaceFrameInitHandler = () => () => { };
+	        this.workspaceFramePageLoadHandler = () => () => { };
+	        this.workspaceFrameWorkspaceRenderHandler = () => () => { };
+	        this.workspaceComponentCreatedHandler = () => () => { };
+	        this.workspaceAppsStartedHandler = () => () => { };
+	        this.workspaceStartupHandler = () => () => { };
+	    }
+	    build() {
+	        const container = {
+	            performanceProvider: this.performanceProvider,
+	            instanceStartedHandler: this.instanceStartedHandler,
+	            instanceStoppedHandler: this.instanceStoppedHandler,
+	            instanceReadyHandler: this.instanceReadyHandler,
+	            instanceFocusedHandler: this.instanceFocusedHandler,
+	            instanceErrorHandler: this.instanceErrorHandler,
+	            instanceCrashHandler: this.instanceCrashHandler,
+	            layoutRestoredHandler: this.layoutRestoredHandler,
+	            platformStartedHandler: this.platformStartedHandler,
+	            platformErrorHandler: this.platformErrorHandler,
+	            workspaceLoadedHandler: this.workspaceLoadedHandler,
+	            workspaceSavedHandler: this.workspaceSavedHandler,
+	            workspaceStoppedHandler: this.workspaceStoppedHandler,
+	            workspaceSelectedHandler: this.workspaceSelectedHandler,
+	            workspaceRestoredHandler: this.workspaceRestoredHandler,
+	            workspaceStartedHandler: this.workspaceStartedHandler,
+	            workspaceStartupHandler: this.workspaceStartupHandler,
+	            workspaceFrameCreatedHandler: this.workspaceFrameCreatedHandler,
+	            workspaceFrameInitHandler: this.workspaceFrameInitHandler,
+	            workspaceFramePageLoadHandler: this.workspaceFramePageLoadHandler,
+	            workspaceFrameWorkspaceRenderHandler: this.workspaceFrameWorkspaceRenderHandler,
+	            workspaceComponentCreatedHandler: this.workspaceComponentCreatedHandler,
+	            workspaceAppsStartedHandler: this.workspaceAppsStartedHandler,
+	        };
+	        return container;
+	    }
+	    withInstanceStartedHandler(instanceStartedHandler) {
+	        this.instanceStartedHandler = instanceStartedHandler;
+	        return this;
+	    }
+	    withInstanceStoppedHandler(instanceStoppedHandler) {
+	        this.instanceStoppedHandler = instanceStoppedHandler;
+	        return this;
+	    }
+	    withInstanceReadyHandler(instanceReadyHandler) {
+	        this.instanceReadyHandler = instanceReadyHandler;
+	        return this;
+	    }
+	    withInstanceFocusedHandler(instanceFocusedHandler) {
+	        this.instanceFocusedHandler = instanceFocusedHandler;
+	        return this;
+	    }
+	    withInstanceErrorHandler(instanceErrorHandler) {
+	        this.instanceErrorHandler = instanceErrorHandler;
+	        return this;
+	    }
+	    withInstanceCrashHandler(instanceCrashHandler) {
+	        this.instanceCrashHandler = instanceCrashHandler;
+	        return this;
+	    }
+	    withLayoutRestoredHandler(layoutRestoredHandler) {
+	        this.layoutRestoredHandler = layoutRestoredHandler;
+	        return this;
+	    }
+	    withWorkspaceLoadedHandler(workspaceLoadedHandler) {
+	        this.workspaceLoadedHandler = workspaceLoadedHandler;
+	        return this;
+	    }
+	    withWorkspaceSavedHandler(workspaceSavedHandler) {
+	        this.workspaceSavedHandler = workspaceSavedHandler;
+	        return this;
+	    }
+	    withWorkspaceStartedHandler(workspaceStartedHandler) {
+	        this.workspaceRestoredHandler = () => () => { };
+	        this.workspaceStartedHandler = workspaceStartedHandler;
+	        return this;
+	    }
+	    withWorkspaceStoppedHandler(workspaceStoppedHandler) {
+	        this.workspaceStoppedHandler = workspaceStoppedHandler;
+	        return this;
+	    }
+	    withWorkspaceSelectedHandler(workspaceSelectedHandler) {
+	        this.workspaceSelectedHandler = workspaceSelectedHandler;
+	        return this;
+	    }
+	    withPlatformStartedHandler(platformStartedHandler) {
+	        this.platformStartedHandler = platformStartedHandler;
+	        return this;
+	    }
+	    withPlatformErrorHandler(platformErrorHandler) {
+	        this.platformErrorHandler = platformErrorHandler;
+	        return this;
+	    }
+	    withPerfProvider(perfProvider) {
+	        this.performanceProvider = perfProvider;
+	        return this;
+	    }
+	    withWorkspaceRestoredHandler(workspaceRestoredHandler) {
+	        this.workspaceRestoredHandler = workspaceRestoredHandler;
+	        this.workspaceStartedHandler = () => () => { };
+	        return this;
+	    }
+	    withWorkspaceStartupHandler(workspaceStartupHandler) {
+	        this.workspaceStartupHandler = workspaceStartupHandler;
+	        return this;
+	    }
+	    withWorkspaceFrameCreatedHandler(workspaceFrameCreatedHandler) {
+	        this.workspaceFrameCreatedHandler = workspaceFrameCreatedHandler;
+	        return this;
+	    }
+	    withWorkspaceFrameInitHandler(workspaceFrameInitHandler) {
+	        this.workspaceFrameInitHandler = workspaceFrameInitHandler;
+	        return this;
+	    }
+	    withWorkspaceFramePageLoadHandler(workspaceFramePageLoadHandler) {
+	        this.workspaceFramePageLoadHandler = workspaceFramePageLoadHandler;
+	        return this;
+	    }
+	    withWorkspaceFrameWorkspaceRenderHandler(workspaceFrameWorkspaceRenderHandler) {
+	        this.workspaceFrameWorkspaceRenderHandler = workspaceFrameWorkspaceRenderHandler;
+	        return this;
+	    }
+	    withWorkspaceComponentCreatedHandler(workspaceComponentCreatedHandler) {
+	        this.workspaceComponentCreatedHandler = workspaceComponentCreatedHandler;
+	        return this;
+	    }
+	    withWorkspaceAppsStartedHandler(workspaceAppsStartedHandler) {
+	        this.workspaceAppsStartedHandler = workspaceAppsStartedHandler;
+	        return this;
+	    }
+	}
+	metricsDependencyBuilder.MetricsDependencyBuilder = MetricsDependencyBuilder;
+	
+	return metricsDependencyBuilder;
+}
 
 var logs = {};
 
-Object.defineProperty(logs, "__esModule", { value: true });
-logs.Logs = void 0;
-const nullManager_1 = nullManager;
-class Logs {
-    static get instance() {
-        var _a, _b;
-        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.logs) {
-            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.logs;
-        }
-        if (!Logs._instance) {
-            Logs._instance = new nullManager_1.NullLogsManager(undefined, undefined, undefined);
-        }
-        return Logs._instance;
-    }
-    static set instance(value) {
-        Logs._instance = value;
-    }
-    static emit(record) {
-        return Logs.instance.emit(record);
-    }
+var hasRequiredLogs;
+
+function requireLogs () {
+	if (hasRequiredLogs) return logs;
+	hasRequiredLogs = 1;
+	Object.defineProperty(logs, "__esModule", { value: true });
+	logs.Logs = void 0;
+	const nullManager_1 = requireNullManager();
+	class Logs {
+	    static get instance() {
+	        var _a, _b;
+	        if ((_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.logs) {
+	            return (_b = globalThis === null || globalThis === void 0 ? void 0 : globalThis.ioInsightsInternals) === null || _b === void 0 ? void 0 : _b.logs;
+	        }
+	        if (!Logs._instance) {
+	            Logs._instance = new nullManager_1.NullLogsManager(undefined, undefined, undefined);
+	        }
+	        return Logs._instance;
+	    }
+	    static set instance(value) {
+	        Logs._instance = value;
+	    }
+	    static emit(record) {
+	        return Logs.instance.emit(record);
+	    }
+	}
+	logs.Logs = Logs;
+	
+	return logs;
 }
-logs.Logs = Logs;
 
 var pluginLoader = {};
 
-Object.defineProperty(pluginLoader, "__esModule", { value: true });
-pluginLoader.registerInsightsPlugin = pluginLoader.loadInsightsPlugin = void 0;
-const returnedPlugins = new Map();
-function loadInsightsPlugin(name, logger) {
-    if (returnedPlugins.get(name) !== undefined) {
-        return returnedPlugins.get(name);
-    }
-    if (typeof globalThis.ioInsightsPlugins === "undefined") {
-        return null;
-    }
-    let plugin = globalThis.ioInsightsPlugins[name];
-    if (!plugin) {
-        return null;
-    }
-    if (typeof plugin === "function") {
-        try {
-            plugin = plugin();
-        }
-        catch (err) {
-            logger === null || logger === void 0 ? void 0 : logger.error(`Error loading io.Insights plugin ${name}`, err);
-            returnedPlugins.set(name, null);
-            return null;
-        }
-    }
-    returnedPlugins.set(name, plugin);
-    return plugin;
-}
-pluginLoader.loadInsightsPlugin = loadInsightsPlugin;
-function registerInsightsPlugin(name, pluginOrFactoryFunc) {
-    if (typeof globalThis.ioInsightsPlugins === "undefined") {
-        globalThis.ioInsightsPlugins = {};
-    }
-    globalThis.ioInsightsPlugins[name] = pluginOrFactoryFunc;
-}
-pluginLoader.registerInsightsPlugin = registerInsightsPlugin;
+var hasRequiredPluginLoader;
 
-var isNode$1 = {};
-
-Object.defineProperty(isNode$1, "__esModule", { value: true });
-isNode$1.isNode = void 0;
-let _isNode;
-function isNode() {
-    if (typeof _isNode !== "undefined") {
-        return _isNode;
-    }
-    if (typeof window !== "undefined") {
-        _isNode = false;
-        return false;
-    }
-    // Only Node.JS has a process variable that is of [[Class]] process
-    try {
-        _isNode = Object.prototype.toString.call(commonjsGlobal.process) === "[object process]";
-    }
-    catch (e) {
-        _isNode = false;
-    }
-    return _isNode;
+function requirePluginLoader () {
+	if (hasRequiredPluginLoader) return pluginLoader;
+	hasRequiredPluginLoader = 1;
+	Object.defineProperty(pluginLoader, "__esModule", { value: true });
+	pluginLoader.loadInsightsPlugin = loadInsightsPlugin;
+	pluginLoader.registerInsightsPlugin = registerInsightsPlugin;
+	const returnedPlugins = new Map();
+	function loadInsightsPlugin(name, logger) {
+	    if (returnedPlugins.get(name) !== undefined) {
+	        return returnedPlugins.get(name);
+	    }
+	    if (typeof globalThis.ioInsightsPlugins === "undefined") {
+	        return null;
+	    }
+	    let plugin = globalThis.ioInsightsPlugins[name];
+	    if (!plugin) {
+	        return null;
+	    }
+	    if (typeof plugin === "function") {
+	        try {
+	            plugin = plugin();
+	        }
+	        catch (err) {
+	            logger === null || logger === void 0 ? void 0 : logger.error(`Error loading io.Insights plugin ${name}`, err);
+	            returnedPlugins.set(name, null);
+	            return null;
+	        }
+	    }
+	    returnedPlugins.set(name, plugin);
+	    return plugin;
+	}
+	function registerInsightsPlugin(name, pluginOrFactoryFunc) {
+	    if (typeof globalThis.ioInsightsPlugins === "undefined") {
+	        globalThis.ioInsightsPlugins = {};
+	    }
+	    globalThis.ioInsightsPlugins[name] = pluginOrFactoryFunc;
+	}
+	
+	return pluginLoader;
 }
-isNode$1.isNode = isNode;
+
+var isNode = {};
+
+var hasRequiredIsNode;
+
+function requireIsNode () {
+	if (hasRequiredIsNode) return isNode;
+	hasRequiredIsNode = 1;
+	Object.defineProperty(isNode, "__esModule", { value: true });
+	isNode.isNode = isNode$1;
+	let _isNode;
+	function isNode$1() {
+	    if (typeof _isNode !== "undefined") {
+	        return _isNode;
+	    }
+	    if (typeof window !== "undefined") {
+	        _isNode = false;
+	        return false;
+	    }
+	    // Only Node.JS has a process variable that is of [[Class]] process
+	    try {
+	        _isNode = Object.prototype.toString.call(commonjsGlobal.process) === "[object process]";
+	    }
+	    catch (e) {
+	        _isNode = false;
+	    }
+	    return _isNode;
+	}
+	
+	return isNode;
+}
 
 var hasRequiredDist;
 
@@ -12565,7 +12837,7 @@ function requireDist () {
 	if (hasRequiredDist) return dist;
 	hasRequiredDist = 1;
 	(function (exports$1) {
-		var __createBinding = (commonjsGlobal && commonjsGlobal.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+		var __createBinding = (dist && dist.__createBinding) || (Object.create ? (function(o, m, k, k2) {
 		    if (k2 === undefined) k2 = k;
 		    var desc = Object.getOwnPropertyDescriptor(m, k);
 		    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
@@ -12576,49 +12848,59 @@ function requireDist () {
 		    if (k2 === undefined) k2 = k;
 		    o[k2] = m[k];
 		}));
-		var __setModuleDefault = (commonjsGlobal && commonjsGlobal.__setModuleDefault) || (Object.create ? (function(o, v) {
+		var __setModuleDefault = (dist && dist.__setModuleDefault) || (Object.create ? (function(o, v) {
 		    Object.defineProperty(o, "default", { enumerable: true, value: v });
 		}) : function(o, v) {
 		    o["default"] = v;
 		});
-		var __importStar = (commonjsGlobal && commonjsGlobal.__importStar) || function (mod) {
-		    if (mod && mod.__esModule) return mod;
-		    var result = {};
-		    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-		    __setModuleDefault(result, mod);
-		    return result;
-		};
-		var __importDefault = (commonjsGlobal && commonjsGlobal.__importDefault) || function (mod) {
+		var __importStar = (dist && dist.__importStar) || (function () {
+		    var ownKeys = function(o) {
+		        ownKeys = Object.getOwnPropertyNames || function (o) {
+		            var ar = [];
+		            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+		            return ar;
+		        };
+		        return ownKeys(o);
+		    };
+		    return function (mod) {
+		        if (mod && mod.__esModule) return mod;
+		        var result = {};
+		        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+		        __setModuleDefault(result, mod);
+		        return result;
+		    };
+		})();
+		var __importDefault = (dist && dist.__importDefault) || function (mod) {
 		    return (mod && mod.__esModule) ? mod : { "default": mod };
 		};
 		Object.defineProperty(exports$1, "__esModule", { value: true });
 		exports$1.SpanStatusCode = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.Logs = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
 		var builder_1 = requireBuilder();
 		Object.defineProperty(exports$1, "Builder", { enumerable: true, get: function () { return builder_1.Builder; } });
-		var log4jsWrapper_1 = log4jsWrapper;
+		var log4jsWrapper_1 = requireLog4jsWrapper();
 		Object.defineProperty(exports$1, "Log4jsWrapper", { enumerable: true, get: function () { return log4jsWrapper_1.Log4jsWrapper; } });
-		var container_1 = container;
+		var container_1 = requireContainer();
 		Object.defineProperty(exports$1, "Container", { enumerable: true, get: function () { return container_1.Container; } });
-		var null_1 = _null$1;
+		var null_1 = require_null$1();
 		Object.defineProperty(exports$1, "NullMetric", { enumerable: true, get: function () { return null_1.NullMetric; } });
-		var metricsDependencyBuilder_1 = metricsDependencyBuilder;
+		var metricsDependencyBuilder_1 = requireMetricsDependencyBuilder();
 		Object.defineProperty(exports$1, "MetricsDependencyBuilder", { enumerable: true, get: function () { return metricsDependencyBuilder_1.MetricsDependencyBuilder; } });
 		const traces_1 = __importStar(requireTraces());
 		exports$1.Traces = traces_1.default;
 		Object.defineProperty(exports$1, "withSpan", { enumerable: true, get: function () { return traces_1.withSpan; } });
 		exports$1.OTEL_PI_KEY = "__interopIOTracePropagationInfo";
-		const nullTracingState_1 = __importDefault(nullTracingState);
+		const nullTracingState_1 = __importDefault(requireNullTracingState());
 		exports$1.NullTracingState = nullTracingState_1.default;
-		var logs_1 = logs;
+		var logs_1 = requireLogs();
 		Object.defineProperty(exports$1, "Logs", { enumerable: true, get: function () { return logs_1.Logs; } });
-		const pluginLoader_1 = pluginLoader;
+		const pluginLoader_1 = requirePluginLoader();
 		Object.defineProperty(exports$1, "registerInsightsPlugin", { enumerable: true, get: function () { return pluginLoader_1.registerInsightsPlugin; } });
 		Object.defineProperty(exports$1, "loadInsightsPlugin", { enumerable: true, get: function () { return pluginLoader_1.loadInsightsPlugin; } });
-		const isNode_1 = isNode$1;
+		const isNode_1 = requireIsNode();
 		Object.defineProperty(exports$1, "isNode", { enumerable: true, get: function () { return isNode_1.isNode; } });
-		const safe_stringify_1 = safeStringify$1;
+		const safe_stringify_1 = requireSafeStringify();
 		Object.defineProperty(exports$1, "safeStringify", { enumerable: true, get: function () { return safe_stringify_1.safeStringify; } });
-		const otelUtils_1 = otelUtils;
+		const otelUtils_1 = requireOtelUtils();
 		Object.defineProperty(exports$1, "getOTELData", { enumerable: true, get: function () { return otelUtils_1.getOTELData; } });
 		Object.defineProperty(exports$1, "flattenOtelAtributes", { enumerable: true, get: function () { return otelUtils_1.flattenOtelAtributes; } });
 		Object.defineProperty(exports$1, "extractFilteringContextFromArgs", { enumerable: true, get: function () { return otelUtils_1.extractFilteringContextFromArgs; } });
@@ -12649,8 +12931,7 @@ function requireDist () {
 		     * The operation contains an error.
 		     */
 		    SpanStatusCode[SpanStatusCode["ERROR"] = 2] = "ERROR";
-		})(SpanStatusCode || (SpanStatusCode = {}));
-		exports$1.SpanStatusCode = SpanStatusCode;
+		})(SpanStatusCode || (exports$1.SpanStatusCode = SpanStatusCode = {}));
 		
 	} (dist));
 	return dist;
@@ -12974,7 +13255,7 @@ function prepareConfig (configuration, ext, glue42gd) {
             settings = gdConfig ?? { enabled: false };
         }
         else {
-            settings = deepMerge(gdConfig || {}, configProp, { isMergeableObject: isPlainObject$2 });
+            settings = deepMerge(gdConfig || {}, configProp, { isMergeableObject: isPlainObject$1 });
         }
         setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext);
         if (settings.traces?.enabled) {
@@ -13138,1743 +13419,1750 @@ var lodash_clonedeep = {exports: {}};
  */
 lodash_clonedeep.exports;
 
-(function (module, exports$1) {
-	/** Used as the size to enable large array optimizations. */
-	var LARGE_ARRAY_SIZE = 200;
-
-	/** Used to stand-in for `undefined` hash values. */
-	var HASH_UNDEFINED = '__lodash_hash_undefined__';
-
-	/** Used as references for various `Number` constants. */
-	var MAX_SAFE_INTEGER = 9007199254740991;
-
-	/** `Object#toString` result references. */
-	var argsTag = '[object Arguments]',
-	    arrayTag = '[object Array]',
-	    boolTag = '[object Boolean]',
-	    dateTag = '[object Date]',
-	    errorTag = '[object Error]',
-	    funcTag = '[object Function]',
-	    genTag = '[object GeneratorFunction]',
-	    mapTag = '[object Map]',
-	    numberTag = '[object Number]',
-	    objectTag = '[object Object]',
-	    promiseTag = '[object Promise]',
-	    regexpTag = '[object RegExp]',
-	    setTag = '[object Set]',
-	    stringTag = '[object String]',
-	    symbolTag = '[object Symbol]',
-	    weakMapTag = '[object WeakMap]';
-
-	var arrayBufferTag = '[object ArrayBuffer]',
-	    dataViewTag = '[object DataView]',
-	    float32Tag = '[object Float32Array]',
-	    float64Tag = '[object Float64Array]',
-	    int8Tag = '[object Int8Array]',
-	    int16Tag = '[object Int16Array]',
-	    int32Tag = '[object Int32Array]',
-	    uint8Tag = '[object Uint8Array]',
-	    uint8ClampedTag = '[object Uint8ClampedArray]',
-	    uint16Tag = '[object Uint16Array]',
-	    uint32Tag = '[object Uint32Array]';
-
-	/**
-	 * Used to match `RegExp`
-	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
-	 */
-	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-
-	/** Used to match `RegExp` flags from their coerced string values. */
-	var reFlags = /\w*$/;
-
-	/** Used to detect host constructors (Safari). */
-	var reIsHostCtor = /^\[object .+?Constructor\]$/;
-
-	/** Used to detect unsigned integer values. */
-	var reIsUint = /^(?:0|[1-9]\d*)$/;
-
-	/** Used to identify `toStringTag` values supported by `_.clone`. */
-	var cloneableTags = {};
-	cloneableTags[argsTag] = cloneableTags[arrayTag] =
-	cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
-	cloneableTags[boolTag] = cloneableTags[dateTag] =
-	cloneableTags[float32Tag] = cloneableTags[float64Tag] =
-	cloneableTags[int8Tag] = cloneableTags[int16Tag] =
-	cloneableTags[int32Tag] = cloneableTags[mapTag] =
-	cloneableTags[numberTag] = cloneableTags[objectTag] =
-	cloneableTags[regexpTag] = cloneableTags[setTag] =
-	cloneableTags[stringTag] = cloneableTags[symbolTag] =
-	cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
-	cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
-	cloneableTags[errorTag] = cloneableTags[funcTag] =
-	cloneableTags[weakMapTag] = false;
-
-	/** Detect free variable `global` from Node.js. */
-	var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
-
-	/** Detect free variable `self`. */
-	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
-
-	/** Used as a reference to the global object. */
-	var root = freeGlobal || freeSelf || Function('return this')();
-
-	/** Detect free variable `exports`. */
-	var freeExports = exports$1 && !exports$1.nodeType && exports$1;
-
-	/** Detect free variable `module`. */
-	var freeModule = freeExports && 'object' == 'object' && module && !module.nodeType && module;
-
-	/** Detect the popular CommonJS extension `module.exports`. */
-	var moduleExports = freeModule && freeModule.exports === freeExports;
-
-	/**
-	 * Adds the key-value `pair` to `map`.
-	 *
-	 * @private
-	 * @param {Object} map The map to modify.
-	 * @param {Array} pair The key-value pair to add.
-	 * @returns {Object} Returns `map`.
-	 */
-	function addMapEntry(map, pair) {
-	  // Don't return `map.set` because it's not chainable in IE 11.
-	  map.set(pair[0], pair[1]);
-	  return map;
-	}
-
-	/**
-	 * Adds `value` to `set`.
-	 *
-	 * @private
-	 * @param {Object} set The set to modify.
-	 * @param {*} value The value to add.
-	 * @returns {Object} Returns `set`.
-	 */
-	function addSetEntry(set, value) {
-	  // Don't return `set.add` because it's not chainable in IE 11.
-	  set.add(value);
-	  return set;
-	}
-
-	/**
-	 * A specialized version of `_.forEach` for arrays without support for
-	 * iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array} [array] The array to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns `array`.
-	 */
-	function arrayEach(array, iteratee) {
-	  var index = -1,
-	      length = array ? array.length : 0;
-
-	  while (++index < length) {
-	    if (iteratee(array[index], index, array) === false) {
-	      break;
-	    }
-	  }
-	  return array;
-	}
-
-	/**
-	 * Appends the elements of `values` to `array`.
-	 *
-	 * @private
-	 * @param {Array} array The array to modify.
-	 * @param {Array} values The values to append.
-	 * @returns {Array} Returns `array`.
-	 */
-	function arrayPush(array, values) {
-	  var index = -1,
-	      length = values.length,
-	      offset = array.length;
-
-	  while (++index < length) {
-	    array[offset + index] = values[index];
-	  }
-	  return array;
-	}
-
-	/**
-	 * A specialized version of `_.reduce` for arrays without support for
-	 * iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array} [array] The array to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @param {*} [accumulator] The initial value.
-	 * @param {boolean} [initAccum] Specify using the first element of `array` as
-	 *  the initial value.
-	 * @returns {*} Returns the accumulated value.
-	 */
-	function arrayReduce(array, iteratee, accumulator, initAccum) {
-	  var index = -1,
-	      length = array ? array.length : 0;
-	  while (++index < length) {
-	    accumulator = iteratee(accumulator, array[index], index, array);
-	  }
-	  return accumulator;
-	}
-
-	/**
-	 * The base implementation of `_.times` without support for iteratee shorthands
-	 * or max array length checks.
-	 *
-	 * @private
-	 * @param {number} n The number of times to invoke `iteratee`.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns the array of results.
-	 */
-	function baseTimes(n, iteratee) {
-	  var index = -1,
-	      result = Array(n);
-
-	  while (++index < n) {
-	    result[index] = iteratee(index);
-	  }
-	  return result;
-	}
-
-	/**
-	 * Gets the value at `key` of `object`.
-	 *
-	 * @private
-	 * @param {Object} [object] The object to query.
-	 * @param {string} key The key of the property to get.
-	 * @returns {*} Returns the property value.
-	 */
-	function getValue(object, key) {
-	  return object == null ? undefined : object[key];
-	}
-
-	/**
-	 * Checks if `value` is a host object in IE < 9.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
-	 */
-	function isHostObject(value) {
-	  // Many host objects are `Object` objects that can coerce to strings
-	  // despite having improperly defined `toString` methods.
-	  var result = false;
-	  if (value != null && typeof value.toString != 'function') {
-	    try {
-	      result = !!(value + '');
-	    } catch (e) {}
-	  }
-	  return result;
-	}
-
-	/**
-	 * Converts `map` to its key-value pairs.
-	 *
-	 * @private
-	 * @param {Object} map The map to convert.
-	 * @returns {Array} Returns the key-value pairs.
-	 */
-	function mapToArray(map) {
-	  var index = -1,
-	      result = Array(map.size);
-
-	  map.forEach(function(value, key) {
-	    result[++index] = [key, value];
-	  });
-	  return result;
-	}
-
-	/**
-	 * Creates a unary function that invokes `func` with its argument transformed.
-	 *
-	 * @private
-	 * @param {Function} func The function to wrap.
-	 * @param {Function} transform The argument transform.
-	 * @returns {Function} Returns the new function.
-	 */
-	function overArg(func, transform) {
-	  return function(arg) {
-	    return func(transform(arg));
-	  };
-	}
-
-	/**
-	 * Converts `set` to an array of its values.
-	 *
-	 * @private
-	 * @param {Object} set The set to convert.
-	 * @returns {Array} Returns the values.
-	 */
-	function setToArray(set) {
-	  var index = -1,
-	      result = Array(set.size);
-
-	  set.forEach(function(value) {
-	    result[++index] = value;
-	  });
-	  return result;
-	}
-
-	/** Used for built-in method references. */
-	var arrayProto = Array.prototype,
-	    funcProto = Function.prototype,
-	    objectProto = Object.prototype;
-
-	/** Used to detect overreaching core-js shims. */
-	var coreJsData = root['__core-js_shared__'];
-
-	/** Used to detect methods masquerading as native. */
-	var maskSrcKey = (function() {
-	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
-	  return uid ? ('Symbol(src)_1.' + uid) : '';
-	}());
-
-	/** Used to resolve the decompiled source of functions. */
-	var funcToString = funcProto.toString;
-
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
-
-	/** Used to detect if a method is native. */
-	var reIsNative = RegExp('^' +
-	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-	);
-
-	/** Built-in value references. */
-	var Buffer = moduleExports ? root.Buffer : undefined,
-	    Symbol = root.Symbol,
-	    Uint8Array = root.Uint8Array,
-	    getPrototype = overArg(Object.getPrototypeOf, Object),
-	    objectCreate = Object.create,
-	    propertyIsEnumerable = objectProto.propertyIsEnumerable,
-	    splice = arrayProto.splice;
-
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-	var nativeGetSymbols = Object.getOwnPropertySymbols,
-	    nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
-	    nativeKeys = overArg(Object.keys, Object);
-
-	/* Built-in method references that are verified to be native. */
-	var DataView = getNative(root, 'DataView'),
-	    Map = getNative(root, 'Map'),
-	    Promise = getNative(root, 'Promise'),
-	    Set = getNative(root, 'Set'),
-	    WeakMap = getNative(root, 'WeakMap'),
-	    nativeCreate = getNative(Object, 'create');
-
-	/** Used to detect maps, sets, and weakmaps. */
-	var dataViewCtorString = toSource(DataView),
-	    mapCtorString = toSource(Map),
-	    promiseCtorString = toSource(Promise),
-	    setCtorString = toSource(Set),
-	    weakMapCtorString = toSource(WeakMap);
-
-	/** Used to convert symbols to primitives and strings. */
-	var symbolProto = Symbol ? Symbol.prototype : undefined,
-	    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
-
-	/**
-	 * Creates a hash object.
-	 *
-	 * @private
-	 * @constructor
-	 * @param {Array} [entries] The key-value pairs to cache.
-	 */
-	function Hash(entries) {
-	  var index = -1,
-	      length = entries ? entries.length : 0;
-
-	  this.clear();
-	  while (++index < length) {
-	    var entry = entries[index];
-	    this.set(entry[0], entry[1]);
-	  }
-	}
-
-	/**
-	 * Removes all key-value entries from the hash.
-	 *
-	 * @private
-	 * @name clear
-	 * @memberOf Hash
-	 */
-	function hashClear() {
-	  this.__data__ = nativeCreate ? nativeCreate(null) : {};
-	}
-
-	/**
-	 * Removes `key` and its value from the hash.
-	 *
-	 * @private
-	 * @name delete
-	 * @memberOf Hash
-	 * @param {Object} hash The hash to modify.
-	 * @param {string} key The key of the value to remove.
-	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
-	 */
-	function hashDelete(key) {
-	  return this.has(key) && delete this.__data__[key];
-	}
-
-	/**
-	 * Gets the hash value for `key`.
-	 *
-	 * @private
-	 * @name get
-	 * @memberOf Hash
-	 * @param {string} key The key of the value to get.
-	 * @returns {*} Returns the entry value.
-	 */
-	function hashGet(key) {
-	  var data = this.__data__;
-	  if (nativeCreate) {
-	    var result = data[key];
-	    return result === HASH_UNDEFINED ? undefined : result;
-	  }
-	  return hasOwnProperty.call(data, key) ? data[key] : undefined;
-	}
-
-	/**
-	 * Checks if a hash value for `key` exists.
-	 *
-	 * @private
-	 * @name has
-	 * @memberOf Hash
-	 * @param {string} key The key of the entry to check.
-	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
-	 */
-	function hashHas(key) {
-	  var data = this.__data__;
-	  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
-	}
-
-	/**
-	 * Sets the hash `key` to `value`.
-	 *
-	 * @private
-	 * @name set
-	 * @memberOf Hash
-	 * @param {string} key The key of the value to set.
-	 * @param {*} value The value to set.
-	 * @returns {Object} Returns the hash instance.
-	 */
-	function hashSet(key, value) {
-	  var data = this.__data__;
-	  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
-	  return this;
-	}
-
-	// Add methods to `Hash`.
-	Hash.prototype.clear = hashClear;
-	Hash.prototype['delete'] = hashDelete;
-	Hash.prototype.get = hashGet;
-	Hash.prototype.has = hashHas;
-	Hash.prototype.set = hashSet;
-
-	/**
-	 * Creates an list cache object.
-	 *
-	 * @private
-	 * @constructor
-	 * @param {Array} [entries] The key-value pairs to cache.
-	 */
-	function ListCache(entries) {
-	  var index = -1,
-	      length = entries ? entries.length : 0;
-
-	  this.clear();
-	  while (++index < length) {
-	    var entry = entries[index];
-	    this.set(entry[0], entry[1]);
-	  }
-	}
-
-	/**
-	 * Removes all key-value entries from the list cache.
-	 *
-	 * @private
-	 * @name clear
-	 * @memberOf ListCache
-	 */
-	function listCacheClear() {
-	  this.__data__ = [];
-	}
-
-	/**
-	 * Removes `key` and its value from the list cache.
-	 *
-	 * @private
-	 * @name delete
-	 * @memberOf ListCache
-	 * @param {string} key The key of the value to remove.
-	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
-	 */
-	function listCacheDelete(key) {
-	  var data = this.__data__,
-	      index = assocIndexOf(data, key);
-
-	  if (index < 0) {
-	    return false;
-	  }
-	  var lastIndex = data.length - 1;
-	  if (index == lastIndex) {
-	    data.pop();
-	  } else {
-	    splice.call(data, index, 1);
-	  }
-	  return true;
-	}
-
-	/**
-	 * Gets the list cache value for `key`.
-	 *
-	 * @private
-	 * @name get
-	 * @memberOf ListCache
-	 * @param {string} key The key of the value to get.
-	 * @returns {*} Returns the entry value.
-	 */
-	function listCacheGet(key) {
-	  var data = this.__data__,
-	      index = assocIndexOf(data, key);
-
-	  return index < 0 ? undefined : data[index][1];
-	}
-
-	/**
-	 * Checks if a list cache value for `key` exists.
-	 *
-	 * @private
-	 * @name has
-	 * @memberOf ListCache
-	 * @param {string} key The key of the entry to check.
-	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
-	 */
-	function listCacheHas(key) {
-	  return assocIndexOf(this.__data__, key) > -1;
-	}
-
-	/**
-	 * Sets the list cache `key` to `value`.
-	 *
-	 * @private
-	 * @name set
-	 * @memberOf ListCache
-	 * @param {string} key The key of the value to set.
-	 * @param {*} value The value to set.
-	 * @returns {Object} Returns the list cache instance.
-	 */
-	function listCacheSet(key, value) {
-	  var data = this.__data__,
-	      index = assocIndexOf(data, key);
-
-	  if (index < 0) {
-	    data.push([key, value]);
-	  } else {
-	    data[index][1] = value;
-	  }
-	  return this;
-	}
-
-	// Add methods to `ListCache`.
-	ListCache.prototype.clear = listCacheClear;
-	ListCache.prototype['delete'] = listCacheDelete;
-	ListCache.prototype.get = listCacheGet;
-	ListCache.prototype.has = listCacheHas;
-	ListCache.prototype.set = listCacheSet;
-
-	/**
-	 * Creates a map cache object to store key-value pairs.
-	 *
-	 * @private
-	 * @constructor
-	 * @param {Array} [entries] The key-value pairs to cache.
-	 */
-	function MapCache(entries) {
-	  var index = -1,
-	      length = entries ? entries.length : 0;
-
-	  this.clear();
-	  while (++index < length) {
-	    var entry = entries[index];
-	    this.set(entry[0], entry[1]);
-	  }
-	}
-
-	/**
-	 * Removes all key-value entries from the map.
-	 *
-	 * @private
-	 * @name clear
-	 * @memberOf MapCache
-	 */
-	function mapCacheClear() {
-	  this.__data__ = {
-	    'hash': new Hash,
-	    'map': new (Map || ListCache),
-	    'string': new Hash
-	  };
-	}
-
-	/**
-	 * Removes `key` and its value from the map.
-	 *
-	 * @private
-	 * @name delete
-	 * @memberOf MapCache
-	 * @param {string} key The key of the value to remove.
-	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
-	 */
-	function mapCacheDelete(key) {
-	  return getMapData(this, key)['delete'](key);
-	}
-
-	/**
-	 * Gets the map value for `key`.
-	 *
-	 * @private
-	 * @name get
-	 * @memberOf MapCache
-	 * @param {string} key The key of the value to get.
-	 * @returns {*} Returns the entry value.
-	 */
-	function mapCacheGet(key) {
-	  return getMapData(this, key).get(key);
-	}
-
-	/**
-	 * Checks if a map value for `key` exists.
-	 *
-	 * @private
-	 * @name has
-	 * @memberOf MapCache
-	 * @param {string} key The key of the entry to check.
-	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
-	 */
-	function mapCacheHas(key) {
-	  return getMapData(this, key).has(key);
-	}
-
-	/**
-	 * Sets the map `key` to `value`.
-	 *
-	 * @private
-	 * @name set
-	 * @memberOf MapCache
-	 * @param {string} key The key of the value to set.
-	 * @param {*} value The value to set.
-	 * @returns {Object} Returns the map cache instance.
-	 */
-	function mapCacheSet(key, value) {
-	  getMapData(this, key).set(key, value);
-	  return this;
-	}
-
-	// Add methods to `MapCache`.
-	MapCache.prototype.clear = mapCacheClear;
-	MapCache.prototype['delete'] = mapCacheDelete;
-	MapCache.prototype.get = mapCacheGet;
-	MapCache.prototype.has = mapCacheHas;
-	MapCache.prototype.set = mapCacheSet;
-
-	/**
-	 * Creates a stack cache object to store key-value pairs.
-	 *
-	 * @private
-	 * @constructor
-	 * @param {Array} [entries] The key-value pairs to cache.
-	 */
-	function Stack(entries) {
-	  this.__data__ = new ListCache(entries);
-	}
-
-	/**
-	 * Removes all key-value entries from the stack.
-	 *
-	 * @private
-	 * @name clear
-	 * @memberOf Stack
-	 */
-	function stackClear() {
-	  this.__data__ = new ListCache;
-	}
-
-	/**
-	 * Removes `key` and its value from the stack.
-	 *
-	 * @private
-	 * @name delete
-	 * @memberOf Stack
-	 * @param {string} key The key of the value to remove.
-	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
-	 */
-	function stackDelete(key) {
-	  return this.__data__['delete'](key);
-	}
-
-	/**
-	 * Gets the stack value for `key`.
-	 *
-	 * @private
-	 * @name get
-	 * @memberOf Stack
-	 * @param {string} key The key of the value to get.
-	 * @returns {*} Returns the entry value.
-	 */
-	function stackGet(key) {
-	  return this.__data__.get(key);
-	}
-
-	/**
-	 * Checks if a stack value for `key` exists.
-	 *
-	 * @private
-	 * @name has
-	 * @memberOf Stack
-	 * @param {string} key The key of the entry to check.
-	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
-	 */
-	function stackHas(key) {
-	  return this.__data__.has(key);
-	}
-
-	/**
-	 * Sets the stack `key` to `value`.
-	 *
-	 * @private
-	 * @name set
-	 * @memberOf Stack
-	 * @param {string} key The key of the value to set.
-	 * @param {*} value The value to set.
-	 * @returns {Object} Returns the stack cache instance.
-	 */
-	function stackSet(key, value) {
-	  var cache = this.__data__;
-	  if (cache instanceof ListCache) {
-	    var pairs = cache.__data__;
-	    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
-	      pairs.push([key, value]);
-	      return this;
-	    }
-	    cache = this.__data__ = new MapCache(pairs);
-	  }
-	  cache.set(key, value);
-	  return this;
-	}
-
-	// Add methods to `Stack`.
-	Stack.prototype.clear = stackClear;
-	Stack.prototype['delete'] = stackDelete;
-	Stack.prototype.get = stackGet;
-	Stack.prototype.has = stackHas;
-	Stack.prototype.set = stackSet;
-
-	/**
-	 * Creates an array of the enumerable property names of the array-like `value`.
-	 *
-	 * @private
-	 * @param {*} value The value to query.
-	 * @param {boolean} inherited Specify returning inherited property names.
-	 * @returns {Array} Returns the array of property names.
-	 */
-	function arrayLikeKeys(value, inherited) {
-	  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
-	  // Safari 9 makes `arguments.length` enumerable in strict mode.
-	  var result = (isArray(value) || isArguments(value))
-	    ? baseTimes(value.length, String)
-	    : [];
-
-	  var length = result.length,
-	      skipIndexes = !!length;
-
-	  for (var key in value) {
-	    if ((hasOwnProperty.call(value, key)) &&
-	        !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
-	      result.push(key);
-	    }
-	  }
-	  return result;
-	}
-
-	/**
-	 * Assigns `value` to `key` of `object` if the existing value is not equivalent
-	 * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
-	 * for equality comparisons.
-	 *
-	 * @private
-	 * @param {Object} object The object to modify.
-	 * @param {string} key The key of the property to assign.
-	 * @param {*} value The value to assign.
-	 */
-	function assignValue(object, key, value) {
-	  var objValue = object[key];
-	  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
-	      (value === undefined && !(key in object))) {
-	    object[key] = value;
-	  }
-	}
-
-	/**
-	 * Gets the index at which the `key` is found in `array` of key-value pairs.
-	 *
-	 * @private
-	 * @param {Array} array The array to inspect.
-	 * @param {*} key The key to search for.
-	 * @returns {number} Returns the index of the matched value, else `-1`.
-	 */
-	function assocIndexOf(array, key) {
-	  var length = array.length;
-	  while (length--) {
-	    if (eq(array[length][0], key)) {
-	      return length;
-	    }
-	  }
-	  return -1;
-	}
-
-	/**
-	 * The base implementation of `_.assign` without support for multiple sources
-	 * or `customizer` functions.
-	 *
-	 * @private
-	 * @param {Object} object The destination object.
-	 * @param {Object} source The source object.
-	 * @returns {Object} Returns `object`.
-	 */
-	function baseAssign(object, source) {
-	  return object && copyObject(source, keys(source), object);
-	}
-
-	/**
-	 * The base implementation of `_.clone` and `_.cloneDeep` which tracks
-	 * traversed objects.
-	 *
-	 * @private
-	 * @param {*} value The value to clone.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @param {boolean} [isFull] Specify a clone including symbols.
-	 * @param {Function} [customizer] The function to customize cloning.
-	 * @param {string} [key] The key of `value`.
-	 * @param {Object} [object] The parent object of `value`.
-	 * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
-	 * @returns {*} Returns the cloned value.
-	 */
-	function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
-	  var result;
-	  if (customizer) {
-	    result = object ? customizer(value, key, object, stack) : customizer(value);
-	  }
-	  if (result !== undefined) {
-	    return result;
-	  }
-	  if (!isObject(value)) {
-	    return value;
-	  }
-	  var isArr = isArray(value);
-	  if (isArr) {
-	    result = initCloneArray(value);
-	    if (!isDeep) {
-	      return copyArray(value, result);
-	    }
-	  } else {
-	    var tag = getTag(value),
-	        isFunc = tag == funcTag || tag == genTag;
-
-	    if (isBuffer(value)) {
-	      return cloneBuffer(value, isDeep);
-	    }
-	    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
-	      if (isHostObject(value)) {
-	        return object ? value : {};
-	      }
-	      result = initCloneObject(isFunc ? {} : value);
-	      if (!isDeep) {
-	        return copySymbols(value, baseAssign(result, value));
-	      }
-	    } else {
-	      if (!cloneableTags[tag]) {
-	        return object ? value : {};
-	      }
-	      result = initCloneByTag(value, tag, baseClone, isDeep);
-	    }
-	  }
-	  // Check for circular references and return its corresponding clone.
-	  stack || (stack = new Stack);
-	  var stacked = stack.get(value);
-	  if (stacked) {
-	    return stacked;
-	  }
-	  stack.set(value, result);
-
-	  if (!isArr) {
-	    var props = isFull ? getAllKeys(value) : keys(value);
-	  }
-	  arrayEach(props || value, function(subValue, key) {
-	    if (props) {
-	      key = subValue;
-	      subValue = value[key];
-	    }
-	    // Recursively populate clone (susceptible to call stack limits).
-	    assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
-	  });
-	  return result;
-	}
-
-	/**
-	 * The base implementation of `_.create` without support for assigning
-	 * properties to the created object.
-	 *
-	 * @private
-	 * @param {Object} prototype The object to inherit from.
-	 * @returns {Object} Returns the new object.
-	 */
-	function baseCreate(proto) {
-	  return isObject(proto) ? objectCreate(proto) : {};
-	}
-
-	/**
-	 * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
-	 * `keysFunc` and `symbolsFunc` to get the enumerable property names and
-	 * symbols of `object`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {Function} keysFunc The function to get the keys of `object`.
-	 * @param {Function} symbolsFunc The function to get the symbols of `object`.
-	 * @returns {Array} Returns the array of property names and symbols.
-	 */
-	function baseGetAllKeys(object, keysFunc, symbolsFunc) {
-	  var result = keysFunc(object);
-	  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
-	}
-
-	/**
-	 * The base implementation of `getTag`.
-	 *
-	 * @private
-	 * @param {*} value The value to query.
-	 * @returns {string} Returns the `toStringTag`.
-	 */
-	function baseGetTag(value) {
-	  return objectToString.call(value);
-	}
-
-	/**
-	 * The base implementation of `_.isNative` without bad shim checks.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a native function,
-	 *  else `false`.
-	 */
-	function baseIsNative(value) {
-	  if (!isObject(value) || isMasked(value)) {
-	    return false;
-	  }
-	  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-	  return pattern.test(toSource(value));
-	}
-
-	/**
-	 * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @returns {Array} Returns the array of property names.
-	 */
-	function baseKeys(object) {
-	  if (!isPrototype(object)) {
-	    return nativeKeys(object);
-	  }
-	  var result = [];
-	  for (var key in Object(object)) {
-	    if (hasOwnProperty.call(object, key) && key != 'constructor') {
-	      result.push(key);
-	    }
-	  }
-	  return result;
-	}
-
-	/**
-	 * Creates a clone of  `buffer`.
-	 *
-	 * @private
-	 * @param {Buffer} buffer The buffer to clone.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Buffer} Returns the cloned buffer.
-	 */
-	function cloneBuffer(buffer, isDeep) {
-	  if (isDeep) {
-	    return buffer.slice();
-	  }
-	  var result = new buffer.constructor(buffer.length);
-	  buffer.copy(result);
-	  return result;
-	}
-
-	/**
-	 * Creates a clone of `arrayBuffer`.
-	 *
-	 * @private
-	 * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
-	 * @returns {ArrayBuffer} Returns the cloned array buffer.
-	 */
-	function cloneArrayBuffer(arrayBuffer) {
-	  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
-	  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
-	  return result;
-	}
-
-	/**
-	 * Creates a clone of `dataView`.
-	 *
-	 * @private
-	 * @param {Object} dataView The data view to clone.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Object} Returns the cloned data view.
-	 */
-	function cloneDataView(dataView, isDeep) {
-	  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
-	  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
-	}
-
-	/**
-	 * Creates a clone of `map`.
-	 *
-	 * @private
-	 * @param {Object} map The map to clone.
-	 * @param {Function} cloneFunc The function to clone values.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Object} Returns the cloned map.
-	 */
-	function cloneMap(map, isDeep, cloneFunc) {
-	  var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
-	  return arrayReduce(array, addMapEntry, new map.constructor);
-	}
-
-	/**
-	 * Creates a clone of `regexp`.
-	 *
-	 * @private
-	 * @param {Object} regexp The regexp to clone.
-	 * @returns {Object} Returns the cloned regexp.
-	 */
-	function cloneRegExp(regexp) {
-	  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
-	  result.lastIndex = regexp.lastIndex;
-	  return result;
-	}
-
-	/**
-	 * Creates a clone of `set`.
-	 *
-	 * @private
-	 * @param {Object} set The set to clone.
-	 * @param {Function} cloneFunc The function to clone values.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Object} Returns the cloned set.
-	 */
-	function cloneSet(set, isDeep, cloneFunc) {
-	  var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
-	  return arrayReduce(array, addSetEntry, new set.constructor);
-	}
-
-	/**
-	 * Creates a clone of the `symbol` object.
-	 *
-	 * @private
-	 * @param {Object} symbol The symbol object to clone.
-	 * @returns {Object} Returns the cloned symbol object.
-	 */
-	function cloneSymbol(symbol) {
-	  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
-	}
-
-	/**
-	 * Creates a clone of `typedArray`.
-	 *
-	 * @private
-	 * @param {Object} typedArray The typed array to clone.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Object} Returns the cloned typed array.
-	 */
-	function cloneTypedArray(typedArray, isDeep) {
-	  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
-	  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
-	}
-
-	/**
-	 * Copies the values of `source` to `array`.
-	 *
-	 * @private
-	 * @param {Array} source The array to copy values from.
-	 * @param {Array} [array=[]] The array to copy values to.
-	 * @returns {Array} Returns `array`.
-	 */
-	function copyArray(source, array) {
-	  var index = -1,
-	      length = source.length;
-
-	  array || (array = Array(length));
-	  while (++index < length) {
-	    array[index] = source[index];
-	  }
-	  return array;
-	}
-
-	/**
-	 * Copies properties of `source` to `object`.
-	 *
-	 * @private
-	 * @param {Object} source The object to copy properties from.
-	 * @param {Array} props The property identifiers to copy.
-	 * @param {Object} [object={}] The object to copy properties to.
-	 * @param {Function} [customizer] The function to customize copied values.
-	 * @returns {Object} Returns `object`.
-	 */
-	function copyObject(source, props, object, customizer) {
-	  object || (object = {});
-
-	  var index = -1,
-	      length = props.length;
-
-	  while (++index < length) {
-	    var key = props[index];
-
-	    var newValue = undefined;
-
-	    assignValue(object, key, newValue === undefined ? source[key] : newValue);
-	  }
-	  return object;
-	}
-
-	/**
-	 * Copies own symbol properties of `source` to `object`.
-	 *
-	 * @private
-	 * @param {Object} source The object to copy symbols from.
-	 * @param {Object} [object={}] The object to copy symbols to.
-	 * @returns {Object} Returns `object`.
-	 */
-	function copySymbols(source, object) {
-	  return copyObject(source, getSymbols(source), object);
-	}
-
-	/**
-	 * Creates an array of own enumerable property names and symbols of `object`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @returns {Array} Returns the array of property names and symbols.
-	 */
-	function getAllKeys(object) {
-	  return baseGetAllKeys(object, keys, getSymbols);
-	}
-
-	/**
-	 * Gets the data for `map`.
-	 *
-	 * @private
-	 * @param {Object} map The map to query.
-	 * @param {string} key The reference key.
-	 * @returns {*} Returns the map data.
-	 */
-	function getMapData(map, key) {
-	  var data = map.__data__;
-	  return isKeyable(key)
-	    ? data[typeof key == 'string' ? 'string' : 'hash']
-	    : data.map;
-	}
-
-	/**
-	 * Gets the native function at `key` of `object`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {string} key The key of the method to get.
-	 * @returns {*} Returns the function if it's native, else `undefined`.
-	 */
-	function getNative(object, key) {
-	  var value = getValue(object, key);
-	  return baseIsNative(value) ? value : undefined;
-	}
-
-	/**
-	 * Creates an array of the own enumerable symbol properties of `object`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @returns {Array} Returns the array of symbols.
-	 */
-	var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
-
-	/**
-	 * Gets the `toStringTag` of `value`.
-	 *
-	 * @private
-	 * @param {*} value The value to query.
-	 * @returns {string} Returns the `toStringTag`.
-	 */
-	var getTag = baseGetTag;
-
-	// Fallback for data views, maps, sets, and weak maps in IE 11,
-	// for data views in Edge < 14, and promises in Node.js.
-	if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
-	    (Map && getTag(new Map) != mapTag) ||
-	    (Promise && getTag(Promise.resolve()) != promiseTag) ||
-	    (Set && getTag(new Set) != setTag) ||
-	    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
-	  getTag = function(value) {
-	    var result = objectToString.call(value),
-	        Ctor = result == objectTag ? value.constructor : undefined,
-	        ctorString = Ctor ? toSource(Ctor) : undefined;
-
-	    if (ctorString) {
-	      switch (ctorString) {
-	        case dataViewCtorString: return dataViewTag;
-	        case mapCtorString: return mapTag;
-	        case promiseCtorString: return promiseTag;
-	        case setCtorString: return setTag;
-	        case weakMapCtorString: return weakMapTag;
-	      }
-	    }
-	    return result;
-	  };
-	}
-
-	/**
-	 * Initializes an array clone.
-	 *
-	 * @private
-	 * @param {Array} array The array to clone.
-	 * @returns {Array} Returns the initialized clone.
-	 */
-	function initCloneArray(array) {
-	  var length = array.length,
-	      result = array.constructor(length);
-
-	  // Add properties assigned by `RegExp#exec`.
-	  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
-	    result.index = array.index;
-	    result.input = array.input;
-	  }
-	  return result;
-	}
-
-	/**
-	 * Initializes an object clone.
-	 *
-	 * @private
-	 * @param {Object} object The object to clone.
-	 * @returns {Object} Returns the initialized clone.
-	 */
-	function initCloneObject(object) {
-	  return (typeof object.constructor == 'function' && !isPrototype(object))
-	    ? baseCreate(getPrototype(object))
-	    : {};
-	}
-
-	/**
-	 * Initializes an object clone based on its `toStringTag`.
-	 *
-	 * **Note:** This function only supports cloning values with tags of
-	 * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
-	 *
-	 * @private
-	 * @param {Object} object The object to clone.
-	 * @param {string} tag The `toStringTag` of the object to clone.
-	 * @param {Function} cloneFunc The function to clone values.
-	 * @param {boolean} [isDeep] Specify a deep clone.
-	 * @returns {Object} Returns the initialized clone.
-	 */
-	function initCloneByTag(object, tag, cloneFunc, isDeep) {
-	  var Ctor = object.constructor;
-	  switch (tag) {
-	    case arrayBufferTag:
-	      return cloneArrayBuffer(object);
-
-	    case boolTag:
-	    case dateTag:
-	      return new Ctor(+object);
-
-	    case dataViewTag:
-	      return cloneDataView(object, isDeep);
-
-	    case float32Tag: case float64Tag:
-	    case int8Tag: case int16Tag: case int32Tag:
-	    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
-	      return cloneTypedArray(object, isDeep);
-
-	    case mapTag:
-	      return cloneMap(object, isDeep, cloneFunc);
-
-	    case numberTag:
-	    case stringTag:
-	      return new Ctor(object);
-
-	    case regexpTag:
-	      return cloneRegExp(object);
-
-	    case setTag:
-	      return cloneSet(object, isDeep, cloneFunc);
-
-	    case symbolTag:
-	      return cloneSymbol(object);
-	  }
-	}
-
-	/**
-	 * Checks if `value` is a valid array-like index.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
-	 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
-	 */
-	function isIndex(value, length) {
-	  length = length == null ? MAX_SAFE_INTEGER : length;
-	  return !!length &&
-	    (typeof value == 'number' || reIsUint.test(value)) &&
-	    (value > -1 && value % 1 == 0 && value < length);
-	}
-
-	/**
-	 * Checks if `value` is suitable for use as unique object key.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
-	 */
-	function isKeyable(value) {
-	  var type = typeof value;
-	  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
-	    ? (value !== '__proto__')
-	    : (value === null);
-	}
-
-	/**
-	 * Checks if `func` has its source masked.
-	 *
-	 * @private
-	 * @param {Function} func The function to check.
-	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
-	 */
-	function isMasked(func) {
-	  return !!maskSrcKey && (maskSrcKey in func);
-	}
-
-	/**
-	 * Checks if `value` is likely a prototype object.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
-	 */
-	function isPrototype(value) {
-	  var Ctor = value && value.constructor,
-	      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
-
-	  return value === proto;
-	}
-
-	/**
-	 * Converts `func` to its source code.
-	 *
-	 * @private
-	 * @param {Function} func The function to process.
-	 * @returns {string} Returns the source code.
-	 */
-	function toSource(func) {
-	  if (func != null) {
-	    try {
-	      return funcToString.call(func);
-	    } catch (e) {}
-	    try {
-	      return (func + '');
-	    } catch (e) {}
-	  }
-	  return '';
-	}
-
-	/**
-	 * This method is like `_.clone` except that it recursively clones `value`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 1.0.0
-	 * @category Lang
-	 * @param {*} value The value to recursively clone.
-	 * @returns {*} Returns the deep cloned value.
-	 * @see _.clone
-	 * @example
-	 *
-	 * var objects = [{ 'a': 1 }, { 'b': 2 }];
-	 *
-	 * var deep = _.cloneDeep(objects);
-	 * console.log(deep[0] === objects[0]);
-	 * // => false
-	 */
-	function cloneDeep(value) {
-	  return baseClone(value, true, true);
-	}
-
-	/**
-	 * Performs a
-	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
-	 * comparison between two values to determine if they are equivalent.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to compare.
-	 * @param {*} other The other value to compare.
-	 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
-	 * @example
-	 *
-	 * var object = { 'a': 1 };
-	 * var other = { 'a': 1 };
-	 *
-	 * _.eq(object, object);
-	 * // => true
-	 *
-	 * _.eq(object, other);
-	 * // => false
-	 *
-	 * _.eq('a', 'a');
-	 * // => true
-	 *
-	 * _.eq('a', Object('a'));
-	 * // => false
-	 *
-	 * _.eq(NaN, NaN);
-	 * // => true
-	 */
-	function eq(value, other) {
-	  return value === other || (value !== value && other !== other);
-	}
-
-	/**
-	 * Checks if `value` is likely an `arguments` object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isArguments(function() { return arguments; }());
-	 * // => true
-	 *
-	 * _.isArguments([1, 2, 3]);
-	 * // => false
-	 */
-	function isArguments(value) {
-	  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
-	  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
-	    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
-	}
-
-	/**
-	 * Checks if `value` is classified as an `Array` object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an array, else `false`.
-	 * @example
-	 *
-	 * _.isArray([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isArray(document.body.children);
-	 * // => false
-	 *
-	 * _.isArray('abc');
-	 * // => false
-	 *
-	 * _.isArray(_.noop);
-	 * // => false
-	 */
-	var isArray = Array.isArray;
-
-	/**
-	 * Checks if `value` is array-like. A value is considered array-like if it's
-	 * not a function and has a `value.length` that's an integer greater than or
-	 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
-	 * @example
-	 *
-	 * _.isArrayLike([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isArrayLike(document.body.children);
-	 * // => true
-	 *
-	 * _.isArrayLike('abc');
-	 * // => true
-	 *
-	 * _.isArrayLike(_.noop);
-	 * // => false
-	 */
-	function isArrayLike(value) {
-	  return value != null && isLength(value.length) && !isFunction(value);
-	}
-
-	/**
-	 * This method is like `_.isArrayLike` except that it also checks if `value`
-	 * is an object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an array-like object,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isArrayLikeObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isArrayLikeObject(document.body.children);
-	 * // => true
-	 *
-	 * _.isArrayLikeObject('abc');
-	 * // => false
-	 *
-	 * _.isArrayLikeObject(_.noop);
-	 * // => false
-	 */
-	function isArrayLikeObject(value) {
-	  return isObjectLike(value) && isArrayLike(value);
-	}
-
-	/**
-	 * Checks if `value` is a buffer.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.3.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
-	 * @example
-	 *
-	 * _.isBuffer(new Buffer(2));
-	 * // => true
-	 *
-	 * _.isBuffer(new Uint8Array(2));
-	 * // => false
-	 */
-	var isBuffer = nativeIsBuffer || stubFalse;
-
-	/**
-	 * Checks if `value` is classified as a `Function` object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
-	 * @example
-	 *
-	 * _.isFunction(_);
-	 * // => true
-	 *
-	 * _.isFunction(/abc/);
-	 * // => false
-	 */
-	function isFunction(value) {
-	  // The use of `Object#toString` avoids issues with the `typeof` operator
-	  // in Safari 8-9 which returns 'object' for typed array and other constructors.
-	  var tag = isObject(value) ? objectToString.call(value) : '';
-	  return tag == funcTag || tag == genTag;
-	}
-
-	/**
-	 * Checks if `value` is a valid array-like length.
-	 *
-	 * **Note:** This method is loosely based on
-	 * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
-	 * @example
-	 *
-	 * _.isLength(3);
-	 * // => true
-	 *
-	 * _.isLength(Number.MIN_VALUE);
-	 * // => false
-	 *
-	 * _.isLength(Infinity);
-	 * // => false
-	 *
-	 * _.isLength('3');
-	 * // => false
-	 */
-	function isLength(value) {
-	  return typeof value == 'number' &&
-	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-	}
-
-	/**
-	 * Checks if `value` is the
-	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
-	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
-	 * @example
-	 *
-	 * _.isObject({});
-	 * // => true
-	 *
-	 * _.isObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObject(_.noop);
-	 * // => true
-	 *
-	 * _.isObject(null);
-	 * // => false
-	 */
-	function isObject(value) {
-	  var type = typeof value;
-	  return !!value && (type == 'object' || type == 'function');
-	}
-
-	/**
-	 * Checks if `value` is object-like. A value is object-like if it's not `null`
-	 * and has a `typeof` result of "object".
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
-	 * @example
-	 *
-	 * _.isObjectLike({});
-	 * // => true
-	 *
-	 * _.isObjectLike([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObjectLike(_.noop);
-	 * // => false
-	 *
-	 * _.isObjectLike(null);
-	 * // => false
-	 */
-	function isObjectLike(value) {
-	  return !!value && typeof value == 'object';
-	}
-
-	/**
-	 * Creates an array of the own enumerable property names of `object`.
-	 *
-	 * **Note:** Non-object values are coerced to objects. See the
-	 * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
-	 * for more details.
-	 *
-	 * @static
-	 * @since 0.1.0
-	 * @memberOf _
-	 * @category Object
-	 * @param {Object} object The object to query.
-	 * @returns {Array} Returns the array of property names.
-	 * @example
-	 *
-	 * function Foo() {
-	 *   this.a = 1;
-	 *   this.b = 2;
-	 * }
-	 *
-	 * Foo.prototype.c = 3;
-	 *
-	 * _.keys(new Foo);
-	 * // => ['a', 'b'] (iteration order is not guaranteed)
-	 *
-	 * _.keys('hi');
-	 * // => ['0', '1']
-	 */
-	function keys(object) {
-	  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
-	}
-
-	/**
-	 * This method returns a new empty array.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.13.0
-	 * @category Util
-	 * @returns {Array} Returns the new empty array.
-	 * @example
-	 *
-	 * var arrays = _.times(2, _.stubArray);
-	 *
-	 * console.log(arrays);
-	 * // => [[], []]
-	 *
-	 * console.log(arrays[0] === arrays[1]);
-	 * // => false
-	 */
-	function stubArray() {
-	  return [];
-	}
-
-	/**
-	 * This method returns `false`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.13.0
-	 * @category Util
-	 * @returns {boolean} Returns `false`.
-	 * @example
-	 *
-	 * _.times(2, _.stubFalse);
-	 * // => [false, false]
-	 */
-	function stubFalse() {
-	  return false;
-	}
-
-	module.exports = cloneDeep; 
-} (lodash_clonedeep, lodash_clonedeep.exports));
-
-var lodash_clonedeepExports = lodash_clonedeep.exports;
+var hasRequiredLodash_clonedeep;
+
+function requireLodash_clonedeep () {
+	if (hasRequiredLodash_clonedeep) return lodash_clonedeep.exports;
+	hasRequiredLodash_clonedeep = 1;
+	(function (module, exports$1) {
+		/** Used as the size to enable large array optimizations. */
+		var LARGE_ARRAY_SIZE = 200;
+
+		/** Used to stand-in for `undefined` hash values. */
+		var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+		/** Used as references for various `Number` constants. */
+		var MAX_SAFE_INTEGER = 9007199254740991;
+
+		/** `Object#toString` result references. */
+		var argsTag = '[object Arguments]',
+		    arrayTag = '[object Array]',
+		    boolTag = '[object Boolean]',
+		    dateTag = '[object Date]',
+		    errorTag = '[object Error]',
+		    funcTag = '[object Function]',
+		    genTag = '[object GeneratorFunction]',
+		    mapTag = '[object Map]',
+		    numberTag = '[object Number]',
+		    objectTag = '[object Object]',
+		    promiseTag = '[object Promise]',
+		    regexpTag = '[object RegExp]',
+		    setTag = '[object Set]',
+		    stringTag = '[object String]',
+		    symbolTag = '[object Symbol]',
+		    weakMapTag = '[object WeakMap]';
+
+		var arrayBufferTag = '[object ArrayBuffer]',
+		    dataViewTag = '[object DataView]',
+		    float32Tag = '[object Float32Array]',
+		    float64Tag = '[object Float64Array]',
+		    int8Tag = '[object Int8Array]',
+		    int16Tag = '[object Int16Array]',
+		    int32Tag = '[object Int32Array]',
+		    uint8Tag = '[object Uint8Array]',
+		    uint8ClampedTag = '[object Uint8ClampedArray]',
+		    uint16Tag = '[object Uint16Array]',
+		    uint32Tag = '[object Uint32Array]';
+
+		/**
+		 * Used to match `RegExp`
+		 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+		 */
+		var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+		/** Used to match `RegExp` flags from their coerced string values. */
+		var reFlags = /\w*$/;
+
+		/** Used to detect host constructors (Safari). */
+		var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+		/** Used to detect unsigned integer values. */
+		var reIsUint = /^(?:0|[1-9]\d*)$/;
+
+		/** Used to identify `toStringTag` values supported by `_.clone`. */
+		var cloneableTags = {};
+		cloneableTags[argsTag] = cloneableTags[arrayTag] =
+		cloneableTags[arrayBufferTag] = cloneableTags[dataViewTag] =
+		cloneableTags[boolTag] = cloneableTags[dateTag] =
+		cloneableTags[float32Tag] = cloneableTags[float64Tag] =
+		cloneableTags[int8Tag] = cloneableTags[int16Tag] =
+		cloneableTags[int32Tag] = cloneableTags[mapTag] =
+		cloneableTags[numberTag] = cloneableTags[objectTag] =
+		cloneableTags[regexpTag] = cloneableTags[setTag] =
+		cloneableTags[stringTag] = cloneableTags[symbolTag] =
+		cloneableTags[uint8Tag] = cloneableTags[uint8ClampedTag] =
+		cloneableTags[uint16Tag] = cloneableTags[uint32Tag] = true;
+		cloneableTags[errorTag] = cloneableTags[funcTag] =
+		cloneableTags[weakMapTag] = false;
+
+		/** Detect free variable `global` from Node.js. */
+		var freeGlobal = typeof commonjsGlobal == 'object' && commonjsGlobal && commonjsGlobal.Object === Object && commonjsGlobal;
+
+		/** Detect free variable `self`. */
+		var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+		/** Used as a reference to the global object. */
+		var root = freeGlobal || freeSelf || Function('return this')();
+
+		/** Detect free variable `exports`. */
+		var freeExports = exports$1 && !exports$1.nodeType && exports$1;
+
+		/** Detect free variable `module`. */
+		var freeModule = freeExports && 'object' == 'object' && module && !module.nodeType && module;
+
+		/** Detect the popular CommonJS extension `module.exports`. */
+		var moduleExports = freeModule && freeModule.exports === freeExports;
+
+		/**
+		 * Adds the key-value `pair` to `map`.
+		 *
+		 * @private
+		 * @param {Object} map The map to modify.
+		 * @param {Array} pair The key-value pair to add.
+		 * @returns {Object} Returns `map`.
+		 */
+		function addMapEntry(map, pair) {
+		  // Don't return `map.set` because it's not chainable in IE 11.
+		  map.set(pair[0], pair[1]);
+		  return map;
+		}
+
+		/**
+		 * Adds `value` to `set`.
+		 *
+		 * @private
+		 * @param {Object} set The set to modify.
+		 * @param {*} value The value to add.
+		 * @returns {Object} Returns `set`.
+		 */
+		function addSetEntry(set, value) {
+		  // Don't return `set.add` because it's not chainable in IE 11.
+		  set.add(value);
+		  return set;
+		}
+
+		/**
+		 * A specialized version of `_.forEach` for arrays without support for
+		 * iteratee shorthands.
+		 *
+		 * @private
+		 * @param {Array} [array] The array to iterate over.
+		 * @param {Function} iteratee The function invoked per iteration.
+		 * @returns {Array} Returns `array`.
+		 */
+		function arrayEach(array, iteratee) {
+		  var index = -1,
+		      length = array ? array.length : 0;
+
+		  while (++index < length) {
+		    if (iteratee(array[index], index, array) === false) {
+		      break;
+		    }
+		  }
+		  return array;
+		}
+
+		/**
+		 * Appends the elements of `values` to `array`.
+		 *
+		 * @private
+		 * @param {Array} array The array to modify.
+		 * @param {Array} values The values to append.
+		 * @returns {Array} Returns `array`.
+		 */
+		function arrayPush(array, values) {
+		  var index = -1,
+		      length = values.length,
+		      offset = array.length;
+
+		  while (++index < length) {
+		    array[offset + index] = values[index];
+		  }
+		  return array;
+		}
+
+		/**
+		 * A specialized version of `_.reduce` for arrays without support for
+		 * iteratee shorthands.
+		 *
+		 * @private
+		 * @param {Array} [array] The array to iterate over.
+		 * @param {Function} iteratee The function invoked per iteration.
+		 * @param {*} [accumulator] The initial value.
+		 * @param {boolean} [initAccum] Specify using the first element of `array` as
+		 *  the initial value.
+		 * @returns {*} Returns the accumulated value.
+		 */
+		function arrayReduce(array, iteratee, accumulator, initAccum) {
+		  var index = -1,
+		      length = array ? array.length : 0;
+		  while (++index < length) {
+		    accumulator = iteratee(accumulator, array[index], index, array);
+		  }
+		  return accumulator;
+		}
+
+		/**
+		 * The base implementation of `_.times` without support for iteratee shorthands
+		 * or max array length checks.
+		 *
+		 * @private
+		 * @param {number} n The number of times to invoke `iteratee`.
+		 * @param {Function} iteratee The function invoked per iteration.
+		 * @returns {Array} Returns the array of results.
+		 */
+		function baseTimes(n, iteratee) {
+		  var index = -1,
+		      result = Array(n);
+
+		  while (++index < n) {
+		    result[index] = iteratee(index);
+		  }
+		  return result;
+		}
+
+		/**
+		 * Gets the value at `key` of `object`.
+		 *
+		 * @private
+		 * @param {Object} [object] The object to query.
+		 * @param {string} key The key of the property to get.
+		 * @returns {*} Returns the property value.
+		 */
+		function getValue(object, key) {
+		  return object == null ? undefined : object[key];
+		}
+
+		/**
+		 * Checks if `value` is a host object in IE < 9.
+		 *
+		 * @private
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+		 */
+		function isHostObject(value) {
+		  // Many host objects are `Object` objects that can coerce to strings
+		  // despite having improperly defined `toString` methods.
+		  var result = false;
+		  if (value != null && typeof value.toString != 'function') {
+		    try {
+		      result = !!(value + '');
+		    } catch (e) {}
+		  }
+		  return result;
+		}
+
+		/**
+		 * Converts `map` to its key-value pairs.
+		 *
+		 * @private
+		 * @param {Object} map The map to convert.
+		 * @returns {Array} Returns the key-value pairs.
+		 */
+		function mapToArray(map) {
+		  var index = -1,
+		      result = Array(map.size);
+
+		  map.forEach(function(value, key) {
+		    result[++index] = [key, value];
+		  });
+		  return result;
+		}
+
+		/**
+		 * Creates a unary function that invokes `func` with its argument transformed.
+		 *
+		 * @private
+		 * @param {Function} func The function to wrap.
+		 * @param {Function} transform The argument transform.
+		 * @returns {Function} Returns the new function.
+		 */
+		function overArg(func, transform) {
+		  return function(arg) {
+		    return func(transform(arg));
+		  };
+		}
+
+		/**
+		 * Converts `set` to an array of its values.
+		 *
+		 * @private
+		 * @param {Object} set The set to convert.
+		 * @returns {Array} Returns the values.
+		 */
+		function setToArray(set) {
+		  var index = -1,
+		      result = Array(set.size);
+
+		  set.forEach(function(value) {
+		    result[++index] = value;
+		  });
+		  return result;
+		}
+
+		/** Used for built-in method references. */
+		var arrayProto = Array.prototype,
+		    funcProto = Function.prototype,
+		    objectProto = Object.prototype;
+
+		/** Used to detect overreaching core-js shims. */
+		var coreJsData = root['__core-js_shared__'];
+
+		/** Used to detect methods masquerading as native. */
+		var maskSrcKey = (function() {
+		  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+		  return uid ? ('Symbol(src)_1.' + uid) : '';
+		}());
+
+		/** Used to resolve the decompiled source of functions. */
+		var funcToString = funcProto.toString;
+
+		/** Used to check objects for own properties. */
+		var hasOwnProperty = objectProto.hasOwnProperty;
+
+		/**
+		 * Used to resolve the
+		 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+		 * of values.
+		 */
+		var objectToString = objectProto.toString;
+
+		/** Used to detect if a method is native. */
+		var reIsNative = RegExp('^' +
+		  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+		  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+		);
+
+		/** Built-in value references. */
+		var Buffer = moduleExports ? root.Buffer : undefined,
+		    Symbol = root.Symbol,
+		    Uint8Array = root.Uint8Array,
+		    getPrototype = overArg(Object.getPrototypeOf, Object),
+		    objectCreate = Object.create,
+		    propertyIsEnumerable = objectProto.propertyIsEnumerable,
+		    splice = arrayProto.splice;
+
+		/* Built-in method references for those with the same name as other `lodash` methods. */
+		var nativeGetSymbols = Object.getOwnPropertySymbols,
+		    nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined,
+		    nativeKeys = overArg(Object.keys, Object);
+
+		/* Built-in method references that are verified to be native. */
+		var DataView = getNative(root, 'DataView'),
+		    Map = getNative(root, 'Map'),
+		    Promise = getNative(root, 'Promise'),
+		    Set = getNative(root, 'Set'),
+		    WeakMap = getNative(root, 'WeakMap'),
+		    nativeCreate = getNative(Object, 'create');
+
+		/** Used to detect maps, sets, and weakmaps. */
+		var dataViewCtorString = toSource(DataView),
+		    mapCtorString = toSource(Map),
+		    promiseCtorString = toSource(Promise),
+		    setCtorString = toSource(Set),
+		    weakMapCtorString = toSource(WeakMap);
+
+		/** Used to convert symbols to primitives and strings. */
+		var symbolProto = Symbol ? Symbol.prototype : undefined,
+		    symbolValueOf = symbolProto ? symbolProto.valueOf : undefined;
+
+		/**
+		 * Creates a hash object.
+		 *
+		 * @private
+		 * @constructor
+		 * @param {Array} [entries] The key-value pairs to cache.
+		 */
+		function Hash(entries) {
+		  var index = -1,
+		      length = entries ? entries.length : 0;
+
+		  this.clear();
+		  while (++index < length) {
+		    var entry = entries[index];
+		    this.set(entry[0], entry[1]);
+		  }
+		}
+
+		/**
+		 * Removes all key-value entries from the hash.
+		 *
+		 * @private
+		 * @name clear
+		 * @memberOf Hash
+		 */
+		function hashClear() {
+		  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+		}
+
+		/**
+		 * Removes `key` and its value from the hash.
+		 *
+		 * @private
+		 * @name delete
+		 * @memberOf Hash
+		 * @param {Object} hash The hash to modify.
+		 * @param {string} key The key of the value to remove.
+		 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+		 */
+		function hashDelete(key) {
+		  return this.has(key) && delete this.__data__[key];
+		}
+
+		/**
+		 * Gets the hash value for `key`.
+		 *
+		 * @private
+		 * @name get
+		 * @memberOf Hash
+		 * @param {string} key The key of the value to get.
+		 * @returns {*} Returns the entry value.
+		 */
+		function hashGet(key) {
+		  var data = this.__data__;
+		  if (nativeCreate) {
+		    var result = data[key];
+		    return result === HASH_UNDEFINED ? undefined : result;
+		  }
+		  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+		}
+
+		/**
+		 * Checks if a hash value for `key` exists.
+		 *
+		 * @private
+		 * @name has
+		 * @memberOf Hash
+		 * @param {string} key The key of the entry to check.
+		 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+		 */
+		function hashHas(key) {
+		  var data = this.__data__;
+		  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+		}
+
+		/**
+		 * Sets the hash `key` to `value`.
+		 *
+		 * @private
+		 * @name set
+		 * @memberOf Hash
+		 * @param {string} key The key of the value to set.
+		 * @param {*} value The value to set.
+		 * @returns {Object} Returns the hash instance.
+		 */
+		function hashSet(key, value) {
+		  var data = this.__data__;
+		  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+		  return this;
+		}
+
+		// Add methods to `Hash`.
+		Hash.prototype.clear = hashClear;
+		Hash.prototype['delete'] = hashDelete;
+		Hash.prototype.get = hashGet;
+		Hash.prototype.has = hashHas;
+		Hash.prototype.set = hashSet;
+
+		/**
+		 * Creates an list cache object.
+		 *
+		 * @private
+		 * @constructor
+		 * @param {Array} [entries] The key-value pairs to cache.
+		 */
+		function ListCache(entries) {
+		  var index = -1,
+		      length = entries ? entries.length : 0;
+
+		  this.clear();
+		  while (++index < length) {
+		    var entry = entries[index];
+		    this.set(entry[0], entry[1]);
+		  }
+		}
+
+		/**
+		 * Removes all key-value entries from the list cache.
+		 *
+		 * @private
+		 * @name clear
+		 * @memberOf ListCache
+		 */
+		function listCacheClear() {
+		  this.__data__ = [];
+		}
+
+		/**
+		 * Removes `key` and its value from the list cache.
+		 *
+		 * @private
+		 * @name delete
+		 * @memberOf ListCache
+		 * @param {string} key The key of the value to remove.
+		 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+		 */
+		function listCacheDelete(key) {
+		  var data = this.__data__,
+		      index = assocIndexOf(data, key);
+
+		  if (index < 0) {
+		    return false;
+		  }
+		  var lastIndex = data.length - 1;
+		  if (index == lastIndex) {
+		    data.pop();
+		  } else {
+		    splice.call(data, index, 1);
+		  }
+		  return true;
+		}
+
+		/**
+		 * Gets the list cache value for `key`.
+		 *
+		 * @private
+		 * @name get
+		 * @memberOf ListCache
+		 * @param {string} key The key of the value to get.
+		 * @returns {*} Returns the entry value.
+		 */
+		function listCacheGet(key) {
+		  var data = this.__data__,
+		      index = assocIndexOf(data, key);
+
+		  return index < 0 ? undefined : data[index][1];
+		}
+
+		/**
+		 * Checks if a list cache value for `key` exists.
+		 *
+		 * @private
+		 * @name has
+		 * @memberOf ListCache
+		 * @param {string} key The key of the entry to check.
+		 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+		 */
+		function listCacheHas(key) {
+		  return assocIndexOf(this.__data__, key) > -1;
+		}
+
+		/**
+		 * Sets the list cache `key` to `value`.
+		 *
+		 * @private
+		 * @name set
+		 * @memberOf ListCache
+		 * @param {string} key The key of the value to set.
+		 * @param {*} value The value to set.
+		 * @returns {Object} Returns the list cache instance.
+		 */
+		function listCacheSet(key, value) {
+		  var data = this.__data__,
+		      index = assocIndexOf(data, key);
+
+		  if (index < 0) {
+		    data.push([key, value]);
+		  } else {
+		    data[index][1] = value;
+		  }
+		  return this;
+		}
+
+		// Add methods to `ListCache`.
+		ListCache.prototype.clear = listCacheClear;
+		ListCache.prototype['delete'] = listCacheDelete;
+		ListCache.prototype.get = listCacheGet;
+		ListCache.prototype.has = listCacheHas;
+		ListCache.prototype.set = listCacheSet;
+
+		/**
+		 * Creates a map cache object to store key-value pairs.
+		 *
+		 * @private
+		 * @constructor
+		 * @param {Array} [entries] The key-value pairs to cache.
+		 */
+		function MapCache(entries) {
+		  var index = -1,
+		      length = entries ? entries.length : 0;
+
+		  this.clear();
+		  while (++index < length) {
+		    var entry = entries[index];
+		    this.set(entry[0], entry[1]);
+		  }
+		}
+
+		/**
+		 * Removes all key-value entries from the map.
+		 *
+		 * @private
+		 * @name clear
+		 * @memberOf MapCache
+		 */
+		function mapCacheClear() {
+		  this.__data__ = {
+		    'hash': new Hash,
+		    'map': new (Map || ListCache),
+		    'string': new Hash
+		  };
+		}
+
+		/**
+		 * Removes `key` and its value from the map.
+		 *
+		 * @private
+		 * @name delete
+		 * @memberOf MapCache
+		 * @param {string} key The key of the value to remove.
+		 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+		 */
+		function mapCacheDelete(key) {
+		  return getMapData(this, key)['delete'](key);
+		}
+
+		/**
+		 * Gets the map value for `key`.
+		 *
+		 * @private
+		 * @name get
+		 * @memberOf MapCache
+		 * @param {string} key The key of the value to get.
+		 * @returns {*} Returns the entry value.
+		 */
+		function mapCacheGet(key) {
+		  return getMapData(this, key).get(key);
+		}
+
+		/**
+		 * Checks if a map value for `key` exists.
+		 *
+		 * @private
+		 * @name has
+		 * @memberOf MapCache
+		 * @param {string} key The key of the entry to check.
+		 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+		 */
+		function mapCacheHas(key) {
+		  return getMapData(this, key).has(key);
+		}
+
+		/**
+		 * Sets the map `key` to `value`.
+		 *
+		 * @private
+		 * @name set
+		 * @memberOf MapCache
+		 * @param {string} key The key of the value to set.
+		 * @param {*} value The value to set.
+		 * @returns {Object} Returns the map cache instance.
+		 */
+		function mapCacheSet(key, value) {
+		  getMapData(this, key).set(key, value);
+		  return this;
+		}
+
+		// Add methods to `MapCache`.
+		MapCache.prototype.clear = mapCacheClear;
+		MapCache.prototype['delete'] = mapCacheDelete;
+		MapCache.prototype.get = mapCacheGet;
+		MapCache.prototype.has = mapCacheHas;
+		MapCache.prototype.set = mapCacheSet;
+
+		/**
+		 * Creates a stack cache object to store key-value pairs.
+		 *
+		 * @private
+		 * @constructor
+		 * @param {Array} [entries] The key-value pairs to cache.
+		 */
+		function Stack(entries) {
+		  this.__data__ = new ListCache(entries);
+		}
+
+		/**
+		 * Removes all key-value entries from the stack.
+		 *
+		 * @private
+		 * @name clear
+		 * @memberOf Stack
+		 */
+		function stackClear() {
+		  this.__data__ = new ListCache;
+		}
+
+		/**
+		 * Removes `key` and its value from the stack.
+		 *
+		 * @private
+		 * @name delete
+		 * @memberOf Stack
+		 * @param {string} key The key of the value to remove.
+		 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+		 */
+		function stackDelete(key) {
+		  return this.__data__['delete'](key);
+		}
+
+		/**
+		 * Gets the stack value for `key`.
+		 *
+		 * @private
+		 * @name get
+		 * @memberOf Stack
+		 * @param {string} key The key of the value to get.
+		 * @returns {*} Returns the entry value.
+		 */
+		function stackGet(key) {
+		  return this.__data__.get(key);
+		}
+
+		/**
+		 * Checks if a stack value for `key` exists.
+		 *
+		 * @private
+		 * @name has
+		 * @memberOf Stack
+		 * @param {string} key The key of the entry to check.
+		 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+		 */
+		function stackHas(key) {
+		  return this.__data__.has(key);
+		}
+
+		/**
+		 * Sets the stack `key` to `value`.
+		 *
+		 * @private
+		 * @name set
+		 * @memberOf Stack
+		 * @param {string} key The key of the value to set.
+		 * @param {*} value The value to set.
+		 * @returns {Object} Returns the stack cache instance.
+		 */
+		function stackSet(key, value) {
+		  var cache = this.__data__;
+		  if (cache instanceof ListCache) {
+		    var pairs = cache.__data__;
+		    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+		      pairs.push([key, value]);
+		      return this;
+		    }
+		    cache = this.__data__ = new MapCache(pairs);
+		  }
+		  cache.set(key, value);
+		  return this;
+		}
+
+		// Add methods to `Stack`.
+		Stack.prototype.clear = stackClear;
+		Stack.prototype['delete'] = stackDelete;
+		Stack.prototype.get = stackGet;
+		Stack.prototype.has = stackHas;
+		Stack.prototype.set = stackSet;
+
+		/**
+		 * Creates an array of the enumerable property names of the array-like `value`.
+		 *
+		 * @private
+		 * @param {*} value The value to query.
+		 * @param {boolean} inherited Specify returning inherited property names.
+		 * @returns {Array} Returns the array of property names.
+		 */
+		function arrayLikeKeys(value, inherited) {
+		  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+		  // Safari 9 makes `arguments.length` enumerable in strict mode.
+		  var result = (isArray(value) || isArguments(value))
+		    ? baseTimes(value.length, String)
+		    : [];
+
+		  var length = result.length,
+		      skipIndexes = !!length;
+
+		  for (var key in value) {
+		    if ((hasOwnProperty.call(value, key)) &&
+		        !(skipIndexes && (key == 'length' || isIndex(key, length)))) {
+		      result.push(key);
+		    }
+		  }
+		  return result;
+		}
+
+		/**
+		 * Assigns `value` to `key` of `object` if the existing value is not equivalent
+		 * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		 * for equality comparisons.
+		 *
+		 * @private
+		 * @param {Object} object The object to modify.
+		 * @param {string} key The key of the property to assign.
+		 * @param {*} value The value to assign.
+		 */
+		function assignValue(object, key, value) {
+		  var objValue = object[key];
+		  if (!(hasOwnProperty.call(object, key) && eq(objValue, value)) ||
+		      (value === undefined && !(key in object))) {
+		    object[key] = value;
+		  }
+		}
+
+		/**
+		 * Gets the index at which the `key` is found in `array` of key-value pairs.
+		 *
+		 * @private
+		 * @param {Array} array The array to inspect.
+		 * @param {*} key The key to search for.
+		 * @returns {number} Returns the index of the matched value, else `-1`.
+		 */
+		function assocIndexOf(array, key) {
+		  var length = array.length;
+		  while (length--) {
+		    if (eq(array[length][0], key)) {
+		      return length;
+		    }
+		  }
+		  return -1;
+		}
+
+		/**
+		 * The base implementation of `_.assign` without support for multiple sources
+		 * or `customizer` functions.
+		 *
+		 * @private
+		 * @param {Object} object The destination object.
+		 * @param {Object} source The source object.
+		 * @returns {Object} Returns `object`.
+		 */
+		function baseAssign(object, source) {
+		  return object && copyObject(source, keys(source), object);
+		}
+
+		/**
+		 * The base implementation of `_.clone` and `_.cloneDeep` which tracks
+		 * traversed objects.
+		 *
+		 * @private
+		 * @param {*} value The value to clone.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @param {boolean} [isFull] Specify a clone including symbols.
+		 * @param {Function} [customizer] The function to customize cloning.
+		 * @param {string} [key] The key of `value`.
+		 * @param {Object} [object] The parent object of `value`.
+		 * @param {Object} [stack] Tracks traversed objects and their clone counterparts.
+		 * @returns {*} Returns the cloned value.
+		 */
+		function baseClone(value, isDeep, isFull, customizer, key, object, stack) {
+		  var result;
+		  if (customizer) {
+		    result = object ? customizer(value, key, object, stack) : customizer(value);
+		  }
+		  if (result !== undefined) {
+		    return result;
+		  }
+		  if (!isObject(value)) {
+		    return value;
+		  }
+		  var isArr = isArray(value);
+		  if (isArr) {
+		    result = initCloneArray(value);
+		    if (!isDeep) {
+		      return copyArray(value, result);
+		    }
+		  } else {
+		    var tag = getTag(value),
+		        isFunc = tag == funcTag || tag == genTag;
+
+		    if (isBuffer(value)) {
+		      return cloneBuffer(value, isDeep);
+		    }
+		    if (tag == objectTag || tag == argsTag || (isFunc && !object)) {
+		      if (isHostObject(value)) {
+		        return object ? value : {};
+		      }
+		      result = initCloneObject(isFunc ? {} : value);
+		      if (!isDeep) {
+		        return copySymbols(value, baseAssign(result, value));
+		      }
+		    } else {
+		      if (!cloneableTags[tag]) {
+		        return object ? value : {};
+		      }
+		      result = initCloneByTag(value, tag, baseClone, isDeep);
+		    }
+		  }
+		  // Check for circular references and return its corresponding clone.
+		  stack || (stack = new Stack);
+		  var stacked = stack.get(value);
+		  if (stacked) {
+		    return stacked;
+		  }
+		  stack.set(value, result);
+
+		  if (!isArr) {
+		    var props = isFull ? getAllKeys(value) : keys(value);
+		  }
+		  arrayEach(props || value, function(subValue, key) {
+		    if (props) {
+		      key = subValue;
+		      subValue = value[key];
+		    }
+		    // Recursively populate clone (susceptible to call stack limits).
+		    assignValue(result, key, baseClone(subValue, isDeep, isFull, customizer, key, value, stack));
+		  });
+		  return result;
+		}
+
+		/**
+		 * The base implementation of `_.create` without support for assigning
+		 * properties to the created object.
+		 *
+		 * @private
+		 * @param {Object} prototype The object to inherit from.
+		 * @returns {Object} Returns the new object.
+		 */
+		function baseCreate(proto) {
+		  return isObject(proto) ? objectCreate(proto) : {};
+		}
+
+		/**
+		 * The base implementation of `getAllKeys` and `getAllKeysIn` which uses
+		 * `keysFunc` and `symbolsFunc` to get the enumerable property names and
+		 * symbols of `object`.
+		 *
+		 * @private
+		 * @param {Object} object The object to query.
+		 * @param {Function} keysFunc The function to get the keys of `object`.
+		 * @param {Function} symbolsFunc The function to get the symbols of `object`.
+		 * @returns {Array} Returns the array of property names and symbols.
+		 */
+		function baseGetAllKeys(object, keysFunc, symbolsFunc) {
+		  var result = keysFunc(object);
+		  return isArray(object) ? result : arrayPush(result, symbolsFunc(object));
+		}
+
+		/**
+		 * The base implementation of `getTag`.
+		 *
+		 * @private
+		 * @param {*} value The value to query.
+		 * @returns {string} Returns the `toStringTag`.
+		 */
+		function baseGetTag(value) {
+		  return objectToString.call(value);
+		}
+
+		/**
+		 * The base implementation of `_.isNative` without bad shim checks.
+		 *
+		 * @private
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a native function,
+		 *  else `false`.
+		 */
+		function baseIsNative(value) {
+		  if (!isObject(value) || isMasked(value)) {
+		    return false;
+		  }
+		  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+		  return pattern.test(toSource(value));
+		}
+
+		/**
+		 * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+		 *
+		 * @private
+		 * @param {Object} object The object to query.
+		 * @returns {Array} Returns the array of property names.
+		 */
+		function baseKeys(object) {
+		  if (!isPrototype(object)) {
+		    return nativeKeys(object);
+		  }
+		  var result = [];
+		  for (var key in Object(object)) {
+		    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+		      result.push(key);
+		    }
+		  }
+		  return result;
+		}
+
+		/**
+		 * Creates a clone of  `buffer`.
+		 *
+		 * @private
+		 * @param {Buffer} buffer The buffer to clone.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Buffer} Returns the cloned buffer.
+		 */
+		function cloneBuffer(buffer, isDeep) {
+		  if (isDeep) {
+		    return buffer.slice();
+		  }
+		  var result = new buffer.constructor(buffer.length);
+		  buffer.copy(result);
+		  return result;
+		}
+
+		/**
+		 * Creates a clone of `arrayBuffer`.
+		 *
+		 * @private
+		 * @param {ArrayBuffer} arrayBuffer The array buffer to clone.
+		 * @returns {ArrayBuffer} Returns the cloned array buffer.
+		 */
+		function cloneArrayBuffer(arrayBuffer) {
+		  var result = new arrayBuffer.constructor(arrayBuffer.byteLength);
+		  new Uint8Array(result).set(new Uint8Array(arrayBuffer));
+		  return result;
+		}
+
+		/**
+		 * Creates a clone of `dataView`.
+		 *
+		 * @private
+		 * @param {Object} dataView The data view to clone.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Object} Returns the cloned data view.
+		 */
+		function cloneDataView(dataView, isDeep) {
+		  var buffer = isDeep ? cloneArrayBuffer(dataView.buffer) : dataView.buffer;
+		  return new dataView.constructor(buffer, dataView.byteOffset, dataView.byteLength);
+		}
+
+		/**
+		 * Creates a clone of `map`.
+		 *
+		 * @private
+		 * @param {Object} map The map to clone.
+		 * @param {Function} cloneFunc The function to clone values.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Object} Returns the cloned map.
+		 */
+		function cloneMap(map, isDeep, cloneFunc) {
+		  var array = isDeep ? cloneFunc(mapToArray(map), true) : mapToArray(map);
+		  return arrayReduce(array, addMapEntry, new map.constructor);
+		}
+
+		/**
+		 * Creates a clone of `regexp`.
+		 *
+		 * @private
+		 * @param {Object} regexp The regexp to clone.
+		 * @returns {Object} Returns the cloned regexp.
+		 */
+		function cloneRegExp(regexp) {
+		  var result = new regexp.constructor(regexp.source, reFlags.exec(regexp));
+		  result.lastIndex = regexp.lastIndex;
+		  return result;
+		}
+
+		/**
+		 * Creates a clone of `set`.
+		 *
+		 * @private
+		 * @param {Object} set The set to clone.
+		 * @param {Function} cloneFunc The function to clone values.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Object} Returns the cloned set.
+		 */
+		function cloneSet(set, isDeep, cloneFunc) {
+		  var array = isDeep ? cloneFunc(setToArray(set), true) : setToArray(set);
+		  return arrayReduce(array, addSetEntry, new set.constructor);
+		}
+
+		/**
+		 * Creates a clone of the `symbol` object.
+		 *
+		 * @private
+		 * @param {Object} symbol The symbol object to clone.
+		 * @returns {Object} Returns the cloned symbol object.
+		 */
+		function cloneSymbol(symbol) {
+		  return symbolValueOf ? Object(symbolValueOf.call(symbol)) : {};
+		}
+
+		/**
+		 * Creates a clone of `typedArray`.
+		 *
+		 * @private
+		 * @param {Object} typedArray The typed array to clone.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Object} Returns the cloned typed array.
+		 */
+		function cloneTypedArray(typedArray, isDeep) {
+		  var buffer = isDeep ? cloneArrayBuffer(typedArray.buffer) : typedArray.buffer;
+		  return new typedArray.constructor(buffer, typedArray.byteOffset, typedArray.length);
+		}
+
+		/**
+		 * Copies the values of `source` to `array`.
+		 *
+		 * @private
+		 * @param {Array} source The array to copy values from.
+		 * @param {Array} [array=[]] The array to copy values to.
+		 * @returns {Array} Returns `array`.
+		 */
+		function copyArray(source, array) {
+		  var index = -1,
+		      length = source.length;
+
+		  array || (array = Array(length));
+		  while (++index < length) {
+		    array[index] = source[index];
+		  }
+		  return array;
+		}
+
+		/**
+		 * Copies properties of `source` to `object`.
+		 *
+		 * @private
+		 * @param {Object} source The object to copy properties from.
+		 * @param {Array} props The property identifiers to copy.
+		 * @param {Object} [object={}] The object to copy properties to.
+		 * @param {Function} [customizer] The function to customize copied values.
+		 * @returns {Object} Returns `object`.
+		 */
+		function copyObject(source, props, object, customizer) {
+		  object || (object = {});
+
+		  var index = -1,
+		      length = props.length;
+
+		  while (++index < length) {
+		    var key = props[index];
+
+		    var newValue = undefined;
+
+		    assignValue(object, key, newValue === undefined ? source[key] : newValue);
+		  }
+		  return object;
+		}
+
+		/**
+		 * Copies own symbol properties of `source` to `object`.
+		 *
+		 * @private
+		 * @param {Object} source The object to copy symbols from.
+		 * @param {Object} [object={}] The object to copy symbols to.
+		 * @returns {Object} Returns `object`.
+		 */
+		function copySymbols(source, object) {
+		  return copyObject(source, getSymbols(source), object);
+		}
+
+		/**
+		 * Creates an array of own enumerable property names and symbols of `object`.
+		 *
+		 * @private
+		 * @param {Object} object The object to query.
+		 * @returns {Array} Returns the array of property names and symbols.
+		 */
+		function getAllKeys(object) {
+		  return baseGetAllKeys(object, keys, getSymbols);
+		}
+
+		/**
+		 * Gets the data for `map`.
+		 *
+		 * @private
+		 * @param {Object} map The map to query.
+		 * @param {string} key The reference key.
+		 * @returns {*} Returns the map data.
+		 */
+		function getMapData(map, key) {
+		  var data = map.__data__;
+		  return isKeyable(key)
+		    ? data[typeof key == 'string' ? 'string' : 'hash']
+		    : data.map;
+		}
+
+		/**
+		 * Gets the native function at `key` of `object`.
+		 *
+		 * @private
+		 * @param {Object} object The object to query.
+		 * @param {string} key The key of the method to get.
+		 * @returns {*} Returns the function if it's native, else `undefined`.
+		 */
+		function getNative(object, key) {
+		  var value = getValue(object, key);
+		  return baseIsNative(value) ? value : undefined;
+		}
+
+		/**
+		 * Creates an array of the own enumerable symbol properties of `object`.
+		 *
+		 * @private
+		 * @param {Object} object The object to query.
+		 * @returns {Array} Returns the array of symbols.
+		 */
+		var getSymbols = nativeGetSymbols ? overArg(nativeGetSymbols, Object) : stubArray;
+
+		/**
+		 * Gets the `toStringTag` of `value`.
+		 *
+		 * @private
+		 * @param {*} value The value to query.
+		 * @returns {string} Returns the `toStringTag`.
+		 */
+		var getTag = baseGetTag;
+
+		// Fallback for data views, maps, sets, and weak maps in IE 11,
+		// for data views in Edge < 14, and promises in Node.js.
+		if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
+		    (Map && getTag(new Map) != mapTag) ||
+		    (Promise && getTag(Promise.resolve()) != promiseTag) ||
+		    (Set && getTag(new Set) != setTag) ||
+		    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
+		  getTag = function(value) {
+		    var result = objectToString.call(value),
+		        Ctor = result == objectTag ? value.constructor : undefined,
+		        ctorString = Ctor ? toSource(Ctor) : undefined;
+
+		    if (ctorString) {
+		      switch (ctorString) {
+		        case dataViewCtorString: return dataViewTag;
+		        case mapCtorString: return mapTag;
+		        case promiseCtorString: return promiseTag;
+		        case setCtorString: return setTag;
+		        case weakMapCtorString: return weakMapTag;
+		      }
+		    }
+		    return result;
+		  };
+		}
+
+		/**
+		 * Initializes an array clone.
+		 *
+		 * @private
+		 * @param {Array} array The array to clone.
+		 * @returns {Array} Returns the initialized clone.
+		 */
+		function initCloneArray(array) {
+		  var length = array.length,
+		      result = array.constructor(length);
+
+		  // Add properties assigned by `RegExp#exec`.
+		  if (length && typeof array[0] == 'string' && hasOwnProperty.call(array, 'index')) {
+		    result.index = array.index;
+		    result.input = array.input;
+		  }
+		  return result;
+		}
+
+		/**
+		 * Initializes an object clone.
+		 *
+		 * @private
+		 * @param {Object} object The object to clone.
+		 * @returns {Object} Returns the initialized clone.
+		 */
+		function initCloneObject(object) {
+		  return (typeof object.constructor == 'function' && !isPrototype(object))
+		    ? baseCreate(getPrototype(object))
+		    : {};
+		}
+
+		/**
+		 * Initializes an object clone based on its `toStringTag`.
+		 *
+		 * **Note:** This function only supports cloning values with tags of
+		 * `Boolean`, `Date`, `Error`, `Number`, `RegExp`, or `String`.
+		 *
+		 * @private
+		 * @param {Object} object The object to clone.
+		 * @param {string} tag The `toStringTag` of the object to clone.
+		 * @param {Function} cloneFunc The function to clone values.
+		 * @param {boolean} [isDeep] Specify a deep clone.
+		 * @returns {Object} Returns the initialized clone.
+		 */
+		function initCloneByTag(object, tag, cloneFunc, isDeep) {
+		  var Ctor = object.constructor;
+		  switch (tag) {
+		    case arrayBufferTag:
+		      return cloneArrayBuffer(object);
+
+		    case boolTag:
+		    case dateTag:
+		      return new Ctor(+object);
+
+		    case dataViewTag:
+		      return cloneDataView(object, isDeep);
+
+		    case float32Tag: case float64Tag:
+		    case int8Tag: case int16Tag: case int32Tag:
+		    case uint8Tag: case uint8ClampedTag: case uint16Tag: case uint32Tag:
+		      return cloneTypedArray(object, isDeep);
+
+		    case mapTag:
+		      return cloneMap(object, isDeep, cloneFunc);
+
+		    case numberTag:
+		    case stringTag:
+		      return new Ctor(object);
+
+		    case regexpTag:
+		      return cloneRegExp(object);
+
+		    case setTag:
+		      return cloneSet(object, isDeep, cloneFunc);
+
+		    case symbolTag:
+		      return cloneSymbol(object);
+		  }
+		}
+
+		/**
+		 * Checks if `value` is a valid array-like index.
+		 *
+		 * @private
+		 * @param {*} value The value to check.
+		 * @param {number} [length=MAX_SAFE_INTEGER] The upper bounds of a valid index.
+		 * @returns {boolean} Returns `true` if `value` is a valid index, else `false`.
+		 */
+		function isIndex(value, length) {
+		  length = length == null ? MAX_SAFE_INTEGER : length;
+		  return !!length &&
+		    (typeof value == 'number' || reIsUint.test(value)) &&
+		    (value > -1 && value % 1 == 0 && value < length);
+		}
+
+		/**
+		 * Checks if `value` is suitable for use as unique object key.
+		 *
+		 * @private
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+		 */
+		function isKeyable(value) {
+		  var type = typeof value;
+		  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+		    ? (value !== '__proto__')
+		    : (value === null);
+		}
+
+		/**
+		 * Checks if `func` has its source masked.
+		 *
+		 * @private
+		 * @param {Function} func The function to check.
+		 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+		 */
+		function isMasked(func) {
+		  return !!maskSrcKey && (maskSrcKey in func);
+		}
+
+		/**
+		 * Checks if `value` is likely a prototype object.
+		 *
+		 * @private
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a prototype, else `false`.
+		 */
+		function isPrototype(value) {
+		  var Ctor = value && value.constructor,
+		      proto = (typeof Ctor == 'function' && Ctor.prototype) || objectProto;
+
+		  return value === proto;
+		}
+
+		/**
+		 * Converts `func` to its source code.
+		 *
+		 * @private
+		 * @param {Function} func The function to process.
+		 * @returns {string} Returns the source code.
+		 */
+		function toSource(func) {
+		  if (func != null) {
+		    try {
+		      return funcToString.call(func);
+		    } catch (e) {}
+		    try {
+		      return (func + '');
+		    } catch (e) {}
+		  }
+		  return '';
+		}
+
+		/**
+		 * This method is like `_.clone` except that it recursively clones `value`.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 1.0.0
+		 * @category Lang
+		 * @param {*} value The value to recursively clone.
+		 * @returns {*} Returns the deep cloned value.
+		 * @see _.clone
+		 * @example
+		 *
+		 * var objects = [{ 'a': 1 }, { 'b': 2 }];
+		 *
+		 * var deep = _.cloneDeep(objects);
+		 * console.log(deep[0] === objects[0]);
+		 * // => false
+		 */
+		function cloneDeep(value) {
+		  return baseClone(value, true, true);
+		}
+
+		/**
+		 * Performs a
+		 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+		 * comparison between two values to determine if they are equivalent.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.0.0
+		 * @category Lang
+		 * @param {*} value The value to compare.
+		 * @param {*} other The other value to compare.
+		 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+		 * @example
+		 *
+		 * var object = { 'a': 1 };
+		 * var other = { 'a': 1 };
+		 *
+		 * _.eq(object, object);
+		 * // => true
+		 *
+		 * _.eq(object, other);
+		 * // => false
+		 *
+		 * _.eq('a', 'a');
+		 * // => true
+		 *
+		 * _.eq('a', Object('a'));
+		 * // => false
+		 *
+		 * _.eq(NaN, NaN);
+		 * // => true
+		 */
+		function eq(value, other) {
+		  return value === other || (value !== value && other !== other);
+		}
+
+		/**
+		 * Checks if `value` is likely an `arguments` object.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 0.1.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
+		 *  else `false`.
+		 * @example
+		 *
+		 * _.isArguments(function() { return arguments; }());
+		 * // => true
+		 *
+		 * _.isArguments([1, 2, 3]);
+		 * // => false
+		 */
+		function isArguments(value) {
+		  // Safari 8.1 makes `arguments.callee` enumerable in strict mode.
+		  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
+		    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
+		}
+
+		/**
+		 * Checks if `value` is classified as an `Array` object.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 0.1.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+		 * @example
+		 *
+		 * _.isArray([1, 2, 3]);
+		 * // => true
+		 *
+		 * _.isArray(document.body.children);
+		 * // => false
+		 *
+		 * _.isArray('abc');
+		 * // => false
+		 *
+		 * _.isArray(_.noop);
+		 * // => false
+		 */
+		var isArray = Array.isArray;
+
+		/**
+		 * Checks if `value` is array-like. A value is considered array-like if it's
+		 * not a function and has a `value.length` that's an integer greater than or
+		 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.0.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+		 * @example
+		 *
+		 * _.isArrayLike([1, 2, 3]);
+		 * // => true
+		 *
+		 * _.isArrayLike(document.body.children);
+		 * // => true
+		 *
+		 * _.isArrayLike('abc');
+		 * // => true
+		 *
+		 * _.isArrayLike(_.noop);
+		 * // => false
+		 */
+		function isArrayLike(value) {
+		  return value != null && isLength(value.length) && !isFunction(value);
+		}
+
+		/**
+		 * This method is like `_.isArrayLike` except that it also checks if `value`
+		 * is an object.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.0.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is an array-like object,
+		 *  else `false`.
+		 * @example
+		 *
+		 * _.isArrayLikeObject([1, 2, 3]);
+		 * // => true
+		 *
+		 * _.isArrayLikeObject(document.body.children);
+		 * // => true
+		 *
+		 * _.isArrayLikeObject('abc');
+		 * // => false
+		 *
+		 * _.isArrayLikeObject(_.noop);
+		 * // => false
+		 */
+		function isArrayLikeObject(value) {
+		  return isObjectLike(value) && isArrayLike(value);
+		}
+
+		/**
+		 * Checks if `value` is a buffer.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.3.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
+		 * @example
+		 *
+		 * _.isBuffer(new Buffer(2));
+		 * // => true
+		 *
+		 * _.isBuffer(new Uint8Array(2));
+		 * // => false
+		 */
+		var isBuffer = nativeIsBuffer || stubFalse;
+
+		/**
+		 * Checks if `value` is classified as a `Function` object.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 0.1.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+		 * @example
+		 *
+		 * _.isFunction(_);
+		 * // => true
+		 *
+		 * _.isFunction(/abc/);
+		 * // => false
+		 */
+		function isFunction(value) {
+		  // The use of `Object#toString` avoids issues with the `typeof` operator
+		  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+		  var tag = isObject(value) ? objectToString.call(value) : '';
+		  return tag == funcTag || tag == genTag;
+		}
+
+		/**
+		 * Checks if `value` is a valid array-like length.
+		 *
+		 * **Note:** This method is loosely based on
+		 * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.0.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+		 * @example
+		 *
+		 * _.isLength(3);
+		 * // => true
+		 *
+		 * _.isLength(Number.MIN_VALUE);
+		 * // => false
+		 *
+		 * _.isLength(Infinity);
+		 * // => false
+		 *
+		 * _.isLength('3');
+		 * // => false
+		 */
+		function isLength(value) {
+		  return typeof value == 'number' &&
+		    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+		}
+
+		/**
+		 * Checks if `value` is the
+		 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+		 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 0.1.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+		 * @example
+		 *
+		 * _.isObject({});
+		 * // => true
+		 *
+		 * _.isObject([1, 2, 3]);
+		 * // => true
+		 *
+		 * _.isObject(_.noop);
+		 * // => true
+		 *
+		 * _.isObject(null);
+		 * // => false
+		 */
+		function isObject(value) {
+		  var type = typeof value;
+		  return !!value && (type == 'object' || type == 'function');
+		}
+
+		/**
+		 * Checks if `value` is object-like. A value is object-like if it's not `null`
+		 * and has a `typeof` result of "object".
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.0.0
+		 * @category Lang
+		 * @param {*} value The value to check.
+		 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+		 * @example
+		 *
+		 * _.isObjectLike({});
+		 * // => true
+		 *
+		 * _.isObjectLike([1, 2, 3]);
+		 * // => true
+		 *
+		 * _.isObjectLike(_.noop);
+		 * // => false
+		 *
+		 * _.isObjectLike(null);
+		 * // => false
+		 */
+		function isObjectLike(value) {
+		  return !!value && typeof value == 'object';
+		}
+
+		/**
+		 * Creates an array of the own enumerable property names of `object`.
+		 *
+		 * **Note:** Non-object values are coerced to objects. See the
+		 * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
+		 * for more details.
+		 *
+		 * @static
+		 * @since 0.1.0
+		 * @memberOf _
+		 * @category Object
+		 * @param {Object} object The object to query.
+		 * @returns {Array} Returns the array of property names.
+		 * @example
+		 *
+		 * function Foo() {
+		 *   this.a = 1;
+		 *   this.b = 2;
+		 * }
+		 *
+		 * Foo.prototype.c = 3;
+		 *
+		 * _.keys(new Foo);
+		 * // => ['a', 'b'] (iteration order is not guaranteed)
+		 *
+		 * _.keys('hi');
+		 * // => ['0', '1']
+		 */
+		function keys(object) {
+		  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
+		}
+
+		/**
+		 * This method returns a new empty array.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.13.0
+		 * @category Util
+		 * @returns {Array} Returns the new empty array.
+		 * @example
+		 *
+		 * var arrays = _.times(2, _.stubArray);
+		 *
+		 * console.log(arrays);
+		 * // => [[], []]
+		 *
+		 * console.log(arrays[0] === arrays[1]);
+		 * // => false
+		 */
+		function stubArray() {
+		  return [];
+		}
+
+		/**
+		 * This method returns `false`.
+		 *
+		 * @static
+		 * @memberOf _
+		 * @since 4.13.0
+		 * @category Util
+		 * @returns {boolean} Returns `false`.
+		 * @example
+		 *
+		 * _.times(2, _.stubFalse);
+		 * // => [false, false]
+		 */
+		function stubFalse() {
+		  return false;
+		}
+
+		module.exports = cloneDeep; 
+	} (lodash_clonedeep, lodash_clonedeep.exports));
+	return lodash_clonedeep.exports;
+}
+
+var lodash_clonedeepExports = requireLodash_clonedeep();
 var cloneDeep = /*@__PURE__*/getDefaultExportFromCjs(lodash_clonedeepExports);
 
 function applyContextDelta(context, delta, logger) {
@@ -15538,7 +15826,7 @@ class GW3Bridge {
             }
         }
         else {
-            this._contextNameToData[name] = contextData =
+            this._contextNameToData[name] =
                 new GW3ContextData(contextCreatedMsg.context_id, name, true, contextCreatedMsg.activity_id);
             if (this._trackAllContexts) {
                 this.subscribe(name, () => { }).then((subKey) => this._systemContextsSubKey = subKey);
@@ -16764,10 +17052,10 @@ const nonNegativeNumberDecoder = number().where((num) => num >= 0, "Expected a n
 const methodDefinitionDecoder = object({
     name: nonEmptyStringDecoder,
     objectTypes: optional(array(nonEmptyStringDecoder)),
-    displayName: optional(nonEmptyStringDecoder),
-    accepts: optional(nonEmptyStringDecoder),
-    returns: optional(nonEmptyStringDecoder),
-    description: optional(nonEmptyStringDecoder),
+    displayName: optional(string()),
+    accepts: optional(string()),
+    returns: optional(string()),
+    description: optional(string()),
     version: optional(nonNegativeNumberDecoder),
     supportsStreaming: optional(boolean()),
     flags: optional(object()),
@@ -17670,10 +17958,7 @@ class Server {
         if (!methodDefinition.name) {
             return Promise.reject(`Please, provide a (unique) string value for the “name” property in the “methodDefinition” object: ${JSON.stringify(method)}`);
         }
-        const unregisterInProgress = this.currentlyUnregistering[methodDefinition.name];
-        if (typeof unregisterInProgress !== "undefined") {
-            await unregisterInProgress;
-        }
+        await this.currentlyUnregistering[methodDefinition.name];
         const nameAlreadyExists = this.serverRepository.getList()
             .some((serverMethod) => serverMethod.definition.name === methodDefinition.name);
         if (nameAlreadyExists) {
@@ -17869,7 +18154,6 @@ class ClientRepository {
             return;
         }
         const identifier = this.createMethodIdentifier(method);
-        const that = this;
         const methodDefinition = {
             identifier,
             gatewayId: method.id,
@@ -17883,12 +18167,11 @@ class ClientRepository {
             supportsStreaming: typeof method.flags !== "undefined" ? method.flags.streaming : false,
             flags: method.flags ?? {},
             getServers: () => {
-                return that.getServersByMethod(identifier);
+                return this.getServersByMethod(identifier);
             }
         };
         methodDefinition.object_types = methodDefinition.objectTypes;
         methodDefinition.display_name = methodDefinition.displayName;
-        methodDefinition.version = methodDefinition.version;
         server.methods[method.id] = methodDefinition;
         const clientMethodDefinition = hideMethodSystemFlags(methodDefinition);
         if (!this.methodsCount[identifier]) {
@@ -18180,7 +18463,6 @@ class ServerStreaming {
             .catch((err) => {
             this.logger.warn(`Failed to send drop-subscription message for subscription ${subscription.id}: ${JSON.stringify(err)}`);
         });
-        subscription.instance;
         this.callbacks.execute(SUBSCRIPTION_REMOVED, subscription, streamingMethod);
     }
     closeMultipleSubscriptions(streamingMethod, branchKey) {
@@ -18945,17 +19227,9 @@ class ClientProtocol {
         const isLocal = msg.meta ? msg.meta.local : true;
         const pid = Number(remoteId.process);
         const serverInfo = {
-            machine: remoteId.machine,
+            ...remoteId,
             pid: isNaN(pid) ? remoteId.process : pid,
-            instance: remoteId.instance,
-            application: remoteId.application,
-            applicationName: remoteId.applicationName,
-            environment: remoteId.environment,
-            region: remoteId.region,
-            user: remoteId.user,
-            windowId: remoteId.windowId,
             peerId: newPeerId,
-            api: remoteId.api,
             isLocal
         };
         this.repository.addServer(serverInfo, newPeerId);
@@ -19201,23 +19475,57 @@ class Interop {
 }
 
 const successMessages = ["subscribed", "success"];
+const RECONNECT_STABILIZATION_MS = 500;
+const MAX_PENDING_PUBLISHES = 10000;
 class MessageBus {
     connection;
     logger;
-    peerId;
     session;
     subscriptions;
     readyPromise;
+    resubscribeInProgress;
+    pendingPublishes = [];
+    canDrain = false;
+    drainInProgress = false;
+    sessionGeneration = 0;
     constructor(connection, logger) {
         this.connection = connection;
         this.logger = logger;
-        this.peerId = connection.peerId;
         this.subscriptions = [];
         this.session = connection.domain("bus", successMessages);
         this.readyPromise = this.session.join();
         this.readyPromise.then(() => {
             this.watchOnEvent();
         });
+        this.session.onLeft(() => {
+            this.canDrain = false;
+            this.sessionGeneration++;
+        });
+        this.session.onJoined((wasReconnect) => {
+            this.sessionGeneration++;
+            const myGeneration = this.sessionGeneration;
+            const previous = this.resubscribeInProgress ?? Promise.resolve();
+            this.resubscribeInProgress = previous
+                .then(async () => {
+                try {
+                    if (wasReconnect) {
+                        await this.resubscribe();
+                        await this.sleep(RECONNECT_STABILIZATION_MS);
+                    }
+                    if (this.sessionGeneration !== myGeneration) {
+                        return;
+                    }
+                    this.canDrain = true;
+                    this.tryDrain();
+                }
+                catch (err) {
+                    this.logger.error(`bus: error during onJoined chain: ${JSON.stringify(err)}`);
+                }
+            });
+        });
+    }
+    sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
     ready() {
         return this.readyPromise;
@@ -19233,20 +19541,70 @@ class MessageBus {
         ts.addData("INFO", { routingKey, target });
         data = deepClone(data);
         ts.injectPropagationInfo(data);
-        const args = this.removeEmptyValues({
-            type: "publish",
-            topic,
-            data,
-            peer_id: this.peerId,
-            routing_key: routingKey,
-            target_identity: target
-        });
-        this.session.send(args)
-            .catch((err) => {
-            this.logger.error(`Failed to publish message to topic ${topic} with routing key ${routingKey} for ${JSON.stringify(target)}: ${JSON.stringify(err)}`);
-        });
+        this.pendingPublishes.push({ topic, data, options: options ? deepClone(options) : undefined });
+        if (this.pendingPublishes.length > MAX_PENDING_PUBLISHES) {
+            const dropped = this.pendingPublishes.length - MAX_PENDING_PUBLISHES;
+            this.pendingPublishes.splice(0, dropped);
+            this.logger.warn(`bus: outbox exceeded ${MAX_PENDING_PUBLISHES}, dropped ${dropped} oldest publish(es)`);
+        }
+        if (this.pendingPublishes.length === 1 && !this.canDrain) {
+            this.logger.info(`bus: started buffering publishes (first topic: ${topic})`);
+        }
+        else if (!this.canDrain) {
+            this.logger.debug(`bus: queued publish to ${topic} (${this.pendingPublishes.length} pending)`);
+        }
+        this.tryDrain();
     }
     ;
+    isTransportError(err) {
+        if (err == null) {
+            return false;
+        }
+        if (typeof err === "object" && (err.request_id || err.domain)) {
+            return false;
+        }
+        return true;
+    }
+    async tryDrain() {
+        if (this.drainInProgress || !this.canDrain) {
+            return;
+        }
+        this.drainInProgress = true;
+        try {
+            let dispatched = 0;
+            while (this.pendingPublishes.length > 0 && this.canDrain) {
+                const p = this.pendingPublishes[0];
+                const { routingKey, target } = (p.options || {});
+                const args = this.removeEmptyValues({
+                    type: "publish",
+                    topic: p.topic,
+                    data: p.data,
+                    peer_id: this.connection.peerId,
+                    routing_key: routingKey,
+                    target_identity: target
+                });
+                try {
+                    await this.session.sendFireAndForget(args);
+                    this.pendingPublishes.shift();
+                    dispatched++;
+                }
+                catch (err) {
+                    if (this.isTransportError(err)) {
+                        this.logger.info(`bus: drain paused at ${p.topic} due to transport error (${this.pendingPublishes.length} pending)`);
+                        break;
+                    }
+                    this.pendingPublishes.shift();
+                    this.logger.error(`bus: failed to publish to ${p.topic}: ${JSON.stringify(err)}`);
+                }
+            }
+            if (dispatched > 0 && this.pendingPublishes.length === 0) {
+                this.logger.debug(`bus: drained ${dispatched} publish(es)`);
+            }
+        }
+        finally {
+            this.drainInProgress = false;
+        }
+    }
     subscribe = (topic, callback, options) => {
         return this.subscribeCore(topic, callback, options);
     };
@@ -19259,7 +19617,7 @@ class MessageBus {
             const args = this.removeEmptyValues({
                 type: "subscribe",
                 topic,
-                peer_id: this.peerId,
+                peer_id: this.connection.peerId,
                 routing_key: routingKey,
                 source: target
             });
@@ -19267,22 +19625,25 @@ class MessageBus {
                 .then((response) => {
                 const { subscription_id } = response;
                 ts.addData("INFO", { subscription_id });
-                const tracedCallback = function (...tracedCallbackArgs) {
-                    const propagationInfo = distExports.Traces.extractPropagationInfo(tracedCallbackArgs?.[0], true);
-                    distExports.withSpan("interopio.api.bus.subscribe.callback", { topic }, propagationInfo, (cbts) => {
-                        cbts.addData("INFO", { topic, subscription_id });
-                        cbts.addData("DIAGNOSTIC", { data: tracedCallbackArgs?.[0] });
-                        callback.apply(this, tracedCallbackArgs);
-                    });
+                const entry = {
+                    subscription_id, topic, routingKey, source: target,
+                    callback: function (...tracedCallbackArgs) {
+                        const propagationInfo = distExports.Traces.extractPropagationInfo(tracedCallbackArgs?.[0], true);
+                        distExports.withSpan("interopio.api.bus.subscribe.callback", { topic }, propagationInfo, (cbts) => {
+                            cbts.addData("INFO", { topic, subscription_id: entry.subscription_id });
+                            cbts.addData("DIAGNOSTIC", { data: tracedCallbackArgs?.[0] });
+                            callback.apply(this, tracedCallbackArgs);
+                        });
+                    }
                 };
-                this.subscriptions.push({ subscription_id, topic, callback: tracedCallback, source: target });
+                this.subscriptions.push(entry);
                 resolve({
                     unsubscribe: () => {
-                        this.session.send({ type: "unsubscribe", subscription_id, peer_id: this.peerId })
-                            .then(() => {
-                            this.subscriptions = this.subscriptions.filter((s) => s.subscription_id !== subscription_id);
-                        }).catch((err) => {
-                            this.logger.warn(`Failed to send unsubscribe request for ${subscription_id}: ${JSON.stringify(err)}`);
+                        const currentId = entry.subscription_id;
+                        this.subscriptions = this.subscriptions.filter((s) => s.subscription_id !== currentId);
+                        this.session.send({ type: "unsubscribe", subscription_id: currentId, peer_id: this.connection.peerId })
+                            .catch((err) => {
+                            this.logger.warn(`Failed to send unsubscribe request for ${currentId}: ${JSON.stringify(err)}`);
                         });
                         return Promise.resolve();
                     }
@@ -19309,6 +19670,29 @@ class MessageBus {
             }
         });
     };
+    async resubscribe() {
+        const existing = [...this.subscriptions];
+        this.logger.info(`bus: re-subscribing ${existing.length} subscription(s) after reconnect`);
+        for (const entry of existing) {
+            if (!this.subscriptions.includes(entry)) {
+                continue;
+            }
+            try {
+                const args = this.removeEmptyValues({
+                    type: "subscribe",
+                    topic: entry.topic,
+                    peer_id: this.connection.peerId,
+                    routing_key: entry.routingKey,
+                    source: entry.source
+                });
+                const response = await this.session.send(args);
+                entry.subscription_id = response.subscription_id;
+            }
+            catch (err) {
+                this.logger.error(`bus: failed to re-subscribe to topic "${entry.topic}": ${JSON.stringify(err)}`);
+            }
+        }
+    }
     removeEmptyValues(obj) {
         const cleaned = {};
         Object.keys(obj).forEach((key) => {
@@ -19341,14 +19725,14 @@ function replaceComplexProperties(obj) {
         return;
     }
     for (const prop in obj) {
-        if (!obj.hasOwnProperty(prop)) {
+        if (!Object.prototype.hasOwnProperty.call(obj, prop)) {
             continue;
         }
         const value = obj[prop];
         if (isPrimitiveOrFunction(value)) {
             continue;
         }
-        if (isPlainObject$2(value) || Array.isArray(value)) {
+        if (isPlainObject$1(value) || Array.isArray(value)) {
             replaceComplexProperties(value);
             continue;
         }
