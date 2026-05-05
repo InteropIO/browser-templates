@@ -1,11 +1,13 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideIoConnect } from '@interopio/ng';
-import IOBrowserPlatform, { IOConnectBrowserPlatform } from '@interopio/browser-platform';
+import { IOConnectNgSettings, provideIoConnect } from '@interopio/ng';
 
 import { routes } from './app.routes';
 import * as platformConfig from '../config.json';
 import { IOConnectService } from './io-connect.service';
+
+const browserPlatformConfig =
+  platformConfig as NonNullable<NonNullable<IOConnectNgSettings['browserPlatform']>['config']>;
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,8 +15,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
     provideIoConnect({
       browserPlatform: {
-        factory: IOBrowserPlatform,
-        config: platformConfig as IOConnectBrowserPlatform.Config
+        config: browserPlatformConfig
       }
     }),
     IOConnectService

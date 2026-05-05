@@ -1,13 +1,18 @@
 import { inject, Injectable } from "@angular/core";
 import { IOConnectStore } from "@interopio/ng";
-import { IOConnectBrowser } from "@interopio/browser";
+
+type IOConnectApi = ReturnType<IOConnectStore["getIOConnect"]> & {
+    webPlatform?: {
+        version?: string;
+    };
+};
 
 @Injectable({ providedIn: 'root' })
 export class IOConnectService {
     private readonly ioConnectStore = inject(IOConnectStore);
 
-    get io(): IOConnectBrowser.API {
-        return this.ioConnectStore.getIOConnect() as IOConnectBrowser.API;
+    get io(): IOConnectApi {
+        return this.ioConnectStore.getIOConnect() as IOConnectApi;
     }
     
     get initError(): string | undefined {
