@@ -3,6 +3,7 @@
     "version": "4.4.0",
     "private": true,
     "dependencies": {
+        "@interopio/browser": "^4.5.0",
         "@interopio/modals-api": "^4.5.0",
         "@interopio/react-hooks": "^4.5.0",
         "@interopio/workspaces-api": "^4.5.0",

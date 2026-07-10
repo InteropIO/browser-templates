@@ -8,7 +8,7 @@ If you are a web developer looking to experiment with **io.Connect Browser**, bu
 
 ## Project Overview
 
-The project will start at `http://localhost:3000`. The window will load an io.Connect [Workspaces App](https://docs.interop.io/browser/capabilities/windows/workspaces/workspaces-app/index.html) containing a single [Workspace](https://docs.interop.io/browser/capabilities/windows/workspaces/overview/index.html#workspaces_concepts-workspace) with the following apps:
+The project will start at `http://localhost:3002`. The window will load an io.Connect [Workspaces App](https://docs.interop.io/browser/capabilities/windows/workspaces/workspaces-app/index.html) containing a single [Workspace](https://docs.interop.io/browser/capabilities/windows/workspaces/overview/index.html#workspaces_concepts-workspace) with the following apps:
 
 - On the left is a standard interop-enabled app built with Create React App - the ideal starting point for React developers.
 - On the right is a group of three tabs - the io.Connect documentation, a [Context Viewer](https://docs.interop.io/desktop/developers/dev-tools/index.html#context_viewer) and an [Interop Viewer](https://docs.interop.io/desktop/developers/dev-tools/index.html#interop_viewer) apps. The Context Viewer and the Interop Viewer are developer tool apps from [**io.Connect Desktop**](https://interop.io/products/io-connect/) and are extremely useful when developing, testing or debugging io.Connect apps with extensive [Interop](https://docs.interop.io/browser/capabilities/data-sharing/interop/index.html) or [Shared Contexts](https://docs.interop.io/browser/capabilities/data-sharing/shared-contexts/index.html) functionalities.
