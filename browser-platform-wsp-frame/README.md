@@ -24,7 +24,7 @@ To start the Main app, execute the following command:
 npm start
 ```
 
-By default, the Main app will be hosted at `http://localhost:3000`. You can change the port from the `vite.config.ts` file in the root directory of the project. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
+By default, the Main app will be hosted at `http://localhost:4242`. You can change the port from the `vite.config.ts` file in the root directory of the project. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
 
 ## Template Structure
 
