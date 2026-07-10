@@ -11,7 +11,9 @@ export class IOConnectService {
     }
     
     get initError(): string | undefined {
-        return this.ioConnectStore.getInitError();
+        return typeof this.ioConnectStore.getInitError() === "string"
+          ? this.ioConnectStore.getInitError() as string
+          : JSON.stringify(this.ioConnectStore.getInitError(), null, 2);
     }
     
     get connectionStatus(): "disconnected" | "connected" {
