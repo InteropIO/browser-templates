@@ -32,7 +32,7 @@ The created template contains standard package files and the following directori
 
 | Directory/File | Description |
 |----------------|-------------|
-| `/public` | Contains a Service Worker and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). |
+| `/public` | Contains a Service Worker and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). The `resources` folder contains the bundles, fonts, and styles used by additional io.Connect Browser libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`. |
 | `/src` | Contains standard React app files and configuration files for the Main app. |
 | `vite.config.ts` | Configuration file from which you can change the port at which the Main app is hosted. |
 

@@ -136,6 +136,11 @@ To enable this functionality, go to the `config.json` file and add the necessary
 
 *For more details on configuring a connection to **io.Connect Desktop**, see the [Capabilities > io.Connect Desktop](https://docs.interop.io/browser/capabilities/desktop/index.html) documentation.*
 
+### UI Elements
+The Main app shares the resources (bundles, fonts, and styles) required by additional io.Connect libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`, with all Browser Client apps. For local development, this project exports files in the `public` directory of the current app.
+
+Serving the UI resources from the Main app is convenient during development, but for production deployments we recommend hosting them on a dedicated REST or static asset server.
+
 ## How to...
 
 ### Extend the React Client
