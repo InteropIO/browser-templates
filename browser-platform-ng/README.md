@@ -26,6 +26,8 @@ npm start
 
 By default, the Main app will be hosted at `http://localhost:4200`. You can change the port in the `angular.json` file by adding or modifying the `projects.browser-platform-ng.architect.serve.options.port` setting. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
 
+The static resources for the Intent Resolver and Modals UI are served from the `public/resources` directory of this app. If you change the app port in `angular.json`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `src/config.json` to use the same port.
+
 ## Template Structure
 
 The created template contains standard Angular package files and the following directories and files:

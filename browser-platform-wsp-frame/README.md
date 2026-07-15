@@ -26,6 +26,8 @@ npm start
 
 By default, the Main app will be hosted at `http://localhost:4242`. You can change the port from the `vite.config.ts` file in the root directory of the project. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
 
+The static resources for the Intent Resolver and Modals UI are served from the `public/resources` directory of this app. If you change the app port from `vite.config.ts`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `src/config.json` to use the same port.
+
 ## Template Structure
 
 The created template contains standard package files and the following directories and files:

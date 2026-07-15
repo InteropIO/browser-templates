@@ -139,6 +139,8 @@ To enable this functionality, go to the `config.json` file and add the necessary
 ### UI Elements
 The Main app shares the resources (bundles, fonts, and styles) required by additional io.Connect libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`, with all Browser Client apps. For local development, this project exports files in the `public` directory of the current app.
 
+These static resources are served by the Workspace Platform app from `workspace-platform/public/resources`. If you change the Workspace Platform app port from `workspace-platform/vite.config.ts`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `workspace-platform/src/config.json` to use the same port.
+
 Serving the UI resources from the Main app is convenient during development, but for production deployments we recommend hosting them on a dedicated REST or static asset server.
 
 ## How to...

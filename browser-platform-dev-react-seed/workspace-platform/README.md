@@ -17,3 +17,5 @@ npm start
 ```
 
 By default, the Browser Platform app will be hosted at `http://localhost:3002`. You can change the port in the `vite.config.ts` file by modifying the `server.port` setting.
+
+The static resources for the Intent Resolver and Modals UI are served from the `public/resources` directory of this app. If you change the app port in `vite.config.ts`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `src/config.json` to use the same port.
