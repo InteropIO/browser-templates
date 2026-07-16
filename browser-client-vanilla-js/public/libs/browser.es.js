@@ -1798,22 +1798,26 @@ Decoder$1.valueAt;
 /** See `Decoder.succeed` */
 Decoder$1.succeed;
 /** See `Decoder.fail` */
-Decoder$1.fail;
+var fail$1 = Decoder$1.fail;
 /** See `Decoder.lazy` */
 Decoder$1.lazy;
 
 const nonEmptyStringDecoder$3 = string$1().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder$3 = number$1().where((num) => num >= 0, "Expected a non-negative number");
 const regexDecoder = anyJson$1().andThen((value) => {
-    return value instanceof RegExp ? anyJson$1() : fail(`expected a regex, got a ${typeof value}`);
+    return value instanceof RegExp ? anyJson$1() : fail$1(`expected a regex, got a ${typeof value}`);
 });
-const urlDecoder = nonEmptyStringDecoder$3.andThen((url) => {
+const urlDecoder$1 = nonEmptyStringDecoder$3.andThen((url) => {
     try {
-        new URL(url);
+        const { protocol } = new URL(url);
+        const disallowedProtocols = ["data:", "javascript:", "vbscript:"];
+        if (disallowedProtocols.includes(protocol)) {
+            return fail$1(`Expected a URL with a safe protocol, got: ${protocol} (disallowed protocols: ${disallowedProtocols.join(", ")})`);
+        }
         return nonEmptyStringDecoder$3;
     }
     catch {
-        return fail("Should be a valid URL");
+        return fail$1("Expected a valid URL");
     }
 });
 
@@ -1825,7 +1829,7 @@ const intentDefinitionDecoder$1 = object$1({
 });
 const v2TypeDecoder = oneOf(constant$1("web"), constant$1("native"), constant$1("citrix"), constant$1("onlineNative"), constant$1("other"));
 const v2DetailsDecoder = object$1({
-    url: nonEmptyStringDecoder$3
+    url: urlDecoder$1
 });
 const v2IconDecoder = object$1({
     src: nonEmptyStringDecoder$3,
@@ -1853,18 +1857,19 @@ const v2UserChannelDecoder = object$1({
     listensFor: optional$1(array$1(nonEmptyStringDecoder$3))
 });
 const v2AppChannelDecoder = object$1({
-    name: nonEmptyStringDecoder$3,
+    name: optional$1(nonEmptyStringDecoder$3),
+    id: optional$1(nonEmptyStringDecoder$3),
     description: optional$1(nonEmptyStringDecoder$3),
     broadcasts: optional$1(array$1(nonEmptyStringDecoder$3)),
     listensFor: optional$1(array$1(nonEmptyStringDecoder$3))
-});
+}).where((appChannel) => Boolean(appChannel.name || appChannel.id), "Expected at least a name or an id property to be present in the app channel definition");
 const v2InteropDecoder = object$1({
     intents: optional$1(v2IntentsDecoder),
     userChannels: optional$1(v2UserChannelDecoder),
     appChannels: optional$1(array$1(v2AppChannelDecoder))
 });
 const glue42ApplicationDetailsDecoder = object$1({
-    url: optional$1(nonEmptyStringDecoder$3),
+    url: optional$1(urlDecoder$1),
     top: optional$1(number$1()),
     left: optional$1(number$1()),
     width: optional$1(nonNegativeNumberDecoder$3),
@@ -2144,7 +2149,7 @@ const decoders$1 = {
         nonEmptyStringDecoder: nonEmptyStringDecoder$3,
         nonNegativeNumberDecoder: nonNegativeNumberDecoder$3,
         regexDecoder,
-        urlDecoder
+        urlDecoder: urlDecoder$1
     },
     fdc3: {
         allDefinitionsDecoder,
@@ -2193,13 +2198,14 @@ ioc.fdc3;
 const decoders = ioc.decoders;
 ioc.errors;
 
-const nonEmptyStringDecoder$2 = string$2().where((s) => s.length > 0, "Expected a non-empty string");
-const nonNegativeNumberDecoder$2 = number$2().where((num) => num >= 0, "Expected a non-negative number");
+const nonEmptyStringDecoder$2 = decoders.common.nonEmptyStringDecoder;
+const nonNegativeNumberDecoder$2 = decoders.common.nonNegativeNumberDecoder;
 const optionalNonEmptyStringDecoder = optional$2(nonEmptyStringDecoder$2);
+const urlDecoder = decoders.common.urlDecoder;
 const libDomainDecoder = oneOf$1(constant$2("system"), constant$2("windows"), constant$2("appManager"), constant$2("layouts"), constant$2("intents"), constant$2("notifications"), constant$2("channels"), constant$2("extension"), constant$2("themes"), constant$2("prefs"), constant$2("ui"));
 const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("setZoomFactor"), constant$2("zoomFactorChange"), constant$2("refresh"), constant$2("operationCheck"));
 const appManagerOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("appDirectoryStateChange"), constant$2("instanceStarted"), constant$2("instanceStopped"), constant$2("applicationStart"), constant$2("instanceStop"), constant$2("clear"), constant$2("operationCheck"));
-const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
+const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("getLayoutContents"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
 const notificationsOperationTypesDecoder = oneOf$1(constant$2("raiseNotification"), constant$2("requestPermission"), constant$2("notificationShow"), constant$2("notificationClick"), constant$2("getPermission"), constant$2("list"), constant$2("notificationRaised"), constant$2("notificationClosed"), constant$2("click"), constant$2("clear"), constant$2("clearAll"), constant$2("configure"), constant$2("getConfiguration"), constant$2("configurationChanged"), constant$2("setState"), constant$2("clearOld"), constant$2("activeCountChange"), constant$2("stateChange"), constant$2("operationCheck"), constant$2("getActiveCount"));
 const systemOperationTypesDecoder = oneOf$1(constant$2("getEnvironment"), constant$2("getBase"), constant$2("platformShutdown"), constant$2("isFdc3DataWrappingSupported"), constant$2("clientError"), constant$2("systemHello"), constant$2("operationCheck"));
 const windowRelativeDirectionDecoder = oneOf$1(constant$2("top"), constant$2("left"), constant$2("right"), constant$2("bottom"));
@@ -2222,7 +2228,7 @@ const windowOpenSettingsDecoder = optional$2(object$2({
 }));
 const openWindowConfigDecoder = object$2({
     name: nonEmptyStringDecoder$2,
-    url: nonEmptyStringDecoder$2,
+    url: urlDecoder,
     options: windowOpenSettingsDecoder
 });
 const windowHelloDecoder = object$2({
@@ -2274,7 +2280,7 @@ const frameWindowBoundsResultDecoder = object$2({
 });
 const windowUrlResultDecoder = object$2({
     windowId: nonEmptyStringDecoder$2,
-    url: nonEmptyStringDecoder$2
+    url: urlDecoder
 });
 const windowZoomFactorConfigDecoder = object$2({
     windowId: nonEmptyStringDecoder$2,
@@ -2294,6 +2300,9 @@ const instanceDataDecoder = object$2({
 const iframePermissionsPolicyConfigDecoder = object$2({
     flags: string$2()
 });
+const iframeSandboxConfigDecoder = object$2({
+    flags: string$2()
+});
 const workspacesSandboxDecoder = object$2({
     flags: string$2()
 });
@@ -2305,14 +2314,15 @@ const channelSelectorDecoder$1 = object$2({
     enabled: boolean$2(),
 });
 const applicationDetailsDecoder = object$2({
-    url: nonEmptyStringDecoder$2,
+    url: urlDecoder,
     top: optional$2(number$2()),
     left: optional$2(number$2()),
     width: optional$2(nonNegativeNumberDecoder$2),
     height: optional$2(nonNegativeNumberDecoder$2),
     workspacesSandbox: optional$2(workspacesSandboxDecoder),
     channelSelector: optional$2(channelSelectorDecoder$1),
-    iframePermissionsPolicy: optional$2(iframePermissionsPolicyConfigDecoder)
+    iframePermissionsPolicy: optional$2(iframePermissionsPolicyConfigDecoder),
+    iframeSandbox: optional$2(iframeSandboxConfigDecoder)
 });
 const intentDefinitionDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2380,7 +2390,7 @@ const windowComponentStateDecoder = object$2({
     bounds: windowBoundsDecoder,
     createArgs: object$2({
         name: optional$2(nonEmptyStringDecoder$2),
-        url: optional$2(nonEmptyStringDecoder$2),
+        url: optional$2(urlDecoder),
         context: optional$2(anyJson$2())
     }),
     windowState: optional$2(nonEmptyStringDecoder$2),
@@ -2404,7 +2414,7 @@ const windowLayoutItemDecoder = object$2({
     type: constant$2("window"),
     config: object$2({
         appName: nonEmptyStringDecoder$2,
-        url: optional$2(nonEmptyStringDecoder$2),
+        url: optional$2(urlDecoder),
         title: optional$2(string$2()),
         allowExtract: optional$2(boolean$2()),
         allowReorder: optional$2(boolean$2()),
@@ -2488,6 +2498,17 @@ const restoreOptionsDecoder = object$2({
     closeRunningInstance: optional$2(boolean$2()),
     closeMe: optional$2(boolean$2()),
     timeout: optional$2(nonNegativeNumberDecoder$2)
+});
+const getContentsOptionsDecoder = object$2({
+    name: nonEmptyStringDecoder$2,
+    type: layoutTypeDecoder
+});
+const layoutContentsResultDecoder = object$2({
+    contents: object$2({
+        appComponents: array$2(oneOf$1(windowLayoutComponentDecoder, workspaceLayoutComponentDecoder, workspaceFrameComponentDecoder)),
+        workspaceComponents: array$2(workspaceLayoutComponentStateDecoder),
+        workspaceWindows: array$2(windowLayoutItemDecoder)
+    })
 });
 const layoutSummaryDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2710,10 +2731,10 @@ const publishOptionsDecoder = optional$2(oneOf$1(nonEmptyStringDecoder$2, object
     name: optional$2(nonEmptyStringDecoder$2),
     fdc3: optional$2(boolean$2())
 })));
-const leaveChannelsConfig = object$2({
+const leaveChannelsConfigDecoder = oneOf$1(nonEmptyStringDecoder$2, object$2({
     windowId: optionalNonEmptyStringDecoder,
     channel: optionalNonEmptyStringDecoder
-});
+}));
 const fdc3ContextDecoder = anyJson$2().where((value) => typeof value.type === "string", "Expected a valid FDC3 Context with compulsory 'type' field");
 const interopActionSettingsDecoder = object$2({
     method: nonEmptyStringDecoder$2,
@@ -2867,7 +2888,8 @@ const strictNotificationsConfigurationProtocolDecoder = object$2({
         sourceFilter: object$2({
             allowed: array$2(nonEmptyStringDecoder$2),
             blocked: array$2(nonEmptyStringDecoder$2)
-        })
+        }),
+        showNotificationBadge: optional$2(boolean$2())
     })
 });
 const platformSaveRequestConfigDecoder = object$2({
@@ -3806,7 +3828,7 @@ class WindowsController {
     }
     async open(name, url, options) {
         runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        runDecoderWithIOError(nonEmptyStringDecoder$2, url);
+        runDecoderWithIOError(urlDecoder, url);
         const settings = runDecoderWithIOError(windowOpenSettingsDecoder, options);
         const windowSuccess = await this.bridge.send("windows", operations$a.openWindow, { name, url, options: settings });
         return this.waitForWindowAdded(windowSuccess.windowId);
@@ -4354,7 +4376,12 @@ class AppManagerController {
     }
     getApplication(name) {
         const verifiedName = runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        return this.applications.find((app) => app.name === verifiedName);
+        const application = this.applications.find((app) => app.name === verifiedName);
+        const iframeSandbox = application?.userProperties?.details?.iframeSandbox;
+        if (iframeSandbox) {
+            application.userProperties.details.workspacesSandbox = iframeSandbox;
+        }
+        return application;
     }
     getInstances() {
         return this.instances.slice();
@@ -4664,6 +4691,7 @@ const operations$8 = {
     layoutRenamed: { name: "layoutRenamed", dataDecoder: renamedLayoutNotificationDecoder },
     get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult },
     getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
+    getLayoutContents: { name: "getLayoutContents", dataDecoder: getContentsOptionsDecoder, resultDecoder: layoutContentsResultDecoder },
     export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
     import: { name: "import", dataDecoder: layoutsImportConfigDecoder },
     remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder },
@@ -4719,6 +4747,7 @@ class LayoutsController {
         const api = {
             get: this.get.bind(this),
             getAll: this.getAll.bind(this),
+            getLayoutContents: this.getLayoutContents.bind(this),
             getCurrentLayout: this.getCurrentLayout.bind(this),
             export: this.exportLayouts.bind(this),
             import: this.importLayouts.bind(this),
@@ -4768,6 +4797,15 @@ class LayoutsController {
         runDecoderWithIOError(layoutTypeDecoder, type);
         const result = await this.bridge.send("layouts", operations$8.getAll, { type });
         return result.summaries;
+    }
+    async getLayoutContents(options) {
+        runDecoderWithIOError(getContentsOptionsDecoder, options);
+        const { name, type } = options;
+        if (type !== "Workspace" && type !== "Global") {
+            return ioError.raiseError(`getLayoutContents is only supported for Workspace and Global layouts, but got type "${type}"`);
+        }
+        const result = await this.bridge.send("layouts", operations$8.getLayoutContents, { name, type }, undefined, { includeOperationCheck: true });
+        return result.contents;
     }
     async exportLayouts(type) {
         runDecoderWithIOError(layoutTypeDecoder, type);
@@ -4948,7 +4986,7 @@ const operations$7 = {
     clear: { name: "clear" },
     clearAll: { name: "clearAll" },
     clearOld: { name: "clearOld" },
-    configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder },
+    configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder, resultDecoder: strictNotificationsConfigurationProtocolDecoder },
     getConfiguration: { name: "getConfiguration", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
     getActiveCount: { name: "getActiveCount", resultDecoder: activeNotificationsCountChangeDecoder },
     configurationChanged: { name: "configurationChanged", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
@@ -5092,7 +5130,8 @@ class NotificationsController {
     }
     async configure(config) {
         const verifiedConfig = runDecoderWithIOError(notificationsConfigurationDecoder, config);
-        await this.bridge.send("notifications", operations$7.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
+        const response = await this.bridge.send("notifications", operations$7.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
+        return response.configuration;
     }
     async getConfiguration() {
         const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
@@ -5748,12 +5787,14 @@ class ChannelsController {
         return this.changed(callback);
     }
     async leave(config = {}) {
-        runDecoderWithIOError(leaveChannelsConfig, config);
-        if (config.channel) {
+        const decodedConfig = runDecoderWithIOError(leaveChannelsConfigDecoder, config);
+        const channelName = typeof decodedConfig === "string" ? undefined : decodedConfig.channel;
+        const windowId = typeof decodedConfig === "string" ? decodedConfig : decodedConfig.windowId;
+        if (channelName) {
             const channelNames = this.getAllChannelNames();
-            runDecoderWithIOError(channelNameDecoder(channelNames), config.channel);
+            runDecoderWithIOError(channelNameDecoder(channelNames), channelName);
         }
-        const leaveData = { channelName: config.channel, windowId: config.windowId ?? this.myWindowId };
+        const leaveData = { channelName, windowId: windowId ?? this.myWindowId };
         await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
     }
     async handleAppManagerInitialChannelId(channel) {
@@ -5967,11 +6008,8 @@ class ChannelsController {
         }
         return channelContext;
     }
-    async getMyChannels() {
-        return Promise.all(this.storage.channels.map((channelName) => {
-            const contextName = this.createContextName(channelName);
-            return this.contexts.get(contextName);
-        }));
+    async getMyChannels(options) {
+        return Promise.all(this.storage.channels.map((channelName) => this.get(channelName, options)));
     }
     myChannels() {
         return this.storage.channels;
@@ -6139,12 +6177,13 @@ class ChannelsController {
                 windowId: restrictions.windowId ?? this.myWindowId
             }
         };
-        return this.bridge.send("channels", operations$5.restrictAll, configData, undefined, { includeOperationCheck: true });
+        await this.bridge.send("channels", operations$5.restrictAll, configData, undefined, { includeOperationCheck: true });
     }
     async handleRestrictAll({ restrictions }) {
         const currentChannel = await this.getMy();
         if (!currentChannel) {
-            return this.updateAllRestrictions(restrictions);
+            this.updateAllRestrictions(restrictions);
+            return;
         }
         const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
         this.updateAllRestrictions(restrictions);
@@ -7777,7 +7816,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.4.0";
+var version$1 = "4.5.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
@@ -9210,9 +9249,9 @@ class MessageReplayerImpl {
     }
 }
 
-/* @ts-self-types="./index.d.ts" */
 let urlAlphabet =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+
 let nanoid = (size = 21) => {
   let id = '';
   let i = size | 0;
@@ -9766,6 +9805,10 @@ class WebPlatformTransport {
             return window.name.substring(0, window.name.indexOf("#wsp"));
         }
         if (window !== window.top) {
+            const ifrIndex = window.name.indexOf("#ifr");
+            if (ifrIndex !== -1) {
+                return window.name.substring(0, ifrIndex);
+            }
             return;
         }
         if (window.name?.includes("g42")) {
@@ -9824,6 +9867,83 @@ class AsyncSequelizer {
     intervalBreak() {
         return new Promise((res) => setTimeout(res, this.minSequenceInterval));
     }
+}
+
+function normalizeError(value) {
+    if (value instanceof Error) {
+        return value;
+    }
+    if (typeof value === "string") {
+        return new Error(value);
+    }
+    const anyVal = value;
+    const msgField = typeof anyVal?.message === "string" ? anyVal.message : undefined;
+    const reasonField = typeof anyVal?.reason === "string" ? anyVal.reason : undefined;
+    if (msgField !== undefined && msgField.length > 0) {
+        return new Error(msgField);
+    }
+    if (reasonField !== undefined && reasonField.length > 0) {
+        return new Error(reasonField);
+    }
+    if (msgField === "" || reasonField === "") {
+        return new Error("");
+    }
+    return new Error(safeStringify$1(value));
+}
+function safeErrorStack(value) {
+    try {
+        if (value instanceof Error) {
+            if (typeof value.stack === "string") {
+                return value.stack;
+            }
+            if (typeof value.message === "string") {
+                const name = typeof value.name === "string" && value.name.length > 0 ? value.name : "Error";
+                return `${name}: ${value.message}`;
+            }
+        }
+        if (typeof value === "string") {
+            return value;
+        }
+    }
+    catch { }
+    return safeStringify$1(value);
+}
+function safeStringify$1(value) {
+    try {
+        const seen = new WeakSet();
+        const json = JSON.stringify(value, (_key, v) => {
+            if (typeof v === "bigint") {
+                return `${v.toString()}n`;
+            }
+            if (typeof v === "function") {
+                return "[Function]";
+            }
+            if (typeof v === "symbol") {
+                return v.toString();
+            }
+            if (typeof v === "object" && v !== null) {
+                if (seen.has(v)) {
+                    return "[Circular]";
+                }
+                seen.add(v);
+            }
+            return v;
+        });
+        if (json !== undefined) {
+            return json;
+        }
+    }
+    catch { }
+    if (value !== null && typeof value === "object") {
+        const ctor = value.constructor?.name ?? "Object";
+        let keys = [];
+        try {
+            keys = Object.keys(value);
+        }
+        catch { }
+        return keys.length > 0 ? `[${ctor} keys=${keys.join(",")}]` : `[${ctor}]`;
+    }
+    return String(value);
 }
 
 function domainSession (domain, connection, logger, successMessages, errorMessages) {
@@ -10061,7 +10181,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
                     callback(msg);
                 }
                 catch (e) {
-                    logger.error(`Callback  failed: ${e} \n ${e.stack} \n msg was: ${JSON.stringify(msg)}`, e);
+                    logger.error(`Callback failed: ${safeErrorStack(e)} \n msg was: ${JSON.stringify(msg)}`, e);
                 }
             });
         },
@@ -10075,65 +10195,6 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
             return domain;
         },
     };
-}
-
-function normalizeError(value) {
-    if (value instanceof Error) {
-        return value;
-    }
-    if (typeof value === "string") {
-        return new Error(value);
-    }
-    const anyVal = value;
-    const msgField = typeof anyVal?.message === "string" ? anyVal.message : undefined;
-    const reasonField = typeof anyVal?.reason === "string" ? anyVal.reason : undefined;
-    if (msgField !== undefined && msgField.length > 0) {
-        return new Error(msgField);
-    }
-    if (reasonField !== undefined && reasonField.length > 0) {
-        return new Error(reasonField);
-    }
-    if (msgField === "" || reasonField === "") {
-        return new Error("");
-    }
-    return new Error(safeStringify$1(value));
-}
-function safeStringify$1(value) {
-    try {
-        const seen = new WeakSet();
-        const json = JSON.stringify(value, (_key, v) => {
-            if (typeof v === "bigint") {
-                return `${v.toString()}n`;
-            }
-            if (typeof v === "function") {
-                return "[Function]";
-            }
-            if (typeof v === "symbol") {
-                return v.toString();
-            }
-            if (typeof v === "object" && v !== null) {
-                if (seen.has(v)) {
-                    return "[Circular]";
-                }
-                seen.add(v);
-            }
-            return v;
-        });
-        if (json !== undefined) {
-            return json;
-        }
-    }
-    catch { }
-    if (value !== null && typeof value === "object") {
-        const ctor = value.constructor?.name ?? "Object";
-        let keys = [];
-        try {
-            keys = Object.keys(value);
-        }
-        catch { }
-        return keys.length > 0 ? `[${ctor} keys=${keys.join(",")}]` : `[${ctor}]`;
-    }
-    return String(value);
 }
 
 class Connection {
@@ -10394,7 +10455,7 @@ class Connection {
                     }
                     catch (error) {
                         try {
-                            this.logger.error(`Message handler failed with ${error.stack}`, error);
+                            this.logger.error(`Message handler failed with ${safeErrorStack(error)}`, error);
                         }
                         catch (loggerError) {
                             console.log("Message handler failed", error);
@@ -10872,7 +10933,7 @@ class Logger {
                         }
                         interop.invoke(Logger.InteropMethodName, args)
                             .catch((e) => {
-                            this.logFn.error(`Unable to send log message to the platform: ${e.message}`, e);
+                            this.logFn.error(`Unable to send log message to the platform: ${normalizeError(e).message}`, e);
                         });
                     }
                 }
@@ -10956,7 +11017,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.10.4";
+var version = "6.11.0";
 
 /*!
  * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
@@ -11620,6 +11681,7 @@ function requireOtelUtils () {
 	(function (exports$1) {
 		Object.defineProperty(exports$1, "__esModule", { value: true });
 		exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
+		exports$1.withTimeout = withTimeout;
 		const container_1 = requireContainer();
 		/* eslint-disable @typescript-eslint/no-explicit-any */
 		const flattenOtelAtributes = (data, maxDepth) => {
@@ -11737,6 +11799,19 @@ function requireOtelUtils () {
 		    return filteringContext;
 		};
 		exports$1.extractFilteringContextFromArgs = extractFilteringContextFromArgs;
+		function withTimeout(promise, timeout) {
+		    if (!promise) {
+		        return Promise.resolve();
+		    }
+		    if (!timeout) {
+		        return promise;
+		    }
+		    let timeoutId;
+		    return new Promise((rs, rj) => {
+		        timeoutId = setTimeout(rs, timeout);
+		        promise.then(() => rs(), rj);
+		    }).then(() => clearTimeout(timeoutId));
+		}
 		
 	} (otelUtils));
 	return otelUtils;
@@ -12397,21 +12472,11 @@ function requireBuilder () {
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.logs);
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.metrics);
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.traces);
-	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.logs);
-	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.metrics);
-	        Builder.propagateAttributeDown("useSSOAuth", this.settings, this.settings.traces);
-	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.logs);
-	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.metrics);
-	        Builder.propagateAttributeDown("useSSOAuthRawToken", this.settings, this.settings.traces);
-	        Builder.propagateAttributesDown("headers", this.settings, this.settings.logs);
-	        Builder.propagateAttributesDown("headers", this.settings, this.settings.metrics);
-	        Builder.propagateAttributesDown("headers", this.settings, this.settings.traces);
-	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.logs);
-	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.logs);
-	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.metrics);
-	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.metrics);
-	        Builder.propagateAttributesDown("additionalAttributes", this.settings, this.settings.traces);
-	        Builder.propagateAttributesDown("additionalResourceAttributes", this.settings, this.settings.traces);
+	        // Builder.propagateAttributeDownEx("useSSOAuth", this.settings);
+	        // Builder.propagateAttributeDownEx("useSSOAuthRawToken", this.settings);
+	        Builder.propagateAttributesDownEx("headers", this.settings);
+	        Builder.propagateAttributesDownEx("additionalAttributes", this.settings);
+	        Builder.propagateAttributesDownEx("additionalResourceAttributes", this.settings);
 	        const metricsBuilder = (_g = this.metricsBuilder) !== null && _g !== void 0 ? _g : this.withMetrics();
 	        const metrics = metricsBuilder
 	            .withLogger(this.logger)
@@ -12439,6 +12504,11 @@ function requireBuilder () {
 	        }
 	        settings[k] = (_a = settings[k]) !== null && _a !== void 0 ? _a : otelSettings[k];
 	    }
+	    static propagateAttributeDownEx(k, otelSettings) {
+	        Builder.propagateAttributeDown(k, otelSettings, otelSettings.logs);
+	        Builder.propagateAttributeDown(k, otelSettings, otelSettings.metrics);
+	        Builder.propagateAttributeDown(k, otelSettings, otelSettings.traces);
+	    }
 	    static propagateAttributesDown(k, otelSettings, settings) {
 	        var _a, _b;
 	        if (!settings) {
@@ -12446,7 +12516,15 @@ function requireBuilder () {
 	        }
 	        const providedOtel = (_a = otelSettings[k]) !== null && _a !== void 0 ? _a : {};
 	        const provided = (_b = settings[k]) !== null && _b !== void 0 ? _b : {};
-	        settings[k] = () => (Object.assign(Object.assign({}, container_1.Container.errorless(providedOtel)), container_1.Container.errorless(provided)));
+	        settings[k] = () => {
+	            var _a, _b, _c;
+	            return ((0, _1.flattenOtelAtributes)(Object.assign(Object.assign({}, container_1.Container.errorless(providedOtel)), container_1.Container.errorless(provided)), (_c = (_a = settings.maxAttributeDepth) !== null && _a !== void 0 ? _a : (_b = settings.defaults) === null || _b === void 0 ? void 0 : _b.maxAttributeDepth) !== null && _c !== void 0 ? _c : 5));
+	        };
+	    }
+	    static propagateAttributesDownEx(k, otelSettings) {
+	        Builder.propagateAttributesDown(k, otelSettings, otelSettings.logs);
+	        Builder.propagateAttributesDown(k, otelSettings, otelSettings.metrics);
+	        Builder.propagateAttributesDown(k, otelSettings, otelSettings.traces);
 	    }
 	    static maybeAddResourceAttributesToAttributes(settings) {
 	        if (settings === null || settings === void 0 ? void 0 : settings.addResourceAttributesToAttributes) {
@@ -12874,7 +12952,7 @@ function requireDist () {
 		    return (mod && mod.__esModule) ? mod : { "default": mod };
 		};
 		Object.defineProperty(exports$1, "__esModule", { value: true });
-		exports$1.SpanStatusCode = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.Logs = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
+		exports$1.SpanStatusCode = exports$1.withTimeout = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.Logs = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
 		var builder_1 = requireBuilder();
 		Object.defineProperty(exports$1, "Builder", { enumerable: true, get: function () { return builder_1.Builder; } });
 		var log4jsWrapper_1 = requireLog4jsWrapper();
@@ -12905,6 +12983,7 @@ function requireDist () {
 		Object.defineProperty(exports$1, "flattenOtelAtributes", { enumerable: true, get: function () { return otelUtils_1.flattenOtelAtributes; } });
 		Object.defineProperty(exports$1, "extractFilteringContextFromArgs", { enumerable: true, get: function () { return otelUtils_1.extractFilteringContextFromArgs; } });
 		Object.defineProperty(exports$1, "deep_value", { enumerable: true, get: function () { return otelUtils_1.deep_value; } });
+		Object.defineProperty(exports$1, "withTimeout", { enumerable: true, get: function () { return otelUtils_1.withTimeout; } });
 		if (typeof Promise !== "undefined") {
 		    Promise.allSettled = Promise.allSettled || ((promises) => Promise.all(promises.map((p) => p
 		        .then((value) => ({
@@ -15513,7 +15592,7 @@ class GW3Bridge {
             distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
-        ts.addData("DIAGNOSTIC", { data: contextData });
+        ts.addData("DIAGNOSTIC", { data });
         ts.injectPropagationInfo(data);
         if (!contextData || !contextData.isAnnounced) {
             return this.createContext(name, data);
@@ -15915,6 +15994,10 @@ class GW3Bridge {
                 }
             }
         }
+        const pi = distExports.Traces.extractPropagationInfo(delta, true) ||
+            distExports.Traces.extractPropagationInfo(delta?.added, true) ||
+            distExports.Traces.extractPropagationInfo(delta?.updated, true) ||
+            distExports.Traces.extractPropagationInfo(delta?.reset, true);
         for (const updateCallbackIndex in contextData.updateCallbacks) {
             if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
                 try {
@@ -15924,7 +16007,7 @@ class GW3Bridge {
                         ...delta.updated,
                         ...delta.reset
                     });
-                    updateCallback(deepClone(contextData.context), deltaArg, delta.removed, parseInt(updateCallbackIndex, 10), extraData, distExports.Traces.extractPropagationInfo(delta));
+                    updateCallback(deepClone(contextData.context), deltaArg, delta.removed, parseInt(updateCallbackIndex, 10), extraData, pi);
                 }
                 catch (err) {
                     this._logger.debug("callback error: " + JSON.stringify(err));
@@ -17037,7 +17120,7 @@ Decoder.valueAt;
 /** See `Decoder.succeed` */
 Decoder.succeed;
 /** See `Decoder.fail` */
-var fail$1 = Decoder.fail;
+var fail = Decoder.fail;
 /** See `Decoder.lazy` */
 Decoder.lazy;
 
@@ -17045,7 +17128,7 @@ const functionCheck = (input, propDescription) => {
     const providedType = typeof input;
     return providedType === "function" ?
         anyJson() :
-        fail$1(`The provided argument as ${propDescription} should be of type function, provided: ${providedType}`);
+        fail(`The provided argument as ${propDescription} should be of type function, provided: ${providedType}`);
 };
 const nonEmptyStringDecoder = string().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder = number().where((num) => num >= 0, "Expected a non-negative number or 0");

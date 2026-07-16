@@ -26,13 +26,15 @@ npm start
 
 By default, the Home App will be hosted at `http://localhost:4242`. You can change the port from the `.env` file in the root directory of the project. You can now start modifying the template to build your custom Home App.
 
+The static resources for the Intent Resolver and Modals UI are served from the `public/resources` directory of this app. If you change the app port from the `.env` file, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `src/config.json` to use the same port.
+
 ## Template Structure
 
 The created template contains standard package files and the following directories and files:
 
 | Directory/File | Description |
 |----------------|-------------|
-| `/public` | Contains all files necessary for a PWA - the main `index.html` file of the app, a favicon, logos, a `manifest.json` file, a Service Worker, and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. Use the files in this directory to modify the configuration for your PWA. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). |
+| `/public` | Contains all files necessary for a PWA - the main `index.html` file of the app, a favicon, logos, a `manifest.json` file, a Service Worker, and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. Use the files in this directory to modify the configuration for your PWA. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). The `resources` folder contains the bundles, fonts, and styles used by additional io.Connect Browser libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`. |
 | `/src` | Contains standard React app files and additional source files for the Home App template. |
 | `.env` | Contains React environment variables for the localhost port at which to start the Home App and the necessary authentication details if using [Auth0 authentication](https://docs.interop.io/browser/capabilities/home-app/library-features/index.html#using_the_components-authentication-auth0_login). |
 

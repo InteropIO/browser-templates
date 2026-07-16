@@ -24,7 +24,9 @@ To start the Main app, execute the following command:
 npm start
 ```
 
-By default, the Main app will be hosted at `http://localhost:3000`. You can change the port from the `vite.config.ts` file in the root directory of the project. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
+By default, the Main app will be hosted at `http://localhost:4242`. You can change the port from the `vite.config.ts` file in the root directory of the project. You can now start modifying the template to build your custom Main app for **io.Connect Browser**.
+
+The static resources for the Intent Resolver and Modals UI are served from the `public/resources` directory of this app. If you change the app port from `vite.config.ts`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `src/config.json` to use the same port.
 
 ## Template Structure
 
@@ -32,7 +34,7 @@ The created template contains standard package files and the following directori
 
 | Directory/File | Description |
 |----------------|-------------|
-| `/public` | Contains a Service Worker and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). |
+| `/public` | Contains a Service Worker and the [`@interopio/browser-worker`](https://www.npmjs.com/package/@interopio/browser-worker) library scripts necessary for the Service Worker. The [Service Worker configuration](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#ioconnect_browser_worker) is necessary when using [notifications with actions](https://docs.interop.io/browser/capabilities/notifications/setup/index.html#configuration-notifications_with_actions). The `resources` folder contains the bundles, fonts, and styles used by additional io.Connect Browser libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`. |
 | `/src` | Contains standard React app files and configuration files for the Main app. |
 | `vite.config.ts` | Configuration file from which you can change the port at which the Main app is hosted. |
 

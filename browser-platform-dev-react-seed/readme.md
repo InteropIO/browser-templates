@@ -8,7 +8,7 @@ If you are a web developer looking to experiment with **io.Connect Browser**, bu
 
 ## Project Overview
 
-The project will start at `http://localhost:3000`. The window will load an io.Connect [Workspaces App](https://docs.interop.io/browser/capabilities/windows/workspaces/workspaces-app/index.html) containing a single [Workspace](https://docs.interop.io/browser/capabilities/windows/workspaces/overview/index.html#workspaces_concepts-workspace) with the following apps:
+The project will start at `http://localhost:3002`. The window will load an io.Connect [Workspaces App](https://docs.interop.io/browser/capabilities/windows/workspaces/workspaces-app/index.html) containing a single [Workspace](https://docs.interop.io/browser/capabilities/windows/workspaces/overview/index.html#workspaces_concepts-workspace) with the following apps:
 
 - On the left is a standard interop-enabled app built with Create React App - the ideal starting point for React developers.
 - On the right is a group of three tabs - the io.Connect documentation, a [Context Viewer](https://docs.interop.io/desktop/developers/dev-tools/index.html#context_viewer) and an [Interop Viewer](https://docs.interop.io/desktop/developers/dev-tools/index.html#interop_viewer) apps. The Context Viewer and the Interop Viewer are developer tool apps from [**io.Connect Desktop**](https://interop.io/products/io-connect/) and are extremely useful when developing, testing or debugging io.Connect apps with extensive [Interop](https://docs.interop.io/browser/capabilities/data-sharing/interop/index.html) or [Shared Contexts](https://docs.interop.io/browser/capabilities/data-sharing/shared-contexts/index.html) functionalities.
@@ -135,6 +135,13 @@ To enable this functionality, go to the `config.json` file and add the necessary
 ```
 
 *For more details on configuring a connection to **io.Connect Desktop**, see the [Capabilities > io.Connect Desktop](https://docs.interop.io/browser/capabilities/desktop/index.html) documentation.*
+
+### UI Elements
+The Main app shares the resources (bundles, fonts, and styles) required by additional io.Connect libraries, such as `@interopio/modals-api` and `@interopio/intent-resolver-ui`, with all Browser Client apps. For local development, this project exports files in the `public` directory of the current app.
+
+These static resources are served by the Workspace Platform app from `workspace-platform/public/resources`. If you change the Workspace Platform app port from `workspace-platform/vite.config.ts`, you also need to update the `modals.sources` and `intentResolver.sources` URLs in `workspace-platform/src/config.json` to use the same port.
+
+Serving the UI resources from the Main app is convenient during development, but for production deployments we recommend hosting them on a dedicated REST or static asset server.
 
 ## How to...
 

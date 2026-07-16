@@ -4,12 +4,12 @@
     "private": true,
     "homepage": "./",
     "dependencies": {
-        "@interopio/browser-platform": "^4.4.0",
-        "@interopio/desktop": "^6.20.0",
-        "@interopio/modals-api": "^4.4.0",
-        "@interopio/react-hooks": "^4.4.0",
-        "@interopio/workspaces-api": "^4.4.0",
-        "@interopio/workspaces-ui-react": "^4.4.0",
+        "@interopio/browser-platform": "^4.5.0",
+        "@interopio/desktop": "^6.21.0",
+        "@interopio/modals-api": "^4.5.0",
+        "@interopio/react-hooks": "^4.5.0",
+        "@interopio/workspaces-api": "^4.5.0",
+        "@interopio/workspaces-ui-react": "^4.5.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0"
     },

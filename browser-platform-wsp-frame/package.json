@@ -9,11 +9,11 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@interopio/browser-platform": "^4.4.0",
-        "@interopio/modals-api": "^4.4.0",
-        "@interopio/react-hooks": "^4.4.0",
-        "@interopio/workspaces-api": "^4.4.0",
-        "@interopio/workspaces-ui-react": "^4.4.0",
+        "@interopio/browser-platform": "^4.5.0",
+        "@interopio/modals-api": "^4.5.0",
+        "@interopio/react-hooks": "^4.5.0",
+        "@interopio/workspaces-api": "^4.5.0",
+        "@interopio/workspaces-ui-react": "^4.5.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
     },

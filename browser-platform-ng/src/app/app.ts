@@ -20,6 +20,7 @@ export class App implements OnInit {
 
     if (this.ioConnectStatus() === "disconnected") {
         this.ioConnectInitError.set(this.ioConnectService.initError);
+        console.error(this.ioConnectService.initError);
     }
   }
 
