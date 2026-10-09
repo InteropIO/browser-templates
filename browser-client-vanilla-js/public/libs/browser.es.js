@@ -2207,7 +2207,7 @@ const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2
 const appManagerOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("appDirectoryStateChange"), constant$2("instanceStarted"), constant$2("instanceStopped"), constant$2("applicationStart"), constant$2("instanceStop"), constant$2("clear"), constant$2("operationCheck"));
 const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("getLayoutContents"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
 const notificationsOperationTypesDecoder = oneOf$1(constant$2("raiseNotification"), constant$2("requestPermission"), constant$2("notificationShow"), constant$2("notificationClick"), constant$2("getPermission"), constant$2("list"), constant$2("notificationRaised"), constant$2("notificationClosed"), constant$2("click"), constant$2("clear"), constant$2("clearAll"), constant$2("configure"), constant$2("getConfiguration"), constant$2("configurationChanged"), constant$2("setState"), constant$2("clearOld"), constant$2("activeCountChange"), constant$2("stateChange"), constant$2("operationCheck"), constant$2("getActiveCount"));
-const systemOperationTypesDecoder = oneOf$1(constant$2("getEnvironment"), constant$2("getBase"), constant$2("platformShutdown"), constant$2("isFdc3DataWrappingSupported"), constant$2("clientError"), constant$2("systemHello"), constant$2("operationCheck"));
+const systemOperationTypesDecoder = oneOf$1(constant$2("getEnvironment"), constant$2("getBase"), constant$2("platformShutdown"), constant$2("isFdc3DataWrappingSupported"), constant$2("isChannelsMetadataSupported"), constant$2("clientError"), constant$2("systemHello"), constant$2("operationCheck"));
 const windowRelativeDirectionDecoder = oneOf$1(constant$2("top"), constant$2("left"), constant$2("right"), constant$2("bottom"));
 const windowBoundsDecoder = object$2({
     top: number$2(),
@@ -4996,13 +4996,13 @@ const operations$7 = {
     operationCheck: { name: "operationCheck" }
 };
 
-/* @ts-self-types="./index.d.ts" */
 let urlAlphabet$1 =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+
 let nanoid$1 = (size = 21) => {
   let id = '';
   let i = size | 0;
-  while (i--) {
+  while (i-- > 0) {
     id += urlAlphabet$1[(Math.random() * 64) | 0];
   }
   return id
@@ -6418,6 +6418,7 @@ const operations$4 = {
     getBase: { name: "getBase", resultDecoder: anyDecoder },
     platformShutdown: { name: "platformShutdown" },
     isFdc3DataWrappingSupported: { name: "isFdc3DataWrappingSupported" },
+    isChannelsMetadataSupported: { name: "isChannelsMetadataSupported" },
     clientError: { name: "clientError", dataDecoder: clientErrorDataDecoder },
     systemHello: { name: "systemHello", resultDecoder: systemHelloSuccessDecoder },
     operationCheck: { name: "operationCheck" }
@@ -6440,7 +6441,7 @@ class SystemController {
             const systemHelloSuccess = await this.bridge.send("system", operations$4.systemHello, undefined, undefined, { includeOperationCheck: true });
             isClientErrorOperationSupported = systemHelloSuccess.isClientErrorOperationSupported;
         }
-        catch (error) {
+        catch {
             this.logger.warn("The platform of this client is outdated and does not support some system operations.");
         }
         this.errorPort.onmessage = async (event) => {
@@ -6480,11 +6481,15 @@ class SystemController {
     addOperationsExecutors() {
         operations$4.platformShutdown.execute = this.processPlatformShutdown.bind(this);
         operations$4.isFdc3DataWrappingSupported.execute = this.handleIsFdc3DataWrappingSupported.bind(this);
+        operations$4.isChannelsMetadataSupported.execute = this.handleIsChannelsMetadataSupported.bind(this);
         operations$4.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
         this.supportedOperationsNames = getSupportedOperationsNames(operations$4);
     }
     async handleIsFdc3DataWrappingSupported() {
         return { isSupported: true };
+    }
+    async handleIsChannelsMetadataSupported() {
+        return { isSupported: false };
     }
 }
 
@@ -7816,7 +7821,7 @@ class IoC {
     }
 }
 
-var version$1 = "4.5.0";
+var version$1 = "4.6.0";
 
 const setupGlobalSystem = (io, bridge) => {
     return {
