@@ -6,7 +6,7 @@
     "dependencies": {
         "@interopio/browser-platform": "^4.6.0",
         "@interopio/desktop": "^6.23.0",
-        "@interopio/modals-api": "^5.0.0",
+        "@interopio/modals-api": "^4.6.0",
         "@interopio/react-hooks": "^5.0.0",
         "@interopio/workspaces-api": "^4.6.0",
         "@interopio/workspaces-ui-react": "^5.0.0",

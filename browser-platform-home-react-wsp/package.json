@@ -7,7 +7,7 @@
         "@interopio/browser-platform": "^4.6.0",
         "@interopio/browser-worker": "^4.6.0",
         "@interopio/home-ui-react": "^5.0.0",
-        "@interopio/modals-api": "^5.0.0",
+        "@interopio/modals-api": "^4.6.0",
         "@interopio/react-hooks": "^5.0.0",
         "@interopio/workspaces-api": "^4.6.0",
         "@interopio/workspaces-ui-react": "^5.0.0",
