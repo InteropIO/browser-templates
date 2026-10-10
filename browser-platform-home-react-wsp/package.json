@@ -9,7 +9,7 @@
         "@interopio/home-ui-react": "^5.0.0",
         "@interopio/modals-api": "^5.0.0",
         "@interopio/react-hooks": "^5.0.0",
-        "@interopio/workspaces-api": "^5.0.0",
+        "@interopio/workspaces-api": "^4.6.0",
         "@interopio/workspaces-ui-react": "^5.0.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
