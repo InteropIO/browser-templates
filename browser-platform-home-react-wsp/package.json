@@ -1,16 +1,16 @@
 {
     "name": "workspaces-home",
-    "version": "4.6.0",
+    "version": "5.0.0",
     "private": true,
     "dependencies": {
         "@auth0/auth0-react": "^2.1.0",
-        "@interopio/browser-platform": "^4.6.0",
-        "@interopio/browser-worker": "^4.6.0",
-        "@interopio/home-ui-react": "^5.0.0",
-        "@interopio/modals-api": "^4.6.0",
-        "@interopio/react-hooks": "^5.0.0",
-        "@interopio/workspaces-api": "^4.6.0",
-        "@interopio/workspaces-ui-react": "^5.0.0",
+        "@interopio/browser-platform": "^5.0.0",
+        "@interopio/browser-worker": "^5.0.0",
+        "@interopio/home-ui-react": "^5.1.0",
+        "@interopio/modals-api": "^5.1.0",
+        "@interopio/react-hooks": "^5.1.0",
+        "@interopio/workspaces-api": "^5.1.0",
+        "@interopio/workspaces-ui-react": "^5.1.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "web-vitals": "^2.1.4"
@@ -29,7 +29,7 @@
         "eslint": "^8.57.0",
         "eslint-plugin-react-hooks": "^4.6.2",
         "eslint-plugin-react-refresh": "^0.4.7",
-        "typescript": "^4.9.5",
+        "typescript": "~5.8.2",
         "vite": "^5.3.4"
     },
     "scripts": {

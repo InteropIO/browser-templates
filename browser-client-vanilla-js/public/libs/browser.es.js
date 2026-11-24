@@ -897,7 +897,7 @@ var array$2 = Decoder$2.array;
 /** See `Decoder.tuple` */
 Decoder$2.tuple;
 /** See `Decoder.dict` */
-Decoder$2.dict;
+var dict$1 = Decoder$2.dict;
 /** See `Decoder.optional` */
 var optional$2 = Decoder$2.optional;
 /** See `Decoder.oneOf` */
@@ -905,7 +905,7 @@ var oneOf$1 = Decoder$2.oneOf;
 /** See `Decoder.union` */
 var union$1 = Decoder$2.union;
 /** See `Decoder.intersection` */
-var intersection = Decoder$2.intersection;
+var intersection$1 = Decoder$2.intersection;
 /** See `Decoder.withDefault` */
 Decoder$2.withDefault;
 /** See `Decoder.valueAt` */
@@ -913,7 +913,7 @@ Decoder$2.valueAt;
 /** See `Decoder.succeed` */
 Decoder$2.succeed;
 /** See `Decoder.fail` */
-Decoder$2.fail;
+var fail$2 = Decoder$2.fail;
 /** See `Decoder.lazy` */
 var lazy = Decoder$2.lazy;
 
@@ -1772,7 +1772,7 @@ var boolean$1 = Decoder$1.boolean;
 /** See `Decoder.anyJson` */
 var anyJson$1 = Decoder$1.anyJson;
 /** See `Decoder.unknownJson` */
-Decoder$1.unknownJson;
+var unknownJson = Decoder$1.unknownJson;
 /** See `Decoder.constant` */
 var constant$1 = Decoder$1.constant;
 /** See `Decoder.object` */
@@ -1790,13 +1790,13 @@ var oneOf = Decoder$1.oneOf;
 /** See `Decoder.union` */
 Decoder$1.union;
 /** See `Decoder.intersection` */
-Decoder$1.intersection;
+var intersection = Decoder$1.intersection;
 /** See `Decoder.withDefault` */
 Decoder$1.withDefault;
 /** See `Decoder.valueAt` */
 Decoder$1.valueAt;
 /** See `Decoder.succeed` */
-Decoder$1.succeed;
+var succeed = Decoder$1.succeed;
 /** See `Decoder.fail` */
 var fail$1 = Decoder$1.fail;
 /** See `Decoder.lazy` */
@@ -1804,9 +1804,12 @@ Decoder$1.lazy;
 
 const nonEmptyStringDecoder$3 = string$1().where((s) => s.length > 0, "Expected a non-empty string");
 const nonNegativeNumberDecoder$3 = number$1().where((num) => num >= 0, "Expected a non-negative number");
+const positiveNumberDecoder$1 = number$1().where((num) => num > 0, "Expected a positive number");
+const nullable$1 = (decoder) => unknownJson().andThen((value) => value === null ? succeed(null) : decoder);
 const regexDecoder = anyJson$1().andThen((value) => {
     return value instanceof RegExp ? anyJson$1() : fail$1(`expected a regex, got a ${typeof value}`);
 });
+const looseObjectDecoder$1 = (fieldDecoders) => intersection(object$1(), object$1(fieldDecoders));
 const urlDecoder$1 = nonEmptyStringDecoder$3.andThen((url) => {
     try {
         const { protocol } = new URL(url);
@@ -2148,8 +2151,11 @@ const decoders$1 = {
     common: {
         nonEmptyStringDecoder: nonEmptyStringDecoder$3,
         nonNegativeNumberDecoder: nonNegativeNumberDecoder$3,
+        positiveNumberDecoder: positiveNumberDecoder$1,
+        nullable: nullable$1,
         regexDecoder,
-        urlDecoder: urlDecoder$1
+        urlDecoder: urlDecoder$1,
+        looseObjectDecoder: looseObjectDecoder$1
     },
     fdc3: {
         allDefinitionsDecoder,
@@ -2200,10 +2206,20 @@ ioc.errors;
 
 const nonEmptyStringDecoder$2 = decoders.common.nonEmptyStringDecoder;
 const nonNegativeNumberDecoder$2 = decoders.common.nonNegativeNumberDecoder;
+const positiveNumberDecoder = decoders.common.positiveNumberDecoder;
 const optionalNonEmptyStringDecoder = optional$2(nonEmptyStringDecoder$2);
 const urlDecoder = decoders.common.urlDecoder;
+const nullable = decoders.common.nullable;
+const looseObjectDecoder = decoders.common.looseObjectDecoder;
+const functionDecoder = (propDescription) => anyJson$2().andThen((input) => {
+    return typeof input === "function"
+        ? anyJson$2()
+        : fail$2(`The provided argument as ${propDescription} should be of type function, provided: ${typeof input}`);
+});
+const anyObjectDecoder = object$2();
+const anyObjectArrayDecoder = array$2(object$2());
 const libDomainDecoder = oneOf$1(constant$2("system"), constant$2("windows"), constant$2("appManager"), constant$2("layouts"), constant$2("intents"), constant$2("notifications"), constant$2("channels"), constant$2("extension"), constant$2("themes"), constant$2("prefs"), constant$2("ui"));
-const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("setZoomFactor"), constant$2("zoomFactorChange"), constant$2("refresh"), constant$2("operationCheck"));
+const windowOperationTypesDecoder = oneOf$1(constant$2("openWindow"), constant$2("windowHello"), constant$2("windowAdded"), constant$2("windowRemoved"), constant$2("getBounds"), constant$2("getFrameBounds"), constant$2("getUrl"), constant$2("moveResize"), constant$2("focus"), constant$2("close"), constant$2("getTitle"), constant$2("setTitle"), constant$2("focusChange"), constant$2("getChannel"), constant$2("notifyChannelsChanged"), constant$2("setZoomFactor"), constant$2("zoomFactorChange"), constant$2("refresh"), constant$2("windowsClosing"), constant$2("operationCheck"));
 const appManagerOperationTypesDecoder = oneOf$1(constant$2("appHello"), constant$2("appDirectoryStateChange"), constant$2("instanceStarted"), constant$2("instanceStopped"), constant$2("applicationStart"), constant$2("instanceStop"), constant$2("clear"), constant$2("operationCheck"));
 const layoutsOperationTypesDecoder = oneOf$1(constant$2("layoutAdded"), constant$2("layoutChanged"), constant$2("layoutRemoved"), constant$2("layoutRenamed"), constant$2("get"), constant$2("getAll"), constant$2("getLayoutContents"), constant$2("export"), constant$2("import"), constant$2("remove"), constant$2("rename"), constant$2("clientSaveRequest"), constant$2("getGlobalPermissionState"), constant$2("checkGlobalActivated"), constant$2("requestGlobalPermission"), constant$2("getDefaultGlobal"), constant$2("setDefaultGlobal"), constant$2("clearDefaultGlobal"), constant$2("updateMetadata"), constant$2("operationCheck"), constant$2("getCurrent"), constant$2("defaultLayoutChanged"), constant$2("layoutRestored"));
 const notificationsOperationTypesDecoder = oneOf$1(constant$2("raiseNotification"), constant$2("requestPermission"), constant$2("notificationShow"), constant$2("notificationClick"), constant$2("getPermission"), constant$2("list"), constant$2("notificationRaised"), constant$2("notificationClosed"), constant$2("click"), constant$2("clear"), constant$2("clearAll"), constant$2("configure"), constant$2("getConfiguration"), constant$2("configurationChanged"), constant$2("setState"), constant$2("clearOld"), constant$2("activeCountChange"), constant$2("stateChange"), constant$2("operationCheck"), constant$2("getActiveCount"));
@@ -2313,6 +2329,10 @@ const requestChannelSelectorConfigDecoder = object$2({
 const channelSelectorDecoder$1 = object$2({
     enabled: boolean$2(),
 });
+const closeHandlersDecoder = object$2({
+    enabled: optional$2(boolean$2()),
+    timeout: optional$2(nonNegativeNumberDecoder$2)
+});
 const applicationDetailsDecoder = object$2({
     url: urlDecoder,
     top: optional$2(number$2()),
@@ -2322,7 +2342,8 @@ const applicationDetailsDecoder = object$2({
     workspacesSandbox: optional$2(workspacesSandboxDecoder),
     channelSelector: optional$2(channelSelectorDecoder$1),
     iframePermissionsPolicy: optional$2(iframePermissionsPolicyConfigDecoder),
-    iframeSandbox: optional$2(iframeSandboxConfigDecoder)
+    iframeSandbox: optional$2(iframeSandboxConfigDecoder),
+    closeHandlers: optional$2(closeHandlersDecoder),
 });
 const intentDefinitionDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2495,9 +2516,11 @@ const newLayoutOptionsDecoder = object$2({
 const restoreOptionsDecoder = object$2({
     name: nonEmptyStringDecoder$2,
     context: optional$2(anyJson$2()),
-    closeRunningInstance: optional$2(boolean$2()),
+    closeRunningInstances: optional$2(boolean$2()),
     closeMe: optional$2(boolean$2()),
-    timeout: optional$2(nonNegativeNumberDecoder$2)
+    timeout: optional$2(nonNegativeNumberDecoder$2),
+    allowPrevent: optional$2(boolean$2()),
+    showDialog: optional$2(boolean$2())
 });
 const getContentsOptionsDecoder = object$2({
     name: nonEmptyStringDecoder$2,
@@ -2629,7 +2652,8 @@ const intentRequestDecoder = object$2({
     handlers: optional$2(array$2(intentHandlerDecoder)),
     timeout: optional$2(nonNegativeNumberDecoder$2),
     waitUserResponseIndefinitely: optional$2(boolean$2()),
-    clearSavedHandler: optional$2(boolean$2())
+    clearSavedHandler: optional$2(boolean$2()),
+    metadata: optional$2(object$2())
 });
 const originAppDecoder = object$2({
     interopInstance: nonEmptyStringDecoder$2,
@@ -2676,7 +2700,8 @@ const handlerFilterDecoder = object$2({
     contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
     resultType: optional$2(nonEmptyStringDecoder$2),
     applicationNames: optional$2(array$2(nonEmptyStringDecoder$2)),
-    excludeList: optional$2(array$2(handlerExclusionCriteriaDecoder))
+    excludeList: optional$2(array$2(handlerExclusionCriteriaDecoder)),
+    handlers: optional$2(array$2(intentHandlerDecoder))
 });
 const embeddedResolverConfigDecoder = object$2({
     enabled: boolean$2(),
@@ -2693,14 +2718,15 @@ const intentResultDecoder = object$2({
     result: anyJson$2()
 });
 const filterHandlersResultDecoder = object$2({
-    handlers: array$2(intentHandlerDecoder)
+    handlers: array$2(intentHandlerDecoder),
+    intent: optional$2(nonEmptyStringDecoder$2)
 });
 const filterHandlersWithResolverConfigDecoder = object$2({
     filterHandlersRequest: handlerFilterDecoder,
     resolverConfig: resolverConfigDecoder,
     embeddedResolverConfig: optional$2(embeddedResolverConfigDecoder)
 });
-const AddIntentListenerRequestDecoder = object$2({
+const registerIntentRequestDecoder = object$2({
     intent: nonEmptyStringDecoder$2,
     contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
     displayName: optional$2(string$2()),
@@ -2709,7 +2735,7 @@ const AddIntentListenerRequestDecoder = object$2({
     resultType: optional$2(string$2()),
     customConfig: optional$2(object$2())
 });
-const AddIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder$2, AddIntentListenerRequestDecoder);
+const registerIntentListenerDecoder = oneOf$1(nonEmptyStringDecoder$2, registerIntentRequestDecoder);
 const intentInfoDecoder = object$2({
     intent: nonEmptyStringDecoder$2,
     contextTypes: optional$2(array$2(nonEmptyStringDecoder$2)),
@@ -2727,15 +2753,19 @@ const channelNameDecoder = (channelNames) => {
 const fdc3OptionsDecoder = object$2({
     contextType: optional$2(nonEmptyStringDecoder$2)
 });
+const fdc3PublishOptionsDecoder = object$2({
+    enabled: boolean$2(),
+    metadata: optional$2(object$2())
+});
 const publishOptionsDecoder = optional$2(oneOf$1(nonEmptyStringDecoder$2, object$2({
     name: optional$2(nonEmptyStringDecoder$2),
-    fdc3: optional$2(boolean$2())
+    fdc3: optional$2(oneOf$1(boolean$2(), fdc3PublishOptionsDecoder))
 })));
 const leaveChannelsConfigDecoder = oneOf$1(nonEmptyStringDecoder$2, object$2({
     windowId: optionalNonEmptyStringDecoder,
     channel: optionalNonEmptyStringDecoder
 }));
-const fdc3ContextDecoder = anyJson$2().where((value) => typeof value.type === "string", "Expected a valid FDC3 Context with compulsory 'type' field");
+const fdc3ContextDecoder = anyJson$2().where((value) => typeof value?.type === "string", "Expected a valid FDC3 Context with compulsory 'type' field");
 const interopActionSettingsDecoder = object$2({
     method: nonEmptyStringDecoder$2,
     arguments: optional$2(anyJson$2()),
@@ -2789,29 +2819,28 @@ const glue42NotificationOptionsDecoder = object$2({
     showInPanel: optional$2(boolean$2()),
     state: optional$2(notificationStateDecoder)
 });
+const optionalNotificationClickOptionsDecoder = optional$2(object$2({
+    close: optional$2(boolean$2())
+}));
+const notificationClickConfigDecoder = object$2({
+    id: nonEmptyStringDecoder$2,
+    action: optional$2(nonEmptyStringDecoder$2),
+    clickOptions: optionalNotificationClickOptionsDecoder
+});
 const notificationSetStateRequestDecoder = object$2({
     id: nonEmptyStringDecoder$2,
     state: notificationStateDecoder
 });
-object$2().where((value) => value.fdc3 ? typeof value.fdc3.type === "string" : true, "Expected a valid FDC3 Context with compulsory 'type' field");
-const channelFDC3DisplayMetadataDecoder = object$2({
-    color: optional$2(nonEmptyStringDecoder$2),
-    icon: optional$2(nonEmptyStringDecoder$2),
-    name: optional$2(nonEmptyStringDecoder$2),
-    glyph: optional$2(nonEmptyStringDecoder$2)
+const channelContextMetaDecoder = looseObjectDecoder({
+    color: nonEmptyStringDecoder$2
 });
-const channelFdc3MetaDecoder = object$2({
-    id: nonEmptyStringDecoder$2,
-    displayMetadata: optional$2(channelFDC3DisplayMetadataDecoder)
+const channelContextDataDecoder = looseObjectDecoder({
+    fdc3: optional$2(fdc3ContextDecoder)
 });
-const channelMetaDecoder = object$2({
-    color: nonEmptyStringDecoder$2,
-    fdc3: optional$2(channelFdc3MetaDecoder)
-});
-const channelDefinitionDecoder = object$2({
+const channelContextDecoder = object$2({
     name: nonEmptyStringDecoder$2,
-    meta: channelMetaDecoder,
-    data: optional$2(object$2()),
+    meta: channelContextMetaDecoder,
+    data: channelContextDataDecoder
 });
 const pathValueDecoder = object$2({
     path: nonEmptyStringDecoder$2,
@@ -3012,6 +3041,7 @@ const startApplicationOptionsDecoder = optional$2(object$2({
     waitForAGMReady: optional$2(boolean$2()),
     channelId: optional$2(nonEmptyStringDecoder$2),
     reuseId: optional$2(nonEmptyStringDecoder$2),
+    layoutComponentId: optional$2(nonEmptyStringDecoder$2),
     originIntentRequest: optional$2(intentRequestDecoder)
 }));
 const joinChannelDataDecoder = object$2({
@@ -3065,6 +3095,141 @@ const clientErrorDataDecoder = object$2({
 const systemHelloSuccessDecoder = object$2({
     isClientErrorOperationSupported: boolean$2()
 });
+const windowCloseConfigDecoder = object$2({
+    windowId: nonEmptyStringDecoder$2,
+    allowPrevent: optional$2(boolean$2()),
+    showDialog: optional$2(boolean$2())
+});
+const windowCloseResultDecoder = object$2({
+    wasClosed: optional$2(boolean$2())
+});
+const windowsClosingConfigDecoder = object$2({
+    windowIds: array$2(nonEmptyStringDecoder$2)
+});
+const windowsClosingResultDecoder = object$2({
+    results: array$2(object$2({
+        windowId: nonEmptyStringDecoder$2,
+        isClosePrevented: boolean$2()
+    }))
+});
+const windowCloseOptionsDecoder = optional$2(object$2({
+    allowPrevent: optional$2(boolean$2()),
+    showDialog: optional$2(boolean$2())
+}));
+const insightsInstrumentationDecoder = oneOf$1(boolean$2(), object$2());
+const insightsHeadersDecoder = oneOf$1(dict$1(string$2()), functionDecoder("insights headers"));
+const insightsAttributesDecoder = oneOf$1(object$2(), functionDecoder("insights attributes"));
+const insightsAttributeSettingsModeDecoder = oneOf$1(constant$2("allowlist"), constant$2("blocklist"));
+const insightsMetricSettingsTypeDecoder = oneOf$1(constant$2("custom_gauge"), constant$2("custom_counter"), constant$2("custom_histogram"), constant$2("custom_up_down_counter"));
+const insightsMetricTypeDecoder = oneOf$1(insightsMetricSettingsTypeDecoder, constant$2("custom_observable_counter"), constant$2("custom_observable_gauge"), constant$2("custom_observable_up_down_counter"));
+const insightsMetricSettingsFields = {
+    enabled: optional$2(boolean$2()),
+    type: optional$2(insightsMetricSettingsTypeDecoder),
+    name: nonEmptyStringDecoder$2,
+    description: optional$2(nonEmptyStringDecoder$2),
+    unit: optional$2(nonEmptyStringDecoder$2),
+    buckets: optional$2(array$2(number$2())),
+    additionalAttributes: optional$2(insightsAttributesDecoder),
+    publishingSettings: optional$2(anyObjectDecoder)
+};
+const insightsMetricSettingsDecoder = object$2(insightsMetricSettingsFields);
+const insightsMetricFilterFields = {
+    name: optional$2(nonEmptyStringDecoder$2),
+    type: optional$2(insightsMetricTypeDecoder),
+    attributes: optional$2(anyObjectDecoder),
+    enabled: optional$2(boolean$2()),
+    overrideDefaultFilters: optional$2(boolean$2()),
+    sample: optional$2(oneOf$1(number$2(), boolean$2())),
+    attributeSettings: optional$2(anyObjectDecoder),
+    attributeSettingsMode: optional$2(insightsAttributeSettingsModeDecoder),
+    additionalAttributes: optional$2(insightsAttributesDecoder)
+};
+const insightsMetricFilterDecoder = object$2(insightsMetricFilterFields);
+const insightsMetricsSettingsFields = {
+    enabled: boolean$2(),
+    url: optional$2(urlDecoder),
+    publishInterval: optional$2(positiveNumberDecoder),
+    concurrencyLimit: optional$2(nonNegativeNumberDecoder$2),
+    timeoutMillis: optional$2(nonNegativeNumberDecoder$2),
+    headers: optional$2(insightsHeadersDecoder),
+    addResourceAttributesToAttributes: optional$2(boolean$2()),
+    additionalAttributes: optional$2(insightsAttributesDecoder),
+    additionalResourceAttributes: optional$2(insightsAttributesDecoder),
+    metrics: optional$2(array$2(insightsMetricSettingsDecoder)),
+    filters: optional$2(array$2(insightsMetricFilterDecoder)),
+    useDefaultFilters: optional$2(boolean$2()),
+    defaultPublishingSettings: optional$2(anyObjectDecoder),
+    maxAttributeDepth: optional$2(nonNegativeNumberDecoder$2),
+    exporterSettings: optional$2(anyObjectDecoder),
+    readerSettings: optional$2(anyObjectDecoder),
+    meterProviderSettings: optional$2(anyObjectDecoder),
+    meterProvider: optional$2(functionDecoder("insights metrics meterProvider")),
+    metricExporters: optional$2(functionDecoder("insights metrics metricExporters")),
+    metricReaders: optional$2(functionDecoder("insights metrics metricReaders"))
+};
+const insightsMetricsSettingsDecoder = object$2(insightsMetricsSettingsFields);
+const optionalInsightsTraceMetricDecoder = nullable(optional$2(oneOf$1(boolean$2(), string$2())));
+const insightsTracesSettingsFields = {
+    enabled: boolean$2(),
+    url: optional$2(urlDecoder),
+    filters: optional$2(anyObjectArrayDecoder),
+    useDefaultFilters: optional$2(boolean$2()),
+    sampling: optional$2(anyObjectArrayDecoder),
+    defaults: optional$2(anyObjectDecoder),
+    countMetric: optionalInsightsTraceMetricDecoder,
+    durationMetric: optionalInsightsTraceMetricDecoder,
+    resultMetric: optionalInsightsTraceMetricDecoder,
+    attributeSettings: optional$2(anyObjectDecoder),
+    attributeSettingsMode: optional$2(insightsAttributeSettingsModeDecoder),
+    useOTELContextManager: optional$2(boolean$2()),
+    parentFromOTELContext: optional$2(boolean$2()),
+    restoreCurrentTracingState: optional$2(boolean$2()),
+    concurrencyLimit: optional$2(nonNegativeNumberDecoder$2),
+    timeoutMillis: optional$2(nonNegativeNumberDecoder$2),
+    clickstream: optional$2(oneOf$1(boolean$2(), constant$2("nested"), constant$2("sibling"), object$2())),
+    instrumentAppStartup: optional$2(insightsInstrumentationDecoder),
+    instrumentRequests: optional$2(insightsInstrumentationDecoder),
+    instrumentErrors: optional$2(insightsInstrumentationDecoder),
+    instrumentResources: optional$2(insightsInstrumentationDecoder),
+    instrumentNavigation: optional$2(boolean$2()),
+    instrumentEventLoop: optional$2(insightsInstrumentationDecoder),
+    instrumentWebSockets: optional$2(insightsInstrumentationDecoder),
+    instrumentWebVitals: optional$2(insightsInstrumentationDecoder),
+    processorSettings: optional$2(anyObjectDecoder),
+    parentNameLimit: optional$2(nonNegativeNumberDecoder$2),
+    console: optional$2(boolean$2()),
+    headers: optional$2(insightsHeadersDecoder),
+    addResourceAttributesToAttributes: optional$2(boolean$2()),
+    additionalAttributes: optional$2(insightsAttributesDecoder),
+    additionalResourceAttributes: optional$2(insightsAttributesDecoder),
+    tracerProvider: optional$2(functionDecoder("insights traces tracerProvider")),
+    sampler: optional$2(functionDecoder("insights traces sampler")),
+    spanProcessors: optional$2(functionDecoder("insights traces spanProcessors")),
+    spanExporters: optional$2(functionDecoder("insights traces spanExporters")),
+    propagator: optional$2(functionDecoder("insights traces propagator")),
+    contextManager: optional$2(functionDecoder("insights traces contextManager"))
+};
+const insightsTracesSettingsDecoder = object$2(insightsTracesSettingsFields);
+const insightsConfigFields = {
+    enabled: boolean$2(),
+    useExistingOTELSDK: optional$2(boolean$2()),
+    registerGlobalOTELObjects: optional$2(oneOf$1(boolean$2(), constant$2("force"))),
+    applicationName: optional$2(nonEmptyStringDecoder$2),
+    errorlessMode: optional$2(boolean$2()),
+    failOnInitError: optional$2(boolean$2()),
+    platformVersion: optional$2(nonEmptyStringDecoder$2),
+    serviceName: optional$2(nonEmptyStringDecoder$2),
+    serviceId: optional$2(nonEmptyStringDecoder$2),
+    serviceVersion: optional$2(nonEmptyStringDecoder$2),
+    userId: optional$2(nonEmptyStringDecoder$2),
+    headers: optional$2(insightsHeadersDecoder),
+    addResourceAttributesToAttributes: optional$2(boolean$2()),
+    additionalAttributes: optional$2(insightsAttributesDecoder),
+    additionalResourceAttributes: optional$2(insightsAttributesDecoder),
+    metrics: optional$2(insightsMetricsSettingsDecoder),
+    traces: optional$2(insightsTracesSettingsDecoder)
+};
+const insightsConfigDecoder = object$2(insightsConfigFields);
 
 const nonEmptyStringDecoder$1 = decoders.common.nonEmptyStringDecoder;
 const nonNegativeNumberDecoder$1 = decoders.common.nonNegativeNumberDecoder;
@@ -3119,7 +3284,7 @@ const modalsConfigDecoder = object$2({
     awaitFactory: optional$2(boolean$2()),
     timeout: optional$2(nonNegativeNumberDecoder$1),
 });
-const uiOperationTypesDecoder = oneOf$1(constant$2("getResources"), constant$2("operationCheck"), constant$2("showAlert"), constant$2("showDialog"), constant$2("alertInteropAction"), constant$2("showResolver"));
+const uiOperationTypesDecoder = oneOf$1(constant$2("getResources"), constant$2("operationCheck"), constant$2("showAlert"), constant$2("showDialog"), constant$2("closeDialog"), constant$2("alertInteropAction"), constant$2("showResolver"));
 const getResourcesDataDecoder = object$2({
     origin: nonEmptyStringDecoder$1
 });
@@ -3213,7 +3378,11 @@ object$2({
 });
 const uiDialogRequestMessageDecoder = object$2({
     config: dialogRequestConfigDecoder,
-    target: modalRequestMessageTargetDecoder
+    target: modalRequestMessageTargetDecoder,
+    dialogId: optional$2(nonEmptyStringDecoder$1)
+});
+const uiCloseDialogRequestMessageDecoder = object$2({
+    dialogId: nonEmptyStringDecoder$1
 });
 const openAlertResultDecoder = object$2({
     id: nonEmptyStringDecoder$1
@@ -3266,7 +3435,7 @@ const openConfigWithHandlerFilterDecoder = object$2({
     handlerFilter: handlerFilterDecoder
 });
 const intentResolverOpenConfigDecoder = union$1(openConfigWithIntentRequestDecoder, openConfigWithHandlerFilterDecoder);
-const uiResolverRequestMessageConfigDecoder = intersection(intentResolverOpenConfigDecoder, object$2({ timeout: nonNegativeNumberDecoder$1 }));
+const uiResolverRequestMessageConfigDecoder = intersection$1(intentResolverOpenConfigDecoder, object$2({ timeout: nonNegativeNumberDecoder$1 }));
 const uiResolverRequestMessageDecoder = object$2({
     config: uiResolverRequestMessageConfigDecoder
 });
@@ -3288,9 +3457,22 @@ const parseConfig = (config = {}) => {
     if (!decodedIntentResolverConfigResult.ok) {
         throw ioError.raiseError(`The provided 'intentResolver' config is invalid. Error: ${JSON.stringify(decodedIntentResolverConfigResult.error)}`);
     }
+    let insights = config.insights;
+    if (!isPlatformInternal) {
+        const decodedInsightsConfigResult = optional$2(insightsConfigDecoder).run(config.insights);
+        if (!decodedInsightsConfigResult.ok) {
+            throw ioError.raiseError(`The provided 'insights' config is invalid. Error: ${JSON.stringify(decodedInsightsConfigResult.error)}`);
+        }
+        insights = decodedInsightsConfigResult.result;
+        if (insights?.metrics) {
+            const metrics = { ...insights.metrics, platformMetricsEnabled: false };
+            insights = { ...insights, metrics };
+        }
+    }
     const combined = {
         ...defaultConfig,
         ...config,
+        insights,
         isPlatformInternal,
         logger: config.systemLogger?.level ?? "info",
         customLogger: config.systemLogger?.customLogger,
@@ -3336,7 +3518,8 @@ const operations$a = {
     getUrl: { name: "getUrl", dataDecoder: simpleWindowDecoder, resultDecoder: windowUrlResultDecoder },
     moveResize: { name: "moveResize", dataDecoder: windowMoveResizeConfigDecoder },
     focus: { name: "focus", dataDecoder: simpleWindowDecoder },
-    close: { name: "close", dataDecoder: simpleWindowDecoder },
+    close: { name: "close", dataDecoder: windowCloseConfigDecoder, resultDecoder: windowCloseResultDecoder },
+    windowsClosing: { name: "windowsClosing", dataDecoder: windowsClosingConfigDecoder, resultDecoder: windowsClosingResultDecoder },
     getTitle: { name: "getTitle", dataDecoder: simpleWindowDecoder, resultDecoder: windowTitleConfigDecoder },
     setTitle: { name: "setTitle", dataDecoder: windowTitleConfigDecoder },
     focusChange: { name: "focusChange", dataDecoder: focusEventDataDecoder },
@@ -3495,6 +3678,7 @@ class WebWindowModel {
     _logger;
     registry = CallbackRegistryFactory$1();
     myCtxKey;
+    preventableCloseTimeoutMs = 2 * 60 * 1000;
     ctxUnsubscribe;
     zoomFactorIndex = 7;
     me;
@@ -3530,6 +3714,15 @@ class WebWindowModel {
         this.zoomFactorIndex = factorIndex;
         this.registry.execute("zoom-factor-changed", this.me);
     }
+    async processClosingEvent() {
+        const resultPromises = this.registry.execute("closing").map((resultPromise) => resultPromise.catch((error) => {
+            this._logger.warn(`An onClosing callback for window ${this.id} threw an error: ${extractErrorMsg(error)}`);
+            return { isClosePrevented: false };
+        }));
+        const results = await Promise.all(resultPromises);
+        const isClosePrevented = results.some((result) => result.isClosePrevented);
+        return { isClosePrevented };
+    }
     async toApi() {
         this.ctxUnsubscribe = await this._bridge.contextLib.subscribe(this.myCtxKey, (data) => this.registry.execute("context-updated", data));
         this.me = {
@@ -3543,6 +3736,7 @@ class WebWindowModel {
             moveTo: this.moveTo.bind(this),
             focus: this.focus.bind(this),
             close: this.close.bind(this),
+            onClosing: this.onClosing.bind(this),
             getTitle: this.getTitle.bind(this),
             setTitle: this.setTitle.bind(this),
             getBounds: this.getBounds.bind(this),
@@ -3624,9 +3818,25 @@ class WebWindowModel {
         }
         return this.me;
     }
-    async close() {
-        await this._bridge.send("windows", operations$a.close, { windowId: this.id });
-        return this.me;
+    async close(options) {
+        const { allowPrevent, showDialog } = runDecoderWithIOError(windowCloseOptionsDecoder, options) ?? {};
+        const invokeOptions = allowPrevent ? { methodResponseTimeoutMs: showDialog ? MAX_SET_TIMEOUT_DELAY : this.preventableCloseTimeoutMs } : undefined;
+        const { wasClosed } = await this._bridge.send("windows", operations$a.close, { windowId: this.id, allowPrevent, showDialog }, invokeOptions);
+        return wasClosed ?? true;
+    }
+    onClosing(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to window closing events, because the provided callback is not a function!");
+        }
+        const wrappedCallback = async () => {
+            let isClosePrevented = false;
+            const preventClose = () => {
+                isClosePrevented = true;
+            };
+            await callback(preventClose);
+            return { isClosePrevented };
+        };
+        return this.registry.add("closing", wrappedCallback);
     }
     async getTitle() {
         const result = await this._bridge.send("windows", operations$a.getTitle, { windowId: this.id });
@@ -3718,4183 +3928,49 @@ class WebWindowModel {
     }
 }
 
-const commonOperations = {
-    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
-    getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: workspaceFrameBoundsResultDecoder, dataDecoder: simpleItemIdDecoder }
+/******************************************************************************
+Copyright (c) Microsoft Corporation.
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
+
+function __decorate$1(decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+typeof SuppressedError === "function" ? SuppressedError : function (error, suppressed, message) {
+    var e = new Error(message);
+    return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
-const PromiseWrap = (callback, timeoutMilliseconds, timeoutMessage) => {
-    return new Promise((resolve, reject) => {
-        let promiseActive = true;
-        const timeout = setTimeout(() => {
-            if (!promiseActive) {
-                return;
+function _mergeNamespaces$1(n, m) {
+    m.forEach(function (e) {
+        e && typeof e !== 'string' && !Array.isArray(e) && Object.keys(e).forEach(function (k) {
+            if (k !== 'default' && !(k in n)) {
+                var d = Object.getOwnPropertyDescriptor(e, k);
+                Object.defineProperty(n, k, d.get ? d : {
+                    enumerable: true,
+                    get: function () { return e[k]; }
+                });
             }
-            promiseActive = false;
-            const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
-            reject(message);
-        }, timeoutMilliseconds);
-        callback()
-            .then((result) => {
-            if (!promiseActive) {
-                return;
-            }
-            promiseActive = false;
-            clearTimeout(timeout);
-            resolve(result);
-        })
-            .catch((error) => {
-            if (!promiseActive) {
-                return;
-            }
-            promiseActive = false;
-            clearTimeout(timeout);
-            reject(error);
         });
     });
-};
-const PromisePlus$1 = (executor, timeoutMilliseconds, timeoutMessage) => {
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-            const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
-            reject(message);
-        }, timeoutMilliseconds);
-        const providedPromise = new Promise(executor);
-        providedPromise
-            .then((result) => {
-            clearTimeout(timeout);
-            resolve(result);
-        })
-            .catch((error) => {
-            clearTimeout(timeout);
-            reject(error);
-        });
-    });
-};
-
-class WindowsController {
-    supportedOperationsNames = [];
-    focusEventHandler;
-    registry = CallbackRegistryFactory$1();
-    platformRegistration;
-    ioc;
-    bridge;
-    publicWindowId;
-    allWindowProjections = [];
-    me;
-    logger;
-    isWorkspaceFrame;
-    instanceId;
-    channelsController;
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("windows.controller.web");
-        this.logger.trace("starting the web windows controller");
-        this.publicWindowId = ioc.publicWindowId;
-        this.addWindowOperationExecutors();
-        this.ioc = ioc;
-        this.bridge = ioc.bridge;
-        this.instanceId = coreGlue.interop.instance.instance;
-        this.channelsController = ioc.channelsController;
-        this.logger.trace(`set the public window id: ${this.publicWindowId}, set the bridge operations and ioc, registering with the platform now`);
-        this.platformRegistration = this.registerWithPlatform();
-        await this.platformRegistration;
-        await this.initializeFocusTracking();
-        this.logger.trace("registration with the platform successful, attaching the windows property to glue and returning");
-        const api = this.toApi();
-        coreGlue.windows = api;
-    }
-    handlePlatformShutdown() {
-        this.registry.clear();
-        this.allWindowProjections = [];
-        if (!this.focusEventHandler) {
-            return;
-        }
-        document.removeEventListener("visibilityChange", this.focusEventHandler);
-        window.removeEventListener("focus", this.focusEventHandler);
-        window.removeEventListener("blur", this.focusEventHandler);
-    }
-    async handleBridgeMessage(args) {
-        await this.platformRegistration;
-        const operationName = runDecoderWithIOError(windowOperationTypesDecoder, args.operation);
-        const operation = operations$a[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    async open(name, url, options) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        runDecoderWithIOError(urlDecoder, url);
-        const settings = runDecoderWithIOError(windowOpenSettingsDecoder, options);
-        const windowSuccess = await this.bridge.send("windows", operations$a.openWindow, { name, url, options: settings });
-        return this.waitForWindowAdded(windowSuccess.windowId);
-    }
-    list() {
-        return this.allWindowProjections.map((projection) => projection.api);
-    }
-    findById(id) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
-        return this.allWindowProjections.find((projection) => projection.id === id)?.api;
-    }
-    toApi() {
-        return {
-            open: this.open.bind(this),
-            my: this.my.bind(this),
-            list: this.list.bind(this),
-            findById: this.findById.bind(this),
-            onWindowAdded: this.onWindowAdded.bind(this),
-            onWindowRemoved: this.onWindowRemoved.bind(this),
-            onWindowGotFocus: this.onWindowGotFocus.bind(this),
-            onWindowLostFocus: this.onWindowLostFocus.bind(this)
-        };
-    }
-    addWindowOperationExecutors() {
-        operations$a.focusChange.execute = this.handleFocusChangeEvent.bind(this);
-        operations$a.windowAdded.execute = this.handleWindowAdded.bind(this);
-        operations$a.windowRemoved.execute = this.handleWindowRemoved.bind(this);
-        operations$a.getBounds.execute = this.handleGetBounds.bind(this);
-        operations$a.getFrameBounds.execute = this.handleGetBounds.bind(this);
-        operations$a.getTitle.execute = this.handleGetTitle.bind(this);
-        operations$a.getUrl.execute = this.handleGetUrl.bind(this);
-        operations$a.moveResize.execute = this.handleMoveResize.bind(this);
-        operations$a.setTitle.execute = this.handleSetTitle.bind(this);
-        operations$a.getChannel.execute = this.handleGetChannel.bind(this);
-        operations$a.notifyChannelsChanged.execute = this.handleChannelsChanged.bind(this);
-        operations$a.setZoomFactor.execute = this.handleSetZoomFactor.bind(this);
-        operations$a.zoomFactorChange.execute = this.handleZoomFactorChanged.bind(this);
-        operations$a.refresh.execute = this.handleRefresh.bind(this);
-        operations$a.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$a);
-    }
-    my() {
-        return Object.assign({}, this.me);
-    }
-    onWindowAdded(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to window added, because the provided callback is not a function!");
-        }
-        return this.registry.add("window-added", callback);
-    }
-    onWindowRemoved(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to window removed, because the provided callback is not a function!");
-        }
-        return this.registry.add("window-removed", callback);
-    }
-    onWindowGotFocus(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onWindowGotFocus, because the provided callback is not a function!");
-        }
-        return this.registry.add("window-got-focus", callback);
-    }
-    onWindowLostFocus(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onWindowLostFocus, because the provided callback is not a function!");
-        }
-        return this.registry.add("window-lost-focus", callback);
-    }
-    async sayHello() {
-        const helloSuccess = await this.bridge.send("windows", operations$a.windowHello, { windowId: this.publicWindowId });
-        return helloSuccess;
-    }
-    async registerWithPlatform() {
-        const { windows, isWorkspaceFrame } = await this.sayHello();
-        this.isWorkspaceFrame = isWorkspaceFrame;
-        this.logger.trace("the platform responded to the hello message");
-        if (!this.isWorkspaceFrame && this.publicWindowId) {
-            this.logger.trace("i am not treated as a workspace frame, setting my window");
-            const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
-            if (!myWindow) {
-                const windowsInfo = windows.map(w => `${w.windowId}:${w.name}`).join(", ");
-                return ioError.raiseError(`Cannot initialize the window library, because I received no information about me -> id: ${this.publicWindowId} name: ${window.name} from the platform: known windows: ${windowsInfo}`);
-            }
-            const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name, this.logger);
-            this.me = myProjection.api;
-            this.allWindowProjections.push(myProjection);
-        }
-        const currentWindows = await Promise.all(windows
-            .filter((w) => w.windowId !== this.publicWindowId)
-            .map((w) => this.ioc.buildWebWindow(w.windowId, w.name, this.logger)));
-        this.logger.trace("all windows projections are completed, building the list collection");
-        this.allWindowProjections.push(...currentWindows);
-    }
-    async handleFocusChangeEvent(focusData) {
-        const foundProjection = this.allWindowProjections.find((projection) => projection.id === focusData.windowId);
-        if (!foundProjection) {
-            return;
-        }
-        foundProjection.model.processSelfFocusEvent(focusData.hasFocus);
-        const keyToExecute = focusData.hasFocus ? "window-got-focus" : "window-lost-focus";
-        this.registry.execute(keyToExecute, foundProjection.api);
-    }
-    async handleWindowAdded(data) {
-        if (this.allWindowProjections.some((projection) => projection.id === data.windowId)) {
-            return;
-        }
-        const webWindowProjection = await this.ioc.buildWebWindow(data.windowId, data.name, this.logger);
-        this.allWindowProjections.push(webWindowProjection);
-        this.registry.execute("window-added", webWindowProjection.api);
-    }
-    async handleWindowRemoved(data) {
-        const removed = this.allWindowProjections.find((w) => w.id === data.windowId);
-        if (!removed) {
-            return;
-        }
-        this.allWindowProjections = this.allWindowProjections.filter((w) => w.id !== data.windowId);
-        removed.model.clean();
-        this.registry.execute("window-removed", removed.api);
-    }
-    async handleGetBounds() {
-        if (!this.me && !this.isWorkspaceFrame) {
-            return ioError.raiseError("This window cannot report it's bounds, because it is not a Glue Window, most likely because it is an iframe");
-        }
-        return {
-            windowId: this.isWorkspaceFrame ? "noop" : this.me.id,
-            bounds: {
-                top: window.screenTop,
-                left: window.screenLeft,
-                width: window.innerWidth,
-                height: window.innerHeight
-            }
-        };
-    }
-    async handleGetTitle() {
-        if (!this.me) {
-            return ioError.raiseError("This window cannot report it's title, because it is not a Glue Window, most likely because it is an iframe");
-        }
-        return {
-            windowId: this.me.id,
-            title: document.title
-        };
-    }
-    async handleGetUrl() {
-        if (!this.me) {
-            return ioError.raiseError("This window cannot report it's url, because it is not a Glue Window, most likely because it is an iframe");
-        }
-        return {
-            windowId: this.me.id,
-            url: window.location.href
-        };
-    }
-    async handleMoveResize(config) {
-        const targetTop = typeof config.top === "number" ? config.top :
-            config.relative ? 0 : window.screenTop;
-        const targetLeft = typeof config.left === "number" ? config.left :
-            config.relative ? 0 : window.screenLeft;
-        const targetHeight = typeof config.height === "number" ? config.height :
-            config.relative ? 0 : window.innerHeight;
-        const targetWidth = typeof config.width === "number" ? config.width :
-            config.relative ? 0 : window.innerWidth;
-        const moveMethod = config.relative ? window.moveBy : window.moveTo;
-        const resizeMethod = config.relative ? window.resizeBy : window.resizeTo;
-        moveMethod(targetLeft, targetTop);
-        resizeMethod(targetWidth, targetHeight);
-    }
-    async handleSetTitle(config) {
-        document.title = config.title;
-    }
-    async initializeFocusTracking() {
-        if (this.isWorkspaceFrame) {
-            this.logger.trace("Ignoring the focus tracking, because this client is a workspace frame");
-            return;
-        }
-        try {
-            await this.bridge.send("windows", commonOperations.operationCheck, { operation: "focusChange" });
-        }
-        catch (error) {
-            this.logger.warn("The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.");
-            return;
-        }
-        const hasFocus = document.hasFocus();
-        await this.transmitFocusChange(true);
-        if (!hasFocus) {
-            await this.transmitFocusChange(false);
-        }
-        this.defineEventListeners();
-    }
-    processFocusEvent() {
-        const hasFocus = document.hasFocus();
-        this.transmitFocusChange(hasFocus);
-    }
-    waitForWindowAdded(windowId) {
-        const foundWindow = this.allWindowProjections.find((projection) => projection.id === windowId);
-        if (foundWindow) {
-            return Promise.resolve(foundWindow.api);
-        }
-        return PromisePlus$1((resolve) => {
-            const unsubscribe = this.onWindowAdded((addedWindow) => {
-                if (addedWindow.id === windowId) {
-                    unsubscribe();
-                    resolve(addedWindow);
-                }
-            });
-        }, 30000, `Timed out waiting for ${windowId} to be announced`);
-    }
-    async transmitFocusChange(hasFocus) {
-        const eventData = {
-            windowId: this.me?.id || `iframe-${this.instanceId}`,
-            hasFocus
-        };
-        if (this.me) {
-            this.me.isFocused = hasFocus;
-        }
-        await this.bridge.send("windows", operations$a.focusChange, eventData);
-    }
-    defineEventListeners() {
-        this.focusEventHandler = this.processFocusEvent.bind(this);
-        document.addEventListener("visibilityChange", this.focusEventHandler);
-        window.addEventListener("focus", this.focusEventHandler);
-        window.addEventListener("blur", this.focusEventHandler);
-    }
-    async handleGetChannel() {
-        if (!this.me) {
-            return ioError.raiseError("This window cannot report its channel, because it is not a ioConnect Window, most likely because it is an iframe");
-        }
-        const channel = this.channelsController.my();
-        return {
-            ...(channel ? { channel } : {}),
-        };
-    }
-    async handleRefresh() {
-        if (!this.me) {
-            return ioError.raiseError("This window cannot refresh, because it is not an ioConnect Window, most likely because it is an iframe");
-        }
-        setTimeout(() => {
-            window.location.reload();
-        }, 0);
-    }
-    async handleChannelsChanged(data) {
-        const windowProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
-        windowProjection?.model.processChannelsChangedEvent(data.channelNames);
-    }
-    async handleSetZoomFactor(config) {
-        if (!this.me) {
-            return ioError.raiseError("This window cannot change its zoom factor, because it is not an ioConnect Window, most likely because it is an iframe");
-        }
-        document.body.style.zoom = `${ZOOM_FACTORS[config.factorIndex]}%`;
-    }
-    async handleZoomFactorChanged(data) {
-        const foundProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
-        if (!foundProjection) {
-            return;
-        }
-        foundProjection.model.processSelfZoomFactorChangedEvent(data.factorIndex);
-    }
+    return Object.freeze(n);
 }
-
-const GlueWebPlatformControlName = "T42.Web.Platform.Control";
-const GlueWebPlatformStreamName = "T42.Web.Platform.Stream";
-const GlueClientControlName = "T42.Web.Client.Control";
-const GlueCorePlusThemesStream = "T42.Core.Plus.Themes.Stream";
-
-class GlueBridge {
-    coreGlue;
-    communicationId;
-    platformMethodTimeoutMs = 10000;
-    controllers;
-    sub;
-    running;
-    constructor(coreGlue, communicationId) {
-        this.coreGlue = coreGlue;
-        this.communicationId = communicationId;
-    }
-    get contextLib() {
-        return this.coreGlue.contexts;
-    }
-    get interopInstance() {
-        return this.coreGlue.interop.instance.instance;
-    }
-    async stop() {
-        this.running = false;
-        this.sub.close();
-        await this.coreGlue.interop.unregister(GlueClientControlName);
-    }
-    async start(controllers) {
-        this.running = true;
-        this.controllers = controllers;
-        await Promise.all([
-            this.checkWaitMethod(GlueWebPlatformControlName),
-            this.checkWaitMethod(GlueWebPlatformStreamName)
-        ]);
-        const systemId = this.communicationId;
-        const [sub] = await Promise.all([
-            this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
-            this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
-        ]);
-        this.sub = sub;
-        this.sub.onData((pkg) => this.passMessageController(pkg.data));
-    }
-    getInteropInstance(windowId) {
-        const result = this.coreGlue.interop.servers().find((s) => s.windowId && s.windowId === windowId);
-        return {
-            application: result?.application,
-            applicationName: result?.applicationName,
-            peerId: result?.peerId,
-            instance: result?.instance,
-            windowId: result?.windowId
-        };
-    }
-    async send(domain, operation, operationData, options, webOptions) {
-        if (operation.dataDecoder) {
-            try {
-                operation.dataDecoder.runWithException(operationData);
-            }
-            catch (error) {
-                return ioError.raiseError(`Unexpected Web->Platform outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
-            }
-        }
-        const operationSupported = webOptions?.includeOperationCheck ?
-            (await this.checkOperationSupported(domain, operation)).isSupported :
-            true;
-        if (!operationSupported) {
-            return ioError.raiseError(`Cannot complete operation: ${operation.name} for domain: ${domain} because this client is connected to a platform which does not support it`);
-        }
-        try {
-            const operationResult = await this.transmitMessage(domain, operation, operationData, options);
-            if (operation.resultDecoder) {
-                operation.resultDecoder.runWithException(operationResult);
-            }
-            return operationResult;
-        }
-        catch (error) {
-            if (error?.kind) {
-                return ioError.raiseError(`Unexpected Web<-Platform incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
-            }
-            return ioError.raiseError(error);
-        }
-    }
-    async createThemesSubscription() {
-        const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
-        if (!streamExists) {
-            return ioError.raiseError("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
-        }
-        return this.coreGlue.interop.subscribe(GlueCorePlusThemesStream, this.communicationId ? { target: { instance: this.communicationId } } : undefined);
-    }
-    async checkOperationSupported(domain, operation) {
-        try {
-            const result = await this.send(domain, commonOperations.operationCheck, { operation: operation.name });
-            return result;
-        }
-        catch (error) {
-            return { isSupported: false };
-        }
-    }
-    checkWaitMethod(name) {
-        return PromisePlus$1((resolve) => {
-            const hasMethod = this.coreGlue.interop.methods().some((method) => {
-                const nameMatch = method.name === name;
-                const serverMatch = this.communicationId ?
-                    method.getServers().some((server) => server.instance === this.communicationId) :
-                    true;
-                return nameMatch && serverMatch;
-            });
-            if (hasMethod) {
-                return resolve();
-            }
-            const unSub = this.coreGlue.interop.serverMethodAdded((data) => {
-                const method = data.method;
-                const server = data.server;
-                const serverMatch = this.communicationId ?
-                    server.instance === this.communicationId :
-                    true;
-                if (method.name === name && serverMatch) {
-                    unSub();
-                    resolve();
-                }
-            });
-        }, this.platformMethodTimeoutMs, `Cannot initiate Glue Web, because a system method's discovery timed out: ${name}`);
-    }
-    passMessageController(args, success, error) {
-        const decodeResult = libDomainDecoder.run(args.domain);
-        if (!decodeResult.ok) {
-            if (error) {
-                error(`Cannot execute this client control, because of domain validation error: ${JSON.stringify(decodeResult.error)}`);
-            }
-            return;
-        }
-        const domain = decodeResult.result;
-        this.controllers[domain]
-            .handleBridgeMessage(args)
-            .then((resolutionData) => {
-            if (success) {
-                success(resolutionData);
-            }
-        })
-            .catch((err) => {
-            if (error) {
-                error(err);
-            }
-            console.warn(err);
-        });
-    }
-    async transmitMessage(domain, operation, data, options) {
-        const messageData = { domain, data, operation: operation.name };
-        let invocationResult;
-        const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
-        const systemId = this.communicationId;
-        try {
-            if (!this.running) {
-                throw new Error("Cannot send a control message, because the platform shut down");
-            }
-            invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
-            if (!invocationResult) {
-                throw new Error("Received unsupported result from the platform - empty result");
-            }
-            if (!Array.isArray(invocationResult.all_return_values) || invocationResult.all_return_values.length === 0) {
-                throw new Error("Received unsupported result from the platform - empty values collection");
-            }
-        }
-        catch (error) {
-            if (error && error.all_errors && error.all_errors.length) {
-                const invocationErrorMessage = error.all_errors[0].message;
-                throw new Error(`${baseErrorMessage} -> Inner message: ${invocationErrorMessage}`);
-            }
-            throw new Error(`${baseErrorMessage} -> Inner message: ${error.message}`);
-        }
-        return invocationResult.all_return_values[0].returned;
-    }
-}
-
-const operations$9 = {
-    appHello: { name: "appHello", dataDecoder: windowHelloDecoder, resultDecoder: appHelloSuccessDecoder },
-    appDirectoryStateChange: { name: "appDirectoryStateChange", dataDecoder: appDirectoryStateChangeDecoder },
-    instanceStarted: { name: "instanceStarted", dataDecoder: instanceDataDecoder },
-    instanceStopped: { name: "instanceStopped", dataDecoder: instanceDataDecoder },
-    applicationStart: { name: "applicationStart", dataDecoder: applicationStartConfigDecoder, resultDecoder: instanceDataDecoder },
-    instanceStop: { name: "instanceStop", dataDecoder: basicInstanceDataDecoder },
-    import: { name: "import" },
-    remove: { name: "remove", dataDecoder: appRemoveConfigDecoder },
-    export: { name: "export", resultDecoder: appsExportOperationDecoder },
-    clear: { name: "clear" },
-    operationCheck: { name: "operationCheck" }
-};
-
-class AppManagerController {
-    me;
-    supportedOperationsNames = [];
-    baseApplicationsTimeoutMS = 60000;
-    appImportTimeoutMS = 20;
-    registry = CallbackRegistryFactory$1();
-    ioc;
-    bridge;
-    publicWindowId;
-    applications = [];
-    instances = [];
-    platformRegistration;
-    logger;
-    channelsController;
-    interop;
-    initialChannelId;
-    handlePlatformShutdown() {
-        this.registry.clear();
-        this.applications = [];
-        this.instances = [];
-        delete this.me;
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("appManger.controller.web");
-        this.logger.trace("starting the web appManager controller");
-        this.publicWindowId = ioc.publicWindowId;
-        this.addOperationsExecutors();
-        this.ioc = ioc;
-        this.bridge = ioc.bridge;
-        this.channelsController = ioc.channelsController;
-        this.interop = coreGlue.interop;
-        this.platformRegistration = this.registerWithPlatform();
-        await this.platformRegistration;
-        this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
-        const api = this.toApi();
-        coreGlue.appManager = api;
-    }
-    async postStart() {
-        if (!this.initialChannelId) {
-            return;
-        }
-        await this.channelsController.handleAppManagerInitialChannelId(this.initialChannelId);
-    }
-    async handleBridgeMessage(args) {
-        await this.platformRegistration;
-        const operationName = runDecoderWithIOError(appManagerOperationTypesDecoder, args.operation);
-        const operation = operations$9[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    onInstanceStarted(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onInstanceStarted requires a single argument of type function");
-        }
-        return this.registry.add("instance-started", callback, this.instances);
-    }
-    onInstanceStopped(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onInstanceStopped requires a single argument of type function");
-        }
-        return this.registry.add("instance-stopped", callback);
-    }
-    async startApplication(appName, context, options) {
-        const channels = await this.channelsController.all();
-        if (options?.channelId && !channels.includes(options.channelId)) {
-            return ioError.raiseError(`The channel with name "${options.channelId}" doesn't exist!`);
-        }
-        const startOptions = {
-            name: appName,
-            waitForAGMReady: options?.waitForAGMReady ?? true,
-            context,
-            top: options?.top,
-            left: options?.left,
-            width: options?.width,
-            height: options?.height,
-            relativeTo: options?.relativeTo,
-            relativeDirection: options?.relativeDirection,
-            id: options?.reuseId,
-            forceChromeTab: options?.forceTab,
-            layoutComponentId: options?.layoutComponentId,
-            channelId: options?.channelId,
-            startReason: {
-                originApp: {
-                    name: this.me?.application.name,
-                    interopInstance: this.interop.instance.instance
-                }
-            }
-        };
-        if (options?.originIntentRequest) {
-            startOptions.startReason.intentRequest = options.originIntentRequest;
-        }
-        const openResult = await this.bridge.send("appManager", operations$9.applicationStart, startOptions);
-        const app = this.applications.find((a) => a.name === openResult.applicationName);
-        return this.ioc.buildInstance(openResult, app);
-    }
-    getApplication(name) {
-        const verifiedName = runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        const application = this.applications.find((app) => app.name === verifiedName);
-        const iframeSandbox = application?.userProperties?.details?.iframeSandbox;
-        if (iframeSandbox) {
-            application.userProperties.details.workspacesSandbox = iframeSandbox;
-        }
-        return application;
-    }
-    getInstances() {
-        return this.instances.slice();
-    }
-    onAppAdded(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onAppAdded requires a single argument of type function");
-        }
-        return this.registry.add("application-added", callback, this.applications);
-    }
-    onAppRemoved(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onAppRemoved requires a single argument of type function");
-        }
-        return this.registry.add("application-removed", callback);
-    }
-    toApi() {
-        const api = {
-            myInstance: this.me,
-            inMemory: {
-                import: this.importApps.bind(this),
-                remove: this.remove.bind(this),
-                export: this.exportApps.bind(this),
-                clear: this.clear.bind(this)
-            },
-            application: this.getApplication.bind(this),
-            applications: this.getApplications.bind(this),
-            instances: this.getInstances.bind(this),
-            onAppAdded: this.onAppAdded.bind(this),
-            onAppChanged: this.onAppChanged.bind(this),
-            onAppRemoved: this.onAppRemoved.bind(this),
-            onInstanceStarted: this.onInstanceStarted.bind(this),
-            onInstanceStopped: this.onInstanceStopped.bind(this)
-        };
-        return api;
-    }
-    addOperationsExecutors() {
-        operations$9.appDirectoryStateChange.execute = this.handleAppDirectoryStateChange.bind(this);
-        operations$9.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
-        operations$9.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
-        operations$9.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$9);
-    }
-    async handleAppDirectoryStateChange(data) {
-        data.appsAdded.forEach(this.handleApplicationAddedMessage.bind(this));
-        data.appsChanged.forEach(this.handleApplicationChangedMessage.bind(this));
-        data.appsRemoved.forEach(this.handleApplicationRemovedMessage.bind(this));
-    }
-    onAppChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onAppChanged requires a single argument of type function");
-        }
-        return this.registry.add("application-changed", callback);
-    }
-    async handleApplicationAddedMessage(appData) {
-        if (this.applications.some((app) => app.name === appData.name)) {
-            return;
-        }
-        const app = await this.ioc.buildApplication(appData, []);
-        const instances = this.instances.filter((instance) => instance.application.name === app.name);
-        app.instances.push(...instances);
-        this.applications.push(app);
-        this.registry.execute("application-added", app);
-    }
-    async handleApplicationRemovedMessage(appData) {
-        const appIndex = this.applications.findIndex((app) => app.name === appData.name);
-        if (appIndex < 0) {
-            return;
-        }
-        const app = this.applications[appIndex];
-        this.applications.splice(appIndex, 1);
-        this.registry.execute("application-removed", app);
-    }
-    async handleApplicationChangedMessage(appData) {
-        const app = this.applications.find((app) => app.name === appData.name);
-        if (!app) {
-            return this.handleApplicationAddedMessage(appData);
-        }
-        app.title = appData.title;
-        app.version = appData.version;
-        app.icon = appData.icon;
-        app.caption = appData.caption;
-        app.userProperties = appData.userProperties;
-        this.registry.execute("application-changed", app);
-    }
-    async handleInstanceStartedMessage(instanceData) {
-        if (this.instances.some((instance) => instance.id === instanceData.id)) {
-            return;
-        }
-        const application = this.applications.find((app) => app.name === instanceData.applicationName);
-        if (!application) {
-            return ioError.raiseError(`Cannot add instance: ${instanceData.id}, because there is no application definition associated with it`);
-        }
-        const instance = this.ioc.buildInstance(instanceData, application);
-        this.instances.push(instance);
-        application.instances.push(instance);
-        this.registry.execute("instance-started", instance);
-    }
-    async handleInstanceStoppedMessage(instanceData) {
-        const instance = this.instances.find((i) => i.id === instanceData.id);
-        if (instance) {
-            const instIdx = this.instances.findIndex((inst) => inst.id === instanceData.id);
-            this.instances.splice(instIdx, 1);
-        }
-        const application = this.applications.find((app) => app.instances.some((inst) => inst.id === instanceData.id));
-        if (application) {
-            const instIdxApps = application.instances.findIndex((inst) => inst.id === instanceData.id);
-            application.instances.splice(instIdxApps, 1);
-        }
-        if (!instance) {
-            return;
-        }
-        this.registry.execute("instance-stopped", instance);
-    }
-    async importApps(definitions, mode = "replace") {
-        runDecoderWithIOError(importModeDecoder, mode);
-        if (!Array.isArray(definitions)) {
-            return ioError.raiseError("Import must be called with an array of definitions");
-        }
-        if (definitions.length > 10000) {
-            return ioError.raiseError("Cannot import more than 10000 app definitions in Glue42 Core.");
-        }
-        const parseResult = definitions.reduce((soFar, definition) => {
-            const { isValid, error } = this.isValidDefinition(definition);
-            if (!isValid) {
-                soFar.invalid.push({ app: definition?.name, error: error ?? `Provided definition is invalid ${JSON.stringify(definition)}` });
-            }
-            else {
-                soFar.valid.push(definition);
-            }
-            return soFar;
-        }, { valid: [], invalid: [] });
-        const responseTimeout = this.baseApplicationsTimeoutMS + this.appImportTimeoutMS * parseResult.valid.length;
-        await this.bridge.send("appManager", operations$9.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
-        return {
-            imported: parseResult.valid.map((valid) => valid.name),
-            errors: parseResult.invalid
-        };
-    }
-    isValidDefinition(definition) {
-        const isFdc3V2Definition = definition?.appId && definition?.details;
-        if (isFdc3V2Definition) {
-            const decodeResult = decoders.fdc3.v2DefinitionDecoder.run(definition);
-            return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid FDC3 v2 definition. Error: ${JSON.stringify(decodeResult.error)}` };
-        }
-        const isFdc3V1Definition = definition?.appId && definition?.manifest;
-        if (isFdc3V1Definition) {
-            const decodeResult = decoders.fdc3.v1DefinitionDecoder.run(definition);
-            return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid FDC3 v1 definition. Error: ${JSON.stringify(decodeResult.error)}` };
-        }
-        const decodeResult = applicationDefinitionDecoder.run(definition);
-        return { isValid: decodeResult.ok, error: decodeResult.ok ? undefined : `Received invalid definition. Error: ${JSON.stringify(decodeResult.error)}` };
-    }
-    async remove(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        await this.bridge.send("appManager", operations$9.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-    }
-    async clear() {
-        await this.bridge.send("appManager", operations$9.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-    }
-    async exportApps() {
-        const response = await this.bridge.send("appManager", operations$9.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-        return response.definitions;
-    }
-    getApplications() {
-        return this.applications.slice();
-    }
-    async registerWithPlatform() {
-        const result = await this.bridge.send("appManager", operations$9.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
-        this.logger.trace("the platform responded to the hello message with a full list of apps");
-        this.applications = await Promise.all(result.apps.map((app) => this.ioc.buildApplication(app, app.instances)));
-        this.instances = this.applications.reduce((instancesSoFar, app) => {
-            instancesSoFar.push(...app.instances);
-            return instancesSoFar;
-        }, []);
-        this.me = this.findMyInstance();
-        this.logger.trace(`all applications were parsed and saved. I am ${this.me ? "NOT a" : "a"} valid instance`);
-        this.initialChannelId = result.initialChannelId;
-    }
-    findMyInstance() {
-        for (const app of this.applications) {
-            const foundInstance = app.instances.find((instance) => instance.id === this.publicWindowId);
-            if (foundInstance) {
-                return foundInstance;
-            }
-        }
-        return undefined;
-    }
-}
-
-class InstanceModel {
-    data;
-    bridge;
-    application;
-    me;
-    myCtxKey;
-    constructor(data, bridge, application) {
-        this.data = data;
-        this.bridge = bridge;
-        this.application = application;
-        this.myCtxKey = `___instance___${this.data.id}`;
-    }
-    toApi() {
-        const agm = this.bridge.getInteropInstance(this.data.id);
-        const api = {
-            id: this.data.id,
-            agm,
-            application: this.application,
-            stop: this.stop.bind(this),
-            getContext: this.getContext.bind(this)
-        };
-        this.me = Object.freeze(api);
-        return this.me;
-    }
-    async getContext() {
-        return this.bridge.contextLib.get(this.myCtxKey);
-    }
-    async stop() {
-        await this.bridge.send("appManager", operations$9.instanceStop, { id: this.data.id });
-    }
-}
-
-class ApplicationModel {
-    data;
-    instances;
-    controller;
-    me;
-    constructor(data, instances, controller) {
-        this.data = data;
-        this.instances = instances;
-        this.controller = controller;
-    }
-    toApi() {
-        const api = {
-            name: this.data.name,
-            title: this.data.title,
-            version: this.data.version,
-            icon: this.data.icon,
-            caption: this.data.caption,
-            userProperties: this.data.userProperties,
-            instances: this.instances,
-            start: this.start.bind(this),
-            getConfiguration: this.getConfiguration.bind(this),
-            onInstanceStarted: this.onInstanceStarted.bind(this),
-            onInstanceStopped: this.onInstanceStopped.bind(this)
-        };
-        this.me = api;
-        return this.me;
-    }
-    onInstanceStarted(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("OnInstanceStarted requires a single argument of type function");
-        }
-        return this.controller.onInstanceStarted((instance) => {
-            if (instance.application.name === this.data.name) {
-                callback(instance);
-            }
-        });
-    }
-    onInstanceStopped(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("OnInstanceStarted requires a single argument of type function");
-        }
-        return this.controller.onInstanceStopped((instance) => {
-            if (instance.application.name === this.data.name) {
-                callback(instance);
-            }
-        });
-    }
-    async start(context, options) {
-        const verifiedContext = runDecoderWithIOError(startApplicationContextDecoder, context);
-        const verifiedOptions = runDecoderWithIOError(startApplicationOptionsDecoder, options);
-        return this.controller.startApplication(this.data.name, verifiedContext, verifiedOptions);
-    }
-    async getConfiguration() {
-        const { details, intents, hidden, ...customProperties } = this.data.userProperties;
-        const definition = {
-            name: this.data.name,
-            type: this.data.type,
-            details,
-            customProperties
-        };
-        const optionalProperties = {
-            title: this.data.title,
-            version: this.data.version,
-            icon: this.data.icon,
-            caption: this.data.caption,
-            intents,
-            hidden,
-            fdc3: this.data.fdc3
-        };
-        for (const [key, value] of Object.entries(optionalProperties)) {
-            if (value !== undefined) {
-                definition[key] = value;
-            }
-        }
-        return definition;
-    }
-}
-
-const operations$8 = {
-    layoutAdded: { name: "layoutAdded", dataDecoder: glueLayoutDecoder },
-    layoutChanged: { name: "layoutChanged", dataDecoder: glueLayoutDecoder },
-    layoutRemoved: { name: "layoutRemoved", dataDecoder: glueLayoutDecoder },
-    layoutRestored: { name: "layoutRestored", dataDecoder: glueLayoutDecoder },
-    defaultLayoutChanged: { name: "defaultLayoutChanged", dataDecoder: defaultGlobalChangedDecoder },
-    layoutRenamed: { name: "layoutRenamed", dataDecoder: renamedLayoutNotificationDecoder },
-    get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult },
-    getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
-    getLayoutContents: { name: "getLayoutContents", dataDecoder: getContentsOptionsDecoder, resultDecoder: layoutContentsResultDecoder },
-    export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
-    import: { name: "import", dataDecoder: layoutsImportConfigDecoder },
-    remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder },
-    rename: { name: "rename", dataDecoder: renameLayoutConfigDecoder, resultDecoder: layoutResultDecoder },
-    save: { name: "save", dataDecoder: saveLayoutConfigDecoder, resultDecoder: simpleLayoutResultDecoder },
-    restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder },
-    clientSaveRequest: { name: "clientSaveRequest", dataDecoder: platformSaveRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder },
-    getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder },
-    requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder },
-    checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder },
-    getDefaultGlobal: { name: "getDefaultGlobal", resultDecoder: optionalSimpleLayoutResult },
-    setDefaultGlobal: { name: "setDefaultGlobal", dataDecoder: setDefaultGlobalConfigDecoder },
-    clearDefaultGlobal: { name: "clearDefaultGlobal" },
-    getCurrent: { name: "getCurrent", resultDecoder: optionalSimpleLayoutResult },
-    updateMetadata: { name: "updateMetadata", dataDecoder: updateLayoutMetadataConfigDecoder },
-    operationCheck: { name: "operationCheck" }
-};
-
-class LayoutsController {
-    supportedOperationsNames = [];
-    defaultLayoutRestoreTimeoutMS = 120000;
-    registry = CallbackRegistryFactory$1();
-    bridge;
-    logger;
-    windowsController;
-    saveRequestSubscription;
-    handlePlatformShutdown() {
-        this.registry.clear();
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("layouts.controller.web");
-        this.logger.trace("starting the web layouts controller");
-        this.bridge = ioc.bridge;
-        this.windowsController = ioc.windowsController;
-        this.addOperationsExecutors();
-        const api = this.toApi();
-        this.logger.trace("no need for platform registration, attaching the layouts property to glue and returning");
-        coreGlue.layouts = api;
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(layoutsOperationTypesDecoder, args.operation);
-        const operation = operations$8[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    toApi() {
-        const api = {
-            get: this.get.bind(this),
-            getAll: this.getAll.bind(this),
-            getLayoutContents: this.getLayoutContents.bind(this),
-            getCurrentLayout: this.getCurrentLayout.bind(this),
-            export: this.exportLayouts.bind(this),
-            import: this.importLayouts.bind(this),
-            save: this.save.bind(this),
-            restore: this.restore.bind(this),
-            remove: this.remove.bind(this),
-            onAdded: this.onAdded.bind(this),
-            onChanged: this.onChanged.bind(this),
-            onRemoved: this.onRemoved.bind(this),
-            onDefaultGlobalChanged: this.onDefaultGlobalChanged.bind(this),
-            onSaveRequested: this.subscribeOnSaveRequested.bind(this),
-            getMultiScreenPermissionState: this.getGlobalPermissionState.bind(this),
-            requestMultiScreenPermission: this.requestGlobalPermission.bind(this),
-            getGlobalTypeState: this.checkGlobalActivated.bind(this),
-            getDefaultGlobal: this.getDefaultGlobal.bind(this),
-            setDefaultGlobal: this.setDefaultGlobal.bind(this),
-            clearDefaultGlobal: this.clearDefaultGlobal.bind(this),
-            rename: this.rename.bind(this),
-            onRenamed: this.onRenamed.bind(this),
-            onRestored: this.onRestored.bind(this),
-            updateMetadata: this.updateMetadata.bind(this)
-        };
-        return Object.freeze(api);
-    }
-    addOperationsExecutors() {
-        operations$8.layoutAdded.execute = this.handleOnAdded.bind(this);
-        operations$8.layoutChanged.execute = this.handleOnChanged.bind(this);
-        operations$8.layoutRemoved.execute = this.handleOnRemoved.bind(this);
-        operations$8.layoutRenamed.execute = this.handleOnRenamed.bind(this);
-        operations$8.layoutRestored.execute = this.handleOnRestored.bind(this);
-        operations$8.defaultLayoutChanged.execute = this.handleOnDefaultChanged.bind(this);
-        operations$8.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
-        operations$8.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$8);
-    }
-    async get(name, type) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        runDecoderWithIOError(layoutTypeDecoder, type);
-        const result = await this.bridge.send("layouts", operations$8.get, { name, type });
-        return result.layout;
-    }
-    async getCurrentLayout() {
-        const result = await this.bridge.send("layouts", operations$8.getCurrent, undefined);
-        return result.layout;
-    }
-    async getAll(type) {
-        runDecoderWithIOError(layoutTypeDecoder, type);
-        const result = await this.bridge.send("layouts", operations$8.getAll, { type });
-        return result.summaries;
-    }
-    async getLayoutContents(options) {
-        runDecoderWithIOError(getContentsOptionsDecoder, options);
-        const { name, type } = options;
-        if (type !== "Workspace" && type !== "Global") {
-            return ioError.raiseError(`getLayoutContents is only supported for Workspace and Global layouts, but got type "${type}"`);
-        }
-        const result = await this.bridge.send("layouts", operations$8.getLayoutContents, { name, type }, undefined, { includeOperationCheck: true });
-        return result.contents;
-    }
-    async exportLayouts(type) {
-        runDecoderWithIOError(layoutTypeDecoder, type);
-        const result = await this.bridge.send("layouts", operations$8.export, { type });
-        return result.layouts;
-    }
-    async importLayouts(layouts, mode = "replace") {
-        runDecoderWithIOError(importModeDecoder, mode);
-        if (!Array.isArray(layouts)) {
-            return ioError.raiseError("Import must be called with an array of layouts");
-        }
-        if (layouts.length > 1000) {
-            return ioError.raiseError("Cannot import more than 1000 layouts at once in Glue42 Core.");
-        }
-        const parseResult = layouts.reduce((soFar, layout) => {
-            const decodeResult = glueLayoutDecoder.run(layout);
-            if (decodeResult.ok) {
-                soFar.valid.push(layout);
-            }
-            else {
-                this.logger.warn(`A layout with name: ${layout.name} was not imported, because of error: ${JSON.stringify(decodeResult.error)}`);
-            }
-            return soFar;
-        }, { valid: [] });
-        const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
-        await this.bridge.send("layouts", operations$8.import, { layouts: layoutsToImport, mode });
-    }
-    async save(layout) {
-        runDecoderWithIOError(newLayoutOptionsDecoder, layout);
-        const saveResult = await this.bridge.send("layouts", operations$8.save, { layout });
-        return saveResult.layout;
-    }
-    async restore(options) {
-        runDecoderWithIOError(restoreOptionsDecoder, options);
-        const invocationTimeout = options.timeout ? options.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
-        await this.bridge.send("layouts", operations$8.restore, { layout: options }, { methodResponseTimeoutMs: invocationTimeout });
-    }
-    async remove(type, name) {
-        runDecoderWithIOError(layoutTypeDecoder, type);
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        await this.bridge.send("layouts", operations$8.remove, { type, name });
-    }
-    async handleSaveRequest(config) {
-        const response = {};
-        if (this.saveRequestSubscription) {
-            try {
-                const onSaveRequestResponse = this.saveRequestSubscription(config);
-                response.windowContext = onSaveRequestResponse?.windowContext;
-            }
-            catch (error) {
-                this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
-            }
-        }
-        return response;
-    }
-    async getGlobalPermissionState() {
-        const requestResult = await this.bridge.send("layouts", operations$8.getGlobalPermissionState, undefined);
-        return requestResult;
-    }
-    async requestGlobalPermission() {
-        const currentState = (await this.getGlobalPermissionState()).state;
-        if (currentState === "denied") {
-            return { permissionGranted: false };
-        }
-        if (currentState === "granted") {
-            return { permissionGranted: true };
-        }
-        const myWindow = this.windowsController.my();
-        const globalNamespace = window.glue42core || window.iobrowser;
-        const amIWorkspaceFrame = globalNamespace.isPlatformFrame;
-        if (myWindow.name !== "Platform" && !amIWorkspaceFrame) {
-            return ioError.raiseError("Cannot request permission for multi-window placement from any app other than the Platform.");
-        }
-        const requestResult = await this.bridge.send("layouts", operations$8.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
-        return { permissionGranted: requestResult.isAvailable };
-    }
-    async checkGlobalActivated() {
-        const requestResult = await this.bridge.send("layouts", operations$8.checkGlobalActivated, undefined);
-        return { activated: requestResult.isAvailable };
-    }
-    async getDefaultGlobal() {
-        const requestResult = await this.bridge.send("layouts", operations$8.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
-        return requestResult.layout;
-    }
-    async setDefaultGlobal(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        await this.bridge.send("layouts", operations$8.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
-    }
-    async clearDefaultGlobal() {
-        await this.bridge.send("layouts", operations$8.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
-    }
-    async rename(layout, newName) {
-        runDecoderWithIOError(glueLayoutDecoder, layout);
-        runDecoderWithIOError(nonEmptyStringDecoder$2, newName);
-        const result = await this.bridge.send("layouts", operations$8.rename, { layout, newName }, undefined, { includeOperationCheck: true });
-        return result;
-    }
-    async updateMetadata(layout) {
-        runDecoderWithIOError(glueLayoutDecoder, layout);
-        await this.bridge.send("layouts", operations$8.updateMetadata, { layout }, undefined, { includeOperationCheck: true });
-    }
-    onAdded(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onAdded, because the provided callback is not a function!");
-        }
-        this.exportLayouts("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
-        this.exportLayouts("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
-        return this.registry.add(operations$8.layoutAdded.name, callback);
-    }
-    onChanged(callback) {
-        return this.registry.add(operations$8.layoutChanged.name, callback);
-    }
-    onDefaultGlobalChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onDefaultGlobalChanged, because the provided callback is not a function!");
-        }
-        this.getDefaultGlobal().then((layout) => callback(layout ? { name: layout.name } : undefined)).catch(() => { });
-        return this.registry.add(operations$8.defaultLayoutChanged.name, callback);
-    }
-    onRemoved(callback) {
-        return this.registry.add(operations$8.layoutRemoved.name, callback);
-    }
-    onRenamed(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onRenamed, because the provided callback is not a function!");
-        }
-        return this.registry.add(operations$8.layoutRenamed.name, callback);
-    }
-    onRestored(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onRestored, because the provided callback is not a function!");
-        }
-        return this.registry.add(operations$8.layoutRestored.name, callback);
-    }
-    subscribeOnSaveRequested(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onSaveRequested, because the provided argument is not a valid callback function.");
-        }
-        if (this.saveRequestSubscription) {
-            return ioError.raiseError("Cannot subscribe to onSaveRequested, because this client has already subscribed and only one subscription is supported. Consider unsubscribing from the initial one.");
-        }
-        this.saveRequestSubscription = callback;
-        return () => {
-            delete this.saveRequestSubscription;
-        };
-    }
-    async handleOnAdded(layout) {
-        this.registry.execute(operations$8.layoutAdded.name, layout);
-    }
-    async handleOnChanged(layout) {
-        this.registry.execute(operations$8.layoutChanged.name, layout);
-    }
-    async handleOnDefaultChanged(layout) {
-        this.registry.execute(operations$8.defaultLayoutChanged.name, layout);
-    }
-    async handleOnRemoved(layout) {
-        this.registry.execute(operations$8.layoutRemoved.name, layout);
-    }
-    async handleOnRestored(layout) {
-        this.registry.execute(operations$8.layoutRestored.name, layout);
-    }
-    async handleOnRenamed(renamedData) {
-        const { prevName, ...layout } = renamedData;
-        this.registry.execute(operations$8.layoutRenamed.name, layout, { name: prevName });
-    }
-}
-
-const operations$7 = {
-    raiseNotification: { name: "raiseNotification", dataDecoder: raiseNotificationDecoder, resultDecoder: raiseNotificationResultDecoder },
-    requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder },
-    notificationShow: { name: "notificationShow", dataDecoder: notificationEventPayloadDecoder },
-    notificationClick: { name: "notificationClick", dataDecoder: notificationEventPayloadDecoder },
-    getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder },
-    list: { name: "list", resultDecoder: allNotificationsDataDecoder },
-    notificationRaised: { name: "notificationRaised", dataDecoder: simpleNotificationDataDecoder },
-    notificationClosed: { name: "notificationClosed", dataDecoder: simpleNotificationSelectDecoder },
-    click: { name: "click" },
-    clear: { name: "clear" },
-    clearAll: { name: "clearAll" },
-    clearOld: { name: "clearOld" },
-    configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder, resultDecoder: strictNotificationsConfigurationProtocolDecoder },
-    getConfiguration: { name: "getConfiguration", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
-    getActiveCount: { name: "getActiveCount", resultDecoder: activeNotificationsCountChangeDecoder },
-    configurationChanged: { name: "configurationChanged", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
-    setState: { name: "setState", dataDecoder: notificationSetStateRequestDecoder },
-    activeCountChange: { name: "activeCountChange", resultDecoder: activeNotificationsCountChangeDecoder },
-    stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder },
-    operationCheck: { name: "operationCheck" }
-};
-
-let urlAlphabet$1 =
-  'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
-
-let nanoid$1 = (size = 21) => {
-  let id = '';
-  let i = size | 0;
-  while (i-- > 0) {
-    id += urlAlphabet$1[(Math.random() * 64) | 0];
-  }
-  return id
-};
-
-class NotificationsController {
-    supportedOperationsNames = [];
-    registry = CallbackRegistryFactory$1();
-    logger;
-    bridge;
-    notificationsSettings;
-    notifications = {};
-    coreGlue;
-    buildNotificationFunc;
-    notificationsConfiguration;
-    notificationsActiveCount = 0;
-    handlePlatformShutdown() {
-        this.notifications = {};
-        this.registry.clear();
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("notifications.controller.web");
-        this.logger.trace("starting the web notifications controller");
-        this.bridge = ioc.bridge;
-        this.coreGlue = coreGlue;
-        this.notificationsSettings = ioc.config.notifications;
-        this.buildNotificationFunc = ioc.buildNotification;
-        this.notificationsConfiguration = await this.getConfiguration();
-        this.notificationsActiveCount = await this.getActiveCount();
-        const api = this.toApi();
-        this.addOperationExecutors();
-        coreGlue.notifications = api;
-        this.logger.trace("notifications are ready");
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(notificationsOperationTypesDecoder, args.operation);
-        const operation = operations$7[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    toApi() {
-        const api = {
-            raise: this.raise.bind(this),
-            requestPermission: this.requestPermission.bind(this),
-            getPermission: this.getPermission.bind(this),
-            list: this.list.bind(this),
-            onRaised: this.onRaised.bind(this),
-            onClosed: this.onClosed.bind(this),
-            click: this.click.bind(this),
-            clear: this.clear.bind(this),
-            clearAll: this.clearAll.bind(this),
-            clearOld: this.clearOld.bind(this),
-            configure: this.configure.bind(this),
-            getConfiguration: this.getConfiguration.bind(this),
-            getFilter: this.getFilter.bind(this),
-            setFilter: this.setFilter.bind(this),
-            setState: this.setState.bind(this),
-            onConfigurationChanged: this.onConfigurationChanged.bind(this),
-            onActiveCountChanged: this.onActiveCountChanged.bind(this),
-            onCounterChanged: this.onActiveCountChanged.bind(this),
-            onStateChanged: this.onStateChanged.bind(this)
-        };
-        return Object.freeze(api);
-    }
-    async getPermission() {
-        const queryResult = await this.bridge.send("notifications", operations$7.getPermission, undefined);
-        return queryResult.permission;
-    }
-    async requestPermission() {
-        const permissionResult = await this.bridge.send("notifications", operations$7.requestPermission, undefined);
-        return permissionResult.permissionGranted;
-    }
-    async raise(options) {
-        const settings = runDecoderWithIOError(glue42NotificationOptionsDecoder, options);
-        settings.showToast = typeof settings.showToast === "boolean" ? settings.showToast : true;
-        settings.showInPanel = typeof settings.showInPanel === "boolean" ? settings.showInPanel : true;
-        const permissionGranted = await this.requestPermission();
-        if (!permissionGranted) {
-            return ioError.raiseError("Cannot raise the notification, because the user has declined the permission request");
-        }
-        const id = nanoid$1(10);
-        const raiseResult = await this.bridge.send("notifications", operations$7.raiseNotification, { settings, id });
-        const notification = this.buildNotificationFunc(raiseResult.settings, id);
-        this.notifications[id] = notification;
-        return notification;
-    }
-    async list() {
-        const bridgeResponse = await this.bridge.send("notifications", operations$7.list, undefined, undefined, { includeOperationCheck: true });
-        return bridgeResponse.notifications;
-    }
-    onRaised(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onRaised expects a callback of type function");
-        }
-        return this.registry.add("notification-raised", callback);
-    }
-    onClosed(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onClosed expects a callback of type function");
-        }
-        return this.registry.add("notification-closed", callback);
-    }
-    async click(id, action) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
-        if (action) {
-            runDecoderWithIOError(nonEmptyStringDecoder$2, action);
-        }
-        await this.bridge.send("notifications", operations$7.click, { id, action }, undefined, { includeOperationCheck: true });
-    }
-    async clear(id) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
-        await this.bridge.send("notifications", operations$7.clear, { id }, undefined, { includeOperationCheck: true });
-    }
-    async clearAll() {
-        await this.bridge.send("notifications", operations$7.clearAll, undefined, undefined, { includeOperationCheck: true });
-    }
-    async clearOld() {
-        await this.bridge.send("notifications", operations$7.clearOld, undefined, undefined, { includeOperationCheck: true });
-    }
-    async configure(config) {
-        const verifiedConfig = runDecoderWithIOError(notificationsConfigurationDecoder, config);
-        const response = await this.bridge.send("notifications", operations$7.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
-        return response.configuration;
-    }
-    async getConfiguration() {
-        const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
-        return response.configuration;
-    }
-    async getActiveCount() {
-        try {
-            const response = await this.bridge.send("notifications", operations$7.getActiveCount, undefined, undefined, { includeOperationCheck: true });
-            return response.count;
-        }
-        catch (error) {
-            console.warn("Failed to get accurate active notifications count", error);
-            return 0;
-        }
-    }
-    async getFilter() {
-        const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
-        return response.configuration.sourceFilter;
-    }
-    async setFilter(filter) {
-        const verifiedFilter = runDecoderWithIOError(notificationFilterDecoder, filter);
-        await this.bridge.send("notifications", operations$7.configure, { configuration: { sourceFilter: verifiedFilter } }, undefined, { includeOperationCheck: true });
-        return verifiedFilter;
-    }
-    async setState(id, state) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
-        runDecoderWithIOError(notificationStateDecoder, state);
-        await this.bridge.send("notifications", operations$7.setState, { id, state }, undefined, { includeOperationCheck: true });
-    }
-    onConfigurationChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to configuration changed, because the provided callback is not a function!");
-        }
-        setTimeout(() => callback(this.notificationsConfiguration), 0);
-        return this.registry.add("notifications-config-changed", callback);
-    }
-    onActiveCountChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onActiveCountChanged changed, because the provided callback is not a function!");
-        }
-        setTimeout(() => callback({ count: this.notificationsActiveCount }), 0);
-        return this.registry.add("notifications-active-count-changed", callback);
-    }
-    onStateChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to onStateChanged changed, because the provided callback is not a function!");
-        }
-        return this.registry.add("notification-state-changed", callback);
-    }
-    addOperationExecutors() {
-        operations$7.notificationShow.execute = this.handleNotificationShow.bind(this);
-        operations$7.notificationClick.execute = this.handleNotificationClick.bind(this);
-        operations$7.notificationRaised.execute = this.handleNotificationRaised.bind(this);
-        operations$7.notificationClosed.execute = this.handleNotificationClosed.bind(this);
-        operations$7.configurationChanged.execute = this.handleConfigurationChanged.bind(this);
-        operations$7.activeCountChange.execute = this.handleActiveCountChanged.bind(this);
-        operations$7.stateChange.execute = this.handleNotificationStateChanged.bind(this);
-        operations$7.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$7);
-    }
-    async handleConfigurationChanged(data) {
-        this.notificationsConfiguration = data.configuration;
-        this.registry.execute("notifications-config-changed", data.configuration);
-    }
-    async handleActiveCountChanged(data) {
-        this.notificationsActiveCount = data.count;
-        this.registry.execute("notifications-active-count-changed", data);
-    }
-    async handleNotificationStateChanged(data) {
-        this.registry.execute("notification-state-changed", { id: data.id }, data.state);
-    }
-    async handleNotificationShow(data) {
-        if (!data.id) {
-            return;
-        }
-        const notification = this.notifications[data.id];
-        if (notification && notification.onshow) {
-            notification.onshow();
-        }
-    }
-    async handleNotificationClick(data) {
-        if (!data.action && this.notificationsSettings?.defaultClick) {
-            this.notificationsSettings.defaultClick(this.coreGlue, data.definition);
-        }
-        if (data.action && this.notificationsSettings?.actionClicks?.some((actionDef) => actionDef.action === data.action)) {
-            const foundHandler = this.notificationsSettings?.actionClicks?.find((actionDef) => actionDef.action === data.action);
-            foundHandler.handler(this.coreGlue, data.definition);
-        }
-        if (!data.id) {
-            return;
-        }
-        const notification = this.notifications[data.id];
-        if (notification && notification.onclick) {
-            notification.onclick();
-            delete this.notifications[data.id];
-        }
-    }
-    async handleNotificationRaised(data) {
-        this.registry.execute("notification-raised", data.notification);
-    }
-    async handleNotificationClosed(data) {
-        this.registry.execute("notification-closed", data);
-    }
-}
-
-const operations$6 = {
-    getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder },
-    findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder, resultDecoder: wrappedIntentsDecoder },
-    raise: { name: "raise", dataDecoder: raiseIntentRequestDecoder, resultDecoder: intentResultDecoder },
-    filterHandlers: { name: "filterHandlers", dataDecoder: filterHandlersWithResolverConfigDecoder, resultDecoder: filterHandlersResultDecoder },
-    getIntentsByHandler: { name: "getIntentsByHandler", dataDecoder: intentHandlerDecoder, resultDecoder: getIntentsResultDecoder }
-};
-
-const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
-const INTENTS_RESOLVER_APP_NAME = "intentsResolver";
-const DEFAULT_RESOLVER_RESPONSE_TIMEOUT = 60 * 1000;
-const ADDITIONAL_BRIDGE_OPERATION_TIMEOUT = 30 * 1000;
-const DEFAULT_PICK_HANDLER_BY_TIMEOUT = 90 * 1000;
-
-class IntentsController {
-    bridge;
-    logger;
-    interop;
-    appManagerController;
-    windowsController;
-    myIntents = new Set();
-    prefsController;
-    uiController;
-    useIntentsResolverUI = true;
-    intentsResolverAppName;
-    intentResolverResponseTimeout = DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
-    unregisterIntentPromises = [];
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("intents.controller.web");
-        this.logger.trace("starting the web intents controller");
-        this.bridge = ioc.bridge;
-        this.interop = coreGlue.interop;
-        this.appManagerController = ioc.appManagerController;
-        this.windowsController = ioc.windowsController;
-        this.prefsController = ioc.prefsController;
-        this.uiController = ioc.uiController;
-        this.checkIfIntentsResolverIsEnabled(ioc.config);
-        const api = this.toApi();
-        this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
-        coreGlue.intents = api;
-    }
-    handlePlatformShutdown() {
-        this.myIntents = new Set();
-        this.unregisterIntentPromises = [];
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(intentsOperationTypesDecoder, args.operation);
-        const operation = operations$6[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    toApi() {
-        const api = {
-            raise: this.raise.bind(this),
-            all: this.all.bind(this),
-            addIntentListener: this.addIntentListener.bind(this),
-            register: this.register.bind(this),
-            find: this.find.bind(this),
-            filterHandlers: this.filterHandlers.bind(this),
-            getIntents: this.getIntentsByHandler.bind(this),
-            clearSavedHandlers: this.clearSavedHandlers.bind(this),
-            onHandlerAdded: this.onHandlerAdded.bind(this),
-            onHandlerRemoved: this.onHandlerRemoved.bind(this)
-        };
-        return api;
-    }
-    async raise(request) {
-        const validatedIntentRequest = runDecoderWithIOError(raiseRequestDecoder, request);
-        const intentRequest = typeof validatedIntentRequest === "string"
-            ? { intent: validatedIntentRequest }
-            : validatedIntentRequest;
-        await Promise.all(this.unregisterIntentPromises);
-        if (intentRequest.clearSavedHandler) {
-            this.logger.trace(`User removes saved handler for intent ${intentRequest.intent}`);
-            await this.removeRememberedHandler(intentRequest.intent);
-        }
-        const resultFromRememberedHandler = await this.checkHandleRaiseWithRememberedHandler(intentRequest);
-        if (resultFromRememberedHandler) {
-            return resultFromRememberedHandler;
-        }
-        const requestWithResolverInfo = {
-            intentRequest,
-            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
-            embeddedResolverConfig: this.getEmbeddedResolverConfig()
-        };
-        const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
-            ? MAX_SET_TIMEOUT_DELAY
-            : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-        this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${methodResponseTimeoutMs}ms`);
-        const response = await this.bridge.send("intents", operations$6.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
-        this.logger.trace(`Raise operation completed with response: ${JSON.stringify(response)}`);
-        return response;
-    }
-    getLegacyResolverConfigByRequest(filter) {
-        if (filter.handlerFilter) {
-            return {
-                enabled: typeof filter.handlerFilter?.openResolver === "boolean" ? filter.handlerFilter?.openResolver : this.useIntentsResolverUI,
-                appName: this.intentsResolverAppName,
-                waitResponseTimeout: filter.handlerFilter?.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT
-            };
-        }
-        const waitResponseTimeout = filter.intentRequest?.waitUserResponseIndefinitely ? MAX_SET_TIMEOUT_DELAY : this.intentResolverResponseTimeout;
-        return {
-            enabled: this.useIntentsResolverUI,
-            appName: this.intentsResolverAppName,
-            waitResponseTimeout
-        };
-    }
-    getEmbeddedResolverConfig() {
-        return {
-            enabled: this.uiController.isIntentResolverEnabled(),
-            initialCaller: { instanceId: this.interop.instance.instance }
-        };
-    }
-    async all() {
-        await Promise.all(this.unregisterIntentPromises);
-        const result = await this.bridge.send("intents", operations$6.getIntents, undefined);
-        return result.intents;
-    }
-    addIntentListener(intent, handler) {
-        runDecoderWithIOError(AddIntentListenerDecoder, intent);
-        if (typeof handler !== "function") {
-            return ioError.raiseError("Cannot add intent listener, because the provided handler is not a function!");
-        }
-        let registerPromise;
-        const intentName = typeof intent === "string" ? intent : intent.intent;
-        const methodName = this.buildInteropMethodName(intentName);
-        const alreadyRegistered = this.myIntents.has(intentName);
-        if (alreadyRegistered) {
-            return ioError.raiseError(`Intent listener for intent ${intentName} already registered!`);
-        }
-        this.myIntents.add(intentName);
-        const result = {
-            unsubscribe: () => {
-                this.myIntents.delete(intentName);
-                registerPromise
-                    .then(() => this.interop.unregister(methodName))
-                    .catch((err) => this.logger.trace(`Unregistration of a method with name ${methodName} failed with reason: ${err}`));
-            }
-        };
-        let intentFlag = {};
-        if (typeof intent === "object") {
-            const { intent: removed, ...rest } = intent;
-            intentFlag = rest;
-        }
-        registerPromise = this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
-            if (this.myIntents.has(intentName)) {
-                const { _initialCallerId, ...rest } = args;
-                return handler(rest);
-            }
-        });
-        registerPromise.catch(err => {
-            this.myIntents.delete(intentName);
-            this.logger.warn(`Registration of a method with name ${methodName} failed with reason: ${err}`);
-        });
-        return result;
-    }
-    async register(intent, handler) {
-        runDecoderWithIOError(AddIntentListenerDecoder, intent);
-        if (typeof handler !== "function") {
-            return ioError.raiseError("Cannot add intent listener, because the provided handler is not a function!");
-        }
-        await Promise.all(this.unregisterIntentPromises);
-        const intentName = typeof intent === "string" ? intent : intent.intent;
-        const methodName = this.buildInteropMethodName(intentName);
-        const alreadyRegistered = this.myIntents.has(intentName);
-        if (alreadyRegistered) {
-            return ioError.raiseError(`Intent listener for intent ${intentName} already registered!`);
-        }
-        this.myIntents.add(intentName);
-        let intentFlag = {};
-        if (typeof intent === "object") {
-            const { intent: removed, ...rest } = intent;
-            intentFlag = rest;
-        }
-        try {
-            await this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
-                if (this.myIntents.has(intentName)) {
-                    const { _initialCallerId, ...rest } = args;
-                    const caller = this.interop.servers().find((server) => server.instance === _initialCallerId);
-                    return handler(rest, caller);
-                }
-            });
-        }
-        catch (err) {
-            this.myIntents.delete(intentName);
-            return ioError.raiseError(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`);
-        }
-        return {
-            unsubscribe: () => this.unsubscribeIntent(intentName)
-        };
-    }
-    async find(intentFilter) {
-        let data = undefined;
-        if (typeof intentFilter !== "undefined") {
-            const intentFilterObj = runDecoderWithIOError(findFilterDecoder, intentFilter);
-            if (typeof intentFilterObj === "string") {
-                data = {
-                    filter: {
-                        name: intentFilterObj
-                    }
-                };
-            }
-            else if (typeof intentFilterObj === "object") {
-                data = {
-                    filter: intentFilterObj
-                };
-            }
-        }
-        await Promise.all(this.unregisterIntentPromises);
-        const result = await this.bridge.send("intents", operations$6.findIntent, data);
-        return result.intents;
-    }
-    onHandlerAdded(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe for 'onHandlerAdded' event - callback is not a function!");
-        }
-        const unOnAppAdded = this.subscribeForAppEvent("onAppAdded", callback);
-        const unOnServerMethodAdded = this.subscribeForServerMethodEvent("serverMethodAdded", callback);
-        return () => {
-            unOnAppAdded();
-            unOnServerMethodAdded();
-        };
-    }
-    onHandlerRemoved(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe for 'onHandlerRemoved' event - callback is not a function!");
-        }
-        const unOnAppRemoved = this.subscribeForAppEvent("onAppRemoved", callback);
-        const unOnServerMethodRemoved = this.subscribeForServerMethodEvent("serverMethodRemoved", callback);
-        return () => {
-            unOnAppRemoved();
-            unOnServerMethodRemoved();
-        };
-    }
-    subscribeForAppEvent(method, callback) {
-        return this.appManagerController[method]((app) => {
-            const appIntents = app.userProperties.intents;
-            if (!appIntents?.length) {
-                return;
-            }
-            appIntents.forEach((intent) => {
-                const handler = this.buildIntentHandlerFromApp(app, intent);
-                callback(handler, intent.name);
-            });
-        });
-    }
-    subscribeForServerMethodEvent(eventMethod, callback) {
-        return this.interop[eventMethod](async ({ server, method }) => {
-            if (!method.name.startsWith(GLUE42_FDC3_INTENTS_METHOD_PREFIX)) {
-                return;
-            }
-            const intentName = method.name.replace(GLUE42_FDC3_INTENTS_METHOD_PREFIX, "");
-            const handler = await this.buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName);
-            callback(handler, intentName);
-        });
-    }
-    buildIntentHandlerFromApp(app, intent) {
-        const handler = {
-            applicationName: app.name,
-            type: "app",
-            applicationDescription: app.caption,
-            applicationIcon: app.icon,
-            applicationTitle: app.title,
-            contextTypes: intent.contexts,
-            displayName: intent.displayName,
-            resultType: intent.resultType,
-            customConfig: intent.customConfig
-        };
-        return handler;
-    }
-    async buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName) {
-        const info = method.flags.intent;
-        const app = this.appManagerController.getApplication(server.application || server.applicationName);
-        let title;
-        if (eventMethod === "serverMethodAdded" && server.windowId) {
-            title = await (this.windowsController.findById(server.windowId))?.getTitle();
-        }
-        const appIntent = app?.userProperties?.intents?.find((intent) => intent.name === intentName);
-        const handler = {
-            applicationName: server.application || server.applicationName || "",
-            instanceId: server.windowId || server.instance,
-            type: "instance",
-            applicationIcon: info?.icon || app?.icon,
-            applicationTitle: app?.title,
-            applicationDescription: info?.description || app?.caption,
-            contextTypes: info?.contextTypes || appIntent?.contexts,
-            instanceTitle: title,
-            displayName: info?.displayName || appIntent?.displayName,
-            resultType: info?.resultType || appIntent?.resultType,
-            customConfig: info?.customConfig
-        };
-        return handler;
-    }
-    async clearSavedHandlers() {
-        this.logger.trace("Removing all saved handlers from prefs storage for current app");
-        await this.prefsController.update({ intents: undefined });
-    }
-    checkIfIntentsResolverIsEnabled(options) {
-        this.useIntentsResolverUI = typeof options.intents?.enableIntentsResolverUI === "boolean"
-            ? options.intents.enableIntentsResolverUI
-            : true;
-        this.intentsResolverAppName = options.intents?.intentsResolverAppName ?? INTENTS_RESOLVER_APP_NAME;
-        this.intentResolverResponseTimeout = options.intents?.methodResponseTimeoutMs ?? DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
-    }
-    clearUnregistrationPromise(promiseToRemove) {
-        this.unregisterIntentPromises = this.unregisterIntentPromises.filter(promise => promise !== promiseToRemove);
-    }
-    buildInteropMethodName(intentName) {
-        return `${GLUE42_FDC3_INTENTS_METHOD_PREFIX}${intentName}`;
-    }
-    unsubscribeIntent(intentName) {
-        this.myIntents.delete(intentName);
-        const methodName = this.buildInteropMethodName(intentName);
-        const unregisterPromise = this.interop.unregister(methodName);
-        this.unregisterIntentPromises.push(unregisterPromise);
-        unregisterPromise
-            .then(() => {
-            this.clearUnregistrationPromise(unregisterPromise);
-        })
-            .catch((err) => {
-            this.logger.error(`Unregistration of a method with name ${methodName} failed with reason: ${err}`);
-            this.clearUnregistrationPromise(unregisterPromise);
-        });
-    }
-    async filterHandlers(handlerFilter) {
-        runDecoderWithIOError(handlerFilterDecoder, handlerFilter);
-        this.checkIfAtLeastOneFilterIsPresent(handlerFilter);
-        const embeddedResolverConfig = this.getEmbeddedResolverConfig();
-        if (handlerFilter.openResolver && !this.useIntentsResolverUI && !embeddedResolverConfig.enabled) {
-            return ioError.raiseError("Cannot resolve 'filterHandlers' request using Intents Resolver UI because it's globally disabled");
-        }
-        const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
-        const filterHandlersRequestWithResolverConfig = {
-            filterHandlersRequest: handlerFilter,
-            resolverConfig: this.getLegacyResolverConfigByRequest({ handlerFilter }),
-            embeddedResolverConfig
-        };
-        const result = await this.bridge.send("intents", operations$6.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
-        return result;
-    }
-    checkIfAtLeastOneFilterIsPresent(filter) {
-        const errorMsg = "Provide at least one filter criteria of the following: 'intent' | 'contextTypes' | 'resultType' | 'applicationNames'";
-        if (!Object.keys(filter).length) {
-            return ioError.raiseError(errorMsg);
-        }
-        const { intent, resultType, contextTypes, applicationNames } = filter;
-        const existingValidContextTypes = contextTypes?.length;
-        const existingValidApplicationNames = applicationNames?.length;
-        if (!intent && !resultType && !existingValidContextTypes && !existingValidApplicationNames) {
-            return ioError.raiseError(errorMsg);
-        }
-    }
-    async getIntentsByHandler(handler) {
-        runDecoderWithIOError(intentHandlerDecoder, handler);
-        const result = await this.bridge.send("intents", operations$6.getIntentsByHandler, handler, undefined, { includeOperationCheck: true });
-        return result;
-    }
-    async removeRememberedHandler(intentName) {
-        this.logger.trace(`Removing saved handler from prefs storage for intent ${intentName}`);
-        let prefs;
-        try {
-            prefs = await this.prefsController.get();
-        }
-        catch (error) {
-            this.logger.warn(`prefs.get() threw the following error: ${error}`);
-            return;
-        }
-        const intentPrefs = prefs.data?.intents;
-        if (!intentPrefs) {
-            this.logger.trace("No app prefs found for current app");
-            return;
-        }
-        delete intentPrefs[intentName];
-        const updatedPrefs = {
-            ...prefs.data,
-            intents: intentPrefs
-        };
-        try {
-            await this.prefsController.update(updatedPrefs);
-        }
-        catch (error) {
-            this.logger.warn(`prefs.update() threw the following error: ${error}`);
-            return;
-        }
-        this.logger.trace(`Handler saved choice for intent ${intentName} removed successfully`);
-    }
-    async checkForRememberedHandler(intentRequest) {
-        let prefs;
-        try {
-            prefs = await this.prefsController.get();
-        }
-        catch (error) {
-            this.logger.warn(`prefs.get() threw the following error: ${error}`);
-            return;
-        }
-        const prefsForIntent = prefs.data?.intents?.[intentRequest.intent];
-        return prefsForIntent?.handler;
-    }
-    async checkHandleRaiseWithRememberedHandler(intentRequest) {
-        if (intentRequest.target) {
-            return;
-        }
-        const rememberedHandler = await this.checkForRememberedHandler(intentRequest);
-        if (!rememberedHandler) {
-            return;
-        }
-        const operationData = {
-            intentRequest: {
-                ...intentRequest,
-                target: {
-                    app: rememberedHandler.applicationName,
-                    instance: rememberedHandler.instanceId
-                }
-            },
-            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
-            embeddedResolverConfig: this.getEmbeddedResolverConfig()
-        };
-        try {
-            const response = await this.bridge.send("intents", operations$6.raise, operationData);
-            return response;
-        }
-        catch (error) {
-            this.logger.trace(`Could not raise intent to remembered handler. Reason: ${error}. Removing it from Prefs store`);
-            await this.removeRememberedHandler(intentRequest.intent);
-        }
-    }
-}
-
-const operations$5 = {
-    appHello: { name: "appHello", dataDecoder: channelsAppHelloDataDecoder, resultDecoder: channelsAppHelloSuccessDecoder },
-    addChannel: { name: "addChannel", dataDecoder: channelDefinitionDecoder },
-    removeChannel: { name: "removeChannel", dataDecoder: removeChannelDataDecoder },
-    getMyChannel: { name: "getMyChannel", resultDecoder: getMyChanelResultDecoder },
-    getWindowIdsOnChannel: { name: "getWindowIdsOnChannel", dataDecoder: getWindowIdsOnChannelDataDecoder, resultDecoder: getWindowIdsOnChannelResultDecoder },
-    getWindowIdsWithChannels: { name: "getWindowIdsWithChannels", dataDecoder: wrappedWindowWithChannelFilterDecoder, resultDecoder: getWindowIdsWithChannelsResultDecoder },
-    joinChannel: { name: "joinChannel", dataDecoder: joinChannelDataDecoder },
-    restrict: { name: "restrict", dataDecoder: restrictionConfigDataDecoder },
-    getRestrictions: { name: "getRestrictions", dataDecoder: getRestrictionsDataDecoder, resultDecoder: restrictionsDecoder },
-    restrictAll: { name: "restrictAll", dataDecoder: restrictAllDataDecoder },
-    notifyChannelsChanged: { name: "notifyChannelsChanged", dataDecoder: channelsChangedDataDecoder },
-    leaveChannel: { name: "leaveChannel", dataDecoder: leaveChannelDataDecoder },
-    requestChannelSelector: { name: "requestChannelSelector", dataDecoder: requestChannelSelectorConfigDecoder },
-    getMode: { name: "getMode", resultDecoder: getChannelsModeDecoder },
-    operationCheck: { name: "operationCheck" },
-};
-
-const DEFAULT_MODE = "single";
-const CHANNELS_PREFIX = "___channel___";
-const SUBS_KEY = "subs";
-const CHANGED_KEY = "changed";
-const CHANNELS_CHANGED = "channels_changed";
-const STORAGE_NAMESPACE = "io_connect_channels";
-const DEFAULT_STORAGE_MODE = "inMemory";
-
-class ChannelsController {
-    supportedOperationsNames = [];
-    registry = CallbackRegistryFactory$1();
-    logger;
-    contexts;
-    interop;
-    bridge;
-    windowsController;
-    _mode;
-    myWindowId;
-    storage;
-    handlePlatformShutdown() {
-        this.registry.clear();
-        this.storage.clear();
-    }
-    addOperationsExecutors() {
-        operations$5.getMyChannel.execute = this.handleGetMyChannel.bind(this);
-        operations$5.joinChannel.execute = this.handleJoinChannel.bind(this);
-        operations$5.leaveChannel.execute = this.handleLeaveChannel.bind(this);
-        operations$5.restrict.execute = this.handleRestrict.bind(this);
-        operations$5.getRestrictions.execute = ({ windowId }) => this.getRestrictions(windowId);
-        operations$5.restrictAll.execute = this.handleRestrictAll.bind(this);
-        operations$5.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$5);
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("channels.controller.web");
-        this.logger.trace("starting the web channels controller");
-        this.contexts = coreGlue.contexts;
-        this.interop = coreGlue.interop;
-        this.addOperationsExecutors();
-        this.bridge = ioc.bridge;
-        this.windowsController = ioc.windowsController;
-        this.storage = ioc.channelsStorage;
-        this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
-        this.myWindowId = this.windowsController.my().id ?? this.interop.instance.instance;
-        await this.initialize();
-        const api = this.toApi();
-        coreGlue.channels = api;
-    }
-    async postStart(io, ioc) {
-        try {
-            await this.requestChannelSelector(io.appManager.myInstance);
-        }
-        catch (error) {
-            this.logger.warn(`Failed to display channel selector: ${extractErrorMsg(error)}`);
-        }
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(channelsOperationTypesDecoder, args.operation);
-        const operation = operations$5[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    async list() {
-        const channelNames = this.getAllChannelNames();
-        const channelContexts = await Promise.all(channelNames.map((channelName) => this.get(channelName)));
-        return channelContexts;
-    }
-    my() {
-        return this.current();
-    }
-    async handleGetMyChannel() {
-        const channel = this.my();
-        return channel ? { channel } : {};
-    }
-    async join(name, windowId) {
-        const channelNames = this.getAllChannelNames();
-        runDecoderWithIOError(channelNameDecoder(channelNames), name);
-        runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
-        const joinData = { channel: name, windowId: windowId ?? this.myWindowId };
-        await this.bridge.send("channels", operations$5.joinChannel, joinData, undefined, { includeOperationCheck: true });
-    }
-    handleJoinChannel({ channel }) {
-        if (this._mode === "single") {
-            return this.switchToChannel(channel);
-        }
-        return this.joinAdditionalChannel(channel);
-    }
-    onChanged(callback) {
-        return this.changed(callback);
-    }
-    async leave(config = {}) {
-        const decodedConfig = runDecoderWithIOError(leaveChannelsConfigDecoder, config);
-        const channelName = typeof decodedConfig === "string" ? undefined : decodedConfig.channel;
-        const windowId = typeof decodedConfig === "string" ? decodedConfig : decodedConfig.windowId;
-        if (channelName) {
-            const channelNames = this.getAllChannelNames();
-            runDecoderWithIOError(channelNameDecoder(channelNames), channelName);
-        }
-        const leaveData = { channelName, windowId: windowId ?? this.myWindowId };
-        await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
-    }
-    async handleAppManagerInitialChannelId(channel) {
-        if (this.storage.mode === "inMemory") {
-            return;
-        }
-        if (this.storage.getSessionStorageData()) {
-            return;
-        }
-        return this.handleJoinChannel({ channel, windowId: this.myWindowId });
-    }
-    async handleLeaveChannel({ channelName }) {
-        const channelNamesToLeave = channelName ? [channelName] : this.storage.channels;
-        channelNamesToLeave.forEach((name) => this.storage.invokeUnsubscribes(name));
-        this.storage.channels = this.storage.channels.filter((channelName) => !channelNamesToLeave.includes(channelName));
-        this.executeChangedEvents();
-        await this.notifyChannelsChanged();
-    }
-    toApi() {
-        const api = {
-            mode: this._mode,
-            subscribe: this.subscribe.bind(this),
-            subscribeFor: this.subscribeFor.bind(this),
-            publish: this.publish.bind(this),
-            all: this.all.bind(this),
-            list: this.list.bind(this),
-            get: this.get.bind(this),
-            getMyChannels: this.getMyChannels.bind(this),
-            myChannels: this.myChannels.bind(this),
-            onChannelsChanged: this.onChannelsChanged.bind(this),
-            join: this.join.bind(this),
-            leave: this.leave.bind(this),
-            current: this.current.bind(this),
-            my: this.my.bind(this),
-            changed: this.changed.bind(this),
-            onChanged: this.onChanged.bind(this),
-            add: this.add.bind(this),
-            remove: this.remove.bind(this),
-            getMy: this.getMy.bind(this),
-            getWindowsOnChannel: this.getWindowsOnChannel.bind(this),
-            getWindowsWithChannels: this.getWindowsWithChannels.bind(this),
-            restrict: this.restrict.bind(this),
-            getRestrictions: this.getRestrictions.bind(this),
-            restrictAll: this.restrictAll.bind(this),
-            clearChannelData: this.clearChannelData.bind(this),
-            setPath: this.setPath.bind(this),
-            setPaths: this.setPaths.bind(this)
-        };
-        return Object.freeze(api);
-    }
-    createContextName(channelName) {
-        return `${CHANNELS_PREFIX}${channelName}`;
-    }
-    getAllChannelNames() {
-        const contextNames = this.contexts.all();
-        const channelContextNames = contextNames.filter((contextName) => contextName.startsWith(CHANNELS_PREFIX));
-        const channelNames = channelContextNames.map((channelContextName) => channelContextName.replace(CHANNELS_PREFIX, ""));
-        return channelNames;
-    }
-    async joinAdditionalChannel(name) {
-        if (this.storage.channels.includes(name)) {
-            return;
-        }
-        this.storage.channels = [...this.storage.channels, name];
-        const contextName = this.createContextName(name);
-        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
-        });
-        this.storage.addUnsubscribe(name, unsub);
-        this.executeChangedEvents(name);
-        await this.notifyChannelsChanged();
-    }
-    async switchToChannel(name) {
-        const currentChannel = this.storage.channels[0];
-        if (name === currentChannel) {
-            return;
-        }
-        this.storage.invokeUnsubscribes(currentChannel);
-        this.storage.channels = [name];
-        const contextName = this.createContextName(name);
-        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
-        });
-        this.storage.addUnsubscribe(name, unsub);
-        this.executeChangedEvents(name);
-        await this.notifyChannelsChanged();
-    }
-    executeChangedEvents(name) {
-        this.registry.execute(CHANGED_KEY, name);
-        this.registry.execute(CHANNELS_CHANGED, this.storage.channels);
-    }
-    async notifyChannelsChanged() {
-        const windowId = this.windowsController.my().id;
-        if (!windowId) {
-            return;
-        }
-        try {
-            await this.bridge.send("channels", operations$5.notifyChannelsChanged, { channelNames: this.storage.channels, windowId }, undefined, { includeOperationCheck: true });
-        }
-        catch (error) {
-            this.logger.warn(`Failed to notify channel changed: ${extractErrorMsg(error)}`);
-        }
-    }
-    async updateData(name, data) {
-        const contextName = this.createContextName(name);
-        const fdc3Type = this.getFDC3Type(data);
-        if (this.contexts.setPathSupported) {
-            const pathValues = Object.keys(data).map((key) => {
-                return {
-                    path: `data.${key}`,
-                    value: data[key]
-                };
-            });
-            if (fdc3Type) {
-                pathValues.push({ path: latestFDC3Type, value: fdc3Type });
-            }
-            await this.contexts.setPaths(contextName, pathValues);
-        }
-        else {
-            if (fdc3Type) {
-                data[latestFDC3Type] = fdc3Type;
-            }
-            await this.contexts.update(contextName, { data });
-        }
-    }
-    getFDC3Type(data) {
-        const fdc3PropsArr = Object.keys(data).filter((key) => key.indexOf("fdc3_") === 0);
-        if (fdc3PropsArr.length === 0) {
-            return;
-        }
-        if (fdc3PropsArr.length > 1) {
-            return ioError.raiseError("FDC3 does not support updating of multiple context keys");
-        }
-        return fdc3PropsArr[0].split("_").slice(1).join("_");
-    }
-    subscribe(callback, options) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to channels, because the provided callback is not a function!");
-        }
-        if (options) {
-            runDecoderWithIOError(fdc3OptionsDecoder, options);
-        }
-        const currentChannel = this.current();
-        const wrappedCallback = options?.contextType
-            ? this.getWrappedSubscribeCallbackWithFdc3Type(callback, options.contextType)
-            : this.getWrappedSubscribeCallback(callback);
-        if (currentChannel) {
-            this.replaySubscribe(wrappedCallback, currentChannel);
-        }
-        return this.registry.add(SUBS_KEY, wrappedCallback);
-    }
-    async subscribeFor(name, callback, options) {
-        const channelNames = this.getAllChannelNames();
-        runDecoderWithIOError(channelNameDecoder(channelNames), name);
-        if (typeof callback !== "function") {
-            return ioError.raiseError(`Cannot subscribe to channel ${name}, because the provided callback is not a function!`);
-        }
-        if (options) {
-            runDecoderWithIOError(fdc3OptionsDecoder, options);
-        }
-        const contextName = this.createContextName(name);
-        const wrappedCallback = options?.contextType
-            ? this.getWrappedSubscribeCallbackWithFdc3Type(callback, options.contextType)
-            : this.getWrappedSubscribeCallback(callback);
-        return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
-            wrappedCallback(context.data, context, delta, extraData?.updaterId);
-        });
-    }
-    async publish(data, options) {
-        if (typeof data !== "object") {
-            return ioError.raiseError("Cannot publish to channel, because the provided data is not an object!");
-        }
-        runDecoderWithIOError(publishOptionsDecoder, options);
-        if (typeof options === "object") {
-            return this.publishWithOptions(data, options);
-        }
-        if (typeof options === "string") {
-            const channelNames = this.getAllChannelNames();
-            runDecoderWithIOError(channelNameDecoder(channelNames), options);
-        }
-        if (!options && this.storage.channels.length > 1) {
-            return this.publishOnMultipleChannels(data);
-        }
-        const channelName = typeof options === "string" ? options : this.storage.channels[0];
-        if (!channelName) {
-            return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
-        }
-        const canPublish = this.isAllowedByRestrictions(channelName, "write");
-        if (!canPublish) {
-            return ioError.raiseError(`Cannot publish on channel ${channelName} due to restrictions`);
-        }
-        return this.updateData(channelName, data);
-    }
-    async all() {
-        const channelNames = this.getAllChannelNames();
-        return channelNames;
-    }
-    async get(name, options) {
-        const channelNames = this.getAllChannelNames();
-        runDecoderWithIOError(channelNameDecoder(channelNames), name);
-        if (options) {
-            runDecoderWithIOError(fdc3OptionsDecoder, options);
-        }
-        const contextName = this.createContextName(name);
-        const channelContext = await this.contexts.get(contextName);
-        if (options?.contextType) {
-            return this.getContextForFdc3Type(channelContext, options.contextType);
-        }
-        if (channelContext.latest_fdc3_type) {
-            return this.getContextWithFdc3Data(channelContext);
-        }
-        return channelContext;
-    }
-    async getMyChannels(options) {
-        return Promise.all(this.storage.channels.map((channelName) => this.get(channelName, options)));
-    }
-    myChannels() {
-        return this.storage.channels;
-    }
-    getContextForFdc3Type(channelContext, searchedType) {
-        const encodedType = `fdc3_${searchedType.split(".").join("&")}`;
-        if (!channelContext.data[encodedType]) {
-            return {
-                name: channelContext.name,
-                meta: channelContext.meta,
-                data: {}
-            };
-        }
-        const fdc3Context = { type: searchedType, ...channelContext.data[encodedType] };
-        return {
-            name: channelContext.name,
-            meta: channelContext.meta,
-            data: { fdc3: fdc3Context }
-        };
-    }
-    getContextWithFdc3Data(channelContext) {
-        const { latest_fdc3_type, ...rest } = channelContext;
-        const parsedType = latest_fdc3_type.split("&").join(".");
-        const fdc3Context = { type: parsedType, ...rest.data[`fdc3_${latest_fdc3_type}`] };
-        delete rest.data[`fdc3_${latest_fdc3_type}`];
-        const context = {
-            name: channelContext.name,
-            meta: channelContext.meta,
-            data: {
-                ...rest.data,
-                fdc3: fdc3Context
-            }
-        };
-        return context;
-    }
-    current() {
-        return this.storage.channels[0];
-    }
-    changed(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to channel changed, because the provided callback is not a function!");
-        }
-        return this.registry.add(CHANGED_KEY, callback);
-    }
-    async add(info) {
-        const channelContext = runDecoderWithIOError(channelDefinitionDecoder, info);
-        const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
-        if (channelWithSuchNameExists) {
-            return ioError.raiseError("There's an already existing channel with such name");
-        }
-        await this.bridge.send("channels", operations$5.addChannel, channelContext);
-        return {
-            name: channelContext.name,
-            meta: channelContext.meta,
-            data: channelContext.data || {}
-        };
-    }
-    async remove(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        const channelWithSuchNameExists = this.getAllChannelNames().includes(name);
-        if (!channelWithSuchNameExists) {
-            return ioError.raiseError("There's no channel with such name");
-        }
-        await this.bridge.send("channels", operations$5.removeChannel, { name }, undefined, { includeOperationCheck: true });
-    }
-    replaySubscribe = (callback, channelId) => {
-        this.get(channelId)
-            .then((channelContext) => {
-            if (!channelContext) {
-                return undefined;
-            }
-            const contextName = this.createContextName(channelContext.name);
-            return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
-                callback(context.data, context, delta, extraData?.updaterId);
-            });
-        })
-            .then((un) => un?.())
-            .catch(err => this.logger.trace(err));
-    };
-    async getMy(options) {
-        if (!this.storage.channels.length) {
-            return;
-        }
-        if (options) {
-            runDecoderWithIOError(fdc3OptionsDecoder, options);
-        }
-        return this.get(this.storage.channels[this.storage.channels.length - 1], options);
-    }
-    async getWindowsOnChannel(channel) {
-        const channelNames = this.getAllChannelNames();
-        runDecoderWithIOError(channelNameDecoder(channelNames), channel);
-        const { windowIds } = await this.bridge.send("channels", operations$5.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
-        const result = windowIds.reduce((windows, windowId) => {
-            const window = this.windowsController.findById(windowId);
-            return window ? [...windows, window] : windows;
-        }, []);
-        return result;
-    }
-    async getWindowsWithChannels(filter) {
-        const operationData = filter !== undefined
-            ? { filter: runDecoderWithIOError(windowWithChannelFilterDecoder, filter) }
-            : {};
-        const { windowIdsWithChannels } = await this.bridge.send("channels", operations$5.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
-        const result = windowIdsWithChannels.reduce((windowsWithChannels, { application, channel, windowId }) => {
-            const window = this.windowsController.findById(windowId);
-            return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
-        }, []);
-        return result;
-    }
-    async clearChannelData(name) {
-        const paths = [
-            { path: "data", value: {} },
-            { path: "latest_fdc3_type", value: null },
-        ];
-        await this.handleSetPaths("clearChannelData", paths, name);
-    }
-    async restrict(config) {
-        runDecoderWithIOError(channelRestrictionsDecoder, config);
-        const channelNames = this.getAllChannelNames();
-        runDecoderWithIOError(channelNameDecoder(channelNames), config.name);
-        const configData = {
-            config: {
-                ...config,
-                windowId: config.windowId ?? this.myWindowId
-            }
-        };
-        await this.bridge.send("channels", operations$5.restrict, configData, undefined, { includeOperationCheck: true });
-    }
-    async handleRestrict({ config }) {
-        const currentChannel = await this.getMy();
-        if (!currentChannel) {
-            return this.updateRestriction(config);
-        }
-        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
-        this.updateRestriction(config);
-        const isForCurrentChannel = config.name === currentChannel.name;
-        if (!isForCurrentChannel || prevReadAllowed || !config.read) {
-            return;
-        }
-        this.replaySubscribeCallback(config.name);
-    }
-    updateRestriction(config) {
-        const exists = this.storage.restrictions.some((r) => r.name === config.name);
-        this.storage.restrictions = exists
-            ? this.storage.restrictions.map((restriction) => restriction.name === config.name ? config : restriction)
-            : this.storage.restrictions.concat(config);
-    }
-    updateAllRestrictions(config) {
-        const allChannelNames = this.getAllChannelNames();
-        this.storage.restrictions = allChannelNames.map((name) => ({ name, ...config }));
-    }
-    async getRestrictions(windowId) {
-        runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
-        const forAnotherClient = windowId && windowId !== this.interop.instance.instance;
-        if (windowId && forAnotherClient) {
-            return this.bridge.send("channels", operations$5.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
-        }
-        return { channels: this.storage.restrictions };
-    }
-    async restrictAll(restrictions) {
-        runDecoderWithIOError(restrictionsConfigDecoder, restrictions);
-        const configData = {
-            restrictions: {
-                ...restrictions,
-                windowId: restrictions.windowId ?? this.myWindowId
-            }
-        };
-        await this.bridge.send("channels", operations$5.restrictAll, configData, undefined, { includeOperationCheck: true });
-    }
-    async handleRestrictAll({ restrictions }) {
-        const currentChannel = await this.getMy();
-        if (!currentChannel) {
-            this.updateAllRestrictions(restrictions);
-            return;
-        }
-        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
-        this.updateAllRestrictions(restrictions);
-        if (prevReadAllowed || !restrictions.read) {
-            return;
-        }
-        this.replaySubscribeCallback(currentChannel.name);
-    }
-    async setPath(path, name) {
-        const validatedPath = runDecoderWithIOError(pathValueDecoder, path);
-        const paths = [{ path: `data.${validatedPath.path}`, value: validatedPath.value }];
-        await this.handleSetPaths("setPath", paths, name);
-    }
-    async setPaths(paths, name) {
-        const validatedPaths = runDecoderWithIOError(pathsValueDecoder, paths);
-        const dataPaths = validatedPaths.map(({ path, value }) => ({ path: `data.${path}`, value }));
-        await this.handleSetPaths("setPaths", dataPaths, name);
-    }
-    async handleSetPaths(operation, paths, name) {
-        const channelNamesToUpdate = name ? [name] : this.storage.channels;
-        if (!channelNamesToUpdate.length) {
-            return ioError.raiseError(`Cannot complete ${operation} operation, because channel is not specified. Either join one or pass a channel name as second argument!`);
-        }
-        this.validateChannelNames(channelNamesToUpdate);
-        const { allowed, forbidden } = this.groupChannelsByPermission("write", channelNamesToUpdate);
-        if (channelNamesToUpdate.length === forbidden.length) {
-            return ioError.raiseError(`Cannot complete ${operation} operation due to write restrictions to the following channels: ${channelNamesToUpdate.join(", ")}`);
-        }
-        if (forbidden.length) {
-            this.logger.warn(`Cannot set paths on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} due to write restrictions`);
-        }
-        await Promise.all(allowed.map((channelName) => {
-            const contextName = this.createContextName(channelName);
-            return this.contexts.setPaths(contextName, paths);
-        }));
-    }
-    validateChannelNames(names) {
-        const allChannelNames = this.getAllChannelNames();
-        names.forEach((name) => runDecoderWithIOError(channelNameDecoder(allChannelNames), name));
-    }
-    groupChannelsByPermission(action, channelNames) {
-        return channelNames.reduce((byFar, channelName) => {
-            const isAllowed = this.isAllowedByRestrictions(channelName, action);
-            if (isAllowed) {
-                byFar.allowed.push(channelName);
-            }
-            else {
-                byFar.forbidden.push(channelName);
-            }
-            return byFar;
-        }, { allowed: [], forbidden: [] });
-    }
-    isAllowedByRestrictions(channelName, action) {
-        const restriction = this.storage.restrictions.find((restriction) => restriction.name === channelName);
-        return restriction ? restriction[action] : true;
-    }
-    replaySubscribeCallback(channelName) {
-        const contextName = this.createContextName(channelName);
-        this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
-            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
-        }).then((unsub) => {
-            if (unsub && typeof unsub === "function") {
-                unsub();
-            }
-        }).catch(err => this.logger.error(err));
-    }
-    async publishWithOptions(data, options) {
-        if (options.name) {
-            const channelNames = this.getAllChannelNames();
-            runDecoderWithIOError(channelNameDecoder(channelNames), options.name);
-        }
-        const publishOnMultipleChannels = options.name ? false : this.storage.channels.length > 1;
-        if (publishOnMultipleChannels) {
-            return this.publishOnMultipleChannels(data, options.fdc3);
-        }
-        const channelName = options.name || this.storage.channels[0];
-        if (!channelName) {
-            return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
-        }
-        const canPublish = this.isAllowedByRestrictions(channelName, "write");
-        if (!canPublish) {
-            return ioError.raiseError(`Cannot publish on channel ${channelName} due to restrictions`);
-        }
-        if (!options.fdc3) {
-            return this.updateData(channelName, data);
-        }
-        return this.publishFdc3Data(channelName, data);
-    }
-    async publishOnMultipleChannels(data, isFdc3) {
-        const { allowed, forbidden } = this.groupChannelsByPermission("write", this.storage.channels);
-        if (this.storage.channels.length === forbidden.length) {
-            return ioError.raiseError(`Cannot complete 'publish' operation due to write restrictions to all joined channels: ${this.storage.channels.join(", ")}`);
-        }
-        if (forbidden.length) {
-            this.logger.warn(`Data on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} won't be published due to write restrictions`);
-        }
-        const publishMethod = isFdc3 ? this.publishFdc3Data.bind(this) : this.updateData.bind(this);
-        await Promise.all(allowed.map((channelName) => publishMethod(channelName, data)));
-    }
-    async publishFdc3Data(channelName, data) {
-        runDecoderWithIOError(fdc3ContextDecoder, data);
-        const { type, ...rest } = data;
-        const parsedType = type.split(".").join("&");
-        const fdc3DataToPublish = { [`fdc3_${parsedType}`]: rest };
-        return this.updateData(channelName, fdc3DataToPublish);
-    }
-    getWrappedSubscribeCallback(callback) {
-        const wrappedCallback = (channelData, context, delta, updaterId) => {
-            const canRead = this.isAllowedByRestrictions(context.name, "read");
-            if (!canRead) {
-                return;
-            }
-            const { data, latest_fdc3_type } = context;
-            const latestTypePropName = `fdc3_${latest_fdc3_type}`;
-            if (!latest_fdc3_type || (delta.data && !delta.data[latestTypePropName])) {
-                callback(channelData, context, updaterId);
-                return;
-            }
-            const parsedType = latest_fdc3_type.split("&").join(".");
-            const fdc3Data = { type: parsedType, ...data[latestTypePropName] };
-            const { [latestTypePropName]: latestFDC3Type, ...rest } = channelData;
-            callback({ ...rest, fdc3: fdc3Data }, context, updaterId);
-        };
-        return wrappedCallback;
-    }
-    getWrappedSubscribeCallbackWithFdc3Type(callback, fdc3Type) {
-        const didReplay = { replayed: false };
-        const wrappedCallback = (_, context, delta, updaterId) => {
-            const canRead = this.isAllowedByRestrictions(context.name, "read");
-            if (!canRead) {
-                return;
-            }
-            const { data, latest_fdc3_type } = context;
-            const searchedType = `fdc3_${fdc3Type.split(".").join("&")}`;
-            if (!data[searchedType] || (delta.data && !delta.data[searchedType])) {
-                return;
-            }
-            if (didReplay.replayed) {
-                return this.parseDataAndInvokeSubscribeCallback({ latestFdc3TypeEncoded: latest_fdc3_type, searchedType: fdc3Type, callback, context, updaterId });
-            }
-            const fdc3Data = { type: fdc3Type, ...data[searchedType] };
-            callback({ fdc3: fdc3Data }, context, updaterId);
-            didReplay.replayed = true;
-        };
-        return wrappedCallback;
-    }
-    parseDataAndInvokeSubscribeCallback(args) {
-        const { latestFdc3TypeEncoded, searchedType, callback, context, updaterId } = args;
-        const latestPublishedType = latestFdc3TypeEncoded.split("&").join(".");
-        if (latestPublishedType !== searchedType) {
-            return;
-        }
-        const fdc3Data = { type: searchedType, ...context.data[`fdc3_${latestFdc3TypeEncoded}`] };
-        callback({ fdc3: fdc3Data }, context, updaterId);
-    }
-    async requestChannelSelector(myInstance) {
-        if (!myInstance) {
-            return;
-        }
-        const myApplicationData = myInstance.application;
-        const myAppDetails = myApplicationData.userProperties?.details;
-        if (!myAppDetails) {
-            return;
-        }
-        if (!myAppDetails?.channelSelector?.enabled) {
-            return;
-        }
-        const windowId = myInstance.id;
-        const requestChannelSelectorConfig = { windowId, channelsNames: this.storage.channels };
-        await this.bridge.send("channels", operations$5.requestChannelSelector, requestChannelSelectorConfig, undefined, { includeOperationCheck: true });
-    }
-    async getPlatformChannelsMode() {
-        try {
-            const result = await this.bridge.send("channels", operations$5.getMode, {}, undefined, { includeOperationCheck: true });
-            return result.mode;
-        }
-        catch (error) {
-            this.logger.warn(error?.message || JSON.stringify(error));
-            return DEFAULT_MODE;
-        }
-    }
-    onChannelsChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to channels changed, because the provided callback is not a function");
-        }
-        return this.registry.add(CHANNELS_CHANGED, callback);
-    }
-    async initialize() {
-        const isAppHelloSupported = await this.checkIfAppHelloSupported();
-        if (!isAppHelloSupported) {
-            return this.handleAppHelloFailure("Platform does not support 'appHello' operation and channel state persistence by windowId. Setting 'sessionStorage' mode for tracking channels and restrictions");
-        }
-        const { success, error } = await this.sendAppHello();
-        if (error) {
-            return this.handleAppHelloFailure(error);
-        }
-        this.logger.trace(`Received 'appHelloSuccess' message. Setting initial channels state to: ${JSON.stringify(success)}`);
-        const { mode, channels, restrictions } = success;
-        this.storage.mode = "inMemory";
-        this._mode = mode;
-        this.storage.channels = channels;
-        this.storage.restrictions = restrictions;
-    }
-    async handleAppHelloFailure(errorMsg) {
-        this.logger.trace(errorMsg);
-        this.storage.mode = "sessionStorage";
-        this._mode = await this.getPlatformChannelsMode();
-    }
-    async sendAppHello() {
-        try {
-            const result = await this.bridge.send("channels", operations$5.appHello, { windowId: this.myWindowId }, undefined, { includeOperationCheck: true });
-            return { success: result, error: undefined };
-        }
-        catch (error) {
-            return { error: `Failed to get initial state from platform. Error: ${extractErrorMsg(error)}`, success: undefined };
-        }
-    }
-    async checkIfAppHelloSupported() {
-        try {
-            const { isSupported } = await this.bridge.send("channels", operations$5.operationCheck, { operation: operations$5.appHello.name }, undefined, { includeOperationCheck: true });
-            return isSupported;
-        }
-        catch (error) {
-            this.logger.trace(`Platform does not support 'appHello' operation and channel state persistence by windowId. Error: ${extractErrorMsg(error)}`);
-            return false;
-        }
-    }
-}
-
-const operations$4 = {
-    getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder },
-    getBase: { name: "getBase", resultDecoder: anyDecoder },
-    platformShutdown: { name: "platformShutdown" },
-    isFdc3DataWrappingSupported: { name: "isFdc3DataWrappingSupported" },
-    isChannelsMetadataSupported: { name: "isChannelsMetadataSupported" },
-    clientError: { name: "clientError", dataDecoder: clientErrorDataDecoder },
-    systemHello: { name: "systemHello", resultDecoder: systemHelloSuccessDecoder },
-    operationCheck: { name: "operationCheck" }
-};
-
-class SystemController {
-    supportedOperationsNames = [];
-    bridge;
-    ioc;
-    logger;
-    errorPort = errorChannel.port2;
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("system.controller.web");
-        this.logger.trace("starting the web system controller");
-        this.bridge = ioc.bridge;
-        this.ioc = ioc;
-        this.addOperationsExecutors();
-        let isClientErrorOperationSupported = false;
-        try {
-            const systemHelloSuccess = await this.bridge.send("system", operations$4.systemHello, undefined, undefined, { includeOperationCheck: true });
-            isClientErrorOperationSupported = systemHelloSuccess.isClientErrorOperationSupported;
-        }
-        catch {
-            this.logger.warn("The platform of this client is outdated and does not support some system operations.");
-        }
-        this.errorPort.onmessage = async (event) => {
-            if (!isClientErrorOperationSupported) {
-                return;
-            }
-            await this.bridge.send("system", operations$4.clientError, { message: event.data }, undefined, { includeOperationCheck: true });
-        };
-        await this.setEnvironment();
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(systemOperationTypesDecoder, args.operation);
-        const operation = operations$4[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    async processPlatformShutdown() {
-        Object.values(this.ioc.controllers).forEach((controller) => controller.handlePlatformShutdown ? controller.handlePlatformShutdown() : null);
-        this.ioc.preferredConnectionController.stop();
-        this.ioc.eventsDispatcher.stop();
-        await this.bridge.stop();
-    }
-    async setEnvironment() {
-        const environment = await this.bridge.send("system", operations$4.getEnvironment, undefined);
-        const base = await this.bridge.send("system", operations$4.getBase, undefined);
-        const globalNamespace = window.glue42core || window.iobrowser;
-        const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
-        const globalObj = Object.assign({}, globalNamespace, base, { environment });
-        window[globalNamespaceName] = globalObj;
-    }
-    addOperationsExecutors() {
-        operations$4.platformShutdown.execute = this.processPlatformShutdown.bind(this);
-        operations$4.isFdc3DataWrappingSupported.execute = this.handleIsFdc3DataWrappingSupported.bind(this);
-        operations$4.isChannelsMetadataSupported.execute = this.handleIsChannelsMetadataSupported.bind(this);
-        operations$4.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$4);
-    }
-    async handleIsFdc3DataWrappingSupported() {
-        return { isSupported: true };
-    }
-    async handleIsChannelsMetadataSupported() {
-        return { isSupported: false };
-    }
-}
-
-class Notification {
-    onclick = () => { };
-    onshow = () => { };
-    id;
-    title;
-    badge;
-    body;
-    data;
-    dir;
-    icon;
-    image;
-    lang;
-    renotify;
-    requireInteraction;
-    silent;
-    tag;
-    timestamp;
-    vibrate;
-    clickInterop;
-    actions;
-    focusPlatformOnDefaultClick;
-    severity;
-    showToast;
-    showInPanel;
-    state;
-    constructor(config, id) {
-        this.id = id;
-        this.badge = config.badge;
-        this.body = config.body;
-        this.data = config.data;
-        this.dir = config.dir;
-        this.icon = config.icon;
-        this.image = config.image;
-        this.lang = config.lang;
-        this.renotify = config.renotify;
-        this.requireInteraction = config.requireInteraction;
-        this.silent = config.silent;
-        this.tag = config.tag;
-        this.timestamp = config.timestamp;
-        this.vibrate = config.vibrate;
-        this.title = config.title;
-        this.clickInterop = config.clickInterop;
-        this.actions = config.actions;
-        this.focusPlatformOnDefaultClick = config.focusPlatformOnDefaultClick;
-        this.severity = config.severity;
-        this.showToast = config.showToast;
-        this.showInPanel = config.showInPanel;
-        this.state = config.state;
-    }
-}
-
-oneOf$1(constant$2("clientHello"));
-const extensionConfigDecoder = object$2({
-    widget: object$2({
-        inject: boolean$2()
-    })
-});
-
-const operations$3 = {
-    clientHello: { name: "clientHello", resultDecoder: extensionConfigDecoder }
-};
-
-class ExtController {
-    windowId;
-    logger;
-    bridge;
-    eventsDispatcher;
-    channelsController;
-    config;
-    channels = [];
-    unsubFuncs = [];
-    contentCommands = {
-        widgetVisualizationPermission: { name: "widgetVisualizationPermission", handle: this.handleWidgetVisualizationPermission.bind(this) },
-        changeChannel: { name: "changeChannel", handle: this.handleChangeChannel.bind(this) }
-    };
-    handlePlatformShutdown() {
-        this.unsubFuncs.forEach((unsub) => unsub());
-        this.channels = [];
-        this.unsubFuncs = [];
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("extension.controller.web");
-        this.windowId = ioc.publicWindowId;
-        this.logger.trace("starting the extension web controller");
-        this.bridge = ioc.bridge;
-        this.channelsController = ioc.channelsController;
-        this.eventsDispatcher = ioc.eventsDispatcher;
-        try {
-            await this.registerWithPlatform();
-        }
-        catch (error) {
-            return;
-        }
-        this.channels = await this.channelsController.list();
-        const unsubDispatcher = this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
-        const unsubChannels = this.channelsController.onChanged((channel) => {
-            this.eventsDispatcher.sendContentMessage({ command: "channelChange", newChannel: channel });
-        });
-        this.unsubFuncs.push(unsubDispatcher);
-        this.unsubFuncs.push(unsubChannels);
-    }
-    async handleBridgeMessage(_) {
-    }
-    handleContentMessage(message) {
-        if (!message || typeof message.command !== "string") {
-            return;
-        }
-        const foundHandler = this.contentCommands[message.command];
-        if (!foundHandler) {
-            return;
-        }
-        foundHandler.handle(message);
-    }
-    async registerWithPlatform() {
-        this.logger.trace("registering with the platform");
-        this.config = await this.bridge.send("extension", operations$3.clientHello, { windowId: this.windowId });
-        this.logger.trace("the platform responded to the hello message with a valid extension config");
-    }
-    async handleWidgetVisualizationPermission() {
-        if (!this.config?.widget.inject) {
-            return this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: false });
-        }
-        const currentChannel = this.channels.find((channel) => channel.name === this.channelsController.my());
-        this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: true, channels: this.channels, currentChannel });
-    }
-    async handleChangeChannel(message) {
-        if (message.name === "no-channel") {
-            await this.channelsController.leave();
-            return;
-        }
-        await this.channelsController.join(message.name);
-    }
-}
-
-class EventsDispatcher {
-    config;
-    glue;
-    registry = CallbackRegistryFactory$1();
-    glue42EventName = "Glue42";
-    _handleMessage;
-    _resolveWidgetReadyPromise;
-    _resolveModalsUIFactoryReadyPromise;
-    _resolveIntentResolverUIFactoryReadyPromise;
-    constructor(config) {
-        this.config = config;
-    }
-    events = {
-        notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
-        contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
-        requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) },
-        widgetFactoryReady: { name: "widgetFactoryReady", handle: this.handleWidgetReady.bind(this) },
-        modalsUIFactoryReady: { name: "modalsUIFactoryReady", handle: this.handleModalsUIFactoryReady.bind(this) },
-        intentResolverUIFactoryReady: { name: "intentResolverUIFactoryReady", handle: this.handleIntentResolverUIFactoryReady.bind(this) },
-    };
-    stop() {
-        window.removeEventListener(this.glue42EventName, this._handleMessage);
-    }
-    start(glue) {
-        this.glue = glue;
-        this.wireCustomEventListener();
-        this.announceStarted();
-    }
-    sendContentMessage(message) {
-        this.send("contentOut", "glue42core", message);
-    }
-    onContentMessage(callback) {
-        return this.registry.add("content-inc", callback);
-    }
-    async widgetReady() {
-        const widgetReadyPromise = new Promise((resolve) => {
-            this._resolveWidgetReadyPromise = resolve;
-        });
-        this.requestWidgetReady();
-        return widgetReadyPromise;
-    }
-    async modalsUIFactoryReady() {
-        const modalsUIFactoryReadyPromise = new Promise((resolve) => {
-            this._resolveModalsUIFactoryReadyPromise = resolve;
-        });
-        this.requestModalsUIFactoryReady();
-        return modalsUIFactoryReadyPromise;
-    }
-    async intentResolverUIFactoryReady() {
-        const intentResolverUIFactoryReadyPromise = new Promise((resolve) => {
-            this._resolveIntentResolverUIFactoryReadyPromise = resolve;
-        });
-        this.requestIntentResolverUIFactoryReady();
-        return intentResolverUIFactoryReadyPromise;
-    }
-    wireCustomEventListener() {
-        this._handleMessage = this.handleMessage.bind(this);
-        window.addEventListener(this.glue42EventName, this._handleMessage);
-    }
-    handleMessage(event) {
-        const data = event.detail;
-        const namespace = data?.glue42 ?? data?.glue42core;
-        if (!namespace) {
-            return;
-        }
-        const glue42Event = namespace.event;
-        const foundHandler = this.events[glue42Event];
-        if (!foundHandler) {
-            return;
-        }
-        foundHandler.handle(namespace.message);
-    }
-    announceStarted() {
-        this.send("start", "glue42");
-    }
-    handleRequestGlue() {
-        if (!this.config.exposeAPI) {
-            this.send("requestGlueResponse", "glue42", { error: "Will not give access to the underlying Glue API, because it was explicitly denied upon initialization." });
-            return;
-        }
-        this.send("requestGlueResponse", "glue42", { glue: this.glue });
-    }
-    handleNotifyStarted() {
-        this.announceStarted();
-    }
-    handleContentInc(message) {
-        this.registry.execute("content-inc", message);
-    }
-    requestWidgetReady() {
-        this.send(REQUEST_WIDGET_READY, "glue42");
-    }
-    handleWidgetReady() {
-        this._resolveWidgetReadyPromise?.();
-    }
-    requestModalsUIFactoryReady() {
-        this.send(REQUEST_MODALS_UI_FACTORY_READY, "glue42");
-    }
-    handleModalsUIFactoryReady() {
-        this._resolveModalsUIFactoryReadyPromise?.();
-    }
-    requestIntentResolverUIFactoryReady() {
-        this.send(REQUEST_INTENT_RESOLVER_UI_FACTORY_READY, "glue42");
-    }
-    handleIntentResolverUIFactoryReady() {
-        this._resolveIntentResolverUIFactoryReadyPromise?.();
-    }
-    send(eventName, namespace, message) {
-        const payload = {};
-        payload[namespace] = { event: eventName, message };
-        const event = new CustomEvent(this.glue42EventName, { detail: payload });
-        window.dispatchEvent(event);
-    }
-}
-
-class PreferredConnectionController {
-    coreGlue;
-    transactionTimeout = 15000;
-    transactionLocks = {};
-    webPlatformTransport;
-    webPlatformMessagesUnsubscribe;
-    reconnectCounter = 0;
-    logger;
-    constructor(coreGlue) {
-        this.coreGlue = coreGlue;
-        this.logger = this.coreGlue.logger.subLogger("web.preferred.connection.controller");
-    }
-    stop() {
-        if (!this.webPlatformMessagesUnsubscribe) {
-            return;
-        }
-        this.webPlatformMessagesUnsubscribe();
-    }
-    async start(coreConfig) {
-        if (coreConfig.isPlatformInternal) {
-            this.logger.trace("This is an internal client to the platform, skipping all client preferred communication logic.");
-            return;
-        }
-        const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
-        if (!isConnectedToPlatform) {
-            return ioError.raiseError("Cannot initiate the Glue Web Bridge, because the initial connection was not handled by a Web Platform transport.");
-        }
-        if (!this.coreGlue.connection.transport.isPreferredActivated) {
-            this.logger.trace("The platform of this client was configured without a preferred connection, skipping the rest of the initialization.");
-            return;
-        }
-        this.webPlatformTransport = this.coreGlue.connection.transport;
-        this.webPlatformMessagesUnsubscribe = this.webPlatformTransport.onMessage(this.handleWebPlatformMessage.bind(this));
-        const transportState = await this.getCurrentPlatformTransportState();
-        await this.checkSwitchTransport(transportState);
-    }
-    handleWebPlatformMessage(msg) {
-        if (typeof msg === "string") {
-            return;
-        }
-        const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
-        const type = msg.type;
-        const args = msg.args;
-        const transactionId = msg.transactionId;
-        if (type === Glue42CoreMessageTypes.transportSwitchRequest.name) {
-            return this.handleTransportSwitchRequest(args, transactionId);
-        }
-        if (type === Glue42CoreMessageTypes.platformUnload.name && !isConnectedToPlatform) {
-            return this.handlePlatformUnload();
-        }
-        if (type === Glue42CoreMessageTypes.getCurrentTransportResponse.name) {
-            return this.handleGetCurrentTransportResponse(args, transactionId);
-        }
-        if (type === Glue42CoreMessageTypes.checkPreferredLogic.name) {
-            return this.handleCheckPreferredLogic(transactionId);
-        }
-        if (type === Glue42CoreMessageTypes.checkPreferredConnection.name) {
-            return this.handleCheckPreferredConnection(args, transactionId);
-        }
-    }
-    async reEstablishPlatformPort() {
-        try {
-            await this.webPlatformTransport.connect();
-        }
-        catch (error) {
-            this.logger.trace(`Error when re-establishing port connection to the platform: ${JSON.stringify(error)}`);
-            --this.reconnectCounter;
-            if (this.reconnectCounter > 0) {
-                return this.reEstablishPlatformPort();
-            }
-            this.logger.warn("This client lost connection to the platform while connected to a preferred GW and was not able to re-connect to the platform.");
-        }
-        this.logger.trace("The connection to the platform was re-established, closing the connection to the web gateway.");
-        this.reconnectCounter = 0;
-        this.webPlatformTransport.close();
-        const transportState = await this.getCurrentPlatformTransportState();
-        await this.checkSwitchTransport(transportState);
-    }
-    async checkSwitchTransport(config) {
-        const myCurrentTransportName = this.coreGlue.connection.transport.name();
-        if (myCurrentTransportName === config.transportName) {
-            this.logger.trace("A check switch was requested, but the platform transport and my transport are identical, no switch is necessary");
-            return;
-        }
-        this.logger.trace(`A check switch was requested and a transport switch is necessary, because this client is now on ${myCurrentTransportName}, but it should reconnect to ${JSON.stringify(config)}`);
-        const result = await this.coreGlue.connection.switchTransport(config);
-        this.setConnected();
-        this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
-    }
-    async getCurrentPlatformTransportState() {
-        this.logger.trace("Requesting the current transport state of the platform.");
-        const transaction = this.setTransaction(Glue42CoreMessageTypes.getCurrentTransport.name);
-        this.sendPlatformMessage(Glue42CoreMessageTypes.getCurrentTransport.name, transaction.id);
-        const transportState = await transaction.lock;
-        this.logger.trace(`The platform responded with transport state: ${JSON.stringify(transportState)}`);
-        return transportState;
-    }
-    setTransaction(operation) {
-        const transaction = {};
-        const transactionId = nanoid$1(10);
-        const transactionLock = new Promise((resolve, reject) => {
-            let transactionLive = true;
-            transaction.lift = (args) => {
-                transactionLive = false;
-                delete this.transactionLocks[transactionId];
-                resolve(args);
-            };
-            transaction.fail = (reason) => {
-                transactionLive = false;
-                delete this.transactionLocks[transactionId];
-                reject(reason);
-            };
-            setTimeout(() => {
-                if (!transactionLive) {
-                    return;
-                }
-                transactionLive = false;
-                this.logger.warn(`Transaction for operation: ${operation} timed out.`);
-                delete this.transactionLocks[transactionId];
-                reject(`Transaction for operation: ${operation} timed out.`);
-            }, this.transactionTimeout);
-        });
-        transaction.lock = transactionLock;
-        transaction.id = transactionId;
-        this.transactionLocks[transactionId] = transaction;
-        return transaction;
-    }
-    sendPlatformMessage(type, transactionId, args) {
-        this.logger.trace(`Sending a platform message of type: ${type}, id: ${transactionId} and args: ${JSON.stringify(args)}`);
-        this.webPlatformTransport.sendObject({
-            glue42core: { type, args, transactionId }
-        });
-    }
-    handleTransportSwitchRequest(args, transactionId) {
-        this.logger.trace(`Received a transport switch request with id: ${transactionId} and data: ${JSON.stringify(args)}`);
-        this.coreGlue.connection.switchTransport(args.switchSettings)
-            .then((result) => {
-            this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
-            this.setConnected();
-            this.sendPlatformMessage(Glue42CoreMessageTypes.transportSwitchResponse.name, transactionId, { success: result.success });
-        })
-            .catch((error) => {
-            this.logger.error(error);
-            this.sendPlatformMessage(Glue42CoreMessageTypes.transportSwitchResponse.name, transactionId, { success: false });
-        });
-    }
-    handlePlatformUnload() {
-        this.reconnectCounter = 5;
-        this.logger.trace("The platform was unloaded while I am connected to a preferred connection, re-establishing the port connection.");
-        this.reEstablishPlatformPort();
-    }
-    handleGetCurrentTransportResponse(args, transactionId) {
-        this.logger.trace(`Got a current transport response from the platform with id: ${transactionId} and data: ${JSON.stringify(args)}`);
-        const transportState = args.transportState;
-        const transaction = this.transactionLocks[transactionId];
-        transaction?.lift(transportState);
-    }
-    handleCheckPreferredLogic(transactionId) {
-        setTimeout(() => this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredLogicResponse.name, transactionId), 0);
-    }
-    handleCheckPreferredConnection(args, transactionId) {
-        const url = args.url;
-        this.logger.trace(`Testing the possible connection to: ${url}`);
-        this.checkPreferredConnection(url)
-            .then((result) => {
-            this.logger.trace(`The connection to ${url} is possible`);
-            this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredConnectionResponse.name, transactionId, result);
-        })
-            .catch((error) => {
-            this.logger.trace(`The connection to ${url} is not possible`);
-            this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredConnectionResponse.name, transactionId, { error });
-        });
-    }
-    checkPreferredConnection(url) {
-        return new Promise((resolve) => {
-            const ws = new WebSocket(url);
-            ws.onerror = () => resolve({ live: false });
-            ws.onopen = () => {
-                ws.close();
-                resolve({ live: true });
-            };
-        });
-    }
-    setConnected() {
-        this.webPlatformTransport.manualSetReadyState();
-    }
-}
-
-const operations$2 = {
-    getCurrent: { name: "getCurrent", resultDecoder: simpleThemeResponseDecoder },
-    list: { name: "list", resultDecoder: allThemesResponseDecoder },
-    select: { name: "select", dataDecoder: selectThemeConfigDecoder }
-};
-
-class ThemesController {
-    logger;
-    bridge;
-    registry = CallbackRegistryFactory$1();
-    themesSubscription;
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("themes.controller.web");
-        this.logger.trace("starting the web themes controller");
-        this.bridge = ioc.bridge;
-        await this.setupSubscription();
-        this.logger.trace("themes subscription is ready");
-        const api = this.toApi();
-        coreGlue.themes = api;
-        this.logger.trace("themes are ready");
-    }
-    handlePlatformShutdown() {
-        this.registry.clear();
-        this.themesSubscription?.close();
-        delete this.themesSubscription;
-    }
-    async handleBridgeMessage() {
-    }
-    toApi() {
-        const api = {
-            getCurrent: this.getCurrent.bind(this),
-            list: this.list.bind(this),
-            select: this.select.bind(this),
-            onChanged: this.onChanged.bind(this)
-        };
-        return Object.freeze(api);
-    }
-    async getCurrent() {
-        const bridgeResponse = await this.bridge.send("themes", operations$2.getCurrent, undefined, undefined, { includeOperationCheck: true });
-        return bridgeResponse.theme;
-    }
-    async list() {
-        const bridgeResponse = await this.bridge.send("themes", operations$2.list, undefined, undefined, { includeOperationCheck: true });
-        return bridgeResponse.themes;
-    }
-    async select(name) {
-        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
-        await this.bridge.send("themes", operations$2.select, { name }, undefined, { includeOperationCheck: true });
-    }
-    onChanged(callback) {
-        if (typeof callback !== "function") {
-            return ioError.raiseError("onChanged requires a callback of type function");
-        }
-        return this.registry.add("on-theme-change", callback);
-    }
-    async setupSubscription() {
-        this.themesSubscription = await this.bridge.createThemesSubscription();
-        this.themesSubscription.onData(this.handleStreamData.bind(this));
-        this.themesSubscription.onClosed(this.handleStreamClosure.bind(this));
-    }
-    handleStreamData(data) {
-        const eventData = data.data;
-        const validation = simpleThemeResponseDecoder.run(eventData);
-        if (!validation.ok) {
-            this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
-            return;
-        }
-        const themeChanged = validation.result;
-        this.registry.execute("on-theme-change", themeChanged.theme);
-    }
-    handleStreamClosure() {
-        this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
-        this.registry.clear();
-        delete this.themesSubscription;
-    }
-}
-
-class ChannelsStorage {
-    sessionStorage = window.sessionStorage;
-    _mode = DEFAULT_STORAGE_MODE;
-    inMemoryChannels = [];
-    inMemoryRestrictions = [];
-    _unsubscribeDict = {};
-    clear() {
-        this._mode = DEFAULT_STORAGE_MODE;
-        this.inMemoryChannels = [];
-        this.inMemoryRestrictions = [];
-        this._unsubscribeDict = {};
-        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify([]));
-    }
-    get mode() {
-        return this._mode;
-    }
-    set mode(mode) {
-        this._mode = mode;
-    }
-    get channels() {
-        if (this.mode === "inMemory") {
-            return this.inMemoryChannels.slice();
-        }
-        return this.getSessionStorageData()?.channels ?? [];
-    }
-    set channels(channels) {
-        if (this.mode === "inMemory") {
-            this.inMemoryChannels = channels;
-        }
-        this.setSessionStorageChannels(channels);
-    }
-    get restrictions() {
-        if (this.mode === "inMemory") {
-            return this.inMemoryRestrictions.slice();
-        }
-        return this.getSessionStorageData()?.restrictions ?? [];
-    }
-    set restrictions(restrictions) {
-        if (this.mode === "inMemory") {
-            this.inMemoryRestrictions = restrictions;
-        }
-        this.setSessionStorageRestrictions(restrictions);
-    }
-    getSessionStorageData() {
-        return JSON.parse(this.sessionStorage.getItem(STORAGE_NAMESPACE) || "null");
-    }
-    addUnsubscribe(channel, unsubscribe) {
-        this._unsubscribeDict[channel] = unsubscribe;
-    }
-    invokeUnsubscribes(channel) {
-        if (channel) {
-            this._unsubscribeDict[channel]?.();
-            delete this._unsubscribeDict[channel];
-            return;
-        }
-        Object.values(this._unsubscribeDict).forEach((unsub) => unsub());
-        this._unsubscribeDict = {};
-    }
-    setSessionStorageChannels(channels) {
-        const data = this.getSessionStorageData();
-        if (data?.channels) {
-            data.channels = channels;
-            return this.setSessionStorageData(data);
-        }
-        const newData = { channels, restrictions: data?.restrictions ?? [] };
-        return this.setSessionStorageData(newData);
-    }
-    setSessionStorageRestrictions(restrictions) {
-        const data = this.getSessionStorageData();
-        if (data?.restrictions) {
-            data.restrictions = restrictions;
-            return this.setSessionStorageData(data);
-        }
-        const newData = { channels: data?.channels ?? [], restrictions };
-        return this.setSessionStorageData(newData);
-    }
-    setSessionStorageData(data) {
-        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify(data));
-    }
-}
-
-const operations$1 = {
-    clear: { name: "clear", dataDecoder: basePrefsConfigDecoder },
-    clearAll: { name: "clearAll" },
-    get: { name: "get", dataDecoder: basePrefsConfigDecoder, resultDecoder: getPrefsResultDecoder },
-    getAll: { name: "getAll", resultDecoder: getAllPrefsResultDecoder },
-    set: { name: "set", dataDecoder: changePrefsDataDecoder },
-    update: { name: "update", dataDecoder: changePrefsDataDecoder },
-    prefsChanged: { name: "prefsChanged", dataDecoder: getPrefsResultDecoder },
-    prefsHello: { name: "prefsHello", resultDecoder: prefsHelloSuccessDecoder },
-    operationCheck: { name: "operationCheck" },
-    registerSubscriber: { name: "registerSubscriber", dataDecoder: subscriberRegisterConfigDecoder },
-};
-
-class PrefsController {
-    supportedOperationsNames = [];
-    bridge;
-    config;
-    logger;
-    appManagerController;
-    platformAppName;
-    registry = CallbackRegistryFactory$1();
-    validNonExistentApps;
-    signaledSubscription = false;
-    interopId;
-    isAppValidationEnabled;
-    handlePlatformShutdown() {
-        this.registry.clear();
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("prefs.controller.web");
-        this.logger.trace("starting the web prefs controller");
-        this.addOperationsExecutors();
-        this.interopId = coreGlue.interop.instance.instance;
-        this.bridge = ioc.bridge;
-        this.config = ioc.config;
-        this.appManagerController = ioc.appManagerController;
-        try {
-            const prefsHelloSuccess = await this.bridge.send("prefs", operations$1.prefsHello, undefined, undefined, { includeOperationCheck: true });
-            this.platformAppName = prefsHelloSuccess.platform.app;
-            this.validNonExistentApps = prefsHelloSuccess.validNonExistentApps ?? [];
-            this.isAppValidationEnabled = prefsHelloSuccess.isAppValidationEnabled ?? true;
-        }
-        catch (error) {
-            this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
-            return;
-        }
-        this.logger.trace("no need for platform registration, attaching the prefs property to glue and returning");
-        const api = this.toApi();
-        coreGlue.prefs = api;
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(prefsOperationTypesDecoder, args.operation);
-        const operation = operations$1[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    async get(app) {
-        const verifiedApp = app === undefined || app === null ? this.getMyAppName() : runDecoderWithIOError(nonEmptyStringDecoder$2, app);
-        const { prefs } = await this.bridge.send("prefs", operations$1.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
-        return prefs;
-    }
-    async update(data, options) {
-        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
-        const app = verifiedOptions?.app ?? this.getMyAppName();
-        await this.updateFor(app, data);
-    }
-    addOperationsExecutors() {
-        operations$1.prefsChanged.execute = this.handleOnChanged.bind(this);
-        operations$1.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations$1);
-    }
-    toApi() {
-        const api = {
-            clear: this.clear.bind(this),
-            clearAll: this.clearAll.bind(this),
-            clearFor: this.clearFor.bind(this),
-            get: this.get.bind(this),
-            getAll: this.getAll.bind(this),
-            set: this.set.bind(this),
-            setFor: this.setFor.bind(this),
-            subscribe: this.subscribe.bind(this),
-            subscribeFor: this.subscribeFor.bind(this),
-            update: this.update.bind(this),
-            updateFor: this.updateFor.bind(this),
-        };
-        return api;
-    }
-    async clear() {
-        const app = this.getMyAppName();
-        await this.clearFor(app);
-    }
-    async clearAll() {
-        await this.bridge.send("prefs", operations$1.clearAll, undefined, undefined, { includeOperationCheck: true });
-    }
-    async clearFor(app) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
-        await this.bridge.send("prefs", operations$1.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
-    }
-    async getAll() {
-        const result = await this.bridge.send("prefs", operations$1.getAll, undefined, undefined, { includeOperationCheck: true });
-        return result;
-    }
-    async set(data, options) {
-        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
-        const app = verifiedOptions?.app ?? this.getMyAppName();
-        await this.setFor(app, data);
-    }
-    async setFor(app, data) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
-        const verifiedData = runDecoderWithIOError(object$2(), data);
-        await this.bridge.send("prefs", operations$1.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
-    }
-    subscribe(callback) {
-        const app = this.getMyAppName();
-        return this.subscribeFor(app, callback);
-    }
-    subscribeFor(app, callback) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
-        const applications = this.appManagerController.getApplications();
-        const isValidApp = this.isAppValidationEnabled
-            ? verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp) || this.validNonExistentApps.includes(verifiedApp)
-            : true;
-        if (!isValidApp) {
-            return ioError.raiseError(`The provided app name "${app}" is not valid.`);
-        }
-        if (typeof callback !== "function") {
-            return ioError.raiseError("Cannot subscribe to prefs, because the provided callback is not a function!");
-        }
-        if (!this.signaledSubscription) {
-            this.bridge.send("prefs", operations$1.registerSubscriber, { interopId: this.interopId, appName: verifiedApp }, undefined, { includeOperationCheck: true })
-                .catch((error) => {
-                this.logger.warn("Failed to register subscriber for prefs");
-                this.logger.error(error);
-            });
-            this.signaledSubscription = true;
-        }
-        const subscriptionKey = this.getSubscriptionKey(verifiedApp);
-        this.get(verifiedApp).then(callback);
-        return this.registry.add(subscriptionKey, callback);
-    }
-    async updateFor(app, data) {
-        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
-        const verifiedData = runDecoderWithIOError(object$2(), data);
-        await this.bridge.send("prefs", operations$1.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
-    }
-    getMyAppName() {
-        const myAppName = this.config.isPlatformInternal ? this.platformAppName : this.appManagerController.me?.application.name;
-        if (!myAppName) {
-            return ioError.raiseError("App Preferences operations can not be executed for windows that do not have app!");
-        }
-        return myAppName;
-    }
-    getSubscriptionKey(app) {
-        return `prefs-changed-${app}`;
-    }
-    async handleOnChanged({ prefs }) {
-        const subscriptionKey = this.getSubscriptionKey(prefs.app);
-        this.registry.execute(subscriptionKey, prefs);
-    }
-}
-
-const operations = {
-    getResources: { name: "getResources", dataDecoder: getResourcesDataDecoder, resultDecoder: getResourcesResultDecoder },
-    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
-    showAlert: { name: "showAlert", dataDecoder: uiAlertRequestMessageDecoder },
-    showDialog: { name: "showDialog", dataDecoder: uiDialogRequestMessageDecoder },
-    alertInteropAction: { name: "alertInteropAction", dataDecoder: alertInteropActionDataDecoder },
-    showResolver: { name: "showResolver", dataDecoder: uiResolverRequestMessageDecoder, resultDecoder: uiResolverResponseMessageDecoder },
-};
-
-const DEFAULT_ALERT_TTL = 5 * 1000;
-const MODALS_SHADOW_HOST_ID = "io-modals-shadow-host";
-const MODALS_ROOT_ELEMENT_ID = "io-modals-root";
-const WIDGET_SHADOW_HOST_ID = "io-widget-shadow-host";
-const WIDGET_ROOT_ELEMENT_ID = "io-widget-root";
-const INTENT_RESOLVER_SHADOW_HOST_ID = "io-intent-resolver-shadow-host";
-const INTENT_RESOLVER_ROOT_ELEMENT_ID = "io-intent-resolver-root";
-const SHADOW_ROOT_ELEMENT_CLASSNAME = "io-body io-variables";
-
-class UIController {
-    ioc;
-    supportedOperationsNames = [];
-    logger;
-    bridge;
-    config;
-    zIndexDictionary = {
-        [WIDGET_SHADOW_HOST_ID]: "100",
-        [MODALS_SHADOW_HOST_ID]: "101",
-        [INTENT_RESOLVER_SHADOW_HOST_ID]: "100"
-    };
-    widgetResources;
-    modalsResources;
-    intentResolverResources;
-    rootElements = [];
-    modalsUiApi;
-    isDialogOpen = false;
-    intentResolverUiApi;
-    isIntentResolverOpen = false;
-    constructor(ioc) {
-        this.ioc = ioc;
-    }
-    async start(coreGlue, ioc) {
-        this.logger = coreGlue.logger.subLogger("ui.controller.web");
-        this.logger.trace("starting the ui controller");
-        this.bridge = ioc.bridge;
-        this.config = ioc.config;
-        this.addOperationsExecutors();
-        const resources = await this.getResources();
-        if (!resources) {
-            this.logger.trace("No UI elements to display - platform is not initialized with any UI resources");
-            return;
-        }
-        this.logger.trace(`Received UI resources from platform: ${JSON.stringify(resources)}`);
-        this.setResources(resources);
-    }
-    async handleBridgeMessage(args) {
-        const operationName = runDecoderWithIOError(uiOperationTypesDecoder, args.operation);
-        const operation = operations[operationName];
-        if (!operation.execute) {
-            return;
-        }
-        let operationData = args.data;
-        if (operation.dataDecoder) {
-            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
-        }
-        return await operation.execute(operationData);
-    }
-    async showComponents(io) {
-        const initializeWidgetPromise = this.widgetResources ? this.initializeWidget(io, this.widgetResources) : Promise.resolve();
-        const initializeModalsPromise = this.modalsResources ? this.initializeModalsUi(io, this.modalsResources) : Promise.resolve();
-        const initializeIntentResolverPromise = this.intentResolverResources ? this.initializeIntentResolverUI(io, this.intentResolverResources) : Promise.resolve();
-        this.subscribeForThemeChanges(io);
-        await Promise.all([
-            this.config.widget.awaitFactory ? initializeWidgetPromise : Promise.resolve(),
-            this.config.modals.awaitFactory ? initializeModalsPromise : Promise.resolve(),
-            this.config.intentResolver.awaitFactory ? initializeIntentResolverPromise : Promise.resolve(),
-        ]);
-    }
-    isIntentResolverEnabled() {
-        return !!this.intentResolverResources && this.config.intentResolver.enable;
-    }
-    addOperationsExecutors() {
-        operations.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
-        operations.showAlert.execute = this.handleShowAlert.bind(this);
-        operations.showDialog.execute = this.handleShowDialog.bind(this);
-        operations.showResolver.execute = this.handleShowResolver.bind(this);
-        this.supportedOperationsNames = getSupportedOperationsNames(operations);
-    }
-    async handleShowAlert({ config }) {
-        if (!this.config.modals.alerts.enabled) {
-            return ioError.raiseError("Unable to perform showAlert operation because the client was initialized with 'modals: { alerts: { enabled: false } }' config.");
-        }
-        const modalsUiApi = this.modalsUiApi;
-        if (!modalsUiApi) {
-            return ioError.raiseError("Unable to perform showAlert operation because modalsUiApi is missing.");
-        }
-        const { promise: closePromise, resolve: resolveClosePromise } = wrapPromise();
-        const onClick = (config) => {
-            const decodedConfig = alertOnClickConfigDecoder.run(config);
-            if (!decodedConfig.ok) {
-                this.logger.error(`alert.onClick() was invoked with an invalid config. Error: ${JSON.stringify(decodedConfig.error)}.`);
-                return;
-            }
-            const { interopAction } = decodedConfig.result;
-            this.bridge.send("ui", operations.alertInteropAction, { interopAction }, undefined, { includeOperationCheck: true })
-                .catch((error) => this.logger.warn(extractErrorMsg(error)));
-        };
-        let result;
-        try {
-            this.logger.trace(`Open alert with config: ${JSON.stringify(config)}`);
-            result = modalsUiApi.alerts.open({ ...config, onClick, onClose: resolveClosePromise });
-        }
-        catch (error) {
-            return ioError.raiseError(`modalsUiApi.alerts.open() failed. Reason: ${extractErrorMsg(error)}.`);
-        }
-        const decodeResult = openAlertResultDecoder.run(result);
-        if (!decodeResult.ok) {
-            return ioError.raiseError(`modalsUiApi.alerts.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
-        }
-        const timeoutId = setTimeout(() => {
-            resolveClosePromise();
-        }, getSafeTimeoutDelay(config.ttl ?? DEFAULT_ALERT_TTL));
-        closePromise.then(() => {
-            clearTimeout(timeoutId);
-            try {
-                modalsUiApi.alerts.close({ id: decodeResult.result.id });
-            }
-            catch (error) {
-                this.logger.warn(`Failed to close alert with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
-            }
-        });
-    }
-    async handleShowDialog({ config }) {
-        if (!this.config.modals.dialogs.enabled) {
-            return ioError.raiseError("Unable to perform showDialog operation because the client was initialized with 'modals: { dialogs: { enabled: false } }' config.");
-        }
-        const modalsUiApi = this.modalsUiApi;
-        if (!modalsUiApi) {
-            return ioError.raiseError("Unable to perform showDialog operation because modalsUiApi is missing.");
-        }
-        if (this.isDialogOpen) {
-            return ioError.raiseError("Cannot open a dialog because another one is already open.");
-        }
-        const { promise: completionPromise, resolve: resolveCompletionPromise } = wrapPromise();
-        let result;
-        try {
-            this.logger.trace(`Open dialog with config: ${JSON.stringify(config)}`);
-            result = modalsUiApi.dialogs.open({ ...config, onCompletion: resolveCompletionPromise });
-        }
-        catch (error) {
-            return ioError.raiseError(`modalsUiApi.dialogs.open() failed. Reason: ${extractErrorMsg(error)}.`);
-        }
-        const decodeResult = openDialogResultDecoder.run(result);
-        if (!decodeResult.ok) {
-            return ioError.raiseError(`modalsUiApi.dialogs.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
-        }
-        this.isDialogOpen = true;
-        let timeoutId;
-        if (config.timer) {
-            timeoutId = setTimeout(() => {
-                resolveCompletionPromise({ response: { isExpired: true } });
-            }, getSafeTimeoutDelay(config.timer.duration));
-        }
-        const response = await completionPromise;
-        clearTimeout(timeoutId);
-        this.isDialogOpen = false;
-        try {
-            modalsUiApi.dialogs.close({ id: decodeResult.result.id });
-        }
-        catch (error) {
-            this.logger.warn(`Failed to close dialog with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
-        }
-        const decodeResponse = dialogOnCompletionConfigDecoder.run(response);
-        if (!decodeResponse.ok) {
-            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodeResponse.error)}.`);
-        }
-        return { result: decodeResponse.result.response };
-    }
-    async handleShowResolver({ config }) {
-        this.logger.trace(`Received open intent resolver request with config: ${JSON.stringify(config)}`);
-        if (!this.config.intentResolver.enable) {
-            return ioError.raiseError("Unable to perform showResolver operation because the client was initialized with 'intentResolver: { enable: false }' config.");
-        }
-        const intentResolverApi = this.intentResolverUiApi;
-        if (!intentResolverApi) {
-            return ioError.raiseError("Unable to perform showResolver operation because intentResolverApi is missing.");
-        }
-        if (this.isIntentResolverOpen) {
-            return ioError.raiseError("Cannot open the intent resolver because another one is already open.");
-        }
-        const { promise: completionPromise, resolve: resolveIntentResolverPromise } = wrapPromise();
-        let result;
-        try {
-            this.logger.trace(`Open intent resolver with config: ${JSON.stringify(config)}`);
-            result = intentResolverApi.open({ ...config, onUserResponse: resolveIntentResolverPromise });
-        }
-        catch (error) {
-            return ioError.raiseError(`intentResolverUI.open() failed. Reason: ${extractErrorMsg(error)}.`);
-        }
-        const decodedOpenResult = openResolverResultDecoder.run(result);
-        if (!decodedOpenResult.ok) {
-            return ioError.raiseError(`intentResolverUI.open() returned an invalid result. Error: ${JSON.stringify(decodedOpenResult.error)}.`);
-        }
-        const timer = setTimeout(() => resolveIntentResolverPromise({ response: { isExpired: true } }), getSafeTimeoutDelay(config.timeout));
-        const response = await completionPromise;
-        clearTimeout(timer);
-        this.isIntentResolverOpen = false;
-        try {
-            intentResolverApi.close({ id: decodedOpenResult.result.id });
-        }
-        catch (error) {
-            this.logger.warn(`Failed to close intent resolver with id ${decodedOpenResult.result.id}. Reason: ${extractErrorMsg(error)}`);
-        }
-        const decodedResponse = onUserResponseResponseDecoder.run(response);
-        if (!decodedResponse.ok) {
-            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodedResponse.error)}.`);
-        }
-        return { result: decodedResponse.result.response };
-    }
-    async getResources() {
-        const data = {
-            origin: window.origin
-        };
-        try {
-            const result = await this.bridge.send("ui", operations.getResources, data, undefined, { includeOperationCheck: true });
-            return result.resources;
-        }
-        catch (error) {
-            this.logger.warn(error?.message || JSON.stringify(error));
-        }
-    }
-    appendModalsResources(resources) {
-        this.logger.trace("Appending modals resources");
-        return this.appendResources(MODALS_SHADOW_HOST_ID, MODALS_ROOT_ELEMENT_ID, resources.sources);
-    }
-    appendWidgetResources(resources) {
-        this.logger.trace("Appending widget resources");
-        return this.appendResources(WIDGET_SHADOW_HOST_ID, WIDGET_ROOT_ELEMENT_ID, resources.sources);
-    }
-    appendIntentResolverResources(resources) {
-        this.logger.trace("Appending intent resolver resources");
-        return this.appendResources(INTENT_RESOLVER_SHADOW_HOST_ID, INTENT_RESOLVER_ROOT_ELEMENT_ID, resources.sources);
-    }
-    appendResources(shadowHostId, rootElementId, sources) {
-        const { bundle, fonts = [], styles } = sources;
-        const shadowHost = document.createElement("div");
-        shadowHost.id = shadowHostId;
-        shadowHost.style.position = "fixed";
-        shadowHost.style.zIndex = this.zIndexDictionary[shadowHostId];
-        const shadowRoot = shadowHost.attachShadow({ mode: "open" });
-        const script = document.createElement("script");
-        script.src = bundle;
-        script.type = "module";
-        shadowRoot.appendChild(script);
-        const rootElement = document.createElement("div");
-        rootElement.id = rootElementId;
-        rootElement.className = SHADOW_ROOT_ELEMENT_CLASSNAME;
-        shadowRoot.appendChild(rootElement);
-        styles.forEach((style) => {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = style;
-            shadowRoot.appendChild(link);
-        });
-        fonts.forEach((font) => {
-            const link = document.createElement("link");
-            link.rel = "stylesheet";
-            link.href = font;
-            document.head.insertBefore(link, document.head.firstChild);
-        });
-        document.body.appendChild(shadowHost);
-        return { rootElement };
-    }
-    async initializeWidget(io, resources) {
-        this.logger.trace("Initializing IOBrowserWidget.");
-        const { rootElement } = this.appendWidgetResources(resources);
-        this.rootElements.push(rootElement);
-        const config = {
-            ...deepmerge$1(resources.config, this.config.widget),
-            rootElement
-        };
-        return PromiseWrap(async () => {
-            await this.ioc.eventsDispatcher.widgetReady();
-            this.logger.trace(`IOBrowserWidget factory is available. Invoking it with config: ${JSON.stringify(config)}`);
-            await window.IOBrowserWidget(io, config);
-            this.logger.trace("IOBrowserWidget was initialized successfully.");
-        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserWidget to initialize.`);
-    }
-    async initializeModalsUi(io, resources) {
-        this.logger.trace("Initializing IOBrowserModalsUI.");
-        const { rootElement } = this.appendModalsResources(resources);
-        this.rootElements.push(rootElement);
-        const config = {
-            ...this.config.modals,
-            rootElement
-        };
-        return PromiseWrap(async () => {
-            await this.ioc.eventsDispatcher.modalsUIFactoryReady();
-            this.logger.trace(`IOBrowserModalsUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
-            this.modalsUiApi = await window.IOBrowserModalsUI(io, config);
-            this.logger.trace("IOBrowserModalsUI was initialized successfully.");
-        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserModalsUI to initialize.`);
-    }
-    async initializeIntentResolverUI(io, resources) {
-        this.logger.trace("Initializing IOBrowserIntentResolverUI.");
-        const { rootElement } = this.appendIntentResolverResources(resources);
-        this.rootElements.push(rootElement);
-        const config = {
-            ...this.config.intentResolver,
-            rootElement
-        };
-        const timeout = config.timeout;
-        return PromiseWrap(async () => {
-            await this.ioc.eventsDispatcher.intentResolverUIFactoryReady();
-            this.logger.trace(`IOBrowserIntentResolverUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
-            this.intentResolverUiApi = await window.IOBrowserIntentResolverUI(io, config);
-            this.logger.trace("IOBrowserIntentResolverUI initialized successfully.");
-        }, timeout, `Timeout of ${timeout}ms hit waiting for IOBrowserIntentResolverUI to initialize.`);
-    }
-    setResources(resources) {
-        this.setWidgetResources(resources.widget);
-        this.setModalsUiResources(resources.modals);
-        this.setIntentResolverResources(resources.intentResolver);
-    }
-    setWidgetResources(resources) {
-        const baseMsg = "Widget won't be displayed. Reason: ";
-        const decodedConfig = widgetConfigDecoder.run(this.config.widget);
-        if (!decodedConfig.ok) {
-            this.logger.warn(`${baseMsg} invalid widget config. Error: ${decodedConfig.error}`);
-            return;
-        }
-        if (!this.config.widget.enable) {
-            this.logger.trace(`${baseMsg} Client initialized with 'widget: { enable: false }' config`);
-            return;
-        }
-        if (!resources) {
-            this.logger.trace(`${baseMsg} Platform did not provide resources`);
-            return;
-        }
-        if (resources.blockedOrigin) {
-            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving widget resources`);
-            return;
-        }
-        this.widgetResources = resources;
-    }
-    setModalsUiResources(resources) {
-        const baseMsg = "Modals won't be displayed. Reason: ";
-        const decodedConfig = modalsConfigDecoder.run(this.config.modals);
-        if (!decodedConfig.ok) {
-            this.logger.warn(`${baseMsg} invalid modals config. Error: ${decodedConfig.error}`);
-            return;
-        }
-        if (!this.config.modals.alerts.enabled && !this.config.modals.dialogs.enabled) {
-            this.logger.trace(`${baseMsg} Client initialized with 'modals: { alerts: { enabled: false }, dialogs: { enabled: false } }' config`);
-            return;
-        }
-        if (!resources) {
-            this.logger.trace(`${baseMsg} Platform did not provide resources`);
-            return;
-        }
-        if (resources.blockedOrigin) {
-            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving modals resources`);
-            return;
-        }
-        this.modalsResources = resources;
-    }
-    setIntentResolverResources(resources) {
-        const baseMsg = "Intent Resolver UI won't be displayed. Reason: ";
-        const decodedConfig = intentResolverConfigDecoder.run(this.config.intentResolver);
-        if (!decodedConfig.ok) {
-            this.logger.warn(`${baseMsg} invalid intent resolver config. Error: ${JSON.stringify(decodedConfig.error)}`);
-            return;
-        }
-        if (!this.config.intentResolver.enable) {
-            this.logger.trace(`${baseMsg} Client initialized with 'intentResolver: { enable: false }' config`);
-            return;
-        }
-        if (!resources) {
-            this.logger.trace(`${baseMsg} Platform did not provide resources`);
-            return;
-        }
-        if (resources.blockedOrigin) {
-            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving intent resolver resources`);
-            return;
-        }
-        this.intentResolverResources = resources;
-    }
-    subscribeForThemeChanges(io) {
-        const themesApi = io.themes;
-        if (!themesApi) {
-            return;
-        }
-        const changeTheme = async (theme) => {
-            await Promise.all(this.rootElements.map((element) => this.applyThemeToElement(element, themesApi, theme)));
-        };
-        themesApi.onChanged(changeTheme);
-        themesApi.getCurrent().then(changeTheme);
-    }
-    async applyThemeToElement(element, themesApi, theme) {
-        if (element.classList.contains(theme.name)) {
-            return;
-        }
-        const allThemes = await themesApi.list();
-        element.classList.remove(...allThemes.map(({ name }) => name));
-        element.classList.add(theme.name);
-    }
-}
-
-class IoC {
-    _coreGlue;
-    _communicationId;
-    _publicWindowId;
-    _webConfig;
-    _windowsControllerInstance;
-    _appManagerControllerInstance;
-    _layoutsControllerInstance;
-    _notificationsControllerInstance;
-    _intentsControllerInstance;
-    _channelsControllerInstance;
-    _themesControllerInstance;
-    _extensionController;
-    _systemControllerInstance;
-    _bridgeInstance;
-    _eventsDispatcher;
-    _preferredConnectionController;
-    _channelsStorage;
-    _prefsControllerInstance;
-    _uiController;
-    controllers = {
-        windows: this.windowsController,
-        appManager: this.appManagerController,
-        layouts: this.layoutsController,
-        notifications: this.notificationsController,
-        intents: this.intentsController,
-        channels: this.channelsController,
-        system: this.systemController,
-        extension: this.extensionController,
-        themes: this.themesController,
-        prefs: this.prefsController,
-        ui: this.uiController
-    };
-    get communicationId() {
-        return this._communicationId;
-    }
-    get publicWindowId() {
-        return this._publicWindowId;
-    }
-    get windowsController() {
-        if (!this._windowsControllerInstance) {
-            this._windowsControllerInstance = new WindowsController();
-        }
-        return this._windowsControllerInstance;
-    }
-    get uiController() {
-        if (!this._uiController) {
-            this._uiController = new UIController(this);
-        }
-        return this._uiController;
-    }
-    get appManagerController() {
-        if (!this._appManagerControllerInstance) {
-            this._appManagerControllerInstance = new AppManagerController();
-        }
-        return this._appManagerControllerInstance;
-    }
-    get layoutsController() {
-        if (!this._layoutsControllerInstance) {
-            this._layoutsControllerInstance = new LayoutsController();
-        }
-        return this._layoutsControllerInstance;
-    }
-    get themesController() {
-        if (!this._themesControllerInstance) {
-            this._themesControllerInstance = new ThemesController();
-        }
-        return this._themesControllerInstance;
-    }
-    get notificationsController() {
-        if (!this._notificationsControllerInstance) {
-            this._notificationsControllerInstance = new NotificationsController();
-        }
-        return this._notificationsControllerInstance;
-    }
-    get intentsController() {
-        if (!this._intentsControllerInstance) {
-            this._intentsControllerInstance = new IntentsController();
-        }
-        return this._intentsControllerInstance;
-    }
-    get systemController() {
-        if (!this._systemControllerInstance) {
-            this._systemControllerInstance = new SystemController();
-        }
-        return this._systemControllerInstance;
-    }
-    get channelsController() {
-        if (!this._channelsControllerInstance) {
-            this._channelsControllerInstance = new ChannelsController();
-        }
-        return this._channelsControllerInstance;
-    }
-    get prefsController() {
-        if (!this._prefsControllerInstance) {
-            this._prefsControllerInstance = new PrefsController();
-        }
-        return this._prefsControllerInstance;
-    }
-    get extensionController() {
-        if (!this._extensionController) {
-            this._extensionController = new ExtController();
-        }
-        return this._extensionController;
-    }
-    get eventsDispatcher() {
-        if (!this._eventsDispatcher) {
-            this._eventsDispatcher = new EventsDispatcher(this.config);
-        }
-        return this._eventsDispatcher;
-    }
-    get bridge() {
-        if (!this._bridgeInstance) {
-            this._bridgeInstance = new GlueBridge(this._coreGlue, this.communicationId);
-        }
-        return this._bridgeInstance;
-    }
-    get preferredConnectionController() {
-        if (!this._preferredConnectionController) {
-            this._preferredConnectionController = new PreferredConnectionController(this._coreGlue);
-        }
-        return this._preferredConnectionController;
-    }
-    get channelsStorage() {
-        if (!this._channelsStorage) {
-            this._channelsStorage = new ChannelsStorage();
-        }
-        return this._channelsStorage;
-    }
-    get config() {
-        return this._webConfig;
-    }
-    defineGlue(coreGlue) {
-        this._coreGlue = coreGlue;
-        this._publicWindowId = coreGlue.connection.transport.publicWindowId;
-        const globalNamespace = window.glue42core || window.iobrowser;
-        this._communicationId = coreGlue.connection.transport.communicationId || globalNamespace.communicationId;
-    }
-    defineConfig(config) {
-        this._webConfig = config;
-    }
-    async buildWebWindow(id, name, logger) {
-        const model = new WebWindowModel(id, name, this.bridge, logger);
-        const api = await model.toApi();
-        return { id, model, api };
-    }
-    buildNotification(config, id) {
-        return new Notification(config, id);
-    }
-    async buildApplication(app, applicationInstances) {
-        const application = (new ApplicationModel(app, [], this.appManagerController)).toApi();
-        const instances = applicationInstances.map((instanceData) => this.buildInstance(instanceData, application));
-        application.instances.push(...instances);
-        return application;
-    }
-    buildInstance(instanceData, app) {
-        return (new InstanceModel(instanceData, this.bridge, app)).toApi();
-    }
-}
-
-var version$1 = "4.6.0";
-
-const setupGlobalSystem = (io, bridge) => {
-    return {
-        getContainerInfo: async () => {
-            if (window === window.parent) {
-                return;
-            }
-            if (window.name.includes("#wsp")) {
-                return {
-                    workspaceFrame: {
-                        id: "N/A"
-                    }
-                };
-            }
-            return window.parent === window.top ?
-                { top: {} } :
-                { parent: {} };
-        },
-        getProfileData: async () => {
-            if (!bridge) {
-                throw new Error("Bridge is not available and cannot fetch the profile data");
-            }
-            const data = await bridge.send("system", { name: "getProfileData" }, undefined);
-            return data;
-        }
-    };
-};
-
-const createFactoryFunction = (coreFactoryFunction) => {
-    let cachedApiPromise;
-    const initAPI = async (config) => {
-        const ioc = new IoC();
-        const glue = await PromiseWrap(() => coreFactoryFunction(config, { version: version$1 }), 30000, "Glue Web initialization timed out, because core didn't resolve");
-        const logger = glue.logger.subLogger("web.main.controller");
-        ioc.defineGlue(glue);
-        await ioc.preferredConnectionController.start(config);
-        await ioc.bridge.start(ioc.controllers);
-        ioc.defineConfig(config);
-        logger.trace("the bridge has been started, initializing all controllers");
-        await Promise.all(Object.values(ioc.controllers).map((controller) => controller.start(glue, ioc)));
-        logger.trace("all controllers reported started, starting all additional libraries");
-        try {
-            await Promise.all(config.libraries.map((lib) => lib(glue, config)));
-            logger.trace("all libraries were started");
-            ioc.eventsDispatcher.start(glue);
-            logger.trace("start event dispatched, glue is ready, returning it");
-            await ioc.uiController.showComponents(glue).catch((err) => logger.warn(err?.message ? err.message : JSON.stringify(err)));
-            await Promise.all(Object.values(ioc.controllers).map((controller) => controller.postStart ? controller.postStart(glue, ioc) : Promise.resolve()));
-            window.iobrowser.system = setupGlobalSystem(glue, ioc.bridge);
-            window.iobrowser = Object.freeze({ ...window.iobrowser });
-            return glue;
-        }
-        catch (error) {
-            return ioError.raiseError(error, true);
-        }
-    };
-    const factory = (userConfig) => {
-        if (window.glue42gd || window.iodesktop) {
-            return enterprise(userConfig);
-        }
-        const config = parseConfig(userConfig);
-        try {
-            checkSingleton();
-        }
-        catch (error) {
-            return typeof cachedApiPromise === "undefined" ? Promise.reject(new Error(error)) : cachedApiPromise;
-        }
-        const apiPromise = initAPI(config);
-        cachedApiPromise = userConfig?.memoizeAPI ? apiPromise : undefined;
-        return apiPromise;
-    };
-    return factory;
-};
 
 var MetricTypes = {
     STRING: 1,
@@ -8866,6 +4942,150 @@ class InProcTransport {
     }
 }
 
+function normalizeError(value) {
+    if (value instanceof Error) {
+        return value;
+    }
+    if (typeof value === "string") {
+        return new Error(value);
+    }
+    const anyVal = value;
+    const msgField = typeof anyVal?.message === "string" ? anyVal.message : undefined;
+    const reasonField = typeof anyVal?.reason === "string" ? anyVal.reason : undefined;
+    const errField = typeof anyVal?.err === "string" ? anyVal.err : undefined;
+    if (msgField !== undefined && msgField.length > 0) {
+        return new Error(msgField);
+    }
+    if (reasonField !== undefined && reasonField.length > 0) {
+        return new Error(reasonField);
+    }
+    if (errField !== undefined && errField.length > 0) {
+        return new Error(errField);
+    }
+    if (msgField === "" || reasonField === "" || errField === "") {
+        return new Error("");
+    }
+    return new Error(safeStringify$1(value));
+}
+function safeErrorStack(value) {
+    try {
+        if (value instanceof Error) {
+            if (typeof value.stack === "string") {
+                return value.stack;
+            }
+            if (typeof value.message === "string") {
+                const name = typeof value.name === "string" && value.name.length > 0 ? value.name : "Error";
+                return `${name}: ${value.message}`;
+            }
+        }
+        if (typeof value === "string") {
+            return value;
+        }
+    }
+    catch { }
+    return safeStringify$1(value);
+}
+function safeStringify$1(value) {
+    try {
+        const seen = new WeakSet();
+        const json = JSON.stringify(value, (_key, v) => {
+            if (typeof v === "bigint") {
+                return `${v.toString()}n`;
+            }
+            if (typeof v === "function") {
+                return "[Function]";
+            }
+            if (typeof v === "symbol") {
+                return v.toString();
+            }
+            if (typeof v === "object" && v !== null) {
+                if (seen.has(v)) {
+                    return "[Circular]";
+                }
+                seen.add(v);
+            }
+            return v;
+        });
+        if (json !== undefined) {
+            return json;
+        }
+    }
+    catch { }
+    if (value !== null && typeof value === "object") {
+        let ctor = "Object";
+        try {
+            const name = value.constructor?.name;
+            if (typeof name === "string") {
+                ctor = name;
+            }
+        }
+        catch { }
+        let keys = [];
+        try {
+            keys = Object.keys(value);
+        }
+        catch { }
+        return keys.length > 0 ? `[${ctor} keys=${keys.join(",")}]` : `[${ctor}]`;
+    }
+    try {
+        return String(value);
+    }
+    catch {
+        return "[unprintable]";
+    }
+}
+
+const TRANSPORT_SEND_FAILURE = "core.errors.send.transport";
+const MESSAGE_SERIALIZATION_FAILURE = "core.errors.send.serialization";
+const SERIALIZATION_FAILED_REASON = "The message could not be serialized";
+function describeError(cause, fallback) {
+    try {
+        const message = normalizeError(cause).message;
+        return typeof message === "string" && message.length > 0 ? message : fallback;
+    }
+    catch {
+        return fallback;
+    }
+}
+class MessageSerializationError extends Error {
+    cause;
+    constructor(cause) {
+        super(describeError(cause, SERIALIZATION_FAILED_REASON));
+        this.cause = cause;
+        this.name = "MessageSerializationError";
+    }
+}
+const invalidInput = new WeakSet();
+function asSerializationFailure(error) {
+    if ((typeof error === "object" || typeof error === "function") && error !== null) {
+        invalidInput.add(error);
+        return error;
+    }
+    return new MessageSerializationError(error);
+}
+function postSerialized(post) {
+    try {
+        post();
+    }
+    catch (error) {
+        throw asSerializationFailure(error);
+    }
+}
+function isMessageSerializationFailure(error) {
+    if ((typeof error === "object" || typeof error === "function") && error !== null && invalidInput.has(error)) {
+        return true;
+    }
+    try {
+        return error instanceof MessageSerializationError
+            || (typeof error === "object" && error !== null
+                && Object.prototype.toString.call(error) === "[object DOMException]"
+                && error.name === "DataCloneError");
+    }
+    catch {
+        return false;
+    }
+}
+
 class SharedWorkerTransport {
     logger;
     worker;
@@ -8881,7 +5101,7 @@ class SharedWorkerTransport {
         return true;
     }
     sendObject(msg) {
-        this.worker.port.postMessage(msg);
+        postSerialized(() => this.worker.port.postMessage(msg));
         return Promise.resolve();
     }
     send(_msg) {
@@ -8960,31 +5180,44 @@ class PromiseWrapper {
     }
 }
 
+function jitter(interval) {
+    if (!interval) {
+        return 0;
+    }
+    return Math.round(interval * (0.5 + Math.random()));
+}
+
 const timers = {};
 function getAllTimers() {
     return timers;
 }
-function timer (timerName) {
+function timer (timerName, restart = false) {
     const existing = timers[timerName];
-    if (existing) {
+    if (existing && !restart) {
         return existing;
     }
     const marks = [];
     function now() {
         return new Date().getTime();
     }
-    const startTime = now();
-    mark("start", startTime);
     let endTime;
     let period;
+    const startTime = now();
+    mark("start", startTime);
     function stop() {
-        endTime = now();
-        mark("end", endTime);
+        const stoppedAt = now();
+        record("end", stoppedAt);
+        endTime = stoppedAt;
         period = endTime - startTime;
         return period;
     }
     function mark(name, time) {
-        const currentTime = time ?? now();
+        if (endTime !== undefined) {
+            return;
+        }
+        record(name, time ?? now());
+    }
+    function record(name, currentTime) {
         let diff = 0;
         if (marks.length > 0) {
             diff = currentTime - marks[marks.length - 1].time;
@@ -9009,7 +5242,172 @@ function timer (timerName) {
     return timerObj;
 }
 
+class TransportHandshakeTimeoutError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = "TransportHandshakeTimeoutError";
+    }
+}
+
+let source = () => performance.now();
+function now() {
+    return source();
+}
+
+const DEFAULT_RECONNECT_HANDSHAKE_TIMEOUT_MS = 20_000;
+class WebSocketHandshakeTimeoutError extends TransportHandshakeTimeoutError {
+    constructor(timeoutMs) {
+        super(`WebSocket handshake exceeded ${timeoutMs} ms`);
+        this.name = "WebSocketHandshakeTimeoutError";
+    }
+}
+class SocketOpening {
+    createSocket;
+    retireSocket;
+    owned = new Set();
+    retired = new WeakSet();
+    pending;
+    constructor(createSocket, retireSocket) {
+        this.createSocket = createSocket;
+        this.retireSocket = retireSocket;
+    }
+    isOpening() { return this.pending !== undefined; }
+    isRetired(socket) { return this.retired.has(socket); }
+    open(options) {
+        if (this.pending) {
+            return Promise.reject(new Error("A WebSocket opening is already pending"));
+        }
+        return new Promise((resolve, reject) => {
+            let settled = false;
+            let deadline;
+            let removeSelectionListeners = () => undefined;
+            const finish = (error, socket) => {
+                if (settled) {
+                    return;
+                }
+                settled = true;
+                if (deadline !== undefined) {
+                    clearTimeout(deadline);
+                    deadline = undefined;
+                }
+                removeSelectionListeners();
+                if (this.pending === attempt) {
+                    this.pending = undefined;
+                }
+                if (socket) {
+                    resolve(socket);
+                }
+                else {
+                    reject(error);
+                }
+            };
+            const fail = (error) => {
+                if (settled) {
+                    return;
+                }
+                finish(error);
+                if (attempt.socket) {
+                    this.retire(attempt.socket);
+                }
+            };
+            const attempt = { cancel: fail };
+            this.pending = attempt;
+            if (!options.initial) {
+                deadline = setTimeout(() => {
+                    deadline = undefined;
+                    if (settled || attempt.socket?.readyState === 1) {
+                        return;
+                    }
+                    fail(new WebSocketHandshakeTimeoutError(options.timeoutMs));
+                }, options.timeoutMs);
+            }
+            try {
+                try {
+                    options.onStarting?.(now());
+                }
+                catch { }
+                if (settled) {
+                    return;
+                }
+                const socket = this.createSocket();
+                attempt.socket = socket;
+                this.owned.add(socket);
+                socket.addEventListener("error", () => undefined);
+                socket.addEventListener("close", () => {
+                    if (this.pending?.socket === socket) {
+                        this.pending.cancel(new Error("WebSocket closed while opening"));
+                    }
+                    this.owned.delete(socket);
+                });
+                socket.addEventListener("open", () => {
+                    if (this.retired.has(socket)) {
+                        this.retire(socket);
+                    }
+                });
+                if (settled) {
+                    this.retire(socket);
+                    return;
+                }
+                const opened = () => {
+                    if (this.retired.has(socket)) {
+                        return;
+                    }
+                    finish(undefined, socket);
+                };
+                const failed = () => fail(new Error("WebSocket failed while opening"));
+                socket.addEventListener("open", opened);
+                socket.addEventListener("error", failed);
+                removeSelectionListeners = () => {
+                    socket.removeEventListener("open", opened);
+                    socket.removeEventListener("error", failed);
+                };
+                options.onCreated(socket);
+            }
+            catch (error) {
+                fail(error);
+            }
+        });
+    }
+    cancel(reason = new Error("WebSocket opening cancelled")) {
+        this.pending?.cancel(reason);
+    }
+    retire(socket, graceful = false) {
+        const alreadyRetired = this.retired.has(socket);
+        this.retired.add(socket);
+        if (socket.readyState === 3) {
+            this.owned.delete(socket);
+            return;
+        }
+        if (!alreadyRetired || socket.readyState === 1) {
+            try {
+                if (graceful && !alreadyRetired && socket.readyState === 1) {
+                    socket.close();
+                }
+                else {
+                    this.retireSocket(socket);
+                }
+            }
+            catch { }
+        }
+        if (Number(socket.readyState) === 3) {
+            this.owned.delete(socket);
+        }
+    }
+    close(gracefulSocket) {
+        this.cancel(new Error("WebSocket opening closed"));
+        [...this.owned].forEach((socket) => this.retire(socket, socket === gracefulSocket));
+    }
+}
+
 const WebSocketConstructor = Utils.isNode() ? null : window.WebSocket;
+function abandon(socket) {
+    const terminate = socket.terminate;
+    if (typeof terminate === "function") {
+        terminate.call(socket);
+        return;
+    }
+    socket.close();
+}
 function formatWsErrorReason(err, ws, url, options) {
     const includeStack = options?.includeStack !== false;
     const underlying = err instanceof Error ? err : err?.error;
@@ -9039,18 +5437,32 @@ class WS {
     _running = true;
     _registry = CallbackRegistryFactory();
     wsRequests = [];
+    retryTimer;
+    openRetries;
+    openGeneration = 0;
+    openingGeneration;
+    hasOpened = false;
+    connected = false;
+    socketOpening;
+    reconnectHandshakeTimeoutMs;
     constructor(settings, logger) {
         this.settings = settings;
         this.logger = logger;
         if (!this.settings.ws) {
             throw new Error("ws is missing");
         }
+        this.reconnectHandshakeTimeoutMs = settings.reconnectHandshakeTimeoutMs ?? DEFAULT_RECONNECT_HANDSHAKE_TIMEOUT_MS;
+        this.socketOpening = new SocketOpening(() => new WebSocketConstructor(this.settings.ws ?? ""), abandon);
     }
     onMessage(callback) {
         return this._registry.add("onMessage", callback);
     }
     send(msg, options) {
         return new Promise((resolve, reject) => {
+            if (this.dropClosingSocket()) {
+                reject(`ws to ${this.settings.ws} was closing - the session this message belonged to has ended`);
+                return;
+            }
             this.waitForSocketConnection(() => {
                 try {
                     this.ws?.send(msg);
@@ -9063,32 +5475,79 @@ class WS {
         });
     }
     open() {
-        this.logger.info("opening ws...");
         this._running = true;
+        this.logger.info("opening ws...");
         return new Promise((resolve, reject) => {
             this.waitForSocketConnection(resolve, reject);
         });
     }
+    setOpenRetries(retries) {
+        this.openRetries = retries;
+    }
     close() {
         this._running = false;
-        if (this.ws) {
-            this.ws.close();
+        this.openGeneration++;
+        this.openingGeneration = undefined;
+        if (this.retryTimer) {
+            clearTimeout(this.retryTimer);
+            this.retryTimer = undefined;
         }
+        const requests = this.wsRequests;
+        this.wsRequests = [];
+        this.socketOpening.close(this.ws);
+        const wasConnected = this.connected;
+        this.connected = false;
+        queueMicrotask(() => {
+            if (wasConnected) {
+                this._registry.execute("onConnectedChanged", false);
+            }
+            requests.forEach((request) => request.failed?.(`ws to ${this.settings.ws} closed by user`));
+        });
         return Promise.resolve();
     }
     onConnectedChanged(callback) {
         return this._registry.add("onConnectedChanged", callback);
     }
+    onOpening(callback) {
+        return this._registry.add("onOpening", callback);
+    }
     name() {
         return this.settings.ws;
     }
     reconnect() {
-        this.ws?.close();
+        this.discardSocket();
         const pw = new PromiseWrapper();
-        this.waitForSocketConnection(() => {
-            pw.resolve();
-        });
+        this.waitForSocketConnection(() => pw.resolve(), (err) => pw.reject(normalizeError(err ?? `could not reconnect to ${this.settings.ws}`)));
         return pw.promise;
+    }
+    discardSocket() {
+        this.openGeneration++;
+        this.openingGeneration = undefined;
+        const discarded = this.ws;
+        this.socketOpening.cancel();
+        if (this.retryTimer) {
+            clearTimeout(this.retryTimer);
+            this.retryTimer = undefined;
+        }
+        if (!discarded) {
+            return;
+        }
+        this.ws = undefined;
+        try {
+            this.socketOpening.retire(discarded);
+        }
+        catch {
+        }
+    }
+    dropClosingSocket() {
+        if (!this._running || !this.ws || this.ws.readyState < 2 || this.socketOpening.isRetired(this.ws)) {
+            return false;
+        }
+        this.discardSocket();
+        this.notifyForSocketState("closed");
+        this.notifyStatusChanged(false);
+        this.logger.info(`ws to ${this.settings.ws} is closing but has not reported it - treating it as closed`);
+        return true;
     }
     waitForSocketConnection(callback, failed) {
         failed = failed ?? (() => { });
@@ -9096,96 +5555,457 @@ class WS {
             failed(`wait for socket on ${this.settings.ws} failed - socket closed by user`);
             return;
         }
-        if (this.ws?.readyState === 1) {
+        if (this.ws?.readyState === 1 && !this.socketOpening.isRetired(this.ws)) {
             callback();
             return;
         }
         this.wsRequests.push({ callback, failed });
-        if (this.wsRequests.length > 1) {
+        if (this.openingGeneration === this.openGeneration || this.retryTimer) {
             return;
         }
         this.openSocket();
     }
     async openSocket(retryInterval, retriesLeft) {
+        const generation = this.openGeneration;
+        if (!this._running) {
+            return;
+        }
+        this.openingGeneration = generation;
         this.logger.info(`opening ws to ${this.settings.ws}, retryInterval: ${retryInterval}, retriesLeft: ${retriesLeft}...`);
         this.startupTimer.mark("opening-socket");
         if (retryInterval === undefined) {
             retryInterval = this.settings.reconnectInterval;
         }
         if (typeof retriesLeft === "undefined") {
-            retriesLeft = this.settings.reconnectAttempts;
+            retriesLeft = this.openRetries ?? this.settings.reconnectAttempts;
         }
         try {
-            await this.initiateSocket();
+            if (!this._running || generation !== this.openGeneration) {
+                return;
+            }
+            const attempt = await this.initiateSocket();
+            if (this.ws !== attempt || generation !== this.openGeneration || !this._running) {
+                this.socketOpening.retire(attempt);
+                return;
+            }
             this.startupTimer.mark("socket-initiated");
             this.notifyForSocketState();
         }
-        catch {
+        catch (error) {
+            if (generation !== this.openGeneration || !this._running) {
+                return;
+            }
+            if (error instanceof Error) {
+                this.logger.debug(error.message);
+            }
             if (retriesLeft !== undefined && retriesLeft <= 0) {
-                this.notifyForSocketState(`wait for socket on ${this.settings.ws} failed - no more retries left`);
+                this.notifyForSocketState(error instanceof WebSocketHandshakeTimeoutError ? error :
+                    `wait for socket on ${this.settings.ws} failed - no more retries left`);
                 return;
             }
             if (retriesLeft !== undefined) {
-                this.logger.debug(`will retry ${retriesLeft - 1} more times (every ${retryInterval} ms)`);
+                this.logger.debug(`will retry ${retriesLeft - 1} more times (about every ${retryInterval} ms)`);
             }
-            setTimeout(() => {
+            this.retryTimer = setTimeout(() => {
+                this.retryTimer = undefined;
+                if (!this._running || generation !== this.openGeneration) {
+                    return;
+                }
                 const retries = retriesLeft === undefined ? undefined : retriesLeft - 1;
                 this.openSocket(retryInterval, retries);
-            }, retryInterval);
+            }, jitter(retryInterval));
         }
     }
     initiateSocket() {
-        const pw = new PromiseWrapper();
+        const generation = this.openGeneration;
         this.logger.debug(`initiating ws to ${this.settings.ws}...`);
-        this.ws = new WebSocketConstructor(this.settings.ws ?? "");
+        return this.socketOpening.open({
+            timeoutMs: this.reconnectHandshakeTimeoutMs,
+            initial: !this.hasOpened,
+            onStarting: (monotonicMs) => this._registry.execute("onOpening", monotonicMs),
+            onCreated: (socket) => this.attachSocket(socket, generation)
+        });
+    }
+    attachSocket(socket, generation) {
+        this.ws = socket;
         let wasOpen = false;
-        this.ws.onerror = (err) => {
-            const reason = formatWsErrorReason(err, this.ws, this.settings.ws);
+        const inUse = () => this.ws === socket && generation === this.openGeneration && this._running && !this.socketOpening.isRetired(socket);
+        socket.onerror = (err) => {
+            const reason = formatWsErrorReason(err, socket, this.settings.ws);
             this.logger.info(`ws error - ${reason}`);
-            pw.reject("error");
+            if (!inUse()) {
+                return;
+            }
             if (wasOpen) {
                 wasOpen = false;
                 this.notifyForSocketState("error");
             }
-            const subscriberReason = formatWsErrorReason(err, this.ws, this.settings.ws, { includeStack: false });
+            if (!inUse()) {
+                return;
+            }
+            const subscriberReason = formatWsErrorReason(err, socket, this.settings.ws, { includeStack: false });
             this.notifyStatusChanged(false, subscriberReason);
         };
-        this.ws.onclose = (err) => {
+        socket.onclose = (err) => {
             this.logger.info(`ws closed - ${formatWsCloseReason(err)}`);
-            pw.reject("closed");
+            if (!inUse()) {
+                return;
+            }
             if (wasOpen) {
                 wasOpen = false;
                 this.notifyForSocketState("closed");
             }
-            this.notifyStatusChanged(false);
+            if (inUse()) {
+                this.notifyStatusChanged(false);
+            }
         };
-        this.ws.onopen = () => {
+        socket.onopen = () => {
+            if (!inUse()) {
+                this.socketOpening.retire(socket);
+                return;
+            }
+            this.hasOpened = true;
             this.startupTimer.mark("ws-opened");
             this.logger.info(`ws opened ${this.settings.identity?.application}`);
-            pw.resolve();
+            if (!inUse()) {
+                this.socketOpening.retire(socket);
+                return;
+            }
             wasOpen = true;
             this.notifyStatusChanged(true);
         };
-        this.ws.onmessage = (message) => {
+        socket.onmessage = (message) => {
+            if (!inUse()) {
+                return;
+            }
             this._registry.execute("onMessage", message.data);
         };
-        return pw.promise;
+        try {
+            globalThis.ioInsightsEarly?.trackWebSocket?.(socket, this.settings.ws);
+        }
+        catch { }
     }
     notifyForSocketState(error) {
-        this.wsRequests.forEach((wsRequest) => {
+        const generation = this.openGeneration;
+        if (this.openingGeneration === generation) {
+            this.openingGeneration = undefined;
+        }
+        const socket = this.ws;
+        const requests = this.wsRequests;
+        this.wsRequests = [];
+        requests.forEach((wsRequest) => {
             if (error) {
                 if (wsRequest.failed) {
                     wsRequest.failed(error);
                 }
             }
-            else {
+            else if (this._running && generation === this.openGeneration && this.ws === socket && socket?.readyState === 1) {
                 wsRequest.callback();
             }
+            else {
+                wsRequest.failed?.(`ws to ${this.settings.ws} changed while requests were being released`);
+            }
         });
-        this.wsRequests = [];
     }
     notifyStatusChanged(status, reason) {
+        this.connected = status;
         this._registry.execute("onConnectedChanged", status, reason);
+    }
+}
+
+const MESSAGE_PORT_PROTOCOL_VERSION = 1;
+const PROBE_TYPE = "transport/probe";
+const READY_TYPE = "transport/ready";
+const UNSUPPORTED_TYPE = "transport/unsupported";
+const TYPE_PREFIX = "transport/";
+const probeFrame = (id) => JSON.stringify({ v: MESSAGE_PORT_PROTOCOL_VERSION, type: PROBE_TYPE, id });
+const readyFrame = (id) => JSON.stringify({ v: MESSAGE_PORT_PROTOCOL_VERSION, type: READY_TYPE, id });
+const unsupportedFrame = (id, supported) => JSON.stringify({ v: MESSAGE_PORT_PROTOCOL_VERSION, type: UNSUPPORTED_TYPE, id, supported });
+function parseTransportFrame(text) {
+    if (!text.includes("transport") && !text.includes("\\u")) {
+        return undefined;
+    }
+    try {
+        const frame = JSON.parse(text);
+        return typeof frame?.v === "number" && typeof frame.type === "string" && frame.type.startsWith(TYPE_PREFIX)
+            ? frame : undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+const MessagePortFrames = Object.freeze({
+    MESSAGE_PORT_PROTOCOL_VERSION,
+    PROBE_TYPE,
+    READY_TYPE,
+    UNSUPPORTED_TYPE,
+    probeFrame,
+    readyFrame,
+    unsupportedFrame,
+    parseTransportFrame,
+});
+
+const DEFAULT_READY_TIMEOUT_MS = 5000;
+const RETRY_SPACING_MS = 5000;
+function portOf(state) {
+    switch (state.kind) {
+        case "idle":
+            return state.reusablePort;
+        case "probing":
+        case "ready":
+            return state.port;
+        default:
+            return undefined;
+    }
+}
+function openingOf(state) {
+    return state.kind === "acquiring" || state.kind === "probing" ? state.pending : undefined;
+}
+function newOpening() {
+    const pending = new PromiseWrapper();
+    pending.promise.catch(() => { });
+    return pending;
+}
+function listen(port, type, listener) {
+    const target = port;
+    if (typeof target.addEventListener === "function" && typeof target.removeEventListener === "function") {
+        target.addEventListener(type, listener);
+        return () => target.removeEventListener(type, listener);
+    }
+    if (typeof target.on === "function" && typeof target.removeListener === "function") {
+        target.on(type, listener);
+        return () => target.removeListener(type, listener);
+    }
+    throw new Error("a message port needs addEventListener and removeEventListener, or on and removeListener");
+}
+function closeQuietly(port) {
+    try {
+        port?.close();
+    }
+    catch {
+    }
+}
+class MessagePortTransport {
+    settings;
+    logger;
+    state = { kind: "idle" };
+    unlisten = [];
+    probes = 0;
+    acquisitions = 0;
+    suppliedPortTaken = false;
+    warnedTypes = new Set();
+    registry = CallbackRegistryFactory();
+    retrySpacingMs = RETRY_SPACING_MS;
+    constructor(settings, logger) {
+        this.settings = settings;
+        this.logger = logger;
+        if (!settings.port && typeof settings.getPort !== "function") {
+            throw new Error("messagePort needs a port or getPort");
+        }
+    }
+    get isObjectBasedTransport() {
+        return false;
+    }
+    name() {
+        return "message-port";
+    }
+    onMessage(callback) {
+        return this.registry.add("onMessage", callback);
+    }
+    onConnectedChanged(callback) {
+        return this.registry.add("onConnectedChanged", callback);
+    }
+    onOpening(callback) {
+        return this.registry.add("onOpening", callback);
+    }
+    async send(msg) {
+        const opening = openingOf(this.state);
+        if (opening) {
+            await opening.promise;
+        }
+        const state = this.state;
+        if (state.kind !== "ready") {
+            throw new Error("the message port is not open");
+        }
+        state.port.postMessage(msg);
+    }
+    open() {
+        const state = this.state;
+        switch (state.kind) {
+            case "ready":
+                return Promise.resolve();
+            case "acquiring":
+            case "probing":
+                return state.pending.promise;
+            case "idle":
+                return state.reusablePort ? this.probe(state.reusablePort) : this.acquire();
+            default:
+                return this.acquire();
+        }
+    }
+    reconnect() {
+        const port = portOf(this.state);
+        return port ? this.probe(port) : this.open();
+    }
+    async close() {
+        const port = portOf(this.state);
+        this.transition({ kind: "closed" }, new Error("the message port was closed"), true);
+        closeQuietly(port);
+    }
+    transition(next, error, dropLater = false) {
+        const from = this.state;
+        const port = portOf(next);
+        const portChanges = port !== portOf(from);
+        const listening = portChanges && port ? this.listenTo(port) : undefined;
+        if (from.kind === "probing") {
+            clearTimeout(from.timer);
+        }
+        if (portChanges) {
+            this.unlisten.forEach((unlisten) => unlisten());
+            this.unlisten = listening ?? [];
+            if (listening) {
+                port.start?.();
+            }
+        }
+        const pending = openingOf(from);
+        switch (next.kind) {
+            case "acquiring":
+                this.state = { ...next, pending: pending ?? newOpening() };
+                return;
+            case "probing": {
+                const timeoutMs = this.settings.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
+                const timer = setTimeout(() => {
+                    this.probeFailed(next.port, new TransportHandshakeTimeoutError(`the gateway did not answer on the message port within ${timeoutMs} ms`));
+                }, timeoutMs);
+                this.state = { ...next, timer, pending: pending ?? newOpening() };
+                return;
+            }
+            case "ready":
+                this.state = next;
+                this.notify(true);
+                pending?.resolve();
+                return;
+            default:
+                this.state = next;
+                pending?.reject(error);
+                if (from.kind === "ready") {
+                    if (dropLater) {
+                        queueMicrotask(() => this.notify(false));
+                    }
+                    else {
+                        this.notify(false);
+                    }
+                }
+        }
+    }
+    listenTo(port) {
+        return [
+            listen(port, "message", (event) => this.handleData(event?.data)),
+            listen(port, "close", () => this.handlePortClosed()),
+        ];
+    }
+    acquire() {
+        const supplied = this.suppliedPortTaken ? undefined : this.settings.port;
+        const getPort = this.settings.getPort;
+        if (!supplied && typeof getPort !== "function") {
+            return Promise.reject(new Error("getPort is required to reopen a message port after close()"));
+        }
+        this.suppliedPortTaken = true;
+        const token = ++this.acquisitions;
+        this.transition({ kind: "acquiring", token });
+        const pending = openingOf(this.state);
+        const current = () => this.state.kind === "acquiring" && this.state.token === token;
+        new Promise((resolve) => resolve(supplied ?? getPort())).then((port) => {
+            if (!current()) {
+                closeQuietly(port);
+                return;
+            }
+            if (!port) {
+                this.transition({ kind: "idle" }, new Error("getPort did not supply a message port"));
+                return;
+            }
+            try {
+                this.probe(port);
+            }
+            catch (error) {
+                closeQuietly(port);
+                this.transition({ kind: "idle" }, error);
+            }
+        }, (error) => {
+            if (current()) {
+                this.transition({ kind: "idle" }, error);
+            }
+        });
+        return pending.promise;
+    }
+    probe(port) {
+        const id = ++this.probes;
+        this.transition({ kind: "probing", port, id });
+        const pending = openingOf(this.state);
+        this.logger.debug(`probing the message port (${id})...`);
+        this.registry.execute("onOpening", now());
+        try {
+            port.postMessage(probeFrame(id));
+        }
+        catch (e) {
+            this.probeFailed(port, e);
+        }
+        return pending.promise;
+    }
+    probeFailed(port, error) {
+        if (typeof this.settings.getPort !== "function") {
+            this.transition({ kind: "idle", reusablePort: port }, error);
+            return;
+        }
+        this.transition({ kind: "idle" }, error);
+        closeQuietly(port);
+    }
+    handleData(data) {
+        if (typeof data !== "string") {
+            this.logger.warn(`dropping a frame that is not text (${typeof data})`);
+            return;
+        }
+        const frame = parseTransportFrame(data);
+        if (frame) {
+            this.handleTransportFrame(frame);
+            return;
+        }
+        if (this.state.kind !== "ready") {
+            return;
+        }
+        this.registry.execute("onMessage", data);
+    }
+    handleTransportFrame(frame) {
+        const state = this.state;
+        const answered = state.kind === "probing" && frame.id === state.id ? state : undefined;
+        if (frame.type === READY_TYPE) {
+            if (answered && frame.v === MESSAGE_PORT_PROTOCOL_VERSION) {
+                this.logger.info("message port ready");
+                this.transition({ kind: "ready", port: answered.port });
+            }
+            return;
+        }
+        if (frame.type === UNSUPPORTED_TYPE) {
+            if (answered) {
+                const supported = Array.isArray(frame.supported) ? frame.supported.map((v) => `v${v}`).join(", ") : "none listed";
+                this.transition({ kind: "idle", reusablePort: answered.port }, new Error(`the gateway does not speak message port protocol v${MESSAGE_PORT_PROTOCOL_VERSION} - it speaks v${frame.v} (supported: ${supported})`));
+            }
+            return;
+        }
+        if (!this.warnedTypes.has(frame.type)) {
+            this.warnedTypes.add(frame.type);
+            this.logger.warn(`ignoring transport frames of unknown type ${frame.type}`);
+        }
+    }
+    handlePortClosed() {
+        if (this.state.kind === "closed") {
+            return;
+        }
+        this.logger.info("message port closed by the gateway");
+        this.transition({ kind: "closed" }, new Error("the message port was closed by the gateway"));
+    }
+    notify(connected) {
+        this.registry.execute("onConnectedChanged", connected);
     }
 }
 
@@ -9254,19 +6074,19 @@ class MessageReplayerImpl {
     }
 }
 
-let urlAlphabet =
+let urlAlphabet$1 =
   'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
 
-let nanoid = (size = 21) => {
+let nanoid$1 = (size = 21) => {
   let id = '';
   let i = size | 0;
-  while (i--) {
-    id += urlAlphabet[(Math.random() * 64) | 0];
+  while (i-- > 0) {
+    id += urlAlphabet$1[(Math.random() * 64) | 0];
   }
   return id
 };
 
-const PromisePlus = (executor, timeoutMilliseconds, timeoutMessage) => {
+const PromisePlus$1 = (executor, timeoutMilliseconds, timeoutMessage) => {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
             const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
@@ -9305,6 +6125,7 @@ class WebPlatformTransport {
     connectionReject;
     port;
     myClientId;
+    _insightsHandshakeData;
     extContentAvailable = false;
     extContentConnecting = false;
     extContentConnected = false;
@@ -9355,14 +6176,18 @@ class WebPlatformTransport {
     get communicationId() {
         return this._communicationId;
     }
+    get insightsHandshakeData() {
+        return this._insightsHandshakeData;
+    }
     async sendObject(msg) {
         if (this.extContentConnected) {
-            return window.postMessage({ glue42ExtOut: msg }, window.origin);
+            return postSerialized(() => window.postMessage({ glue42ExtOut: msg }, window.origin));
         }
         if (!this.port) {
             throw new Error("Cannot send message, because the port was not opened yet");
         }
-        this.port.postMessage(msg);
+        const port = this.port;
+        postSerialized(() => port.postMessage(msg));
     }
     get isObjectBasedTransport() {
         return true;
@@ -9441,11 +6266,11 @@ class WebPlatformTransport {
         });
     }
     initiateRemoteConnection(target) {
-        return PromisePlus((resolve, reject) => {
+        return PromisePlus$1((resolve, reject) => {
             this.connectionResolve = resolve;
             this.connectionReject = reject;
-            this.myClientId = this.myClientId ?? nanoid(10);
-            const bridgeInstanceId = this.getMyWindowId() || nanoid(10);
+            this.myClientId = this.myClientId ?? nanoid$1(10);
+            const bridgeInstanceId = this.getMyWindowId() || nanoid$1(10);
             const request = {
                 glue42core: {
                     type: this.messages.connectionRequest.name,
@@ -9562,6 +6387,7 @@ class WebPlatformTransport {
     handleAcceptanceOfMyRequest(data) {
         this.logger.debug("handling a connection accepted signal targeted at me.");
         this.isPreferredActivated = data.isPreferredActivated;
+        this._insightsHandshakeData = data.insights;
         if (this.extContentConnecting) {
             return this.processExtContentConnection(data);
         }
@@ -9573,7 +6399,7 @@ class WebPlatformTransport {
         this.publicWindowId = this.getMyWindowId();
         if (this.identity) {
             this.identity.windowId = this.publicWindowId;
-            this.identity.instance = this.identity.instance ? this.identity.instance : this.publicWindowId || nanoid(10);
+            this.identity.instance = this.identity.instance ? this.identity.instance : this.publicWindowId || nanoid$1(10);
         }
         if (this.identity && data.appName) {
             this.identity.application = data.appName;
@@ -9698,7 +6524,7 @@ class WebPlatformTransport {
     }
     requestConnectionPermissionFromExt() {
         return this.waitForContentScript()
-            .then(() => PromisePlus((resolve, reject) => {
+            .then(() => PromisePlus$1((resolve, reject) => {
             this.extConnectionResolve = resolve;
             this.extConnectionReject = reject;
             const message = {
@@ -9737,7 +6563,7 @@ class WebPlatformTransport {
         if (contentReady) {
             return Promise.resolve();
         }
-        return PromisePlus((resolve) => {
+        return PromisePlus$1((resolve) => {
             window.addEventListener("Glue42EXTReady", () => {
                 resolve();
             });
@@ -9784,18 +6610,20 @@ class WebPlatformTransport {
     }
     confirmParent(targets) {
         const connectionNotPossibleMsg = "Cannot initiate glue, because this window was not opened or created by a glue client";
-        const parentCheck = PromisePlus((resolve) => {
+        const parentCheck = PromisePlus$1((resolve) => {
             this.parentPingResolve = resolve;
             const message = {
                 glue42core: {
                     type: this.messages.platformPing.name
                 }
             };
-            this.parentPingInterval = setInterval(() => {
+            const pingTargets = () => {
                 targets.forEach((target) => {
                     target.postMessage(message, this.defaultTargetString);
                 });
-            }, 1000);
+            };
+            pingTargets();
+            this.parentPingInterval = setInterval(pingTargets, 1000);
         }, this.parentPingTimeout, connectionNotPossibleMsg);
         parentCheck.catch(() => {
             if (this.parentPingInterval) {
@@ -9819,20 +6647,10 @@ class WebPlatformTransport {
         if (window.name?.includes("g42")) {
             return window.name;
         }
-        this.selfAssignedWindowId = this.selfAssignedWindowId || `g42-${nanoid(10)}`;
+        this.selfAssignedWindowId = this.selfAssignedWindowId || `g42-${nanoid$1(10)}`;
         return this.selfAssignedWindowId;
     }
 }
-
-const waitForInvocations = (invocations, callback) => {
-    let left = invocations;
-    return () => {
-        left--;
-        if (left === 0) {
-            callback();
-        }
-    };
-};
 
 class AsyncSequelizer {
     minSequenceInterval;
@@ -9874,83 +6692,11 @@ class AsyncSequelizer {
     }
 }
 
-function normalizeError(value) {
-    if (value instanceof Error) {
-        return value;
-    }
-    if (typeof value === "string") {
-        return new Error(value);
-    }
-    const anyVal = value;
-    const msgField = typeof anyVal?.message === "string" ? anyVal.message : undefined;
-    const reasonField = typeof anyVal?.reason === "string" ? anyVal.reason : undefined;
-    if (msgField !== undefined && msgField.length > 0) {
-        return new Error(msgField);
-    }
-    if (reasonField !== undefined && reasonField.length > 0) {
-        return new Error(reasonField);
-    }
-    if (msgField === "" || reasonField === "") {
-        return new Error("");
-    }
-    return new Error(safeStringify$1(value));
+const CONNECTION_LOST_REASON = "Connection lost - gateway connection was disconnected";
+const SEND_FAILED_REASON = "Sending the request to the gateway failed";
+function describeSendFailure(value, invalidInput) {
+    return describeError(value, invalidInput ? SERIALIZATION_FAILED_REASON : SEND_FAILED_REASON);
 }
-function safeErrorStack(value) {
-    try {
-        if (value instanceof Error) {
-            if (typeof value.stack === "string") {
-                return value.stack;
-            }
-            if (typeof value.message === "string") {
-                const name = typeof value.name === "string" && value.name.length > 0 ? value.name : "Error";
-                return `${name}: ${value.message}`;
-            }
-        }
-        if (typeof value === "string") {
-            return value;
-        }
-    }
-    catch { }
-    return safeStringify$1(value);
-}
-function safeStringify$1(value) {
-    try {
-        const seen = new WeakSet();
-        const json = JSON.stringify(value, (_key, v) => {
-            if (typeof v === "bigint") {
-                return `${v.toString()}n`;
-            }
-            if (typeof v === "function") {
-                return "[Function]";
-            }
-            if (typeof v === "symbol") {
-                return v.toString();
-            }
-            if (typeof v === "object" && v !== null) {
-                if (seen.has(v)) {
-                    return "[Circular]";
-                }
-                seen.add(v);
-            }
-            return v;
-        });
-        if (json !== undefined) {
-            return json;
-        }
-    }
-    catch { }
-    if (value !== null && typeof value === "object") {
-        const ctor = value.constructor?.name ?? "Object";
-        let keys = [];
-        try {
-            keys = Object.keys(value);
-        }
-        catch { }
-        return keys.length > 0 ? `[${ctor} keys=${keys.join(",")}]` : `[${ctor}]`;
-    }
-    return String(value);
-}
-
 function domainSession (domain, connection, logger, successMessages, errorMessages) {
     if (domain == null) {
         domain = "global";
@@ -10052,7 +6798,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
             if (request) {
                 logger.trace(`failing pending request ${requestId} due to connection lost`);
                 request.error({
-                    err: "Connection lost - gateway connection was disconnected"
+                    err: CONNECTION_LOST_REASON
                 });
             }
         });
@@ -10111,7 +6857,7 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         entry.success(msg);
     }
     function getNextRequestId() {
-        return nanoid(10);
+        return nanoid$1(10);
     }
     let queuedCalls = [];
     function send(msg, tag, options) {
@@ -10151,17 +6897,30 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
                     resolve(successMsg);
                 },
                 error: (errorMsg) => {
-                    console.warn(`Gateway error - ${JSON.stringify(errorMsg)}`);
+                    const reported = errorMsg.reason_uri === "core.request.cancelled"
+                        || errorMsg.reason_uri === "global.errors.already_seen"
+                        || (msg.type === "hello" && typeof connection.retryingSlowly === "function" && connection.retryingSlowly());
+                    if (!reported) {
+                        console.warn(`Gateway error - ${JSON.stringify(errorMsg)}`);
+                    }
                     delete requestsMap[requestId];
                     errorMsg._tag = tag;
                     reject(errorMsg);
                 },
             };
-            connection
-                .send(msg, options)
-                .catch((err) => {
-                requestsMap[requestId]?.error({ err });
-            });
+            const failRequest = (reason) => {
+                const invalidInput = isMessageSerializationFailure(reason);
+                requestsMap[requestId]?.error({
+                    err: describeSendFailure(reason, invalidInput),
+                    reason_uri: invalidInput ? MESSAGE_SERIALIZATION_FAILURE : TRANSPORT_SEND_FAILURE,
+                });
+            };
+            try {
+                connection.send(msg, options).catch(failRequest);
+            }
+            catch (err) {
+                failRequest(err);
+            }
         });
     }
     function sendFireAndForget(msg) {
@@ -10177,6 +6936,9 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
         onLeft,
         send,
         sendFireAndForget,
+        cancelRequest: (requestId, reason) => {
+            requestsMap[requestId]?.error({ err: reason, reason_uri: "core.request.cancelled" });
+        },
         on: (type, callback) => {
             connection.on(type, (msg) => {
                 if (msg.domain !== domain) {
@@ -10202,6 +6964,11 @@ function domainSession (domain, connection, logger, successMessages, errorMessag
     };
 }
 
+const ALREADY_SEEN = "global.errors.already_seen";
+const ALREADY_SEEN_FREE_MS = 5 * 60 * 1000;
+const SLOW_RECONNECT_MAX_MS = 30_000;
+const TIMEOUT_RETRY_MIN_START_MS = 20_000;
+const slowReconnectDelay = (slowAttempt, interval) => Math.min(SLOW_RECONNECT_MAX_MS, (interval > 0 ? interval : 1000) * 2 ** Math.min(slowAttempt, 16));
 class Connection {
     settings;
     logger;
@@ -10226,6 +6993,7 @@ class Connection {
     _swapTransport = false;
     _switchInProgress = false;
     _transportSubscriptions = [];
+    startupTimer = timer("connection");
     datePrefix = "#T42_DATE#";
     datePrefixLen = this.datePrefix.length;
     dateMinLen = this.datePrefixLen + 1;
@@ -10240,8 +7008,16 @@ class Connection {
     initialLogin = true;
     initialLoginAttempts = 3;
     remainingReconnectAttempts;
+    reconnectAttemptsGeneration = 0;
+    alreadySeenSince;
+    alreadySeenCharged = false;
+    slowReconnects = 0;
+    timeoutRetrySpacing = false;
+    lastHandshakeStartAt;
     loginConfig;
     loginRetryInProgress = false;
+    helloSent = false;
+    sessionOnTransport = false;
     reconnectInProgress = false;
     constructor(settings, logger) {
         this.settings = settings;
@@ -10258,6 +7034,9 @@ class Connection {
         else if (settings.webPlatform) {
             this.transport = new WebPlatformTransport(settings.webPlatform, logger.subLogger("web-platform"), settings.identity);
         }
+        else if (settings.messagePort) {
+            this.transport = new MessagePortTransport(settings.messagePort, logger.subLogger("message-port"));
+        }
         else if (settings.ws !== undefined) {
             this.transport = new WS(settings, logger.subLogger("ws"));
         }
@@ -10270,6 +7049,7 @@ class Connection {
         const unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
         this._transportSubscriptions.push(unsubConnectionChanged);
         this._transportSubscriptions.push(unsubOnMessage);
+        this.observeHandshakeStarts();
         this._defaultTransport = this.transport;
         this.ping();
     }
@@ -10311,17 +7091,37 @@ class Connection {
     setLibReAnnounced(lib) {
         this.registry.execute("libReAnnounced", lib);
     }
+    setInteropRegistrationsReAnnounced() {
+        this.registry.execute("interopRegistrationsReAnnounced");
+    }
     send(message, options) {
+        const type = message.type;
+        if (!this.sessionOnTransport && type !== "hello") {
+            return Promise.reject(new Error(`not logged in - a ${type} message is not sent until the client logs in again`));
+        }
         if (this.transport.sendObject &&
             this.transport.isObjectBasedTransport) {
             const msg = this.createObjectMessage(message);
             if (this.isTrace) {
-                this.logger.trace(`>> ${JSON.stringify(msg)}`);
+                let description;
+                try {
+                    description = JSON.stringify(msg);
+                }
+                catch (error) {
+                    throw asSerializationFailure(error);
+                }
+                this.logger.trace(`>> ${description}`);
             }
             return this.transport.sendObject(msg, options);
         }
         else {
-            const strMessage = this.createStringMessage(message);
+            let strMessage;
+            try {
+                strMessage = this.createStringMessage(message);
+            }
+            catch (error) {
+                throw asSerializationFailure(error);
+            }
             if (this.isTrace) {
                 this.logger.trace(`>> ${strMessage}`);
             }
@@ -10346,6 +7146,12 @@ class Connection {
     get isConnected() {
         return this._isLoggedIn;
     }
+    get insightsHandshakeData() {
+        return this._defaultTransport.insightsHandshakeData;
+    }
+    get transportName() {
+        return this.transport.name();
+    }
     connected(callback) {
         return this.loggedIn(() => {
             const currentServer = this.transport.name();
@@ -10365,13 +7171,15 @@ class Connection {
             const newAuth = this.transportSwap();
             authRequest = newAuth ?? authRequest;
         }
+        const spaced = this.retryingSlowly() || (this.loginRetryInProgress && this.timeoutRetrySpacing) ? this.transport : undefined;
+        spaced?.setOpenRetries?.(0);
         try {
             await this.transport.open();
             this.logger.debug(`Transport: ${this.transport.name()} opened, logging in`);
-            timer("connection").mark("transport-opened");
+            this.startupTimer.mark("transport-opened");
             const identity = await this.loginCore(authRequest, reconnect);
             this.logger.debug(`Logged in with identity: ${JSON.stringify(identity)}`);
-            timer("connection").mark("protocol-logged-in");
+            this.startupTimer.mark("protocol-logged-in");
             return identity;
         }
         catch (error) {
@@ -10379,7 +7187,14 @@ class Connection {
                 this.logger.debug("An error while logging in after a transport swap, preparing a default swap.");
                 this.prepareDefaultSwap();
             }
-            throw normalizeError(error);
+            const normalized = normalizeError(error);
+            if (typeof error?.reason_uri === "string") {
+                normalized.reason_uri = error.reason_uri;
+            }
+            throw normalized;
+        }
+        finally {
+            spaced?.setOpenRetries?.(undefined);
         }
     }
     async logout() {
@@ -10436,16 +7251,41 @@ class Connection {
                 this.registry.execute("disconnected");
             }
             this.shouldTryLogin = true;
-            await this.login(this.loginConfig, true);
+            const generation = this.reconnectAttemptsGeneration;
+            try {
+                await this.login(this.loginConfig, true);
+            }
+            catch (error) {
+                if (this.shouldTryLogin && !this._isLoggedIn) {
+                    if (error?.reason_uri === ALREADY_SEEN) {
+                        this.startAlreadySeenRun(normalizeError(error));
+                    }
+                    if (generation === this.reconnectAttemptsGeneration && !this.loginRetryInProgress && !this.reconnectTimeout) {
+                        this.remainingReconnectAttempts = this.settings.reconnectAttempts;
+                        this.reconnectAttemptsGeneration++;
+                        this.slowReconnects = 0;
+                        this.attemptLoginWithRetry();
+                    }
+                }
+                throw error;
+            }
         }
         finally {
             this.reconnectInProgress = false;
         }
     }
+    retryingSlowly() {
+        return this.loginRetryInProgress && this.slowReconnects > 0;
+    }
     setLoggedIn(value) {
         this._isLoggedIn = value;
         if (this._isLoggedIn) {
             this.initialLogin = false;
+            this.alreadySeenSince = undefined;
+            this.alreadySeenCharged = false;
+            this.slowReconnects = 0;
+            this.timeoutRetrySpacing = false;
+            this.lastHandshakeStartAt = undefined;
             this.registry.execute("onLoggedIn");
         }
     }
@@ -10475,8 +7315,12 @@ class Connection {
             this.logger.trace("connection state unchanged, skipping");
             return;
         }
-        this.logger.info(`connection state changed to ${connected ? "connected" : "disconnected"}`);
         this._connected = connected;
+        if (!connected) {
+            this.setLoggedIn(false);
+            this.sessionOnTransport = false;
+        }
+        this.logger.info(`connection state changed to ${connected ? "connected" : "disconnected"}`);
         if (connected) {
             if (this.settings?.replaySpecs?.length) {
                 this.replayer = new MessageReplayerImpl(this.settings.replaySpecs);
@@ -10485,12 +7329,20 @@ class Connection {
             this.registry.execute("connected");
         }
         else {
-            this.setLoggedIn(false);
-            if (this.shouldTryLogin) {
+            this.helloSent = false;
+            const reconnectBefore = this.reconnectInProgress;
+            this.registry.execute("disconnected");
+            const startedByHandler = this.reconnectInProgress && !reconnectBefore;
+            if (this.shouldTryLogin && !startedByHandler) {
+                if (this.reconnectTimeout) {
+                    clearTimeout(this.reconnectTimeout);
+                    this.reconnectTimeout = undefined;
+                }
                 this.remainingReconnectAttempts = this.settings.reconnectAttempts;
+                this.reconnectAttemptsGeneration++;
+                this.slowReconnects = 0;
                 this.attemptLoginWithRetry();
             }
-            this.registry.execute("disconnected");
         }
     }
     async attemptLoginWithRetry() {
@@ -10509,6 +7361,12 @@ class Connection {
             this.logger.debug("already logged in, ignoring request...");
             return;
         }
+        const remainingSpacing = this.remainingTimeoutSpacing();
+        if (remainingSpacing > 0) {
+            this.reconnectTimeout = setTimeout(this.attemptLoginWithRetry.bind(this), remainingSpacing);
+            return;
+        }
+        let charged = false;
         if (this.initialLogin) {
             this.logger.debug(`initial login attempt failed, ${this.initialLoginAttempts} attempts remaining...`);
             if (this.initialLoginAttempts <= 0) {
@@ -10519,26 +7377,97 @@ class Connection {
         }
         else if (this.remainingReconnectAttempts !== undefined) {
             if (this.remainingReconnectAttempts <= 0) {
-                this.logger.info("maximum reconnect attempts reached, will not try to login again");
-                return;
+                if ((this.settings.reconnectAttempts ?? 0) <= 0) {
+                    this.logger.info(`automatic reconnection is off (reconnectAttempts: ${this.settings.reconnectAttempts})`);
+                    return;
+                }
+                if (this.slowReconnects === 0) {
+                    this.logger.warn(`reconnect attempts used up - will keep trying, up to ${SLOW_RECONNECT_MAX_MS / 1000} s apart, until logout`);
+                }
+                this.slowReconnects++;
             }
-            this.logger.debug(`reconnect attempt, ${this.remainingReconnectAttempts} attempts remaining...`);
-            this.remainingReconnectAttempts--;
+            else {
+                this.logger.debug(`reconnect attempt, ${this.remainingReconnectAttempts} attempts remaining...`);
+                this.remainingReconnectAttempts--;
+                charged = true;
+            }
         }
+        const generation = this.reconnectAttemptsGeneration;
+        const startedSlow = this.slowReconnects > 0;
         try {
             this.logger.debug(`will try a new login... ${this.loginRetryInProgress}`);
             this.loginRetryInProgress = true;
             await this.login(this.loginConfig, true);
         }
         catch (e) {
-            this.logger.error(`error trying to login: ${e?.message}`, e);
+            const normalized = normalizeError(e);
+            const alreadySeen = e?.reason_uri === ALREADY_SEEN && this.shouldTryLogin && !this.initialLogin;
+            if (alreadySeen) {
+                this.startAlreadySeenRun(normalized);
+                if (charged && generation === this.reconnectAttemptsGeneration) {
+                    this.refundAlreadySeen(normalized);
+                }
+            }
             if (this.shouldTryLogin) {
-                this.reconnectTimeout = setTimeout(this.attemptLoginWithRetry.bind(this), this.settings.reconnectInterval ?? 1000);
+                const interval = this.settings.reconnectInterval ?? 1000;
+                if (alreadySeen) ;
+                else if (this.slowReconnects > 0) {
+                    this.logger.debug(`error trying to login: ${normalized.message}`);
+                }
+                else {
+                    this.logger.error(`error trying to login: ${normalized.message}`, normalized);
+                }
+                const nextIsSlow = !this.initialLogin && this.remainingReconnectAttempts !== undefined && this.remainingReconnectAttempts <= 0;
+                const timedOutSlowOpening = startedSlow && e instanceof TransportHandshakeTimeoutError &&
+                    generation === this.reconnectAttemptsGeneration && !this._isLoggedIn && this.lastHandshakeStartAt !== undefined;
+                if (timedOutSlowOpening) {
+                    this.timeoutRetrySpacing = true;
+                }
+                const delay = timedOutSlowOpening ? jitter(interval) : nextIsSlow
+                    ? Math.min(jitter(slowReconnectDelay(this.slowReconnects + 1, interval)), SLOW_RECONNECT_MAX_MS)
+                    : jitter(interval);
+                this.reconnectTimeout = setTimeout(this.attemptLoginWithRetry.bind(this), Math.max(delay, this.remainingTimeoutSpacing()));
+            }
+            else {
+                this.logger.debug(`login retry aborted during shutdown: ${normalized.message}`);
             }
         }
         finally {
             this.loginRetryInProgress = false;
         }
+    }
+    remainingTimeoutSpacing() {
+        return this.timeoutRetrySpacing && this.lastHandshakeStartAt !== undefined
+            ? Math.max(0, this.lastHandshakeStartAt + (this.transport.retrySpacingMs ?? TIMEOUT_RETRY_MIN_START_MS) - now()) : 0;
+    }
+    observeHandshakeStarts() {
+        const observed = this.transport;
+        const unsub = observed.onOpening?.((monotonicMs) => {
+            if (observed !== this.transport || !Number.isFinite(monotonicMs)) {
+                return;
+            }
+            this.lastHandshakeStartAt = Math.max(this.lastHandshakeStartAt ?? monotonicMs, monotonicMs);
+        });
+        if (unsub) {
+            this._transportSubscriptions.push(unsub);
+        }
+    }
+    refundAlreadySeen(error) {
+        const since = this.startAlreadySeenRun(error);
+        if (Date.now() - since <= ALREADY_SEEN_FREE_MS) {
+            this.remainingReconnectAttempts = (this.remainingReconnectAttempts ?? 0) + 1;
+        }
+        else if (!this.alreadySeenCharged) {
+            this.alreadySeenCharged = true;
+            this.logger.warn(`the gateway has refused this client's session for over ${ALREADY_SEEN_FREE_MS / 60000} minutes (${error.message}) - reconnect attempts are spent again`);
+        }
+    }
+    startAlreadySeenRun(error) {
+        if (this.alreadySeenSince === undefined) {
+            this.alreadySeenSince = Date.now();
+            this.logger.warn(`the gateway still holds this client's previous session (${error.message}) - retrying without spending reconnect attempts while it lets go`);
+        }
+        return this.alreadySeenSince;
     }
     handleTransportMessage(msg) {
         let msgObj;
@@ -10554,22 +7483,27 @@ class Connection {
         this.distributeMessage(msgObj.msg, msgObj.msgType);
     }
     verifyConnection() {
-        return PromisePlus((resolve) => {
-            let unsub;
-            const ready = waitForInvocations(2, () => {
-                if (unsub) {
-                    unsub();
+        return PromisePlus$1((resolve) => {
+            let interop = false;
+            let contexts = false;
+            const unsubs = [];
+            const check = () => {
+                if (!interop || !contexts) {
+                    return;
                 }
+                unsubs.forEach((unsub) => unsub());
                 resolve();
-            });
-            unsub = this.onLibReAnnounced((lib) => {
+            };
+            unsubs.push(this.registry.add("interopRegistrationsReAnnounced", () => { interop = true; check(); }));
+            unsubs.push(this.onLibReAnnounced((lib) => {
                 if (lib.name === "interop") {
-                    return ready();
+                    interop = true;
                 }
                 if (lib.name === "contexts") {
-                    return ready();
+                    contexts = true;
                 }
-            });
+                check();
+            }));
         }, 10000, "Transport switch timed out waiting for all libraries to be re-announced");
     }
     getNewSecondaryTransport(settings) {
@@ -10593,10 +7527,13 @@ class Connection {
         this._transportSubscriptions.forEach((unsub) => unsub());
         this._transportSubscriptions = [];
         this.transport = this._targetTransport;
+        this.helloSent = false;
+        this.sessionOnTransport = false;
         const unsubConnectionChanged = this.transport.onConnectedChanged(this.handleConnectionChanged.bind(this));
         const unsubOnMessage = this.transport.onMessage(this.handleTransportMessage.bind(this));
         this._transportSubscriptions.push(unsubConnectionChanged);
         this._transportSubscriptions.push(unsubOnMessage);
+        this.observeHandshakeStarts();
         return this._targetAuth;
     }
     prepareDefaultSwap() {
@@ -10689,6 +7626,19 @@ class Connection {
             sendOptions.retryInterval = this.settings.reconnectInterval;
             sendOptions.maxRetries = this.settings.reconnectAttempts;
         }
+        if (this.helloSent) {
+            this.logger.debug("this connection has already helloed - reconnecting the transport before logging in again");
+            this._connected = false;
+            this.helloSent = false;
+            this.sessionOnTransport = false;
+            if (this._isLoggedIn) {
+                this.setLoggedIn(false);
+                this.registry.execute("disconnected");
+            }
+            await this.transport.reconnect();
+            await this.transport.open();
+        }
+        this.helloSent = true;
         try {
             const welcomeMsg = await this.tryAuthenticate(this.globalDomain, helloMsg, sendOptions, config);
             this.logger.info("login successful with peerId " + welcomeMsg.peer_id);
@@ -10699,11 +7649,24 @@ class Connection {
                 this.token = welcomeMsg.options.access_token;
                 this.info = welcomeMsg.options.info;
             }
+            this.sessionOnTransport = true;
             this.setLoggedIn(true);
             return welcomeMsg.resolved_identity;
         }
         catch (err) {
-            this.logger.error("error sending hello message - " + (err.message || err.msg || err.reason || err), err);
+            const normalized = normalizeError(err);
+            if (err?.reason_uri === ALREADY_SEEN && (this.loginRetryInProgress || this.reconnectInProgress)) {
+                this.logger.debug("hello refused, the gateway still holds this identity - " + normalized.message);
+            }
+            else if (this.retryingSlowly()) {
+                this.logger.debug("error sending hello message - " + normalized.message);
+            }
+            else if (this.shouldTryLogin) {
+                this.logger.error("error sending hello message - " + normalized.message, normalized);
+            }
+            else {
+                this.logger.debug("hello aborted during shutdown - " + normalized.message);
+            }
             throw err;
         }
         finally {
@@ -10748,7 +7711,13 @@ class Connection {
                     config.gatewayToken = await this.getNewGWToken();
                 }
                 catch (e) {
-                    this.logger.warn(`failed to get GW token when reconnecting ${e?.message || e}`);
+                    const message = `failed to get GW token when reconnecting ${normalizeError(e).message}`;
+                    if (this.retryingSlowly()) {
+                        this.logger.debug(message);
+                    }
+                    else {
+                        this.logger.warn(message);
+                    }
                 }
             }
             authentication.method = "gateway-token";
@@ -10790,6 +7759,7 @@ class Connection {
         this.logger.debug("core logging out...");
         this.shouldTryLogin = false;
         this.setLoggedIn(false);
+        this.helloSent = false;
         if (this.pingTimer) {
             clearTimeout(this.pingTimer);
         }
@@ -10801,6 +7771,7 @@ class Connection {
             return session.leave();
         });
         await Promise.all(promises);
+        this.sessionOnTransport = false;
     }
     getNewGWToken() {
         if (typeof window !== "undefined") {
@@ -10816,7 +7787,9 @@ class Connection {
             return;
         }
         if (this._isLoggedIn) {
-            this.send({ type: "ping" });
+            this.send({ type: "ping" }).catch((err) => {
+                this.logger.debug(`ping not sent - ${err?.message ?? err}`);
+            });
         }
         this.pingTimer = setTimeout(() => {
             this.ping();
@@ -10828,6 +7801,7 @@ const order = ["trace", "debug", "info", "warn", "error", "off"];
 class Logger {
     name;
     parent;
+    getInterop;
     static Interop;
     static InteropMethodName = "T42.AppLogger.Log";
     static Instance;
@@ -10839,9 +7813,11 @@ class Logger {
     includeTimeAndLevel;
     logFn = console;
     customLogFn = false;
-    constructor(name, parent, logFn) {
+    logFnFailureReported = false;
+    constructor(name, parent, logFn, getInterop) {
         this.name = name;
         this.parent = parent;
+        this.getInterop = getInterop;
         if (parent) {
             this.path = `${parent.path}.${name}`;
         }
@@ -10921,7 +7897,8 @@ class Logger {
             }
         }
         if (this.canPublish(level, this.publishLevel())) {
-            const interop = Logger.Interop;
+            const getInterop = this.root().getInterop;
+            const interop = getInterop ? getInterop() : Logger.Interop;
             if (interop) {
                 try {
                     if (interop.methods({ name: Logger.InteropMethodName }).length > 0) {
@@ -10938,7 +7915,12 @@ class Logger {
                         }
                         interop.invoke(Logger.InteropMethodName, args)
                             .catch((e) => {
-                            this.logFn.error(`Unable to send log message to the platform: ${normalizeError(e).message}`, e);
+                            try {
+                                this.logFn.error(`Unable to send log message to the platform: ${normalizeError(e).message}`, e);
+                            }
+                            catch (logFnError) {
+                                this.reportLogFnFailure(logFnError);
+                            }
                         });
                     }
                 }
@@ -10954,34 +7936,55 @@ class Logger {
                 prefix = `[${time}] [${level}] `;
             }
             const toPrint = `${prefix}${loggerName}: ${message}`;
-            switch (level) {
-                case "trace":
-                    this.logFn.debug(toPrint);
-                    break;
-                case "debug":
-                    if (this.logFn.debug) {
-                        this.logFn.debug(toPrint);
-                    }
-                    else {
-                        this.logFn.log(toPrint);
-                    }
-                    break;
-                case "info":
-                    this.logFn.info(toPrint);
-                    break;
-                case "warn":
-                    this.logFn.warn(toPrint);
-                    break;
-                case "error":
-                    if (error) {
-                        this.logFn.error(toPrint, error);
-                    }
-                    else {
-                        this.logFn.error(toPrint);
-                    }
-                    break;
+            try {
+                switch (level) {
+                    case "trace":
+                    case "debug":
+                        if (this.logFn.debug) {
+                            this.logFn.debug(toPrint);
+                        }
+                        else {
+                            this.logFn.log(toPrint);
+                        }
+                        break;
+                    case "info":
+                        this.logFn.info(toPrint);
+                        break;
+                    case "warn":
+                        this.logFn.warn(toPrint);
+                        break;
+                    case "error":
+                        if (error) {
+                            this.logFn.error(toPrint, error);
+                        }
+                        else {
+                            this.logFn.error(toPrint);
+                        }
+                        break;
+                }
+            }
+            catch (logFnError) {
+                this.reportLogFnFailure(logFnError);
             }
         }
+    }
+    reportLogFnFailure(error) {
+        if (!this.customLogFn) {
+            return;
+        }
+        const root = this.root();
+        if (root.logFnFailureReported) {
+            return;
+        }
+        root.logFnFailureReported = true;
+        try {
+            console.warn(`io.Connect logger: the custom logger threw (${normalizeError(error).message}); log lines it fails on are dropped`);
+        }
+        catch {
+        }
+    }
+    root() {
+        return this.parent ? this.parent.root() : this;
     }
 }
 
@@ -11022,7 +8025,7 @@ const ContextMessageReplaySpec = {
     }
 };
 
-var version = "6.11.0";
+var version$1 = "6.14.1";
 
 /*!
  * is-plain-object <https://github.com/jonschlinkert/is-plain-object>
@@ -11194,9 +8197,150 @@ function requireCjs () {
 var cjsExports = requireCjs();
 var deepMerge = /*@__PURE__*/getDefaultExportFromCjs(cjsExports);
 
+const maxFrameDepth = 32;
+const maxWindowNameLength = 64;
+const maxFrameUrlLength = 256;
+const indexInParent = (frame, parent) => {
+    try {
+        const siblings = parent.frames;
+        const count = siblings?.length ?? 0;
+        for (let i = 0; i < count; i++) {
+            if (siblings[i] === frame) {
+                return i;
+            }
+        }
+    }
+    catch {
+    }
+    return -1;
+};
+const getParent = (frame) => {
+    try {
+        const parent = frame.parent;
+        return parent && parent !== frame ? parent : undefined;
+    }
+    catch {
+        return undefined;
+    }
+};
+const getFrameUrl = (frame) => {
+    try {
+        const href = frame.location?.href;
+        if (!href) {
+            return undefined;
+        }
+        const url = new URL(href);
+        if (url.origin && url.origin !== "null") {
+            return url.origin.slice(0, maxFrameUrlLength);
+        }
+        return (url.protocol === "about:" ? url.protocol + url.pathname : url.protocol).slice(0, maxFrameUrlLength);
+    }
+    catch {
+        return undefined;
+    }
+};
+const getWindowName = (frame) => {
+    try {
+        const name = frame.name;
+        return typeof name === "string" && name ? name.slice(0, maxWindowNameLength) : undefined;
+    }
+    catch {
+        return undefined;
+    }
+};
+function getFrameInfo(currentWindow = (typeof window !== "undefined" ? window : undefined)) {
+    if (!currentWindow) {
+        return undefined;
+    }
+    const segments = [];
+    let frame = currentWindow;
+    let parent = getParent(frame);
+    while (parent && segments.length < maxFrameDepth) {
+        const index = indexInParent(frame, parent);
+        segments.unshift(index >= 0 ? String(index) : "?");
+        frame = parent;
+        parent = getParent(frame);
+    }
+    return {
+        isIframe: segments.length > 0,
+        frameDepth: segments.length,
+        framePath: ["top", ...segments].join("/"),
+        frameUrl: getFrameUrl(currentWindow),
+        windowName: getWindowName(currentWindow),
+    };
+}
+
 var dist = {};
 
 var builder$3 = {};
+
+var name$1 = "@interopio/otel";
+var version$2 = "0.1.25";
+var description = "io.Insights observability library";
+var main = "dist/index.js";
+var types = "dist/index.d.ts";
+var scripts = {
+	build: "rimraf dist && tsc -p ./tsconfig.json",
+	"build:tests": "tsc -p ./tests/tsconfig.json",
+	prepublishOnly: "npm run build",
+	preversion: "npm run build && npm run test && npm audit",
+	test: "npm run build:tests &&  mocha tests/tests/dist/**/*.js --recursive --full-trace --exit"
+};
+var repository = {
+	type: "git",
+	url: "git+https://github.com/InteropIO/otel.git"
+};
+var author = "interop.io";
+var license = "MIT";
+var bugs = {
+	url: "https://github.com/InteropIO/otel/issues"
+};
+var homepage = "https://github.com/InteropIO/otel#readme";
+var publishConfig = {
+	registry: "https://registry.npmjs.org",
+	access: "public"
+};
+var dependencies = {
+	"@opentelemetry/api": "^1.9.1",
+	"@opentelemetry/api-logs": "^0.223.1",
+	"@opentelemetry/exporter-logs-otlp-http": "^0.223.1",
+	"@opentelemetry/exporter-metrics-otlp-http": "^0.223.1",
+	"@opentelemetry/exporter-trace-otlp-http": "^0.223.1",
+	"@opentelemetry/otlp-exporter-base": "^0.223.1",
+	"@opentelemetry/resources": "^2.12.1",
+	"@opentelemetry/sdk-logs": "^0.223.1",
+	"@opentelemetry/sdk-metrics": "^2.12.1",
+	"@opentelemetry/sdk-trace-base": "^2.12.1",
+	log4js: "^6.9.1"
+};
+var devDependencies = {
+	"@types/chai": "^5.2.3",
+	"@types/mocha": "^10.0.10",
+	"@types/node": "^26.1.0",
+	"@typescript-eslint/eslint-plugin": "^8.63.0",
+	"@typescript-eslint/parser": "^8.63.0",
+	chai: "^6.2.2",
+	eslint: "^10.6.0",
+	mocha: "^11.7.6",
+	rimraf: "^6.1.3",
+	typescript: "^6.0.3"
+};
+var require$$0 = {
+	name: name$1,
+	version: version$2,
+	description: description,
+	main: main,
+	types: types,
+	scripts: scripts,
+	repository: repository,
+	author: author,
+	license: license,
+	bugs: bugs,
+	homepage: homepage,
+	publishConfig: publishConfig,
+	dependencies: dependencies,
+	devDependencies: devDependencies
+};
 
 var builder$2 = {};
 
@@ -11286,23 +8430,98 @@ var hasRequiredSafeStringify;
 function requireSafeStringify () {
 	if (hasRequiredSafeStringify) return safeStringify;
 	hasRequiredSafeStringify = 1;
-	Object.defineProperty(safeStringify, "__esModule", { value: true });
-	safeStringify.safeStringify = safeStringify$1;
-	const is_plain_object_1 = requireIsPlainObject();
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	function safeStringify$1(obj) {
-	    if (!obj) {
-	        return JSON.stringify(obj);
-	    }
-	    return JSON.stringify(obj, (k, v) => {
-	        if (!v || typeof v !== "object")
-	            return v;
-	        if (!(0, is_plain_object_1.isPlainObject)(v))
-	            return Object.prototype.toString.call(v);
-	        return v;
-	    });
-	}
-	
+	(function (exports$1) {
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.redactedSettingsValue = void 0;
+		exports$1.safeStringify = safeStringify;
+		exports$1.safeStringifySettings = safeStringifySettings;
+		const is_plain_object_1 = requireIsPlainObject();
+		/* eslint-disable @typescript-eslint/no-explicit-any */
+		// what never goes into a log line of the settings: the key masked attribute values are hashed
+		// with - configured, or resolved when the library is built (maskingSettings.maskSecret)
+		const redactedSettingsKeys = ["maskSecret"];
+		// settings whose values are kept out of the log, while their names stay
+		const redactedValuesOfSettingsKeys = ["headers"];
+		exports$1.redactedSettingsValue = "<redacted>";
+		// the name of a non-plain object for the log: its class, or what Object.prototype.toString says
+		function describeObject(v) {
+		    var _a;
+		    const ctorName = (_a = v.constructor) === null || _a === void 0 ? void 0 : _a.name;
+		    return `[object ${ctorName && ctorName !== "Object" ? ctorName : Object.prototype.toString.call(v).slice(8, -1)}]`;
+		}
+		/**
+		 * The JSON.stringify replacer behind safeStringify: plain objects and arrays are serialized as
+		 * they are, errors as their name, message and stack (JSON.stringify alone gives `{}` for them),
+		 * anything else that is an object - a class instance, a Map, a provider - as its class name only,
+		 * so that neither internals nor huge object graphs end up in a log line; an object that is its
+		 * own ancestor is a cycle, and is cut (the same object under two keys is fine).
+		 */
+		function createReplacer(redactKeys, redactValuesOfKeys = []) {
+		    // the objects on the way down to the current one: JSON.stringify calls the replacer with the
+		    // holder as `this`, so the path is rebuilt by popping until the holder is on top
+		    const ancestors = [];
+		    return function (k, v) {
+		        if (redactKeys.indexOf(k) >= 0 && v !== undefined && v !== null && v !== "") {
+		            // the holder is the maskingSettings object: its logMaskingSecret says the secret may be logged
+		            return (this === null || this === void 0 ? void 0 : this.logMaskingSecret) === true ? v : exports$1.redactedSettingsValue;
+		        }
+		        if (redactValuesOfKeys.indexOf(k) >= 0 && (0, is_plain_object_1.isPlainObject)(v)) {
+		            // the names stay in the log, the values do not
+		            const names = {};
+		            for (const name of Object.keys(v)) {
+		                names[name] = exports$1.redactedSettingsValue;
+		            }
+		            return names;
+		        }
+		        if (!v || typeof v !== "object") {
+		            return v;
+		        }
+		        while (ancestors.length && ancestors[ancestors.length - 1] !== this) {
+		            ancestors.pop();
+		        }
+		        if (ancestors.indexOf(v) >= 0) {
+		            return "[circular]";
+		        }
+		        if (v instanceof Error) {
+		            const readable = { name: v.name, message: v.message, stack: v.stack };
+		            if (v.cause !== undefined) {
+		                readable.cause = v.cause;
+		            }
+		            ancestors.push(v, readable);
+		            return readable;
+		        }
+		        if (Array.isArray(v) || (0, is_plain_object_1.isPlainObject)(v)) {
+		            ancestors.push(v);
+		            return v;
+		        }
+		        return describeObject(v);
+		    };
+		}
+		/**
+		 * JSON.stringify for logging: plain data as it is, errors readable, other objects by class name
+		 * only, cycles cut - see createReplacer. Never throws for what JSON.stringify would choke on
+		 * (cycles); a BigInt still does, as in JSON.stringify.
+		 */
+		function safeStringify(obj) {
+		    if (!obj) {
+		        return JSON.stringify(obj);
+		    }
+		    return JSON.stringify(obj, createReplacer([]));
+		}
+		/**
+		 * safeStringify for settings objects: secrets (`maskSecret`, at any depth) are replaced with
+		 * `redactedSettingsValue` - the log says one is set, not what it is - unless the object holding
+		 * one says `logMaskingSecret: true`. The values of `headers` objects, at any depth, are replaced
+		 * too: they can hold tokens. The header names stay.
+		 */
+		function safeStringifySettings(settings) {
+		    if (!settings) {
+		        return JSON.stringify(settings);
+		    }
+		    return JSON.stringify(settings, createReplacer(redactedSettingsKeys, redactedValuesOfSettingsKeys));
+		}
+		
+	} (safeStringify));
 	return safeStringify;
 }
 
@@ -11354,9 +8573,15 @@ function requireNullMetricsManager () {
 	class NullMetricsManager extends nullManager_1.NullManager {
 	    constructor(settings, otelSettings, logger) {
 	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
-	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullMetrcsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullMetrcsManager with settings ${(0, safe_stringify_1.safeStringifySettings)(settings)}`);
 	        }
 	        super();
+	    }
+	    getObservable(name, observeCallback, subscribeCallback, unsubscribeCallback) {
+	        return new null_1.NullMetric({ name, type: "null", enabled: false, description: name });
+	    }
+	    getObservableFromSettings(settings, observeCallback, subscribeCallback, unsubscribeCallback) {
+	        return new null_1.NullMetric(settings);
 	    }
 	    waitForFinalExport(timeoutMs) {
 	        return Promise.resolve();
@@ -11364,8 +8589,8 @@ function requireNullMetricsManager () {
 	    getFromSettings(settings) {
 	        return new null_1.NullMetric(settings);
 	    }
-	    get(type) {
-	        return new null_1.NullMetric({ name: type, type, enabled: false, description: type });
+	    get(name) {
+	        return new null_1.NullMetric({ name, type: "null", enabled: false, description: name });
 	    }
 	}
 	nullMetricsManager.NullMetricsManager = NullMetricsManager;
@@ -11443,14 +8668,28 @@ function requireNullTracingState () {
 	hasRequiredNullTracingState = 1;
 	Object.defineProperty(nullTracingState, "__esModule", { value: true });
 	class NullTracingState {
-	    constructor(source, propagationInfo, disablePropagation) {
+	    constructor(source, propagationInfo, disablePropagation, matchingFilter, 
+	    // when the operation started, if that was not just now (a span published after the fact)
+	    startTime) {
 	        this.source = source;
 	        this.propagationInfo = propagationInfo;
 	        this.disablePropagation = disablePropagation;
+	        this.matchingFilter = matchingFilter;
 	        this.currentSpanStatus = { code: 0 /*SpanStatusCode.UNSET*/ };
 	        this.level = "OFF";
+	        this._startTime = startTime instanceof Date && !Number.isNaN(startTime.getTime()) ? startTime : new Date();
 	    }
-	    endSpan() {
+	    get startTime() {
+	        return this._startTime;
+	    }
+	    get endTime() {
+	        return this._endTime;
+	    }
+	    // like a real span, it ends once: a later end does not move the end time
+	    endSpan(endTime, _allowDoubleEnd) {
+	        if (!this._endTime) {
+	            this._endTime = endTime instanceof Date && !Number.isNaN(endTime.getTime()) ? endTime : new Date();
+	        }
 	        return Promise.resolve();
 	    }
 	    get enabled() {
@@ -11471,6 +8710,9 @@ function requireNullTracingState () {
 	    addEvent(name, attributesOrStartTime, startTime) {
 	        return this;
 	    }
+	    addLink(link) {
+	        return this;
+	    }
 	    recordException(exception, time) { }
 	    isRecording() {
 	        return false;
@@ -11483,7 +8725,9 @@ function requireNullTracingState () {
 	    }
 	    addData(level, data) {
 	    }
-	    end() { }
+	    end() {
+	        void this.endSpan();
+	    }
 	    getPropagationInfo() {
 	        if (this.propagationInfo) {
 	            return this.propagationInfo;
@@ -11631,9 +8875,61 @@ function requireContainer () {
 	        this.logs = logs;
 	        this.logger = logger;
 	        this.started = false;
+	        // whether the close handler is registered with the platform, and what takes it away again -
+	        // when the platform hands that back
+	        this.closeHandlerRegistered = false;
 	        Container._instance = this;
 	        globalThis.ioInsightsInternals = (_a = globalThis.ioInsightsInternals) !== null && _a !== void 0 ? _a : {};
 	        globalThis.ioInsightsInternals.instance = this;
+	        this.addCloseHandler();
+	    }
+	    addCloseHandler() {
+	        var _a;
+	        if (this.closeHandlerRegistered) {
+	            return;
+	        }
+	        // io.Connect Desktop asks a window's close handlers before the window closes - also when
+	        // the close ends up prevented (another handler's word, the user cancelling the dialog),
+	        // and when it only asks whether the window can close. So by default - flushOnCloseMode
+	        // "flush" - nothing here cuts what is still running: what has ended so far is exported,
+	        // within a second, and that is all. The spans that are still open are ended and flushed
+	        // when the page really goes away - the traces manager does that at pagehide (flushOnClose)
+	        // - and the library is not stopped. "shutdown" takes the handler being asked for the
+	        // close itself: the open spans are ended, everything is exported, the library stops.
+	        if ((this._settings.flushOnClose !== false) &&
+	            this._settings.enabled !== false &&
+	            typeof window !== "undefined" &&
+	            typeof ((_a = window.glue42gd) === null || _a === void 0 ? void 0 : _a.addCloseHandler) === "function") {
+	            this.closeHandlerRegistered = true;
+	            // (the platform answers with a function that removes the handler - kept for stop(),
+	            // so that a container that is stopped does not leave its handler behind in the window)
+	            const remove = window.glue42gd.addCloseHandler((success) => __awaiter(this, void 0, void 0, function* () {
+	                var _a, _b, _c, _d, _e, _f;
+	                try {
+	                    if (this._settings.flushOnCloseMode === "shutdown") {
+	                        (_b = (_a = this.traces) === null || _a === void 0 ? void 0 : _a.endOpenSpans) === null || _b === void 0 ? void 0 : _b.call(_a, "close");
+	                        yield this.waitForFinalExport(1000);
+	                        yield this.stop();
+	                    }
+	                    else {
+	                        yield Promise.allSettled([
+	                            // (a traces manager of an earlier version has no flush: its ended
+	                            // spans go out with the batch, or at pagehide)
+	                            (_d = (_c = this.traces) === null || _c === void 0 ? void 0 : _c.flush) === null || _d === void 0 ? void 0 : _d.call(_c, 1000),
+	                            (_e = this.metrics) === null || _e === void 0 ? void 0 : _e.waitForFinalExport(1000),
+	                            (_f = this.logs) === null || _f === void 0 ? void 0 : _f.waitForFinalExport(1000)
+	                        ]);
+	                    }
+	                }
+	                catch (_g) {
+	                    // telemetry must never hold a window's close
+	                }
+	                finally {
+	                    success();
+	                }
+	            }));
+	            this.removeCloseHandler = typeof remove === "function" ? remove : undefined;
+	        }
 	    }
 	    get traces() {
 	        var _a, _b;
@@ -11655,21 +8951,46 @@ function requireContainer () {
 	    }
 	    start() {
 	        return __awaiter(this, void 0, void 0, function* () {
-	            // vnikolov TODO: maybe log this? don't silently refuse to start
-	            const metricsPromise = this.metrics.settings.enabled ? this.metrics.start() : Promise.resolve();
-	            const tracesPromise = this.traces.settings.enabled ? this.traces.start() : Promise.resolve();
-	            const logsPromise = this.logs.settings.enabled ? this.logs.start() : Promise.resolve();
-	            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
-	            this.started = true;
+	            if (!this.started) {
+	                // (taken away by an earlier stop(): a container that is started again flushes on close again)
+	                try {
+	                    this.addCloseHandler();
+	                }
+	                catch (_a) {
+	                    // telemetry must never break the application
+	                }
+	                const metricsPromise = this.metrics.settings.enabled ? this.metrics.start() : Promise.resolve();
+	                const tracesPromise = this.traces.settings.enabled ? this.traces.start() : Promise.resolve();
+	                const logsPromise = this.logs.settings.enabled ? this.logs.start() : Promise.resolve();
+	                yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+	                this.started = true;
+	            }
 	        });
 	    }
 	    stop() {
 	        return __awaiter(this, void 0, void 0, function* () {
-	            const metricsPromise = this.metrics.started ? this.metrics.stop() : Promise.resolve();
-	            const tracesPromise = this.traces.started ? this.traces.stop() : Promise.resolve();
-	            const logsPromise = this.logs.started ? this.logs.stop() : Promise.resolve();
-	            yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
-	            this.started = false;
+	            if (this.started) {
+	                const metricsPromise = this.metrics.started ? this.metrics.stop() : Promise.resolve();
+	                const tracesPromise = this.traces.started ? this.traces.stop() : Promise.resolve();
+	                const logsPromise = this.logs.started ? this.logs.stop() : Promise.resolve();
+	                yield Promise.all([metricsPromise, tracesPromise, logsPromise]);
+	                this.started = false;
+	            }
+	            // The close handler goes with the library: nothing is left to flush at the window's
+	            // close. (Called from inside the handler too - flushOnCloseMode "shutdown" - where the
+	            // handler still answers the platform: removing it does not take back a call in flight.)
+	            // A platform that hands back nothing to remove it with keeps the handler, as before.
+	            const remove = this.removeCloseHandler;
+	            if (remove) {
+	                this.removeCloseHandler = undefined;
+	                this.closeHandlerRegistered = false;
+	                try {
+	                    remove();
+	                }
+	                catch (_a) {
+	                    // telemetry must never break the application
+	                }
+	            }
 	        });
 	    }
 	}
@@ -11685,7 +9006,7 @@ function requireOtelUtils () {
 	hasRequiredOtelUtils = 1;
 	(function (exports$1) {
 		Object.defineProperty(exports$1, "__esModule", { value: true });
-		exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
+		exports$1.extractFilteringContextFromArgs = exports$1.deep_value = exports$1.isError = exports$1.getOTELData = exports$1.flattenOtelAtributes = void 0;
 		exports$1.withTimeout = withTimeout;
 		const container_1 = requireContainer();
 		/* eslint-disable @typescript-eslint/no-explicit-any */
@@ -11696,6 +9017,9 @@ function requireOtelUtils () {
 		    }
 		    if (typeof data !== "object") {
 		        data = { unknownAttribute: data };
+		    }
+		    else if ((0, exports$1.isError)(data)) {
+		        data = errorToObject(data);
 		    }
 		    const toReturn = {};
 		    for (const [key, value] of Object.entries(data)) {
@@ -11720,6 +9044,9 @@ function requireOtelUtils () {
 		    if (isAttributeArray(value)) {
 		        return [[key, value]].concat(flatten(key, value, depth, maxDepth));
 		    }
+		    else if ((0, exports$1.isError)(value)) {
+		        return flatten(key, errorToObject(value), depth, maxDepth);
+		    }
 		    else if (isObject) {
 		        return flatten(key, value, depth, maxDepth);
 		    }
@@ -11740,6 +9067,23 @@ function requireOtelUtils () {
 		        for (const [key3, val3] of (0, exports$1.getOTELData)(key2, val2, depth, maxDepth)) {
 		            toReturn.push([key + "." + key3, val3]);
 		        }
+		    }
+		    return toReturn;
+		};
+		/**
+		 * Whether a value is an Error. Also matches errors from other realms (iframes, vm contexts),
+		 * where `instanceof Error` fails.
+		 */
+		const isError = (value) => value instanceof Error || Object.prototype.toString.call(value) === "[object Error]";
+		exports$1.isError = isError;
+		// name/message/stack/cause are non-enumerable on Error instances, so a plain Object.entries()
+		// walk would publish an error as nothing at all - copy them over explicitly. Any enumerable
+		// own properties (e.g. a `code` assigned by the thrower) are kept as well.
+		const errorToObject = (error) => {
+		    const toReturn = Object.assign(Object.assign({}, error), { name: error.name, message: error.message, stack: error.stack });
+		    const cause = error.cause;
+		    if (cause !== undefined && cause !== null) {
+		        toReturn.cause = cause;
 		    }
 		    return toReturn;
 		};
@@ -11864,7 +9208,7 @@ function requireTraces () {
 	    }
 	    static get currentTracingState() {
 	        var _a;
-	        return ((_a = Traces.instance) === null || _a === void 0 ? void 0 : _a.currentTracingState) || new nullTracingState_1.default("unknown", null, true);
+	        return ((_a = Traces.instance) === null || _a === void 0 ? void 0 : _a.currentTracingState) || new nullTracingState_1.default("unknown", null, true, null);
 	    }
 	    static set currentTracingState(value) {
 	        if (Traces.instance) {
@@ -11875,20 +9219,49 @@ function requireTraces () {
 	        Traces.extractPropagationInfo(propagationInfoCarrier, true);
 	        return propagationInfoCarrier;
 	    }
+	    static readPropagationInfo(propagationInfoCarrier, tracestate, forceTracing) {
+	        const { traceId, spanId, traceFlags } = propagationInfoCarrier;
+	        function padHex(num) {
+	            if (!num) {
+	                return "00";
+	            }
+	            return ('0' + num.toString(16)).slice(-2); //9A
+	        }
+	        // https://www.w3.org/TR/trace-context/#traceparent-header
+	        const traceparent = `00-${traceId}-${spanId}-${padHex(traceFlags !== null && traceFlags !== void 0 ? traceFlags : 0)}`.toLowerCase();
+	        const match = traceparent.match(/^00-([0-9a-f]{32})-([0-9a-f]{16})-[0-9a-f]{2}$/);
+	        if (match &&
+	            match[1].split("").some(x => x != "0") &&
+	            match[2].split("").some(x => x != "0") &&
+	            (!traceFlags || traceFlags < 256)) {
+	            const toReturn = {
+	                traceparent,
+	            };
+	            if (tracestate) {
+	                toReturn.tracestate = tracestate;
+	            }
+	            if (forceTracing) {
+	                toReturn.forceTracing = forceTracing;
+	            }
+	            return toReturn;
+	        }
+	        else {
+	            return null;
+	        }
+	    }
 	    static extractPropagationInfo(propagationInfoCarrier, deleteProperty) {
 	        if (propagationInfoCarrier === null || propagationInfoCarrier === void 0 ? void 0 : propagationInfoCarrier.traceparent) {
 	            return propagationInfoCarrier;
 	        }
 	        const nestedPropagationInfo = propagationInfoCarrier === null || propagationInfoCarrier === void 0 ? void 0 : propagationInfoCarrier.__interopIOTracePropagationInfo;
-	        if (nestedPropagationInfo) {
-	            if (deleteProperty === true) {
-	                delete propagationInfoCarrier.__interopIOTracePropagationInfo;
-	            }
-	            return nestedPropagationInfo;
+	        // The carrier is cleaned up whatever the nested info turns out to be: the key must never reach
+	        // whoever the carrier belongs to (the arguments of an interop method handler).
+	        if (nestedPropagationInfo && deleteProperty === true) {
+	            delete propagationInfoCarrier.__interopIOTracePropagationInfo;
 	        }
-	        else {
-	            return null;
-	        }
+	        // (without a traceparent there is nothing to nest under - e.g. the synthetic propagation info
+	        // of a buffered span, which loses it on its way to another process; see bufferingTracingState)
+	        return (nestedPropagationInfo === null || nestedPropagationInfo === void 0 ? void 0 : nestedPropagationInfo.traceparent) ? nestedPropagationInfo : null;
 	    }
 	    withSequenceSpanEx(source, traceName, filteringContextOrCallback, optionsOrCallback, callback) {
 	        return __awaiter(this, void 0, void 0, function* () {
@@ -11903,10 +9276,6 @@ function requireTraces () {
 	    static withSpan(source, filteringContextOrDecoratorOptionsOrCallback, propagationInfoOrCallback, optionsOrCallback, callback) {
 	        // decorator or wrapping a function
 	        if (!(filteringContextOrDecoratorOptionsOrCallback instanceof Function) &&
-	            (!filteringContextOrDecoratorOptionsOrCallback ||
-	                filteringContextOrDecoratorOptionsOrCallback.argMapping ||
-	                filteringContextOrDecoratorOptionsOrCallback.thisMapping ||
-	                filteringContextOrDecoratorOptionsOrCallback.defaults) &&
 	            !propagationInfoOrCallback &&
 	            !optionsOrCallback &&
 	            !callback) {
@@ -11951,6 +9320,15 @@ function requireTraces () {
 	    static isAsyncFunction(value) {
 	        return value && {}.toString.call(value) === '[object AsyncFunction]';
 	    }
+	    static withTypedSpanWrapper(source, decoratorOptionsOrWrappedFunction, wrappedFunction) {
+	        const decoratorOptions = decoratorOptionsOrWrappedFunction instanceof Function
+	            ? undefined
+	            : decoratorOptionsOrWrappedFunction;
+	        const actualWrappedFunction = decoratorOptionsOrWrappedFunction instanceof Function
+	            ? decoratorOptionsOrWrappedFunction
+	            : wrappedFunction;
+	        return Traces.withSpan(source, decoratorOptions)(actualWrappedFunction);
+	    }
 	    static withSpans(tracingMap, objectToTrace) {
 	        for (const tracingMapPropertyName in tracingMap) {
 	            if (typeof objectToTrace[tracingMapPropertyName] === "function") {
@@ -11970,6 +9348,23 @@ function requireTraces () {
 	            }
 	        }
 	        return objectToTrace;
+	    }
+	    static openSpan(source, context, propagationInfo, options) {
+	        let resolve = () => { };
+	        let reject = () => { };
+	        let ts = new nullTracingState_1.default(source, Traces.extractPropagationInfo(propagationInfo), false, null);
+	        Traces.withSpan(source, context !== null && context !== void 0 ? context : {}, propagationInfo !== null && propagationInfo !== void 0 ? propagationInfo : null, options !== null && options !== void 0 ? options : null, (_ts) => {
+	            ts = _ts;
+	            return new Promise((rs, rj) => {
+	                resolve = rs;
+	                reject = rj;
+	            });
+	        });
+	        return {
+	            ts,
+	            resolve,
+	            reject
+	        };
 	    }
 	}
 	traces.default = Traces;
@@ -12010,7 +9405,7 @@ function requireNullTracesManager () {
 	    }
 	    constructor(_settings, otelSettings, logger) {
 	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
-	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullTracesManager with settings ${(0, safe_stringify_1.safeStringify)(_settings)}`);
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullTracesManager with settings ${(0, safe_stringify_1.safeStringifySettings)(_settings)}`);
 	        }
 	        super();
 	        this._settings = _settings;
@@ -12027,7 +9422,7 @@ function requireNullTracesManager () {
 	        });
 	    }
 	    get currentTracingState() {
-	        return new nullTracingState_1.default("nullTracingState", null, true);
+	        return new nullTracingState_1.default("nullTracingState", null, true, null);
 	    }
 	    set currentTracingState(ts) {
 	    }
@@ -12067,13 +9462,25 @@ function requireNullTracesManager () {
 	        //   extractedPI = Traces.currentTracingState?.getPropagationInfo() || null;
 	        // }
 	        // const nts = new NullTracingState(source, extractedPI);
-	        const nts = new nullTracingState_1.default(source, null, true);
+	        const nts = new nullTracingState_1.default(source, null, true, null);
 	        traces_1.default.currentTracingState = nts;
+	        // The tracing state keeps time like a real one, as far as that can be done without touching
+	        // what the callback returns: it ends when a synchronous callback is done. A promise is handed
+	        // back as it is, and NOT observed - a rejection handler of ours would mark it as handled, and
+	        // a rejection nobody else handles would no longer be reported as unhandled; with io.Insights
+	        // disabled that must not change how an application's errors surface. The tracing state of an
+	        // asynchronous callback therefore has no end time (`endTime ?? new Date()` is how it is read).
+	        let isAsync = false;
 	        try {
-	            return actualCallback(nts);
+	            const result = actualCallback(nts);
+	            isAsync = !!result && typeof result.then === "function";
+	            return result;
 	        }
 	        finally {
 	            traces_1.default.currentTracingState = null;
+	            if (!isAsync) {
+	                nts.end();
+	            }
 	        }
 	    }
 	    setFilterConfig(filters) {
@@ -12124,6 +9531,10 @@ function requireBuilder$2 () {
 	        this.metrics = metrics;
 	        return this;
 	    }
+	    withInterop(interop) {
+	        this.interop = interop;
+	        return this;
+	    }
 	    withTracerProvider(tracerProvider) {
 	        this.tracerProvider = tracerProvider;
 	        return this;
@@ -12166,7 +9577,7 @@ function requireBuilder$2 () {
 	            !(tracePlugin = (0, __1.loadInsightsPlugin)("traces", this.logger))) {
 	            return new nullTracesManager_1.NullTracesManager((_g = this.settings) === null || _g === void 0 ? void 0 : _g.traces, this.settings, this.logger);
 	        }
-	        const manager = tracePlugin.newTracesManager(this.logger, this.settings, (_h = this.traceLogger) !== null && _h !== void 0 ? _h : this.logger, this.metrics, this.store, this.read);
+	        const manager = tracePlugin.newTracesManager(this.logger, this.settings, (_h = this.traceLogger) !== null && _h !== void 0 ? _h : this.logger, this.metrics, this.store, this.read, this.interop);
 	        return manager;
 	    }
 	}
@@ -12223,7 +9634,7 @@ function requireNullManager () {
 	class NullLogsManager extends nullManager_1.NullManager {
 	    constructor(settings, otelSettings, logger) {
 	        if ((otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.logSettingsOnStartup) !== false) {
-	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullLogsManager with settings ${(0, safe_stringify_1.safeStringify)(settings)}`);
+	            logger === null || logger === void 0 ? void 0 : logger.info(`Starting NullLogsManager with settings ${(0, safe_stringify_1.safeStringifySettings)(settings)}`);
 	        }
 	        super();
 	    }
@@ -12370,13 +9781,493 @@ function requireBuilder$1 () {
 	return builder;
 }
 
+var attributeSettings = {};
+
+var hasRequiredAttributeSettings;
+
+function requireAttributeSettings () {
+	if (hasRequiredAttributeSettings) return attributeSettings;
+	hasRequiredAttributeSettings = 1;
+	(function (exports$1) {
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.maxCachedMasks = exports$1.maxReportedMaskedValues = exports$1.defaultMaskLength = void 0;
+		exports$1.inheritAttributeSettings = inheritAttributeSettings;
+		exports$1.ownAttributeSettings = ownAttributeSettings;
+		exports$1.applyAttributeSettings = applyAttributeSettings;
+		exports$1.applyTopLevelAttributeSettings = applyTopLevelAttributeSettings;
+		exports$1.reduceModalityHash = reduceModalityHash;
+		exports$1.reportMaskedValue = reportMaskedValue;
+		exports$1.clearReportedMaskedValues = clearReportedMaskedValues;
+		exports$1.maskAttributeValue = maskAttributeValue;
+		exports$1.maskCacheSize = maskCacheSize;
+		exports$1.isMaskCached = isMaskCached;
+		exports$1.clearMaskCache = clearMaskCache;
+		exports$1.generateMaskSecret = generateMaskSecret;
+		exports$1.processMaskSecret = processMaskSecret;
+		exports$1.resolveMaskSecret = resolveMaskSecret;
+		exports$1.hmacSha256Hex = hmacSha256Hex;
+		// the length of a masked value when nothing says otherwise: 64 bits of the HMAC, in hex
+		exports$1.defaultMaskLength = 16;
+		// Where `inheritAttributeSettings` remembers what a level got from the top level: on the level
+		// itself, not enumerable - it is neither logged nor copied with the settings - and under a
+		// registered symbol, so that a plugin bundled with a copy of this module of its own finds it.
+		const inheritedAttributeSettingsKey = Symbol.for("interopio.insights.inheritedAttributeSettings");
+		const inheritedBy = (level) => level[inheritedAttributeSettingsKey];
+		const sameEntryValue = (a, b) => a === b || (!!a && !!b && a.mode === b.mode && a.reduceModality === b.reduceModality);
+		/**
+		 * Makes the top-level attribute settings the least specific level of `level` (the traces
+		 * settings): its map becomes the top-level entries with its own merged over them, by attribute
+		 * name, and it takes the top-level mode when it sets none. What it inherited that way - the
+		 * top-level entries it does not set itself, the mode - is remembered on it, for
+		 * `ownAttributeSettings` to tell apart later. A level that has inherited before (the same
+		 * settings built again) starts over from what it set itself.
+		 */
+		function inheritAttributeSettings(level, top, topMode) {
+		    const own = inheritedBy(level) ? ownAttributeSettings(level) : level;
+		    const ownMap = own.attributeSettings;
+		    const ownMode = own.attributeSettingsMode;
+		    const inherited = {};
+		    if (top) {
+		        inherited.attributeSettings = {};
+		        for (const name of Object.keys(top)) {
+		            if (!ownMap || !(name in ownMap)) {
+		                inherited.attributeSettings[name] = top[name];
+		            }
+		        }
+		        level.attributeSettings = Object.assign(Object.assign({}, top), ownMap);
+		    }
+		    if (ownMode === undefined || ownMode === null) {
+		        inherited.attributeSettingsMode = topMode;
+		    }
+		    level.attributeSettingsMode = ownMode !== null && ownMode !== void 0 ? ownMode : topMode;
+		    Object.defineProperty(level, inheritedAttributeSettingsKey, {
+		        value: inherited, enumerable: false, configurable: true, writable: true,
+		    });
+		}
+		/**
+		 * What a level (the traces settings) sets itself, without what it inherited from the top
+		 * level: the entries the Builder did not put there (`inheritAttributeSettings` - an entry the
+		 * level overrides is its own), and the mode unless it is the inherited one. For a level the
+		 * Builder left no note on - settings that were copied on the way, or never went through it -
+		 * `top`, the top-level settings, is what tells: an entry that reads the same as the top-level
+		 * entry of its name counts as inherited, and so does a mode that is the top-level one.
+		 */
+		function ownAttributeSettings(level, top) {
+		    var _a;
+		    if (!level || typeof level !== "object") {
+		        return {};
+		    }
+		    const noted = inheritedBy(level);
+		    const inherited = (_a = noted !== null && noted !== void 0 ? noted : top) !== null && _a !== void 0 ? _a : {};
+		    const inheritedMap = inherited.attributeSettings;
+		    const map = level.attributeSettings;
+		    let ownMap = map;
+		    if (map && typeof map === "object" && inheritedMap && typeof inheritedMap === "object") {
+		        ownMap = {};
+		        for (const name of Object.keys(map)) {
+		            const isInherited = name in inheritedMap &&
+		                (noted ? map[name] === inheritedMap[name] : sameEntryValue(map[name], inheritedMap[name]));
+		            if (!isInherited) {
+		                ownMap[name] = map[name];
+		            }
+		        }
+		    }
+		    const mode = level.attributeSettingsMode;
+		    const isModeInherited = !!inherited.attributeSettingsMode && mode === inherited.attributeSettingsMode;
+		    return { attributeSettings: ownMap, attributeSettingsMode: isModeInherited ? undefined : mode };
+		}
+		// The effective mode of an entry: the explicit one, or what the metrics' reduceModality alone
+		// stood for before there was a mode - 0 drops, a positive length masks (the way it did then:
+		// reduceModalityHash, not the keyed mask of an explicit "mask"), a negative one "overrides any
+		// defaults" (the attribute is neither listed nor touched).
+		function effectiveMode(entry) {
+		    if (!entry) {
+		        return undefined;
+		    }
+		    if (entry.mode === "allow" || entry.mode === "drop" || entry.mode === "mask") {
+		        return entry.mode;
+		    }
+		    const reduceTo = entry.reduceModality;
+		    if (typeof reduceTo !== "number") {
+		        return undefined;
+		    }
+		    return reduceTo === 0 ? "drop" : reduceTo > 0 ? "mask" : undefined;
+		}
+		// an entry names an attribute - or, for nested data, everything under it: "bounds" covers
+		// "bounds.left" (attribute names are the flattened, dot-separated ones); the most specific entry,
+		// the longest, is the one that applies
+		function findEntry(key, entries) {
+		    let found;
+		    for (const entry of entries) {
+		        const [name] = entry;
+		        if ((key === name || key.indexOf(name + ".") === 0) &&
+		            (!found || name.length > found[0].length)) {
+		            found = entry;
+		        }
+		    }
+		    return found === null || found === void 0 ? void 0 : found[1];
+		}
+		/**
+		 * Applies attribute settings to (flattened) attributes. An entry names an attribute by its
+		 * flattened name, or everything under it - the most specific one applies. `drop` never publishes
+		 * the attribute, `mask` publishes its value masked (see `maskAttributeValue` - truncated to the
+		 * metrics' `reduceModality` characters when there is one), `allow` publishes it - the exception to
+		 * a broader `drop` in a block list (the default), one of the attributes that get published at all
+		 * in an allow list (`options.mode`: only `allow` and `mask` entries do then). Without a `mode`, the metrics'
+		 * `reduceModality` alone means what it always did: 0 drops, a positive length publishes the
+		 * value hashed the way it always was (`reduceModalityHash` - unkeyed, the same string in every
+		 * process; in an allow list it counts as a `mask` entry, but it is not a masked value: it is
+		 * not reported to the mapping URL), a negative one resets. Settings and entries that are not
+		 * objects are ignored - they come from a config file. Returns the data it was given when there
+		 * is nothing to apply, a new object otherwise.
+		 */
+		function applyAttributeSettings(data, attributeSettings, options) {
+		    if (!data || !attributeSettings || typeof attributeSettings !== "object") {
+		        return data;
+		    }
+		    const entries = Object.entries(attributeSettings)
+		        .filter((entry) => !!entry[1] && typeof entry[1] === "object");
+		    const allowList = (options === null || options === void 0 ? void 0 : options.mode) === "allowlist";
+		    if (!entries.length && !allowList) {
+		        return data;
+		    }
+		    const source = data;
+		    const toReturn = {};
+		    for (const key of Object.keys(source)) {
+		        const entry = findEntry(key, entries);
+		        const mode = effectiveMode(entry);
+		        if (mode === "drop" || (allowList && mode !== "allow" && mode !== "mask")) {
+		            continue;
+		        }
+		        if (mode === "mask") {
+		            const reduceTo = entry === null || entry === void 0 ? void 0 : entry.reduceModality;
+		            if ((entry === null || entry === void 0 ? void 0 : entry.mode) !== "mask") {
+		                // reduceModality alone (a positive length, or it would not read as a mask): the hash
+		                // it has always published - not keyed, and not a masked value to report
+		                toReturn[key] = reduceModalityHash(source[key], reduceTo);
+		                continue;
+		            }
+		            const masked = maskAttributeValue(source[key], reduceTo, options === null || options === void 0 ? void 0 : options.maskSecret);
+		            if (options === null || options === void 0 ? void 0 : options.mappingURL) {
+		                reportMaskedValue(options.mappingURL, source[key] + "", masked);
+		            }
+		            toReturn[key] = masked;
+		        }
+		        else {
+		            toReturn[key] = source[key];
+		        }
+		    }
+		    return toReturn;
+		}
+		/**
+		 * Applies the top-level attribute settings to attributes that are neither a span's nor a
+		 * metric value's: the resource attributes of a signal, the attributes of a log record. The
+		 * "drop" and "mask" entries apply - never as an allow list, which is about what a span or a
+		 * metric value carries - and a value masks to the same string as everywhere else (the masking
+		 * settings' effective secret). The metrics resource gets the same through the metrics'
+		 * `defaultPublishingSettings`, where the top-level entries end up.
+		 *
+		 * `levelSettings` are the entries of the signal the attributes belong to - the traces
+		 * settings' `attributeSettings`, for the traces resource - merged over the top-level ones by
+		 * attribute name, the way they are for the signal's own attributes.
+		 */
+		function applyTopLevelAttributeSettings(data, otelSettings, levelSettings) {
+		    var _a, _b;
+		    const entries = levelSettings ? Object.assign(Object.assign({}, otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.attributeSettings), levelSettings) : otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.attributeSettings;
+		    return applyAttributeSettings(data, entries, {
+		        mode: "blocklist",
+		        maskSecret: (_a = otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.maskingSettings) === null || _a === void 0 ? void 0 : _a.maskSecret,
+		        mappingURL: (_b = otelSettings === null || otelSettings === void 0 ? void 0 : otelSettings.maskingSettings) === null || _b === void 0 ? void 0 : _b.mappingURL,
+		    });
+		}
+		/**
+		 * What the metrics' `reduceModality` alone - an entry without a `mode` - has always published
+		 * for a value: its 32-bit FNV-1a hash (of the value as a string, by UTF-16 code unit) in hex,
+		 * without leading zeros, cut to `length` characters - repeated to fill them when the length is
+		 * longer than the hash. Not keyed: the same value gives the same string in every process and
+		 * every session, which is what the series published so far are told apart by - and why it
+		 * reduces the modality of an attribute but does not hide its value (a candidate value can be
+		 * hashed and compared); `mode: "mask"` is the keyed mask.
+		 */
+		function reduceModalityHash(value, length) {
+		    const str = value + "";
+		    let hash = 0x811c9dc5; // FNV-1a 32-bit offset basis
+		    for (let i = 0; i < str.length; i++) {
+		        hash ^= str.charCodeAt(i);
+		        hash = Math.imul(hash, 0x01000193); // FNV prime
+		    }
+		    const hex = (hash >>> 0).toString(16);
+		    return (hex.length < length ? hex.repeat(Math.ceil(length / hex.length)) : hex).slice(0, length);
+		}
+		const reportedMaskedValues = new Set();
+		// how many (URL, value, masked value) triples are remembered as reported before starting over
+		exports$1.maxReportedMaskedValues = 10000;
+		/**
+		 * Reports a value and its masked form to the mapping URL - a JSON `POST` of
+		 * `{ source, masked }` - the first time the pair is seen (per URL, in this process): the
+		 * mapping service learns each pair once. The pair, not the masked value alone: two values
+		 * that mask to the same string - a mask cut short by `reduceModality` - are two pairs, and
+		 * the service is told of both. Fire-and-forget: nothing waits for the request,
+		 * and a failure is silent - there is no logger here, and the pair comes again from the next
+		 * process. Needs a global `fetch`. The set of reported values is capped at
+		 * `maxReportedMaskedValues`; once full it is cleared, so a value may be reported again.
+		 * Returns whether a request was made.
+		 */
+		function reportMaskedValue(mappingURL, source, masked) {
+		    const fetchFunc = globalThis.fetch;
+		    if (typeof fetchFunc !== "function") {
+		        return false;
+		    }
+		    // (the masked value is hex and the URL has no line break in it: the parts cannot run into
+		    // each other, whatever the value is)
+		    const key = mappingURL + "\n" + masked + "\n" + source;
+		    if (reportedMaskedValues.has(key)) {
+		        return false;
+		    }
+		    if (reportedMaskedValues.size >= exports$1.maxReportedMaskedValues) {
+		        reportedMaskedValues.clear();
+		    }
+		    reportedMaskedValues.add(key);
+		    try {
+		        const result = fetchFunc(mappingURL, {
+		            method: "POST",
+		            headers: { "Content-Type": "application/json" },
+		            body: JSON.stringify({ source, masked }),
+		            keepalive: true,
+		        });
+		        if (typeof (result === null || result === void 0 ? void 0 : result.catch) === "function") {
+		            result.catch(() => undefined);
+		        }
+		    }
+		    catch (_a) {
+		        // a synchronous failure (a bad URL, say) - nothing to do about it here
+		    }
+		    return true;
+		}
+		/** Forgets which masked values were reported - the next ones are reported again (tests). */
+		function clearReportedMaskedValues() {
+		    reportedMaskedValues.clear();
+		}
+		/**
+		 * The masked form of an attribute value: HMAC-SHA-256 of the value (as a string) keyed with the
+		 * mask secret, in hex, truncated to `length` characters (`defaultMaskLength` when not a positive
+		 * number). The same value masks to the same string under the same secret - distinct values stay
+		 * distinguishable - and to nothing recognizable without it: unlike a plain hash, a keyed one
+		 * cannot be reversed by hashing candidate values (user names, e-mails, account numbers).
+		 *
+		 * `secret` is the `maskSecret` of the settings; without one the process-wide random secret is
+		 * used, so masked values are consistent within the process only.
+		 */
+		function maskAttributeValue(value, length, secret) {
+		    const hex = memoizedHmac(secret || processMaskSecret(), value + "");
+		    return hex.slice(0, typeof length === "number" && length > 0 ? length : exports$1.defaultMaskLength);
+		}
+		// The HMACs computed so far, by secret and value - the same few values (a user id, an account)
+		// are masked over and over, on every span and metric value; the whole digest is kept, so every
+		// truncation length shares an entry. Bounded, least recently used out first (a Map iterates in
+		// insertion order, and a hit is re-inserted).
+		const hmacCache = new Map();
+		exports$1.maxCachedMasks = 100;
+		function memoizedHmac(secret, value) {
+		    const key = secret.length + ":" + secret + value;
+		    const cached = hmacCache.get(key);
+		    if (cached !== undefined) {
+		        hmacCache.delete(key);
+		        hmacCache.set(key, cached);
+		        return cached;
+		    }
+		    const hex = hmacSha256Hex(secret, value);
+		    if (hmacCache.size >= exports$1.maxCachedMasks) {
+		        hmacCache.delete(hmacCache.keys().next().value);
+		    }
+		    hmacCache.set(key, hex);
+		    return hex;
+		}
+		/** How many masks are memoized right now (tests, diagnostics). */
+		function maskCacheSize() {
+		    return hmacCache.size;
+		}
+		/** Whether the mask of `value` under `secret` is memoized right now (tests, diagnostics). */
+		function isMaskCached(secret, value) {
+		    return hmacCache.has(secret.length + ":" + secret + value);
+		}
+		/** Forgets the memoized masks (tests). */
+		function clearMaskCache() {
+		    hmacCache.clear();
+		}
+		/**
+		 * A fresh random mask secret: 256 bits, in hex. The Builder generates one per process when the
+		 * settings have none.
+		 */
+		function generateMaskSecret() {
+		    const bytes = new Uint8Array(32);
+		    const webCrypto = globalThis.crypto;
+		    if (typeof (webCrypto === null || webCrypto === void 0 ? void 0 : webCrypto.getRandomValues) === "function") {
+		        webCrypto.getRandomValues(bytes);
+		    }
+		    else {
+		        // no Web Crypto (an old runtime): still unpredictable enough to keep the mapping private
+		        for (let i = 0; i < bytes.length; i++) {
+		            bytes[i] = Math.floor(Math.random() * 256);
+		        }
+		    }
+		    return toHex(bytes);
+		}
+		let processSecret;
+		/**
+		 * The secret of the "process" masking mode - and of masking with no settings at all: generated
+		 * on first use, kept for the life of the process (of this module instance, strictly).
+		 */
+		function processMaskSecret() {
+		    processSecret = processSecret !== null && processSecret !== void 0 ? processSecret : generateMaskSecret();
+		    return processSecret;
+		}
+		/**
+		 * The secret the masking settings resolve to: `maskSecret` in the `"stable"` and the
+		 * `"instance"` modes (the platform's per-session one, in the latter) - and, without one, the
+		 * process secret: masking is never keyed with something that could be reproduced. `"process"`
+		 * is the process secret, whatever is set.
+		 */
+		function resolveMaskSecret(settings) {
+		    return (settings === null || settings === void 0 ? void 0 : settings.maskingMode) !== "process" && (settings === null || settings === void 0 ? void 0 : settings.maskSecret) ? settings.maskSecret : processMaskSecret();
+		}
+		// ---------------------------------------------------------------------------------------------
+		// HMAC-SHA-256 - synchronous, so that attributes can be written where they are produced (the
+		// Web Crypto API is asynchronous, and Node's crypto module is not there in a browser)
+		// ---------------------------------------------------------------------------------------------
+		/** HMAC-SHA-256 of `message` keyed with `key` (both UTF-8), as lowercase hex. */
+		function hmacSha256Hex(key, message) {
+		    return toHex(hmacSha256(utf8Bytes(key), utf8Bytes(message)));
+		}
+		function hmacSha256(key, message) {
+		    const blockSize = 64;
+		    if (key.length > blockSize) {
+		        key = sha256(key);
+		    }
+		    const paddedKey = new Uint8Array(blockSize);
+		    paddedKey.set(key);
+		    const inner = new Uint8Array(blockSize + message.length);
+		    const outer = new Uint8Array(blockSize + 32);
+		    for (let i = 0; i < blockSize; i++) {
+		        inner[i] = paddedKey[i] ^ 0x36;
+		        outer[i] = paddedKey[i] ^ 0x5c;
+		    }
+		    inner.set(message, blockSize);
+		    outer.set(sha256(inner), blockSize);
+		    return sha256(outer);
+		}
+		const K = new Uint32Array([
+		    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+		    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+		    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+		    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+		    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+		    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+		    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+		    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+		]);
+		const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+		function sha256(message) {
+		    const H = new Uint32Array([
+		        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+		    ]);
+		    const bitLength = message.length * 8;
+		    const paddedLength = Math.ceil((message.length + 9) / 64) * 64;
+		    const padded = new Uint8Array(paddedLength);
+		    padded.set(message);
+		    padded[message.length] = 0x80;
+		    const view = new DataView(padded.buffer);
+		    view.setUint32(paddedLength - 8, Math.floor(bitLength / 0x100000000));
+		    view.setUint32(paddedLength - 4, bitLength >>> 0);
+		    const w = new Uint32Array(64);
+		    for (let offset = 0; offset < paddedLength; offset += 64) {
+		        for (let i = 0; i < 16; i++) {
+		            w[i] = view.getUint32(offset + i * 4);
+		        }
+		        for (let i = 16; i < 64; i++) {
+		            const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+		            const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+		            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+		        }
+		        let a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+		        for (let i = 0; i < 64; i++) {
+		            const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+		            const ch = (e & f) ^ (~e & g);
+		            const t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+		            const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+		            const maj = (a & b) ^ (a & c) ^ (b & c);
+		            const t2 = (S0 + maj) >>> 0;
+		            h = g;
+		            g = f;
+		            f = e;
+		            e = (d + t1) >>> 0;
+		            d = c;
+		            c = b;
+		            b = a;
+		            a = (t1 + t2) >>> 0;
+		        }
+		        H[0] += a;
+		        H[1] += b;
+		        H[2] += c;
+		        H[3] += d;
+		        H[4] += e;
+		        H[5] += f;
+		        H[6] += g;
+		        H[7] += h;
+		    }
+		    const digest = new Uint8Array(32);
+		    const digestView = new DataView(digest.buffer);
+		    for (let i = 0; i < 8; i++) {
+		        digestView.setUint32(i * 4, H[i]);
+		    }
+		    return digest;
+		}
+		function utf8Bytes(str) {
+		    if (typeof TextEncoder !== "undefined") {
+		        return new TextEncoder().encode(str);
+		    }
+		    const bytes = [];
+		    for (const char of str) {
+		        let code = char.codePointAt(0);
+		        if (code < 0x80) {
+		            bytes.push(code);
+		        }
+		        else if (code < 0x800) {
+		            bytes.push(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+		        }
+		        else if (code < 0x10000) {
+		            bytes.push(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+		        }
+		        else {
+		            bytes.push(0xf0 | (code >> 18), 0x80 | ((code >> 12) & 0x3f), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+		            code = 0;
+		        }
+		    }
+		    return Uint8Array.from(bytes);
+		}
+		function toHex(bytes) {
+		    let hex = "";
+		    for (let i = 0; i < bytes.length; i++) {
+		        hex += (bytes[i] < 16 ? "0" : "") + bytes[i].toString(16);
+		    }
+		    return hex;
+		}
+		
+	} (attributeSettings));
+	return attributeSettings;
+}
+
 var hasRequiredBuilder;
 
 function requireBuilder () {
 	if (hasRequiredBuilder) return builder$3;
 	hasRequiredBuilder = 1;
+	var __importDefault = (builder$3 && builder$3.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
 	Object.defineProperty(builder$3, "__esModule", { value: true });
 	builder$3.Builder = void 0;
+	const package_json_1 = __importDefault(require$$0);
 	const builder_1 = requireBuilder$3();
 	const builder_2 = requireBuilder$2();
 	const null_1 = require_null();
@@ -12389,6 +10280,7 @@ function requireBuilder () {
 	const _1 = requireDist();
 	const safe_stringify_1 = requireSafeStringify();
 	const builder_3 = requireBuilder$1();
+	const attributeSettings_1 = requireAttributeSettings();
 	class Builder {
 	    constructor() {
 	        this.logger = new null_1.NullLogger();
@@ -12432,6 +10324,10 @@ function requireBuilder () {
 	        container_1.Container.settings = settings;
 	        return this;
 	    }
+	    withInterop(interop) {
+	        this.interop = interop;
+	        return this;
+	    }
 	    // ...before these methods
 	    withMetrics() {
 	        this.metricsBuilder = new builder_1.MetricsManagerBuilder();
@@ -12454,9 +10350,12 @@ function requireBuilder () {
 	    build() {
 	        var _a, _b, _c, _d, _e, _f, _g, _h, _j;
 	        this.settings = (_a = this.settings) !== null && _a !== void 0 ? _a : { enabled: false };
+	        // before the settings are logged or copied: what is logged below (with logMaskingSecret)
+	        // and what the API's settings carry is then the effective secret - a generated one included
+	        Builder.resolveMaskingSettings(this.settings);
 	        const nonPartialSettings = Object.assign({ enabled: false }, this.settings);
 	        if (((_b = this.settings) === null || _b === void 0 ? void 0 : _b.logSettingsOnStartup) !== false) {
-	            this.logger.info(`Starting interop.io OTEL with settings ${(0, safe_stringify_1.safeStringify)(this.settings)}`);
+	            this.logger.info(`Starting interop.io OTEL with settings ${(0, safe_stringify_1.safeStringifySettings)(this.settings)}`);
 	        }
 	        if (((_c = this.settings) === null || _c === void 0 ? void 0 : _c.enabled) == false ||
 	            !((0, _1.loadInsightsPlugin)("base", this.logger))) {
@@ -12468,20 +10367,41 @@ function requireBuilder () {
 	            throw new Error("metrics.platformMetricsEnabled is true, but .withMetrics() method not called.");
 	        }
 	        const providedAdditionalResourceAttributes = this.settings.additionalResourceAttributes;
-	        this.settings.additionalResourceAttributes = () => {
+	        // (a function that threw has not given its answer yet - errorlessMode has the attributes
+	        // put together without it this time, and that must not be the answer that is kept)
+	        let providedFailed = false;
+	        const resourceAttributes = () => {
 	            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z;
-	            const evaluatedAdditionalResourceAttributes = (_a = container_1.Container.errorlessDefined(providedAdditionalResourceAttributes, {})) !== null && _a !== void 0 ? _a : {};
-	            return Object.assign(Object.assign({}, evaluatedAdditionalResourceAttributes), { user: (_e = (_d = (_b = evaluatedAdditionalResourceAttributes.userId) !== null && _b !== void 0 ? _b : (_c = this.settings) === null || _c === void 0 ? void 0 : _c.userId) !== null && _d !== void 0 ? _d : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _e !== void 0 ? _e : constants_1.Defaults.DEFAULT_USER, "user.id": (_j = (_h = (_f = evaluatedAdditionalResourceAttributes.userId) !== null && _f !== void 0 ? _f : (_g = this.settings) === null || _g === void 0 ? void 0 : _g.userId) !== null && _h !== void 0 ? _h : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _j !== void 0 ? _j : constants_1.Defaults.DEFAULT_USER, "service.name": (_o = (_m = (_k = evaluatedAdditionalResourceAttributes.serviceName) !== null && _k !== void 0 ? _k : (_l = this.settings) === null || _l === void 0 ? void 0 : _l.serviceName) !== null && _m !== void 0 ? _m : evaluatedAdditionalResourceAttributes["service.name"]) !== null && _o !== void 0 ? _o : constants_1.Defaults.DEFAULT_SERVICE_NAME, "service.instance.id": (_s = (_r = (_p = evaluatedAdditionalResourceAttributes.serviceId) !== null && _p !== void 0 ? _p : (_q = this.settings) === null || _q === void 0 ? void 0 : _q.serviceId) !== null && _r !== void 0 ? _r : evaluatedAdditionalResourceAttributes["service.instance.id"]) !== null && _s !== void 0 ? _s : constants_1.Defaults.DEFAULT_SERVICE_ID, "service.version": (_w = (_v = (_t = evaluatedAdditionalResourceAttributes.serviceVersion) !== null && _t !== void 0 ? _t : (_u = this.settings) === null || _u === void 0 ? void 0 : _u.serviceVersion) !== null && _v !== void 0 ? _v : evaluatedAdditionalResourceAttributes["service.version"]) !== null && _w !== void 0 ? _w : constants_1.Defaults.DEFAULT_SERVICE_VERSION, platformVersion: (_z = (_x = evaluatedAdditionalResourceAttributes.platformVersion) !== null && _x !== void 0 ? _x : (_y = this.settings) === null || _y === void 0 ? void 0 : _y.platformVersion) !== null && _z !== void 0 ? _z : constants_1.Defaults.DEFAULT_PLATFORM_VERSION });
+	            providedFailed = false;
+	            const evaluatedAdditionalResourceAttributes = (_a = container_1.Container.errorlessDefined(typeof providedAdditionalResourceAttributes !== "function" ?
+	                providedAdditionalResourceAttributes :
+	                () => {
+	                    try {
+	                        return providedAdditionalResourceAttributes();
+	                    }
+	                    catch (err) {
+	                        providedFailed = true;
+	                        throw err;
+	                    }
+	                }, {})) !== null && _a !== void 0 ? _a : {};
+	            return Object.assign(Object.assign({}, evaluatedAdditionalResourceAttributes), { "telemetry.distro.name": "io.insights", "telemetry.distro.version": package_json_1.default.version, user: (_e = (_c = (_b = evaluatedAdditionalResourceAttributes.userId) !== null && _b !== void 0 ? _b : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _c !== void 0 ? _c : (_d = this.settings) === null || _d === void 0 ? void 0 : _d.userId) !== null && _e !== void 0 ? _e : constants_1.Defaults.DEFAULT_USER, "user.id": (_j = (_g = (_f = evaluatedAdditionalResourceAttributes.userId) !== null && _f !== void 0 ? _f : evaluatedAdditionalResourceAttributes["user.id"]) !== null && _g !== void 0 ? _g : (_h = this.settings) === null || _h === void 0 ? void 0 : _h.userId) !== null && _j !== void 0 ? _j : constants_1.Defaults.DEFAULT_USER, "service.name": (_o = (_l = (_k = evaluatedAdditionalResourceAttributes.serviceName) !== null && _k !== void 0 ? _k : evaluatedAdditionalResourceAttributes["service.name"]) !== null && _l !== void 0 ? _l : (_m = this.settings) === null || _m === void 0 ? void 0 : _m.serviceName) !== null && _o !== void 0 ? _o : constants_1.Defaults.DEFAULT_SERVICE_NAME, "service.instance.id": (_s = (_q = (_p = evaluatedAdditionalResourceAttributes.serviceId) !== null && _p !== void 0 ? _p : evaluatedAdditionalResourceAttributes["service.instance.id"]) !== null && _q !== void 0 ? _q : (_r = this.settings) === null || _r === void 0 ? void 0 : _r.serviceId) !== null && _s !== void 0 ? _s : constants_1.Defaults.DEFAULT_SERVICE_ID, "service.version": (_w = (_u = (_t = evaluatedAdditionalResourceAttributes.serviceVersion) !== null && _t !== void 0 ? _t : evaluatedAdditionalResourceAttributes["service.version"]) !== null && _u !== void 0 ? _u : (_v = this.settings) === null || _v === void 0 ? void 0 : _v.serviceVersion) !== null && _w !== void 0 ? _w : constants_1.Defaults.DEFAULT_SERVICE_VERSION, platformVersion: (_z = (_x = evaluatedAdditionalResourceAttributes.platformVersion) !== null && _x !== void 0 ? _x : (_y = this.settings) === null || _y === void 0 ? void 0 : _y.platformVersion) !== null && _z !== void 0 ? _z : constants_1.Defaults.DEFAULT_PLATFORM_VERSION });
 	        };
+	        // resource attributes given as a plain object are resolved once, to a plain object; given as
+	        // a function, the function is asked once, on the first read, and its answer kept (stable).
+	        // The SDK makes its resource once, at its creation, so the attributes are what they were
+	        // then anyway - and the readers that look at them on every span (the filtering context, the
+	        // sampler) now see the same values without evaluating and flattening them every time
+	        this.settings.additionalResourceAttributes =
+	            typeof providedAdditionalResourceAttributes === "function" ?
+	                Builder.stable(resourceAttributes, () => !providedFailed) :
+	                resourceAttributes();
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings);
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.logs);
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.metrics);
 	        Builder.maybeAddResourceAttributesToAttributes(this.settings.traces);
-	        // Builder.propagateAttributeDownEx("useSSOAuth", this.settings);
-	        // Builder.propagateAttributeDownEx("useSSOAuthRawToken", this.settings);
-	        Builder.propagateAttributesDownEx("headers", this.settings);
 	        Builder.propagateAttributesDownEx("additionalAttributes", this.settings);
 	        Builder.propagateAttributesDownEx("additionalResourceAttributes", this.settings);
+	        Builder.propagateAttributeSettingsDown(this.settings);
 	        const metricsBuilder = (_g = this.metricsBuilder) !== null && _g !== void 0 ? _g : this.withMetrics();
 	        const metrics = metricsBuilder
 	            .withLogger(this.logger)
@@ -12492,6 +10412,7 @@ function requireBuilder () {
 	            .withLogger(this.logger)
 	            .withSettings(this.settings)
 	            .withMetrics(metrics)
+	            .withInterop(this.interop)
 	            .build();
 	        _1.Traces.instance = traces;
 	        const logsBuilder = (_j = this.logsBuilder) !== null && _j !== void 0 ? _j : this.withLogs();
@@ -12520,10 +10441,101 @@ function requireBuilder () {
 	            return;
 	        }
 	        const providedOtel = (_a = otelSettings[k]) !== null && _a !== void 0 ? _a : {};
-	        const provided = (_b = settings[k]) !== null && _b !== void 0 ? _b : {};
-	        settings[k] = () => {
-	            var _a, _b, _c;
-	            return ((0, _1.flattenOtelAtributes)(Object.assign(Object.assign({}, container_1.Container.errorless(providedOtel)), container_1.Container.errorless(provided)), (_c = (_a = settings.maxAttributeDepth) !== null && _a !== void 0 ? _a : (_b = settings.defaults) === null || _b === void 0 ? void 0 : _b.maxAttributeDepth) !== null && _c !== void 0 ? _c : 5));
+	        let provided = (_b = settings[k]) !== null && _b !== void 0 ? _b : {};
+	        if (k === "additionalResourceAttributes" && typeof provided === "function") {
+	            provided = Builder.stable(provided);
+	        }
+	        settings[k] = Builder.mergeAttributeLevels(providedOtel, provided, () => { var _a, _b, _c; return (_c = (_a = settings.maxAttributeDepth) !== null && _a !== void 0 ? _a : (_b = settings.defaults) === null || _b === void 0 ? void 0 : _b.maxAttributeDepth) !== null && _c !== void 0 ? _c : 5; });
+	    }
+	    /**
+	     * A function asked once: the first read calls `func` and every read gets that answer. A read
+	     * that throws is not kept - the next read asks again - and neither is one `keep` says no to
+	     * (an answer put together without a part that failed). Marks the function for
+	     * `mergeAttributeLevels`, which treats it as a static level once it has its answer.
+	     */
+	    static stable(func, keep) {
+	        let answer;
+	        const once = () => {
+	            if (answer !== undefined && answer !== null) {
+	                return answer;
+	            }
+	            const value = func();
+	            if (!keep || keep()) {
+	                answer = value;
+	            }
+	            return value;
+	        };
+	        once.ioInsightsStable = true;
+	        once.ioInsightsSettled = () => answer !== undefined && answer !== null;
+	        return once;
+	    }
+	    static isStable(value) {
+	        return typeof value === "function" && value.ioInsightsStable === true;
+	    }
+	    /**
+	     * The flattened union of two attribute levels - the top-level settings' and a signal's own,
+	     * the signal's winning on a key - as the function the managers read on every span, metric
+	     * and log. A level given as a plain object, or as a stable function (`Builder.stable`), is
+	     * flattened once and the result reused; with both levels static the function hands out the
+	     * same object on every read (the readers spread it, nobody writes to it). A level given as
+	     * any other function is called, and its answer flattened, on every read, as before - it may
+	     * answer differently each time. The result is the same as flattening the merged levels in
+	     * one go: a key the signal's level sets replaces the top level's whole value, nested entries
+	     * included.
+	     */
+	    static mergeAttributeLevels(providedOtel, provided, maxDepth) {
+	        const level = (value) => {
+	            const isStatic = typeof value !== "function" || Builder.isStable(value);
+	            let cached;
+	            // A function that threw (errorlessMode answers nothing for it then) has not given its
+	            // answer yet: what is read for it this time - nothing - is not kept, so the next read
+	            // asks again. A stable function does the same on its side (Builder.stable).
+	            let failed = false;
+	            return {
+	                isStatic,
+	                failed: () => failed,
+	                raw: () => {
+	                    var _a, _b;
+	                    const answer = container_1.Container.errorless(value);
+	                    failed = typeof value === "function" && (answer === undefined ||
+	                        answer === null ||
+	                        ((_b = (_a = value).ioInsightsSettled) === null || _b === void 0 ? void 0 : _b.call(_a)) === false);
+	                    return answer !== null && answer !== void 0 ? answer : {};
+	                },
+	                flat: (raw, depth) => {
+	                    if (isStatic && (cached === null || cached === void 0 ? void 0 : cached.depth) === depth) {
+	                        return cached.flat;
+	                    }
+	                    const flat = (0, _1.flattenOtelAtributes)(raw, depth);
+	                    if (isStatic && !failed) {
+	                        cached = { depth, flat };
+	                    }
+	                    return flat;
+	                }
+	            };
+	        };
+	        const top = level(providedOtel);
+	        const own = level(provided);
+	        const overlap = (a, b) => Object.keys(b).some((key) => Object.prototype.hasOwnProperty.call(a, key));
+	        let merged;
+	        return () => {
+	            const depth = maxDepth();
+	            if (top.isStatic && own.isStatic) {
+	                if ((merged === null || merged === void 0 ? void 0 : merged.depth) !== depth) {
+	                    const flat = (0, _1.flattenOtelAtributes)(Object.assign(Object.assign({}, top.raw()), own.raw()), depth);
+	                    if (top.failed() || own.failed()) {
+	                        return flat;
+	                    }
+	                    merged = { depth, flat };
+	                }
+	                return merged.flat;
+	            }
+	            const topRaw = top.raw();
+	            const ownRaw = own.raw();
+	            if (overlap(topRaw, ownRaw)) {
+	                return (0, _1.flattenOtelAtributes)(Object.assign(Object.assign({}, topRaw), ownRaw), depth);
+	            }
+	            return Object.assign(Object.assign({}, top.flat(topRaw, depth)), own.flat(ownRaw, depth));
 	        };
 	    }
 	    static propagateAttributesDownEx(k, otelSettings) {
@@ -12531,11 +10543,63 @@ function requireBuilder () {
 	        Builder.propagateAttributesDown(k, otelSettings, otelSettings.metrics);
 	        Builder.propagateAttributesDown(k, otelSettings, otelSettings.traces);
 	    }
+	    /**
+	     * The top-level `attributeSettings` become the least specific level of the traces'
+	     * (`TracesSettings.attributeSettings`, under the span filters') and of the metrics'
+	     * (`defaultPublishingSettings.attributeSettings`, under the metrics' and the filters'): the
+	     * levels merge by attribute name, the more specific one having the last word on an attribute.
+	     * What the traces settings inherit is remembered on them (`inheritAttributeSettings`): the
+	     * traces manager hands the trace metrics what the traces level set itself only - the metrics
+	     * have the top level as their own least specific level, under the settings of each metric.
+	     */
+	    static propagateAttributeSettingsDown(otelSettings) {
+	        var _a;
+	        // (not in the public typings - see TopLevelAttributeSettings)
+	        const top = otelSettings.attributeSettings;
+	        const topMode = otelSettings.attributeSettingsMode;
+	        if (!(top && typeof top === "object") && !topMode) {
+	            return;
+	        }
+	        if (otelSettings.traces) {
+	            (0, attributeSettings_1.inheritAttributeSettings)(otelSettings.traces, top, topMode);
+	        }
+	        if (otelSettings.metrics) {
+	            const defaults = otelSettings.metrics.defaultPublishingSettings;
+	            otelSettings.metrics.defaultPublishingSettings = Object.assign(Object.assign(Object.assign({}, defaults), (top ? { attributeSettings: Object.assign(Object.assign({}, top), defaults === null || defaults === void 0 ? void 0 : defaults.attributeSettings) } : {})), { attributeSettingsMode: (_a = defaults === null || defaults === void 0 ? void 0 : defaults.attributeSettingsMode) !== null && _a !== void 0 ? _a : topMode });
+	        }
+	    }
+	    /**
+	     * The masking settings, resolved to the effective secret (`maskSecret`): the traces and the
+	     * metrics read them from here, so a value masks to the same string on a span and on a metric.
+	     */
+	    static resolveMaskingSettings(otelSettings) {
+	        otelSettings.maskingSettings = Object.assign(Object.assign({}, otelSettings.maskingSettings), { maskSecret: (0, attributeSettings_1.resolveMaskSecret)(otelSettings.maskingSettings) });
+	    }
 	    static maybeAddResourceAttributesToAttributes(settings) {
 	        if (settings === null || settings === void 0 ? void 0 : settings.addResourceAttributesToAttributes) {
 	            const providedAdditionalResourceAttributes = settings.additionalResourceAttributes;
 	            const providedAdditionalAttributes = settings.additionalAttributes;
-	            settings.additionalAttributes = () => (Object.assign(Object.assign({}, container_1.Container.errorless(providedAdditionalResourceAttributes)), container_1.Container.errorless(providedAdditionalAttributes)));
+	            // whether the last merge was put together without its resource part: the resource
+	            // attributes function threw (errorlessMode answers nothing for it then) - a signal's own
+	            // function - or it is the stable function of the build, whose answer was made without the
+	            // function it wraps and is not kept there either (ioInsightsSettled)
+	            let resourceFailed = false;
+	            const merge = () => {
+	                var _a, _b;
+	                const resourceAttributes = container_1.Container.errorless(providedAdditionalResourceAttributes);
+	                resourceFailed = typeof providedAdditionalResourceAttributes === "function" && (resourceAttributes === undefined ||
+	                    resourceAttributes === null ||
+	                    ((_b = (_a = providedAdditionalResourceAttributes).ioInsightsSettled) === null || _b === void 0 ? void 0 : _b.call(_a)) === false);
+	                return Object.assign(Object.assign({}, resourceAttributes), container_1.Container.errorless(providedAdditionalAttributes));
+	            };
+	            // two plain objects merge once, into a plain object; a resource function (asked once, see
+	            // build) under static attributes merges once, on the first read - the first one that has
+	            // the function's answer: a merge made without it is not kept, the next read asks again,
+	            // as the resource itself does
+	            settings.additionalAttributes =
+	                typeof providedAdditionalAttributes === "function" ? merge
+	                    : typeof providedAdditionalResourceAttributes === "function" ? Builder.stable(merge, () => !resourceFailed)
+	                        : merge();
 	        }
 	    }
 	}
@@ -12660,6 +10724,9 @@ function requireMetricsDependencyBuilder () {
 	        this.instanceReadyHandler = () => () => { };
 	        this.instanceErrorHandler = () => () => { };
 	        this.instanceCrashHandler = () => () => { };
+	        this.instanceHangHandler = () => () => { };
+	        this.instanceLoadFailedHandler = () => () => { };
+	        this.instanceReloadHandler = () => () => { };
 	        this.layoutRestoredHandler = () => () => { };
 	        this.platformStartedHandler = () => () => { };
 	        this.platformErrorHandler = () => () => { };
@@ -12686,6 +10753,9 @@ function requireMetricsDependencyBuilder () {
 	            instanceFocusedHandler: this.instanceFocusedHandler,
 	            instanceErrorHandler: this.instanceErrorHandler,
 	            instanceCrashHandler: this.instanceCrashHandler,
+	            instanceHangHandler: this.instanceHangHandler,
+	            instanceLoadFailedHandler: this.instanceLoadFailedHandler,
+	            instanceReloadHandler: this.instanceReloadHandler,
 	            layoutRestoredHandler: this.layoutRestoredHandler,
 	            platformStartedHandler: this.platformStartedHandler,
 	            platformErrorHandler: this.platformErrorHandler,
@@ -12729,6 +10799,18 @@ function requireMetricsDependencyBuilder () {
 	        this.instanceCrashHandler = instanceCrashHandler;
 	        return this;
 	    }
+	    withInstanceHangHandler(instanceHangHandler) {
+	        this.instanceHangHandler = instanceHangHandler;
+	        return this;
+	    }
+	    withInstanceLoadFailedHandler(instanceLoadFailedHandler) {
+	        this.instanceLoadFailedHandler = instanceLoadFailedHandler;
+	        return this;
+	    }
+	    withInstanceReloadHandler(instanceReloadHandler) {
+	        this.instanceReloadHandler = instanceReloadHandler;
+	        return this;
+	    }
 	    withLayoutRestoredHandler(layoutRestoredHandler) {
 	        this.layoutRestoredHandler = layoutRestoredHandler;
 	        return this;
@@ -12766,6 +10848,9 @@ function requireMetricsDependencyBuilder () {
 	        this.performanceProvider = perfProvider;
 	        return this;
 	    }
+	    /**
+	     * @deprecated Use withWorkspaceStartupHandler
+	     */
 	    withWorkspaceRestoredHandler(workspaceRestoredHandler) {
 	        this.workspaceRestoredHandler = workspaceRestoredHandler;
 	        this.workspaceStartedHandler = () => () => { };
@@ -12803,6 +10888,1299 @@ function requireMetricsDependencyBuilder () {
 	metricsDependencyBuilder.MetricsDependencyBuilder = MetricsDependencyBuilder;
 	
 	return metricsDependencyBuilder;
+}
+
+var bufferingTracesManager = {};
+
+var bufferingTracingState = {};
+
+var hasRequiredBufferingTracingState;
+
+function requireBufferingTracingState () {
+	if (hasRequiredBufferingTracingState) return bufferingTracingState;
+	hasRequiredBufferingTracingState = 1;
+	Object.defineProperty(bufferingTracingState, "__esModule", { value: true });
+	bufferingTracingState.syntheticSpanContext = syntheticSpanContext;
+	bufferingTracingState.spanContextKey = spanContextKey;
+	bufferingTracingState.createRecordedSpan = createRecordedSpan;
+	// a Date, a number, or an HrTime - as opposed to the attributes addEvent() takes in the same position
+	function isTimeInput(value) {
+	    return value instanceof Date ||
+	        typeof value === "number" ||
+	        (Array.isArray(value) && value.length === 2 && typeof value[0] === "number" && typeof value[1] === "number");
+	}
+	function randomHex(bytes) {
+	    let out = "";
+	    for (let i = 0; i < bytes * 2; i++) {
+	        out += Math.floor(Math.random() * 16).toString(16);
+	    }
+	    return out;
+	}
+	/**
+	 * The synthetic traceparent identifies a buffered span to the buffer, so that code passing the
+	 * propagation info of one span to another (manual nesting) keeps working before there are real
+	 * spans. No real span will ever have its ids: handed to ANOTHER process - an application being
+	 * started, the headers of a request - it would make that process parent its telemetry to a trace
+	 * that does not exist.
+	 *
+	 * So the traceparent is not enumerable. Reading it off the object works, which is all the buffer
+	 * needs; whatever copies or serializes the object - a spread, JSON, the structured clone of an IPC
+	 * message, environment variables - comes out without it, and the other side starts a trace of its
+	 * own, the same as it would with no propagation info at all.
+	 */
+	function createSyntheticPropagationInfo() {
+	    const propagationInfo = {};
+	    Object.defineProperty(propagationInfo, "traceparent", {
+	        value: `00-${randomHex(16)}-${randomHex(8)}-01`,
+	        enumerable: false,
+	        writable: false,
+	        configurable: false,
+	    });
+	    return propagationInfo;
+	}
+	/**
+	 * The span context the synthetic traceparent stands for: what a link to a buffered span is made
+	 * with while buffering. Like the traceparent, it means something inside this process only - the
+	 * replay rewrites the links made with it to the real span's context (see
+	 * BufferingTracesManager.replayInto).
+	 */
+	function syntheticSpanContext(node) {
+	    var _a;
+	    const [, traceId, spanId] = ((_a = node.syntheticPropagationInfo.traceparent) !== null && _a !== void 0 ? _a : "").split("-");
+	    return { traceId, spanId, traceFlags: 1 /* TraceFlags.SAMPLED */ };
+	}
+	/** What tells one span context from another: the ids. */
+	function spanContextKey(context) {
+	    return context.traceId + ":" + context.spanId;
+	}
+	/**
+	 * Creates a fresh {@link RecordedSpan} with a synthetic W3C traceparent.
+	 */
+	function createRecordedSpan(source, filteringContext, explicitPropagationInfo, options, startTime) {
+	    return {
+	        source,
+	        filteringContext,
+	        explicitPropagationInfo,
+	        options,
+	        startTime,
+	        events: [],
+	        addedData: [],
+	        exceptions: [],
+	        links: [],
+	        children: [],
+	        syntheticPropagationInfo: createSyntheticPropagationInfo(),
+	    };
+	}
+	/**
+	 * A no-op-for-OTEL TracingState that records everything into a {@link RecordedSpan}
+	 * instead of writing to a live span. Verbosity/level filtering is intentionally
+	 * NOT applied here (the real level isn't known until settings are loaded) — every
+	 * addData call is recorded and filtered when replayed by the real TracingState.
+	 * Data given as a function is not computed here for the same reason: the function
+	 * is what is recorded, and the real TracingState calls it at the replay if the
+	 * span records its level.
+	 */
+	class BufferingTracingState {
+	    constructor(node, disablePropagation) {
+	        this.node = node;
+	        this.disablePropagation = disablePropagation;
+	        this.hasEnded = false;
+	        // The buffer is only ever populated when recording is desired, so it always
+	        // reports as recording — otherwise instrumented code would skip gathering the
+	        // attributes we want to replay.
+	        this.enabled = true;
+	        // Cosmetic during buffering: real verbosity filtering happens at replay.
+	        this.level = "LOWEST";
+	    }
+	    get source() {
+	        return this.node.source;
+	    }
+	    set source(value) {
+	        this.node.source = value;
+	    }
+	    get startTime() {
+	        return this.node.startTime;
+	    }
+	    get endTime() {
+	        var _a, _b;
+	        // (a span kept open on the real span at the replay ends there - see liveTs)
+	        return (_a = this.node.endTime) !== null && _a !== void 0 ? _a : (_b = this.node.liveTs) === null || _b === void 0 ? void 0 : _b.endTime;
+	    }
+	    get id() {
+	        var _a, _b;
+	        return (_b = (_a = this.getPropagationInfo()) === null || _a === void 0 ? void 0 : _a.traceparent) === null || _b === void 0 ? void 0 : _b.split("-")[2];
+	    }
+	    get traceId() {
+	        var _a, _b;
+	        return (_b = (_a = this.getPropagationInfo()) === null || _a === void 0 ? void 0 : _a.traceparent) === null || _b === void 0 ? void 0 : _b.split("-")[1];
+	    }
+	    set status(status) {
+	        this.node.status = Object.assign({}, status);
+	        if (this.node.liveTs) {
+	            this.node.liveTs.status = Object.assign({}, status);
+	        }
+	    }
+	    get status() {
+	        var _a;
+	        return (_a = this.node.status) !== null && _a !== void 0 ? _a : { code: 0 /* SpanStatusCode.UNSET */ };
+	    }
+	    end() {
+	        void this.endSpan();
+	    }
+	    endSpan(endTime, allowDoubleEnd) {
+	        var _a, _b;
+	        if (this.node.liveTs) {
+	            this.hasEnded = true;
+	            // (the end of the real span, as seen through this state - see the endTime getter)
+	            this.node.endTime = (_b = (_a = this.node.endTime) !== null && _a !== void 0 ? _a : endTime) !== null && _b !== void 0 ? _b : new Date();
+	            return this.node.liveTs.endSpan(endTime, allowDoubleEnd);
+	        }
+	        if (this.hasEnded && !allowDoubleEnd) {
+	            return Promise.resolve();
+	        }
+	        if (!this.hasEnded) {
+	            this.hasEnded = true;
+	            this.node.endTime = endTime !== null && endTime !== void 0 ? endTime : new Date();
+	        }
+	        return Promise.resolve();
+	    }
+	    // Once the span has been replayed, what is recorded on it goes to the real span it was kept
+	    // open on (node.liveTs) - or nowhere, when it was published as ended: it could never be
+	    // published anymore, and must not be collected for as long as the code holding this state runs.
+	    addEvent(name, attributesOrStartTime, startTime) {
+	        if (this.node.liveTs) {
+	            this.node.liveTs.addEvent(name, attributesOrStartTime, startTime);
+	        }
+	        else if (!this.node.replayed) {
+	            // Stamped now, unless the caller said when: the replay happens later - a whole login screen
+	            // later, with a late init - and the event would otherwise be published as happening then,
+	            // after the span it belongs to has ended.
+	            this.node.events.push({
+	                name,
+	                attributesOrStartTime,
+	                startTime: startTime !== null && startTime !== void 0 ? startTime : (isTimeInput(attributesOrStartTime) ? undefined : new Date()),
+	            });
+	        }
+	        return this;
+	    }
+	    recordException(exception, time) {
+	        if (this.node.liveTs) {
+	            this.node.liveTs.recordException(exception, time);
+	        }
+	        else if (!this.node.replayed) {
+	            // (stamped now, for the same reason as events)
+	            this.node.exceptions.push({ exception, time: time !== null && time !== void 0 ? time : new Date() });
+	        }
+	    }
+	    addLink(link) {
+	        var _a, _b;
+	        if (this.node.liveTs) {
+	            // (the tracing state of a traces manager of an earlier version has no addLink)
+	            (_b = (_a = this.node.liveTs).addLink) === null || _b === void 0 ? void 0 : _b.call(_a, link);
+	        }
+	        else if (!this.node.replayed) {
+	            this.node.links.push(link);
+	        }
+	        return this;
+	    }
+	    isRecording() {
+	        if (this.node.liveTs) {
+	            return this.node.liveTs.isRecording();
+	        }
+	        return !this.hasEnded && !this.node.replayed;
+	    }
+	    updateName(name) {
+	        var _a;
+	        this.node.updatedName = name;
+	        this.node.source = name;
+	        (_a = this.node.liveTs) === null || _a === void 0 ? void 0 : _a.updateName(name);
+	        return this;
+	    }
+	    // What a link to this span is made with: the synthetic context while buffering - the replay
+	    // rewrites such links to the real span's - and the real span's once replayed, or undefined when
+	    // no real span came out of the replay.
+	    spanContext() {
+	        const real = this.node.replayedSpanContext;
+	        return real === undefined ? syntheticSpanContext(this.node) : real !== null && real !== void 0 ? real : undefined;
+	    }
+	    addData(level, data) {
+	        if (this.node.liveTs) {
+	            this.node.liveTs.addData(level, data);
+	            return;
+	        }
+	        if (this.node.replayed) {
+	            return;
+	        }
+	        // (a function is kept as it is, and not called: data given as a function is computed only
+	        // for a span that records its level, which the real tracing state decides at the replay -
+	        // called here, a DEBUG value would be worked out for nothing, and could throw into the
+	        // caller, on every span of the startup)
+	        this.node.addedData.push({ level, data });
+	    }
+	    getPropagationInfo() {
+	        var _a;
+	        // Once replayed, the synthetic propagation info means nothing to anyone: hand out that of the
+	        // real span instead - null when no real span came out of the replay, rather than a
+	        // traceparent that points nowhere.
+	        return this.node.replayed ?
+	            (_a = this.node.replayedPropagationInfo) !== null && _a !== void 0 ? _a : null :
+	            this.node.syntheticPropagationInfo;
+	    }
+	    injectPropagationInfo(carrier) {
+	        const propagationInfo = this.getPropagationInfo();
+	        if (!this.disablePropagation && propagationInfo) {
+	            carrier.__interopIOTracePropagationInfo = propagationInfo;
+	        }
+	    }
+	}
+	bufferingTracingState.default = BufferingTracingState;
+	
+	return bufferingTracingState;
+}
+
+var spanFilters = {};
+
+var hasRequiredSpanFilters;
+
+function requireSpanFilters () {
+	if (hasRequiredSpanFilters) return spanFilters;
+	hasRequiredSpanFilters = 1;
+	(function (exports$1) {
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.isFilterMatch = exports$1.isFilterContextValueMatch = exports$1.isFilterSourceMatch = exports$1.findMatchingFilters = void 0;
+		const otelUtils_1 = requireOtelUtils();
+		// The matching of span filters (`TracesSettings.filters`, the default filters) against a span -
+		// its source and its filtering context. Used by the traces manager of @interopio/insights-traces
+		// for every span, and by the startup span buffer (BufferingTracesManager) for the filters that
+		// disable spans.
+		const findMatchingFilters = (filters, filteringContext, source) => {
+		    let foundAny = false;
+		    const toReturn = {};
+		    const keysOfSpanFilter = {
+		        source: "",
+		        context: {},
+		        enabled: false,
+		        stopPropagationIfSpanIsDisabled: false,
+		        level: "INFO",
+		        addContextToTrace: false,
+		        autoSetSuccessStatus: false,
+		        sample: 0,
+		        disablePropagation: false,
+		        disableNesting: false,
+		        linkToParent: false,
+		        countMetric: false,
+		        countMetricOnDisabledSpans: false,
+		        resultMetric: false,
+		        resultMetricOnDisabledSpans: false,
+		        durationMetric: false,
+		        durationMetricOnDisabledSpans: false,
+		        canBeRoot: false,
+		        maxAttributeDepth: 0,
+		        forceChildTracing: false,
+		        otelSpanOptions: {},
+		        minDurationMs: 0,
+		        log: false,
+		        overrideDefaultFilters: false,
+		        injectOTELHeaders: false,
+		        forceStatus: 0,
+		        attributeSettings: {},
+		        attributeSettingsMode: "blocklist"
+		    };
+		    for (const filter of filters) {
+		        if ((0, exports$1.isFilterMatch)(filter, filteringContext, source)) {
+		            foundAny = true;
+		            for (const key of Object.keys(keysOfSpanFilter)) {
+		                // the attribute settings of the matching filters merge by attribute name, the first
+		                // matching filter having the last word on an attribute
+		                if (key === "attributeSettings") {
+		                    if (filter.attributeSettings) {
+		                        toReturn.attributeSettings = Object.assign(Object.assign({}, filter.attributeSettings), toReturn.attributeSettings);
+		                    }
+		                    continue;
+		                }
+		                if (toReturn[key] === undefined) {
+		                    toReturn[key] = filter[key];
+		                }
+		            }
+		        }
+		    }
+		    if (foundAny) {
+		        return toReturn;
+		    }
+		    else {
+		        return undefined;
+		    }
+		};
+		exports$1.findMatchingFilters = findMatchingFilters;
+		// The span filters' regular expressions ("#..." sources and context values), compiled once.
+		// Every withSpan call matches every filter against the span, and compiling a RegExp per
+		// expression per span was a visible part of the per-span cost. The patterns come from the
+		// configuration, so the cache stays small; it is emptied, not grown, past the cap.
+		const MAX_CACHED_REGEXPS = 1000;
+		const compiledRegExps = new Map();
+		const filterRegExp = (pattern) => {
+		    let compiled = compiledRegExps.get(pattern);
+		    if (!compiled) {
+		        compiled = new RegExp(pattern, "i");
+		        if (compiledRegExps.size >= MAX_CACHED_REGEXPS) {
+		            compiledRegExps.clear();
+		        }
+		        compiledRegExps.set(pattern, compiled);
+		    }
+		    return compiled;
+		};
+		/**
+		 * Whether the `source` of a filter matches the source of a span: the same source, or a source
+		 * under it ("io.api" matches "io.api.foo"; "io.api.foo." matches "io.api.foo" only) - or, for
+		 * a "#..." source, the regular expression (case-insensitive). A filter without a source
+		 * matches every source.
+		 */
+		const isFilterSourceMatch = (filterSource, source) => {
+		    if (filterSource && filterSource.startsWith("#")) {
+		        return filterRegExp(filterSource.substring(1)).test(source);
+		    }
+		    return !filterSource ||
+		        // "io.api.foo" matches filter "io.api.foo"
+		        source === filterSource ||
+		        // "io.api.foo" matches filter "io.api"
+		        source.startsWith(filterSource + ".") ||
+		        // "io.api.foo" matches filter "io.api.foo."
+		        // "io.api.foo.bar" doesn't match filter "io.api.foo."
+		        source + "." === filterSource;
+		};
+		exports$1.isFilterSourceMatch = isFilterSourceMatch;
+		/**
+		 * Whether a value of the filtering context is what a filter's context asks for under the same
+		 * key: the very value - or, for a "#..." string, a value the regular expression matches
+		 * (case-insensitive; a value that is not there never does).
+		 */
+		const isFilterContextValueMatch = (required, provided) => {
+		    if (typeof required === "string" && required[0] === "#") {
+		        return provided !== null &&
+		            provided !== undefined &&
+		            filterRegExp(required.substring(1)).test(provided + "");
+		    }
+		    return required === provided;
+		};
+		exports$1.isFilterContextValueMatch = isFilterContextValueMatch;
+		const isFilterMatch = (filter, filteringContext, source) => {
+		    if (!(0, exports$1.isFilterSourceMatch)(filter.source, source)) {
+		        return 0;
+		    }
+		    if (!filter.context) {
+		        return 1;
+		    }
+		    for (const key of Object.keys(filter.context)) {
+		        // every key of the filter's context has to match
+		        if (!(0, exports$1.isFilterContextValueMatch)(filter.context[key], (0, otelUtils_1.deep_value)(filteringContext, key))) {
+		            return 0;
+		        }
+		    }
+		    return 2;
+		};
+		exports$1.isFilterMatch = isFilterMatch;
+		
+	} (spanFilters));
+	return spanFilters;
+}
+
+var hasRequiredBufferingTracesManager;
+
+function requireBufferingTracesManager () {
+	if (hasRequiredBufferingTracesManager) return bufferingTracesManager;
+	hasRequiredBufferingTracesManager = 1;
+	var __createBinding = (bufferingTracesManager && bufferingTracesManager.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    var desc = Object.getOwnPropertyDescriptor(m, k);
+	    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+	      desc = { enumerable: true, get: function() { return m[k]; } };
+	    }
+	    Object.defineProperty(o, k2, desc);
+	}) : (function(o, m, k, k2) {
+	    if (k2 === undefined) k2 = k;
+	    o[k2] = m[k];
+	}));
+	var __setModuleDefault = (bufferingTracesManager && bufferingTracesManager.__setModuleDefault) || (Object.create ? (function(o, v) {
+	    Object.defineProperty(o, "default", { enumerable: true, value: v });
+	}) : function(o, v) {
+	    o["default"] = v;
+	});
+	var __importStar = (bufferingTracesManager && bufferingTracesManager.__importStar) || (function () {
+	    var ownKeys = function(o) {
+	        ownKeys = Object.getOwnPropertyNames || function (o) {
+	            var ar = [];
+	            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+	            return ar;
+	        };
+	        return ownKeys(o);
+	    };
+	    return function (mod) {
+	        if (mod && mod.__esModule) return mod;
+	        var result = {};
+	        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+	        __setModuleDefault(result, mod);
+	        return result;
+	    };
+	})();
+	var __awaiter = (bufferingTracesManager && bufferingTracesManager.__awaiter) || function (thisArg, _arguments, P, generator) {
+	    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+	    return new (P || (P = Promise))(function (resolve, reject) {
+	        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+	        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+	        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+	        step((generator = generator.apply(thisArg, _arguments || [])).next());
+	    });
+	};
+	var __importDefault = (bufferingTracesManager && bufferingTracesManager.__importDefault) || function (mod) {
+	    return (mod && mod.__esModule) ? mod : { "default": mod };
+	};
+	Object.defineProperty(bufferingTracesManager, "__esModule", { value: true });
+	bufferingTracesManager.BufferingTracesManager = void 0;
+	const nullManager_1 = requireNullManager$1();
+	const otelUtils_1 = requireOtelUtils();
+	const bufferingTracingState_1 = __importStar(requireBufferingTracingState());
+	const nullTracingState_1 = __importDefault(requireNullTracingState());
+	const spanFilters_1 = requireSpanFilters();
+	// how a trace filter matches a span, as far as the buffer can tell - see matchFilter
+	const NO_MATCH = 0;
+	const MAY_MATCH = 1;
+	const MATCH = 2;
+	/**
+	 * Whether a place a span's options come from - a trace filter, the span's own options - asks
+	 * for something of the span when it is DISABLED: to be counted in a trace metric
+	 * (`countMetricOnDisabledSpans`, `resultMetricOnDisabledSpans`, `durationMetricOnDisabledSpans`),
+	 * to be logged (`log.onDisabledSpans`), or to cut the propagation to what is created inside it
+	 * (`stopPropagationIfSpanIsDisabled`). All of it is the real manager's doing, at the replay: a
+	 * span a filter disables is only left out of the buffer when nothing asks for any of it.
+	 */
+	const asksOfDisabledSpans = (place) => !!place && typeof place === "object" && (!!place.countMetricOnDisabledSpans ||
+	    !!place.resultMetricOnDisabledSpans ||
+	    !!place.durationMetricOnDisabledSpans ||
+	    !!place.stopPropagationIfSpanIsDisabled ||
+	    (!!place.log && typeof place.log === "object" && !!place.log.onDisabledSpans));
+	/**
+	 * The tracing state of a span the buffer does not record, because a trace filter disables it:
+	 * what the real manager gives the callback of a disabled span. Everything can be called on it
+	 * and nothing is kept; the propagation info is that of the nearest recorded ancestor - the
+	 * synthetic one while buffering, the real span's once replayed - or the one the span was given
+	 * when there is no such ancestor, so that whatever is nested under it by hand ends up where the
+	 * replay would have put it.
+	 */
+	class UnrecordedTracingState extends nullTracingState_1.default {
+	    constructor(source, ancestor, givenPropagationInfo, noPropagation) {
+	        super(source, null, noPropagation, undefined);
+	        this.ancestor = ancestor;
+	        this.givenPropagationInfo = givenPropagationInfo;
+	        this.noPropagation = noPropagation;
+	    }
+	    getPropagationInfo() {
+	        var _a;
+	        const ancestor = this.ancestor;
+	        if (!ancestor) {
+	            return this.givenPropagationInfo;
+	        }
+	        return ancestor.replayed ? (_a = ancestor.replayedPropagationInfo) !== null && _a !== void 0 ? _a : null : ancestor.syntheticPropagationInfo;
+	    }
+	    injectPropagationInfo(carrier) {
+	        const propagationInfo = this.getPropagationInfo();
+	        if (!this.noPropagation && propagationInfo) {
+	            carrier.__interopIOTracePropagationInfo = propagationInfo;
+	        }
+	    }
+	}
+	/**
+	 * The link as it goes on the real span: rewritten to the target's real context; `null` when the
+	 * target got no real span (nothing to link to); `undefined` while the target is not replayed yet.
+	 */
+	function resolveLink(link, target) {
+	    const context = target.replayedSpanContext;
+	    return context ? Object.assign(Object.assign({}, link), { context }) : context;
+	}
+	// SpanStatusCode is declared in the package index; use the raw numeric values
+	// here to avoid a circular import at module-evaluation time (index -> this file).
+	const STATUS_UNSET = 0; // SpanStatusCode.UNSET
+	const STATUS_OK = 1; // SpanStatusCode.OK
+	const STATUS_ERROR = 2; // SpanStatusCode.ERROR
+	// AsyncLocalStorage gives us automatic parent/child nesting across `await`
+	// boundaries. It only exists in Node; in a browser bundle the require fails and
+	// we fall back to a synchronous parent stack (good enough — buffering only ever
+	// runs in the Electron main process during startup).
+	let AsyncLocalStorageCtor;
+	try {
+	    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+	    AsyncLocalStorageCtor = require("async_hooks").AsyncLocalStorage;
+	}
+	catch (_a) {
+	    AsyncLocalStorageCtor = undefined;
+	}
+	/**
+	 * A stand-in TracesManager used **before** the OTEL SDK is initialized.
+	 *
+	 * It behaves like {@link NullTracesManager} for control flow — every callback is
+	 * executed and its result returned untouched — but instead of discarding the
+	 * span it records the call (timing, nesting, events, attributes, status,
+	 * exceptions) into an in-memory tree. Once the real TracesManager is available,
+	 * call {@link replayInto} to re-create the whole tree as real spans, preserving
+	 * the original start/end timestamps and nesting.
+	 *
+	 * Nesting is captured automatically via AsyncLocalStorage, so existing
+	 * `Traces.withSpan` / `@withSpan` instrumentation is buffered without any change
+	 * at the call site.
+	 *
+	 * The buffer has no settings. Given the trace filters ({@link setFilterConfig}), it leaves out
+	 * the spans a filter disables for certain - they would only be dropped by the replay - and
+	 * records everything else, for the real manager to decide: a disabled span that something is
+	 * asked of all the same (a trace metric, a log line, cutting the propagation) included.
+	 */
+	class BufferingTracesManager extends nullManager_1.NullManager {
+	    constructor(logger, maxSpans = 10000) {
+	        super();
+	        this.logger = logger;
+	        this.maxSpans = maxSpans;
+	        this.roots = [];
+	        this.piIndex = new Map();
+	        this.als = AsyncLocalStorageCtor ? new AsyncLocalStorageCtor() : undefined;
+	        this.spanCount = 0;
+	        this.dropped = 0;
+	        this._currentTracingState = null;
+	        // set once the buffer has been replayed: from then on nothing is recorded anymore
+	        this.replayDone = false;
+	        this.warnedAfterReplay = false;
+	        // the trace filters (setFilterConfig), in the two groups the real manager matches them in:
+	        // the ones that override the default filters, then the rest - the default filters a span
+	        // brings along in its options go in between
+	        this.overridingFilters = [];
+	        this.otherFilters = [];
+	        // the ones among them that ask for something of a disabled span (see asksOfDisabledSpans) -
+	        // none, as a rule, and a span a filter disables is left out without another look
+	        this.filtersAskingOfDisabledSpans = [];
+	        this.started = true;
+	    }
+	    /**
+	     * Makes the buffer the process-wide traces manager (globalThis.ioInsightsInternals.traces) -
+	     * what Traces.instance and every Container's `traces` resolve to, whichever copy of this
+	     * package they come from, and what a builder that is not `definitiveInstance` hands out
+	     * instead of building a manager of its own. So whoever initializes io.Insights while the
+	     * buffer is in charge (another library in the same process) shares the buffer, rather than
+	     * taking the spans away from it.
+	     *
+	     * The manager the buffer is eventually replayed into has to be built with `definitiveInstance`:
+	     * that is what lets it replace the buffer. Leaves an already registered manager alone.
+	     *
+	     * @returns whether the buffer is the registered manager now
+	     */
+	    registerGlobal() {
+	        var _a;
+	        globalThis.ioInsightsInternals = (_a = globalThis.ioInsightsInternals) !== null && _a !== void 0 ? _a : {};
+	        if (!globalThis.ioInsightsInternals.traces) {
+	            globalThis.ioInsightsInternals.traces = this;
+	        }
+	        return globalThis.ioInsightsInternals.traces === this;
+	    }
+	    /**
+	     * Steps down as the process-wide traces manager, if the buffer still is it. replayInto() does
+	     * this on its own; call it earlier - right before io.Insights gets initialized - when that
+	     * initialization may well come out disabled: a disabled build registers nothing, and would
+	     * find (and keep) the buffer.
+	     */
+	    releaseGlobal() {
+	        var _a;
+	        if (((_a = globalThis.ioInsightsInternals) === null || _a === void 0 ? void 0 : _a.traces) === this) {
+	            delete globalThis.ioInsightsInternals.traces;
+	        }
+	    }
+	    get settings() {
+	        // Report enabled so instrumented code doesn't short-circuit its data
+	        // gathering while we're buffering.
+	        return { enabled: true };
+	    }
+	    set settings(_value) {
+	        // no-op: buffering has no real settings
+	    }
+	    get currentTracingState() {
+	        var _a, _b;
+	        if (this.replayedInto) {
+	            return this.replayedInto.currentTracingState;
+	        }
+	        // The scope follows the span's callback across `await`s (AsyncLocalStorage), the same way
+	        // the real manager behaves with an OTEL context manager. The plain field is what is left
+	        // without AsyncLocalStorage (a browser bundle), and what an explicit assignment sets: it is
+	        // only reliable until the callback's first `await`.
+	        return (_b = (_a = this.currentScope()) === null || _a === void 0 ? void 0 : _a.ts) !== null && _b !== void 0 ? _b : this._currentTracingState;
+	    }
+	    set currentTracingState(ts) {
+	        this._currentTracingState = ts;
+	    }
+	    withSequenceSpan(source, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            return this.withSequenceSpanEx(source, source + ".start", filteringContextOrCallback, optionsOrCallback, callback);
+	        });
+	    }
+	    withSequenceSpanEx(source, _traceName, filteringContextOrCallback, optionsOrCallback, callback) {
+	        return __awaiter(this, void 0, void 0, function* () {
+	            if (this.replayedInto) {
+	                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	                return this.replayedInto.withSequenceSpanEx(source, _traceName, filteringContextOrCallback, optionsOrCallback, callback);
+	            }
+	            // No cross-process PI persistence while buffering — just record the span.
+	            return this.withSpan(source, filteringContextOrCallback, null, optionsOrCallback, callback);
+	        });
+	    }
+	    withSpan(source, filteringContextOrCallback, propagationInfoOrCallback, optionsOrCallback, callback) {
+	        var _a, _b, _c, _d, _e, _f;
+	        // Replayed, and into a real manager: the buffer is retired, but a call that still reaches it
+	        // - through a reference taken while it was in charge - is as good as one made to the real
+	        // manager, and goes there. (Any code that resolves the manager at call time, Traces.withSpan
+	        // above all, does not get here: the buffer stepped down as the process-wide manager.)
+	        if (this.replayedInto) {
+	            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	            return this.replayedInto.withSpan(source, filteringContextOrCallback, propagationInfoOrCallback, optionsOrCallback, callback);
+	        }
+	        const actualCallback = typeof filteringContextOrCallback === "function" ? filteringContextOrCallback
+	            : typeof propagationInfoOrCallback === "function" ? propagationInfoOrCallback
+	                : typeof optionsOrCallback === "function" ? optionsOrCallback
+	                    : callback;
+	        if (typeof actualCallback !== "function") {
+	            throw new Error("Callback must be a function, received " + typeof actualCallback);
+	        }
+	        const filteringContext = filteringContextOrCallback && typeof filteringContextOrCallback !== "function"
+	            ? Object.assign({}, filteringContextOrCallback) : {};
+	        // (inside a span that is not recorded and has no recorded ancestor, the propagation info
+	        // that span was given stands in for one that is not given - see BufferingScope)
+	        const explicitPI = (_c = (_a = (typeof propagationInfoOrCallback === "function"
+	            ? null
+	            : this.extractPropagationInfo(propagationInfoOrCallback))) !== null && _a !== void 0 ? _a : (_b = this.currentScope()) === null || _b === void 0 ? void 0 : _b.propagationInfo) !== null && _c !== void 0 ? _c : null;
+	        const options = typeof optionsOrCallback === "function" ? undefined : optionsOrCallback !== null && optionsOrCallback !== void 0 ? optionsOrCallback : undefined;
+	        const disablePropagation = (options === null || options === void 0 ? void 0 : options.disablePropagation) === true;
+	        // A span the trace filters disable is not recorded: the real manager would not create it at
+	        // the replay, and until then it would take a place in the buffer - and count against its
+	        // cap - for nothing. Its callback runs as that of a disabled span does on the real manager,
+	        // and what is created inside it nests under the nearest recorded ancestor. Not so under a
+	        // span that may force the tracing of its children: the real manager decides then. Nor when
+	        // something is asked of the span although it is disabled (isDisabledByFilters): the real
+	        // manager is the one to do it.
+	        if (this.overridingFilters.length > 0 || this.otherFilters.length > 0) {
+	            const ancestor = this.resolveParent(explicitPI);
+	            if (!(ancestor === null || ancestor === void 0 ? void 0 : ancestor.forcesChildTracing) &&
+	                (explicitPI === null || explicitPI === void 0 ? void 0 : explicitPI.forceTracing) !== true &&
+	                this.isDisabledByFilters(source, filteringContext, options)) {
+	                const disabled = new UnrecordedTracingState(source, ancestor, ancestor ? null : explicitPI, disablePropagation);
+	                return this.executeUnrecorded(disabled, { node: ancestor, ts: disabled, propagationInfo: ancestor ? undefined : explicitPI }, actualCallback);
+	            }
+	        }
+	        const node = (0, bufferingTracingState_1.createRecordedSpan)(source, filteringContext, explicitPI, options !== null && options !== void 0 ? options : undefined, new Date());
+	        const ts = new bufferingTracingState_1.default(node, disablePropagation);
+	        // Capacity guard: keep executing callbacks, but stop recording so a hang
+	        // before init can't grow the buffer without bound. Descendants attach to the
+	        // nearest still-recorded ancestor (we don't open a scope for dropped spans).
+	        if (this.spanCount >= this.maxSpans) {
+	            this.dropped++;
+	            return this.execute(ts, node, actualCallback, false);
+	        }
+	        // The buffer has been replayed already, and there was no real manager to replay it into (see
+	        // replayInto): a span recorded now would never be published, only held on to. The callback
+	        // still runs - and the loss is said once, since it is the loss of every span from here on.
+	        if (this.replayDone) {
+	            if (!this.warnedAfterReplay) {
+	                this.warnedAfterReplay = true;
+	                (_e = (_d = this.logger) === null || _d === void 0 ? void 0 : _d.warn) === null || _e === void 0 ? void 0 : _e.call(_d, `BufferingTracesManager: a span (${source}) was started on the startup span buffer after its replay, ` +
+	                    "and there is no real manager to hand it to: it is dropped, as is every span that reaches the buffer from now on");
+	            }
+	            return this.execute(ts, node, actualCallback, false);
+	        }
+	        this.spanCount++;
+	        const parent = this.resolveParent(explicitPI);
+	        if (parent) {
+	            parent.children.push(node);
+	        }
+	        else {
+	            this.roots.push(node);
+	        }
+	        if ((parent === null || parent === void 0 ? void 0 : parent.forcesChildTracing) || this.forcesChildTracing(node)) {
+	            node.forcesChildTracing = true;
+	        }
+	        if ((_f = node.syntheticPropagationInfo) === null || _f === void 0 ? void 0 : _f.traceparent) {
+	            this.piIndex.set(node.syntheticPropagationInfo.traceparent, node);
+	        }
+	        return this.execute(ts, node, actualCallback, true);
+	    }
+	    /**
+	     * Runs the callback, recording timing/status onto the node (when `record`),
+	     * and — matching the real manager — ending the span in the async tail if the
+	     * callback returns a thenable.
+	     */
+	    execute(ts, node, actualCallback, record) {
+	        const finalize = () => {
+	            node.pending = undefined;
+	            if (record && !node.endTime) {
+	                node.endTime = new Date();
+	            }
+	        };
+	        const onError = (err) => {
+	            // once replayed, the outcome is either the real span's business (kept open - the real
+	            // manager sees the same rejection) or of no use to anyone (published as ended)
+	            if (record && !node.replayed) {
+	                node.status = { code: STATUS_ERROR, message: typeof err === "string" ? err : err === null || err === void 0 ? void 0 : err.message };
+	                node.exceptions.push({ exception: err, time: new Date() });
+	            }
+	            finalize();
+	        };
+	        const prevTS = this._currentTracingState;
+	        this._currentTracingState = ts;
+	        let result;
+	        let threw = false;
+	        let errObj;
+	        try {
+	            // Descendants of a dropped span must not get parented to a node that will never be
+	            // replayed: its scope keeps the nearest recorded ancestor as the nesting node.
+	            result = this.runInScope({ node: record ? node : this.currentParent(), ts }, () => actualCallback(ts));
+	        }
+	        catch (err) {
+	            threw = true;
+	            errObj = err;
+	        }
+	        finally {
+	            this._currentTracingState = prevTS;
+	        }
+	        if (threw) {
+	            onError(errObj);
+	            throw errObj;
+	        }
+	        if (result && typeof result.then === "function") {
+	            if (record) {
+	                node.pending = result;
+	            }
+	            return result.then((r) => { finalize(); return r; }, (err) => { onError(err); throw err; });
+	        }
+	        finalize();
+	        return result;
+	    }
+	    /**
+	     * Runs the callback of a span that is not recorded - a trace filter disables it - the way the
+	     * real manager runs that of a disabled span: what it returns (a promise included) and what it
+	     * throws pass through, and the tracing state ends when the callback does.
+	     */
+	    executeUnrecorded(ts, scope, actualCallback) {
+	        const onError = (err) => {
+	            ts.status = { code: STATUS_ERROR, message: typeof err === "string" ? err : err === null || err === void 0 ? void 0 : err.message };
+	            void ts.endSpan();
+	        };
+	        const prevTS = this._currentTracingState;
+	        this._currentTracingState = ts;
+	        let result;
+	        try {
+	            result = this.runInScope(scope, () => actualCallback(ts));
+	        }
+	        catch (err) {
+	            onError(err);
+	            throw err;
+	        }
+	        finally {
+	            this._currentTracingState = prevTS;
+	        }
+	        if (result && typeof result.then === "function") {
+	            return result.then((r) => { void ts.endSpan(); return r; }, (err) => { onError(err); throw err; });
+	        }
+	        void ts.endSpan();
+	        return result;
+	    }
+	    /**
+	     * How a trace filter matches a span, as far as the buffer can tell. The real manager matches
+	     * the filter's context against the context the span was created with AND the additional and
+	     * resource attributes of the settings, which the buffer does not have: a context key the
+	     * span's own context does not provide cannot be decided here (MAY_MATCH) - unless a key it
+	     * does provide already rules the filter out. What the span provides is decisive: its own
+	     * context has the last word over the attributes of the settings.
+	     *
+	     * @param anySource for the default filters a span brings along (`options.defaultFilters`):
+	     *   they apply to the span's source, whatever theirs is
+	     */
+	    matchFilter(filter, source, filteringContext, anySource) {
+	        var _a;
+	        if (!anySource && !(0, spanFilters_1.isFilterSourceMatch)(filter.source, source)) {
+	            return NO_MATCH;
+	        }
+	        let match = MATCH;
+	        const required = (_a = filter.context) !== null && _a !== void 0 ? _a : {};
+	        for (const key of Object.keys(required)) {
+	            const provided = (0, otelUtils_1.deep_value)(filteringContext, key);
+	            if (provided === undefined) {
+	                match = MAY_MATCH;
+	            }
+	            else if (!(0, spanFilters_1.isFilterContextValueMatch)(required[key], provided)) {
+	                return NO_MATCH;
+	            }
+	        }
+	        return match;
+	    }
+	    /**
+	     * Whether the trace filters disable a span - for certain: the first matching filter that
+	     * sets `enabled` says so, as on the real manager (which matches the filters that override the
+	     * default filters first, then the default filters the span brings along, then the rest). A
+	     * filter the buffer cannot decide on (see matchFilter) counts as not matching - the span is
+	     * recorded, and the real manager decides at the replay - except that one which would ENABLE
+	     * the span ends the search: a later filter must not disable what it may have enabled. The
+	     * default filters of the span's own options are never decided here (whether they are used is
+	     * a setting, `useDefaultFilters`): they cannot disable a span, only keep one from being
+	     * disabled. Filters that cannot be evaluated at all (a broken regular expression) disable
+	     * nothing.
+	     *
+	     * A span that is disabled, but asked for something all the same, is not "disabled" here: it
+	     * is recorded, for the real manager to do what is asked at the replay - see
+	     * isAskedForWhenDisabled.
+	     */
+	    isDisabledByFilters(source, filteringContext, options) {
+	        // true: disabled, false: recorded, undefined: the filter does not say - on to the next one
+	        const verdict = (filter, ofTheSpan) => {
+	            if (!filter || filter.enabled === undefined) {
+	                return undefined;
+	            }
+	            const match = this.matchFilter(filter, source, filteringContext, ofTheSpan);
+	            if (match === NO_MATCH) {
+	                return undefined;
+	            }
+	            if (match === MATCH && !ofTheSpan) {
+	                return !filter.enabled;
+	            }
+	            return filter.enabled ? false : undefined;
+	        };
+	        try {
+	            const defaultFilters = Array.isArray(options === null || options === void 0 ? void 0 : options.defaultFilters) ? options.defaultFilters : [];
+	            for (const [filters, ofTheSpan] of [
+	                [this.overridingFilters, false], [defaultFilters, true], [this.otherFilters, false]
+	            ]) {
+	                for (const filter of filters) {
+	                    const disabled = verdict(filter, ofTheSpan);
+	                    if (disabled !== undefined) {
+	                        return disabled && !this.isAskedForWhenDisabled(source, filteringContext, options, defaultFilters);
+	                    }
+	                }
+	            }
+	        }
+	        catch (_a) {
+	            // (the span is recorded)
+	        }
+	        return false;
+	    }
+	    /**
+	     * Whether something is asked of a span when it is disabled (see asksOfDisabledSpans) - by
+	     * the span's own options, by a trace filter that may match it, or by a default filter the
+	     * span brings along. The real manager takes each of these properties from the first matching
+	     * filter that sets it, then from the span's options, then from the `defaults` of the
+	     * settings; the buffer does not work out which one wins - whoever asks, the span is recorded,
+	     * and the real manager, which does it all at the replay, decides. (The `defaults` of the
+	     * settings are not known to the buffer, and not seen.)
+	     */
+	    isAskedForWhenDisabled(source, filteringContext, options, defaultFilters) {
+	        if (asksOfDisabledSpans(options)) {
+	            return true;
+	        }
+	        if (this.filtersAskingOfDisabledSpans.length === 0 && defaultFilters.length === 0) {
+	            return false;
+	        }
+	        return this.filtersAskingOfDisabledSpans.some((filter) => this.matchFilter(filter, source, filteringContext) !== NO_MATCH) ||
+	            defaultFilters.some((filter) => asksOfDisabledSpans(filter) && this.matchFilter(filter, source, filteringContext, true) !== NO_MATCH);
+	    }
+	    /**
+	     * Whether a recorded span may force the tracing of the spans created under it at the replay
+	     * (`forceChildTracing`), as far as the buffer can tell: its own options ask for it, the
+	     * propagation info it was given carries it (`forceTracing`), or a trace filter that may match
+	     * it sets it. Erring on the side of yes: such a span's descendants are all recorded.
+	     */
+	    forcesChildTracing(node) {
+	        var _a, _b, _c;
+	        if (((_a = node.options) === null || _a === void 0 ? void 0 : _a.forceChildTracing) === true || ((_b = node.explicitPropagationInfo) === null || _b === void 0 ? void 0 : _b.forceTracing) === true) {
+	            return true;
+	        }
+	        try {
+	            const forces = (filter, ofTheSpan) => !!(filter === null || filter === void 0 ? void 0 : filter.forceChildTracing) &&
+	                this.matchFilter(filter, node.source, node.filteringContext, ofTheSpan) !== NO_MATCH;
+	            const defaultFilters = Array.isArray((_c = node.options) === null || _c === void 0 ? void 0 : _c.defaultFilters) ? node.options.defaultFilters : [];
+	            return this.overridingFilters.some((filter) => forces(filter, false)) ||
+	                defaultFilters.some((filter) => forces(filter, true)) ||
+	                this.otherFilters.some((filter) => forces(filter, false));
+	        }
+	        catch (_d) {
+	            return true;
+	        }
+	    }
+	    runInScope(scope, fn) {
+	        if (this.als) {
+	            return this.als.run(scope, fn);
+	        }
+	        const prev = this.syncScope;
+	        this.syncScope = scope;
+	        try {
+	            return fn();
+	        }
+	        finally {
+	            this.syncScope = prev;
+	        }
+	    }
+	    currentScope() {
+	        return this.als ? this.als.getStore() : this.syncScope;
+	    }
+	    currentParent() {
+	        var _a;
+	        return (_a = this.currentScope()) === null || _a === void 0 ? void 0 : _a.node;
+	    }
+	    resolveParent(explicitPI) {
+	        if (explicitPI === null || explicitPI === void 0 ? void 0 : explicitPI.traceparent) {
+	            // Manual nesting under another buffered span.
+	            const match = this.piIndex.get(explicitPI.traceparent);
+	            if (match) {
+	                return match;
+	            }
+	            // An external (cross-process) PI: this becomes a root and carries the PI
+	            // through to replay so it nests under the real remote trace.
+	            return undefined;
+	        }
+	        return this.currentParent();
+	    }
+	    extractPropagationInfo(carrier) {
+	        var _a;
+	        if (!carrier) {
+	            return null;
+	        }
+	        if (carrier.traceparent) {
+	            return carrier;
+	        }
+	        return (_a = carrier.__interopIOTracePropagationInfo) !== null && _a !== void 0 ? _a : null;
+	    }
+	    /**
+	     * Re-creates the whole recorded tree as real spans on the given (initialized)
+	     * manager, preserving original timestamps and nesting.
+	     *
+	     * @param parentPI Optional propagation info to nest all buffered top-level
+	     *   spans under (e.g. the app's real startup root span). A buffered root that
+	     *   carried its own external propagation info keeps it instead.
+	     * @param options see ReplayOptions
+	     */
+	    replayInto(manager, parentPI = null, options) {
+	        var _a, _b, _c, _d, _e;
+	        this.replayDone = true;
+	        // from here on the buffer records nothing - it must not be what Traces.instance resolves to
+	        this.releaseGlobal();
+	        // The buffer is handed over exactly once: it is emptied up front, so a second replayInto()
+	        // has nothing to replay - it would otherwise publish every span again.
+	        const roots = this.roots.splice(0, this.roots.length);
+	        this.piIndex.clear();
+	        if (manager === this) {
+	            // there is no real manager (io.Insights came out disabled, or failed to initialize):
+	            // nothing to replay into - the spans are let go of
+	            (_b = (_a = this.logger) === null || _a === void 0 ? void 0 : _a.warn) === null || _b === void 0 ? void 0 : _b.call(_a, `BufferingTracesManager: replayed into itself - there is no real manager, ${roots.length} buffered root span(s) ` +
+	                "and everything under them are dropped");
+	            this.dropped = 0;
+	            return;
+	        }
+	        // From here on the buffer hands what still reaches it to the real manager. Never to itself -
+	        // the case above returns before this - and never to a buffer that would hand it back: a call
+	        // handed to a retired buffer would otherwise go round forever.
+	        const handsBackHere = (candidate) => {
+	            for (let hop = candidate; hop instanceof BufferingTracesManager; hop = hop.replayedInto) {
+	                if (hop === this) {
+	                    return true;
+	                }
+	            }
+	            return false;
+	        };
+	        if (!handsBackHere(manager)) {
+	            this.replayedInto = manager;
+	        }
+	        const keepOpen = (options === null || options === void 0 ? void 0 : options.keepOpen) === true;
+	        const replay = { bySynthetic: new Map(), deferred: [] };
+	        const index = (node) => {
+	            replay.bySynthetic.set((0, bufferingTracingState_1.spanContextKey)((0, bufferingTracingState_1.syntheticSpanContext)(node)), node);
+	            node.children.forEach(index);
+	        };
+	        roots.forEach(index);
+	        for (const root of roots) {
+	            this.replayNode(manager, root, (_c = root.explicitPropagationInfo) !== null && _c !== void 0 ? _c : parentPI, keepOpen, replay);
+	        }
+	        this.addDeferredLinks(replay);
+	        if (this.dropped > 0) {
+	            (_e = (_d = this.logger) === null || _d === void 0 ? void 0 : _d.warn) === null || _e === void 0 ? void 0 : _e.call(_d, `BufferingTracesManager: ${this.dropped} startup span(s) dropped after reaching the buffer cap of ${this.maxSpans}`);
+	            this.dropped = 0;
+	        }
+	    }
+	    replayNode(manager, node, parentPI, keepOpen, replay) {
+	        var _a, _b, _c, _d, _e, _f;
+	        const options = Object.assign(Object.assign({}, node.options), { otelSpanOptions: Object.assign(Object.assign({}, (_a = node.options) === null || _a === void 0 ? void 0 : _a.otelSpanOptions), { startTime: (_d = (_c = (_b = node.options) === null || _b === void 0 ? void 0 : _b.otelSpanOptions) === null || _c === void 0 ? void 0 : _c.startTime) !== null && _d !== void 0 ? _d : node.startTime }) });
+	        if (node.links.length > 0) {
+	            // the links added after creation (addLink) can all be given at creation now - or deferred,
+	            // like a creation link, when the target is replayed later: a parent's link to its child
+	            options.otelSpanOptions.links = [...((_f = (_e = options.otelSpanOptions) === null || _e === void 0 ? void 0 : _e.links) !== null && _f !== void 0 ? _f : []), ...node.links];
+	        }
+	        const deferred = this.resolveLinks(options, replay);
+	        const replayed = manager.withSpan(node.source, node.filteringContext, parentPI, options, (ts) => {
+	            var _a, _b, _c, _d, _e, _f, _g, _h;
+	            if (node.updatedName) {
+	                ts.updateName(node.updatedName);
+	            }
+	            for (const e of node.events) {
+	                ts.addEvent(e.name, e.attributesOrStartTime, e.startTime);
+	            }
+	            for (const d of node.addedData) {
+	                if (typeof d.data !== "function") {
+	                    ts.addData(d.level, d.data);
+	                    continue;
+	                }
+	                // Data given as a function: recorded as the function, and computed here - by the real
+	                // tracing state, once, and only if the span records its level. A function that throws
+	                // has no caller to throw to anymore, and must not take the rest of the span - and the
+	                // spans under it - out of the replay.
+	                try {
+	                    ts.addData(d.level, d.data);
+	                }
+	                catch (err) {
+	                    (_b = (_a = this.logger) === null || _a === void 0 ? void 0 : _a.warn) === null || _b === void 0 ? void 0 : _b.call(_a, `BufferingTracesManager: the data function of a buffered span (${node.source}) threw at the replay, ` +
+	                        `its data is left out: ${(_c = err === null || err === void 0 ? void 0 : err.message) !== null && _c !== void 0 ? _c : err}`);
+	                }
+	            }
+	            for (const x of node.exceptions) {
+	                ts.recordException(x.exception, x.time);
+	            }
+	            // The status the real manager would have given the span, had it been started on it. The
+	            // buffer records a failure, and a status that was set explicitly: those are restored. A
+	            // finished span without one has completed - the real manager makes that OK when
+	            // `autoSetSuccessStatus` is on for the span (it has resolved the matching filter, the span
+	            // options and the defaults: ts.autoSetSuccessStatus), and leaves it UNSET when it is not.
+	            // It has to be done here: the span is ended below, with its recorded end time, and a span
+	            // that has ended is past having its status set. A span that is still open at replay time
+	            // has not completed: it stays UNSET - published as ending now, whatever it was doing is
+	            // still in flight, or was cut short when the replay happens because the platform is going
+	            // down - unless it is kept open, and then its outcome is the real manager's business.
+	            ts.status = (_d = node.status) !== null && _d !== void 0 ? _d : { code: node.endTime && ts.autoSetSuccessStatus === true ? STATUS_OK : STATUS_UNSET };
+	            // what a link to this span resolves to, from here on: known before the children are
+	            // replayed, so that a child linking to an ancestor finds it
+	            node.replayedSpanContext = (_f = (_e = ts.spanContext) === null || _e === void 0 ? void 0 : _e.call(ts)) !== null && _f !== void 0 ? _f : null;
+	            // the real span may not exist (e.g. disabled by a filter): then whatever nests under
+	            // this node nests under its nearest ancestor that does
+	            const childPI = (_g = ts.getPropagationInfo()) !== null && _g !== void 0 ? _g : parentPI;
+	            for (const child of node.children) {
+	                this.replayNode(manager, child, childPI, keepOpen, replay);
+	            }
+	            // ensure future spans get nested under the real span - see getActivePropagationInfo()
+	            // and BufferingTracingState.getPropagationInfo()
+	            node.replayed = true;
+	            node.replayedPropagationInfo = childPI;
+	            // Let go of everything that has just been published. A node can stay reachable for as
+	            // long as the code that ran under its span does (it is that code's AsyncLocalStorage
+	            // store - think of a timer loop started during startup), and it would keep its whole
+	            // subtree of recorded spans and their data alive with it. `replayed` and
+	            // `replayedPropagationInfo` are all that is needed from here on.
+	            node.children = [];
+	            node.events = [];
+	            node.addedData = [];
+	            node.exceptions = [];
+	            node.links = [];
+	            const pending = node.pending;
+	            node.pending = undefined;
+	            if (keepOpen && !node.endTime && pending) {
+	                // Still in flight: hand the real manager the very promise the span is waiting on. It
+	                // keeps a span open for as long as its callback's promise is pending, ends it when that
+	                // settles, and gives it its outcome - OK when `autoSetSuccessStatus` is on for it, ERROR
+	                // with the exception on a rejection - the same way it would have, had the span been
+	                // started on it.
+	                node.liveTs = ts;
+	                if (deferred.length > 0) {
+	                    replay.deferred.push({ ts, links: deferred });
+	                }
+	                return Promise.resolve(pending).finally(() => { node.liveTs = undefined; });
+	            }
+	            const endTime = (_h = node.endTime) !== null && _h !== void 0 ? _h : new Date();
+	            if (deferred.length > 0) {
+	                // Held open until the replay is over: a link can only be added once its target has been
+	                // replayed, and only to a span that has not ended. It ends with its time all the same.
+	                return new Promise((resolve) => {
+	                    replay.deferred.push({ ts, links: deferred, release: { endTime, resolve } });
+	                });
+	            }
+	            void ts.endSpan(endTime);
+	            return undefined;
+	        });
+	        // The rejection of a span kept open belongs to whoever awaits the original promise - the
+	        // real manager re-throws it on its own chain, which nobody else will ever handle.
+	        if (replayed && typeof replayed.then === "function") {
+	            replayed.then(undefined, () => undefined);
+	        }
+	    }
+	    /**
+	     * Rewrites the links of a span being replayed, in place: a link to a buffered span - made with
+	     * the synthetic context - becomes a link to the real span the target was replayed as, or no link
+	     * when the target got none. Any other link is kept as it is.
+	     *
+	     * @returns the links to a target that is not replayed yet (it comes later in the replay: under a
+	     *   younger root than the span's own), to be added once it is - see addDeferredLinks
+	     */
+	    resolveLinks(options, replay) {
+	        var _a;
+	        const deferred = [];
+	        const given = (_a = options.otelSpanOptions) === null || _a === void 0 ? void 0 : _a.links;
+	        if (!(given === null || given === void 0 ? void 0 : given.length) || !options.otelSpanOptions) {
+	            return deferred;
+	        }
+	        const links = [];
+	        for (const link of given) {
+	            const target = link.context ? replay.bySynthetic.get((0, bufferingTracingState_1.spanContextKey)(link.context)) : undefined;
+	            if (!target) {
+	                links.push(link);
+	                continue;
+	            }
+	            const resolved = resolveLink(link, target);
+	            if (resolved === undefined) {
+	                deferred.push({ link, target });
+	            }
+	            else if (resolved) {
+	                links.push(resolved);
+	            }
+	        }
+	        options.otelSpanOptions.links = links;
+	        return deferred;
+	    }
+	    /**
+	     * Adds the links that were waiting for their target to be replayed - to a span that is still
+	     * open: kept open by its callback, or held open for this - and lets a span held open end.
+	     */
+	    addDeferredLinks(replay) {
+	        var _a, _b;
+	        for (const { ts, links, release } of replay.deferred) {
+	            for (const { link, target } of links) {
+	                const resolved = resolveLink(link, target);
+	                if (resolved) {
+	                    // (the host's SDK may predate addLink: then the link is lost, nothing else is)
+	                    (_b = (_a = ts.span) === null || _a === void 0 ? void 0 : _a.addLink) === null || _b === void 0 ? void 0 : _b.call(_a, resolved);
+	                }
+	            }
+	            if (release) {
+	                void ts.endSpan(release.endTime);
+	                release.resolve();
+	            }
+	        }
+	        replay.deferred = [];
+	    }
+	    /**
+	     * The propagation info new spans should nest under, for code that is running inside (the async
+	     * continuation of) a buffered span which has since been replayed: that of the real span it was
+	     * replayed as. Null anywhere else - outside of a buffered span, or before the replay.
+	     */
+	    getActivePropagationInfo() {
+	        var _a;
+	        const node = this.currentParent();
+	        return (node === null || node === void 0 ? void 0 : node.replayed) ? (_a = node.replayedPropagationInfo) !== null && _a !== void 0 ? _a : null : null;
+	    }
+	    /**
+	     * Hands the nesting of the buffered spans over to the real TracesManager.
+	     *
+	     * A real manager using an OTEL context manager resolves the parent of a new span from the
+	     * active OTEL context. Code that started under a buffered span - and is still running when the
+	     * real manager takes over - has none: the buffer tracks nesting on its own. Its spans would
+	     * become roots of new traces, or not be created at all when they cannot be roots. This plugs
+	     * getActivePropagationInfo() into the real manager's last-resort `defaults.getPropagationInfo`
+	     * hook, which is only consulted when nothing else provides a parent - so such code keeps
+	     * nesting under the span it started in.
+	     *
+	     * The bridge is asked before a hook that is already installed: it only ever answers for code
+	     * running inside a replayed span, which makes it the more specific of the two - the library's
+	     * own startup trace, for one, installs a hook that answers with the generic startup root for
+	     * every parentless span. Everywhere else the existing hook answers as before.
+	     *
+	     * Call it after replayInto(), and call the returned function once the buffered work is over
+	     * (e.g. when the startup completes): a timer loop that started under a buffered span would
+	     * otherwise keep nesting under it forever.
+	     *
+	     * @returns a function that removes the bridge
+	     */
+	    bridgePropagation(manager) {
+	        const settings = manager.settings;
+	        if (!settings) {
+	            return () => { };
+	        }
+	        const previousDefaults = settings.defaults;
+	        const previous = previousDefaults === null || previousDefaults === void 0 ? void 0 : previousDefaults.getPropagationInfo;
+	        let active = true;
+	        const bridged = (source, fullFilteringContext) => {
+	            var _a, _b;
+	            return (_b = (_a = (active ? this.getActivePropagationInfo() : null)) !== null && _a !== void 0 ? _a : previous === null || previous === void 0 ? void 0 : previous(source, fullFilteringContext)) !== null && _b !== void 0 ? _b : null;
+	        };
+	        settings.defaults = Object.assign(Object.assign({}, previousDefaults), { getPropagationInfo: bridged });
+	        return () => {
+	            var _a;
+	            active = false;
+	            // put the previous hook back, unless someone has replaced ours in the meantime
+	            if (((_a = settings.defaults) === null || _a === void 0 ? void 0 : _a.getPropagationInfo) === bridged) {
+	                settings.defaults = Object.assign(Object.assign({}, settings.defaults), { getPropagationInfo: previous });
+	            }
+	        };
+	    }
+	    /**
+	     * Gives the buffer the trace filters the real manager is going to match the spans against -
+	     * `traces.filters`, with the default filters of the settings where the real manager matches
+	     * them (after the filters that `overrideDefaultFilters`, before the rest) when they are to
+	     * count. From then on a span that a filter disables (`enabled: false`) is not recorded: its
+	     * callback runs as that of a disabled span does on the real manager - with a tracing state
+	     * that keeps nothing, its result and errors passing through - the spans created inside it
+	     * nest under the nearest recorded ancestor, and it does not count against the buffer's cap.
+	     *
+	     * The first matching filter that sets `enabled` decides, as on the real manager. The buffer
+	     * matches a filter against the span's source and the context the span was created with; a
+	     * filter whose context names something else - an additional or a resource attribute of the
+	     * settings - cannot be decided here and does not disable: the span is recorded, and the real
+	     * manager decides at the replay, as it does for every span without filters. So it does for a
+	     * span created under one that may force the tracing of its children (`forceChildTracing` in
+	     * its options or in a filter, `forceTracing` on the propagation info it was given) - the
+	     * `forceChildTracing` of the settings' `defaults`, which the buffer does not have, is not
+	     * seen. And so it does for a span a filter disables, but of which something is asked all the
+	     * same: `countMetricOnDisabledSpans`, `resultMetricOnDisabledSpans`,
+	     * `durationMetricOnDisabledSpans`, `log.onDisabledSpans` or `stopPropagationIfSpanIsDisabled`,
+	     * set by a filter that may match the span (the disabling one or any other), by a default
+	     * filter of the span's options or by the span's options themselves - the real manager does
+	     * what is asked at the replay, as it did before the buffer had filters (what the settings'
+	     * `defaults` ask is, again, not seen). Nothing but a plain `enabled: false` is acted on while
+	     * buffering: every other property of the filters is applied by the real manager at the replay.
+	     *
+	     * Without filters - never called, or with an empty list - every span is recorded.
+	     */
+	    setFilterConfig(filters) {
+	        const given = Array.isArray(filters) ? filters.filter((filter) => !!filter && typeof filter === "object") : [];
+	        this.overridingFilters = given.filter((filter) => filter.overrideDefaultFilters);
+	        this.otherFilters = given.filter((filter) => !filter.overrideDefaultFilters);
+	        this.filtersAskingOfDisabledSpans = given.filter((filter) => asksOfDisabledSpans(filter));
+	        // the spans recorded so far were not looked at with these filters: whether each may force
+	        // the tracing of its children is worked out again, from the roots down
+	        const mark = (node, forced) => {
+	            const forces = forced || this.forcesChildTracing(node);
+	            if (forces) {
+	                node.forcesChildTracing = true;
+	            }
+	            else {
+	                delete node.forcesChildTracing;
+	            }
+	            for (const child of node.children) {
+	                mark(child, forces);
+	            }
+	        };
+	        for (const root of this.roots) {
+	            mark(root, false);
+	        }
+	    }
+	    get startupTraceFinished() {
+	        return () => { };
+	    }
+	    get userJourneyMarker() {
+	        return () => { };
+	    }
+	    setUserJourneyMarker(_userJourneyMarker) {
+	        // no-op while buffering
+	    }
+	    get clickstreamMarker() {
+	        return () => { };
+	    }
+	}
+	bufferingTracesManager.BufferingTracesManager = BufferingTracesManager;
+	bufferingTracesManager.default = BufferingTracesManager;
+	
+	return bufferingTracesManager;
 }
 
 var logs = {};
@@ -12914,6 +12292,233 @@ function requireIsNode () {
 	return isNode;
 }
 
+var exportHeaders = {};
+
+var hasRequiredExportHeaders;
+
+function requireExportHeaders () {
+	if (hasRequiredExportHeaders) return exportHeaders;
+	hasRequiredExportHeaders = 1;
+	(function (exports$1) {
+		var __awaiter = (exportHeaders && exportHeaders.__awaiter) || function (thisArg, _arguments, P, generator) {
+		    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+		    return new (P || (P = Promise))(function (resolve, reject) {
+		        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+		        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+		        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+		        step((generator = generator.apply(thisArg, _arguments || [])).next());
+		    });
+		};
+		Object.defineProperty(exports$1, "__esModule", { value: true });
+		exports$1.DEFAULT_HEADERS_FUNCTION_TIMEOUT_MS = exports$1.DEFAULT_SSO_AUTH_INFO_TIMEOUT_MS = exports$1.DEFAULT_SSO_AUTH_INFO_CACHE_MS = exports$1.DEFAULT_SSO_AUTH_WAIT_FOR_LOGIN_TIMEOUT_MS = void 0;
+		exports$1.applySsoAuthHeaders = applySsoAuthHeaders;
+		exports$1.createExportHeaders = createExportHeaders;
+		const container_1 = requireContainer();
+		exports$1.DEFAULT_SSO_AUTH_WAIT_FOR_LOGIN_TIMEOUT_MS = 5000;
+		exports$1.DEFAULT_SSO_AUTH_INFO_CACHE_MS = 30000;
+		const WAIT_FOR_LOGIN_POLL_MS = 250;
+		// A provider that never answers (in a window it is a round trip to the platform) must not hold
+		// every export until the batch processor gives up on it - and drops the batch.
+		exports$1.DEFAULT_SSO_AUTH_INFO_TIMEOUT_MS = 5000;
+		// A headers function that never answers would keep its export pending forever. Kept below the
+		// default `timeoutMillis` of the OTLP exporters (10000).
+		exports$1.DEFAULT_HEADERS_FUNCTION_TIMEOUT_MS = 5000;
+		const authStates = new WeakMap();
+		// Header source functions that have failed and been warned about. Kept per function, so a source
+		// shared by the signals is reported once, and not again on every export.
+		const warnedSources = new WeakSet();
+		// In a window of io.Connect Desktop the login comes from the platform. It is only handed to
+		// applications that are allowed to have it (`allowAuthInfo` in the application definition) -
+		// getAuth() throws for the rest.
+		const platformProvider = () => {
+		    var _a;
+		    const desktopObject = (_a = globalThis === null || globalThis === void 0 ? void 0 : globalThis.glue42gd) !== null && _a !== void 0 ? _a : globalThis === null || globalThis === void 0 ? void 0 : globalThis.iodesktop;
+		    if (typeof (desktopObject === null || desktopObject === void 0 ? void 0 : desktopObject.getAuth) !== "function") {
+		        return null;
+		    }
+		    return desktopObject.getAuth();
+		};
+		// Calls `func` and rejects if it has not answered in `timeoutMs`. `who` names it in the error.
+		const callWithTimeout = (func, timeoutMs, who) => new Promise((resolve, reject) => {
+		    var _a;
+		    const timer = setTimeout(() => reject(new Error(`${who} did not answer in ${timeoutMs} ms`)), timeoutMs);
+		    (_a = timer === null || timer === void 0 ? void 0 : timer.unref) === null || _a === void 0 ? void 0 : _a.call(timer);
+		    // (func can answer right away, with a promise, or by throwing)
+		    Promise.resolve()
+		        .then(() => func())
+		        .then((answer) => { clearTimeout(timer); resolve(answer); }, (err) => { clearTimeout(timer); reject(err); });
+		});
+		const askWithTimeout = (provider, timeoutMs) => callWithTimeout(provider, timeoutMs, "the login provider");
+		// Any login object counts - not only one with a token: a login can be all user information, which
+		// is what the `auth` header (useAuthHeader) is for.
+		const hasLogin = (auth) => !!auth && typeof auth === "object" && !Array.isArray(auth) && Object.keys(auth).length > 0;
+		/**
+		 * The headers the SSO login adds to the (static) headers of an export request - see
+		 * IOInsights.SSOAuthSettings. Exported for the hosts that have to do this on their own, for a
+		 * process the library does not run in with access to the login (io.Connect Desktop, for the gateway).
+		 */
+		function applySsoAuthHeaders(headers, auth, ssoAuth) {
+		    var _a;
+		    const toReturn = Object.assign({}, headers);
+		    if (!(ssoAuth === null || ssoAuth === void 0 ? void 0 : ssoAuth.enabled) || !hasLogin(auth)) {
+		        return toReturn;
+		    }
+		    if (ssoAuth.useAuthHeader) {
+		        toReturn["auth"] = (_a = toReturn["auth"]) !== null && _a !== void 0 ? _a : JSON.stringify(auth);
+		    }
+		    if (typeof auth.token === "string" && auth.token) {
+		        toReturn["Authorization"] =
+		            (ssoAuth.useRawToken === false && auth.token.trim().indexOf(" ") < 0) ?
+		                "Bearer " + auth.token :
+		                auth.token;
+		    }
+		    if (auth.headers && typeof auth.headers === "object") {
+		        for (const key of Object.keys(auth.headers)) {
+		            toReturn[key] = auth.headers[key];
+		        }
+		    }
+		    return toReturn;
+		}
+		/**
+		 * The headers of the export requests of a signal: the static ones - later sources win - and, with
+		 * `ssoAuth.enabled`, the SSO login.
+		 *
+		 * The result is always a function the OTLP exporters call on every export. Sources that are
+		 * functions are called on every export, so they can return different headers each time, and
+		 * they can be async. With no ssoAuth and no source that is a function, the headers are resolved
+		 * once and every call returns the same result.
+		 *
+		 * With ssoAuth the login is asked for when it is needed, so it does not have to be there when
+		 * io.Insights is initialized, and a refreshed token is picked up. Exports that happen before
+		 * anybody has logged in go out without it - unless `ssoAuth.waitForLogin` makes them wait.
+		 *
+		 * The function never rejects. If the login fails, the export goes ahead with the static headers.
+		 * If a source throws, rejects or does not answer in `headersFunctionTimeoutMs`, the export goes
+		 * ahead without that source's headers. The other sources and the login still apply. The failure
+		 * is logged as a warning once per source function.
+		 *
+		 * The source functions and the login are asked at the same time, so the waits do not add up.
+		 */
+		function createExportHeaders(staticHeaders, ssoAuth, logger, headersFunctionTimeoutMs = exports$1.DEFAULT_HEADERS_FUNCTION_TIMEOUT_MS) {
+		    // Never rejects: a function that throws, rejects or does not answer in time gives no headers.
+		    const resolveSource = (source) => __awaiter(this, void 0, void 0, function* () {
+		        var _a, _b, _c, _d;
+		        if (typeof source !== "function") {
+		            return source;
+		        }
+		        try {
+		            return yield callWithTimeout(source, headersFunctionTimeoutMs, "the headers function");
+		        }
+		        catch (err) {
+		            if (!warnedSources.has(source)) {
+		                warnedSources.add(source);
+		                (_c = (_b = (logger !== null && logger !== void 0 ? logger : (_a = container_1.Container.instance) === null || _a === void 0 ? void 0 : _a.logger)) === null || _b === void 0 ? void 0 : _b.warn) === null || _c === void 0 ? void 0 : _c.call(_b, "io.Insights: a headers function failed, the telemetry is exported without its headers" +
+		                    " (reported once): " + ((_d = err === null || err === void 0 ? void 0 : err.message) !== null && _d !== void 0 ? _d : err));
+		            }
+		            return undefined;
+		        }
+		    });
+		    // The sources are asked at the same time and merged in their order, so later sources win.
+		    const resolveStatic = () => __awaiter(this, void 0, void 0, function* () { return Object.assign({}, ...(yield Promise.all(staticHeaders.map(resolveSource)))); });
+		    if (!(ssoAuth === null || ssoAuth === void 0 ? void 0 : ssoAuth.enabled)) {
+		        if (!staticHeaders.some((source) => typeof source === "function")) {
+		            const cached = resolveStatic();
+		            return () => cached;
+		        }
+		        return resolveStatic;
+		    }
+		    const provider = typeof ssoAuth.getAuthInfo === "function" ? ssoAuth.getAuthInfo : platformProvider;
+		    let state = authStates.get(provider);
+		    if (!state) {
+		        state = {};
+		        authStates.set(provider, state);
+		    }
+		    const authState = state;
+		    const cacheMs = typeof ssoAuth.authInfoCacheMs === "number" && ssoAuth.authInfoCacheMs >= 0 ?
+		        ssoAuth.authInfoCacheMs :
+		        exports$1.DEFAULT_SSO_AUTH_INFO_CACHE_MS;
+		    const providerTimeoutMs = typeof ssoAuth.authInfoTimeoutMs === "number" && ssoAuth.authInfoTimeoutMs > 0 ?
+		        ssoAuth.authInfoTimeoutMs :
+		        exports$1.DEFAULT_SSO_AUTH_INFO_TIMEOUT_MS;
+		    const askProvider = () => {
+		        var _a;
+		        const cached = authState.cached;
+		        if (cached && Date.now() - cached.at < cacheMs) {
+		            return Promise.resolve(cached.auth);
+		        }
+		        (_a = authState.inFlight) !== null && _a !== void 0 ? _a : (authState.inFlight = (() => __awaiter(this, void 0, void 0, function* () {
+		            var _a, _b, _c;
+		            try {
+		                const auth = (_a = (yield askWithTimeout(provider, providerTimeoutMs))) !== null && _a !== void 0 ? _a : null;
+		                if (hasLogin(auth)) {
+		                    authState.loginSeen = true;
+		                    authState.cached = { at: Date.now(), auth };
+		                    return auth;
+		                }
+		                // nobody has logged in yet: not cached, so the login is picked up as soon as it is there
+		                authState.cached = undefined;
+		                return null;
+		            }
+		            catch (err) {
+		                // not allowed to have the login, most likely - no point in asking again right away
+		                authState.cached = { at: Date.now(), auth: null };
+		                if (!authState.warned) {
+		                    authState.warned = true;
+		                    (_b = logger === null || logger === void 0 ? void 0 : logger.warn) === null || _b === void 0 ? void 0 : _b.call(logger, "io.Insights ssoAuth: the SSO login is not available, the telemetry is exported without it" +
+		                        " (in io.Connect Desktop the application needs `allowAuthInfo` in its definition): " +
+		                        ((_c = err === null || err === void 0 ? void 0 : err.message) !== null && _c !== void 0 ? _c : err));
+		                }
+		                return null;
+		            }
+		            finally {
+		                authState.inFlight = undefined;
+		            }
+		        }))());
+		        return authState.inFlight;
+		    };
+		    const waitForLogin = () => __awaiter(this, void 0, void 0, function* () {
+		        var _a;
+		        const timeoutMs = typeof ssoAuth.waitForLoginTimeoutMs === "number" && ssoAuth.waitForLoginTimeoutMs >= 0 ?
+		            ssoAuth.waitForLoginTimeoutMs :
+		            exports$1.DEFAULT_SSO_AUTH_WAIT_FOR_LOGIN_TIMEOUT_MS;
+		        const deadline = Date.now() + timeoutMs;
+		        for (;;) {
+		            const auth = yield askProvider();
+		            if (auth || authState.cached) {
+		                // logged in - or the login is not available to this application at all
+		                return auth;
+		            }
+		            if (Date.now() >= deadline) {
+		                authState.waitTimedOut = true;
+		                (_a = logger === null || logger === void 0 ? void 0 : logger.warn) === null || _a === void 0 ? void 0 : _a.call(logger, `io.Insights ssoAuth: nobody has logged in after ${timeoutMs} ms - exporting without the SSO login`);
+		                return null;
+		            }
+		            yield new Promise((resolve) => {
+		                var _a;
+		                const timer = setTimeout(resolve, Math.min(WAIT_FOR_LOGIN_POLL_MS, Math.max(0, deadline - Date.now())));
+		                // (Node.js: an export waiting for a login must not be what keeps the process from exiting)
+		                (_a = timer === null || timer === void 0 ? void 0 : timer.unref) === null || _a === void 0 ? void 0 : _a.call(timer);
+		            });
+		        }
+		    });
+		    return () => __awaiter(this, void 0, void 0, function* () {
+		        // started before the login is asked for, so the two wait at the same time
+		        const staticHeadersPromise = resolveStatic();
+		        try {
+		            const shouldWait = ssoAuth.waitForLogin === true && !authState.loginSeen && !authState.waitTimedOut;
+		            const auth = shouldWait ? yield waitForLogin() : yield askProvider();
+		            return applySsoAuthHeaders(yield staticHeadersPromise, auth, ssoAuth);
+		        }
+		        catch (_a) {
+		            return staticHeadersPromise;
+		        }
+		    });
+		}
+		
+	} (exportHeaders));
+	return exportHeaders;
+}
+
 var hasRequiredDist;
 
 function requireDist () {
@@ -12957,7 +12562,7 @@ function requireDist () {
 		    return (mod && mod.__esModule) ? mod : { "default": mod };
 		};
 		Object.defineProperty(exports$1, "__esModule", { value: true });
-		exports$1.SpanStatusCode = exports$1.withTimeout = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.Logs = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
+		exports$1.SpanStatusCode = exports$1.isError = exports$1.withTimeout = exports$1.deep_value = exports$1.extractFilteringContextFromArgs = exports$1.getOTELData = exports$1.flattenOtelAtributes = exports$1.safeStringifySettings = exports$1.safeStringify = exports$1.isNode = exports$1.loadInsightsPlugin = exports$1.registerInsightsPlugin = exports$1.reduceModalityHash = exports$1.ownAttributeSettings = exports$1.inheritAttributeSettings = exports$1.maxCachedMasks = exports$1.clearMaskCache = exports$1.maskCacheSize = exports$1.maxReportedMaskedValues = exports$1.clearReportedMaskedValues = exports$1.reportMaskedValue = exports$1.defaultMaskLength = exports$1.hmacSha256Hex = exports$1.processMaskSecret = exports$1.resolveMaskSecret = exports$1.generateMaskSecret = exports$1.maskAttributeValue = exports$1.applyTopLevelAttributeSettings = exports$1.applyAttributeSettings = exports$1.applySsoAuthHeaders = exports$1.createExportHeaders = exports$1.Logs = exports$1.isFilterMatch = exports$1.findMatchingFilters = exports$1.BufferingTracesManager = exports$1.NullTracingState = exports$1.OTEL_PI_KEY = exports$1.withSpan = exports$1.Traces = exports$1.MetricsDependencyBuilder = exports$1.NullMetric = exports$1.Container = exports$1.Log4jsWrapper = exports$1.Builder = void 0;
 		var builder_1 = requireBuilder();
 		Object.defineProperty(exports$1, "Builder", { enumerable: true, get: function () { return builder_1.Builder; } });
 		var log4jsWrapper_1 = requireLog4jsWrapper();
@@ -12974,6 +12579,11 @@ function requireDist () {
 		exports$1.OTEL_PI_KEY = "__interopIOTracePropagationInfo";
 		const nullTracingState_1 = __importDefault(requireNullTracingState());
 		exports$1.NullTracingState = nullTracingState_1.default;
+		var bufferingTracesManager_1 = requireBufferingTracesManager();
+		Object.defineProperty(exports$1, "BufferingTracesManager", { enumerable: true, get: function () { return bufferingTracesManager_1.BufferingTracesManager; } });
+		var spanFilters_1 = requireSpanFilters();
+		Object.defineProperty(exports$1, "findMatchingFilters", { enumerable: true, get: function () { return spanFilters_1.findMatchingFilters; } });
+		Object.defineProperty(exports$1, "isFilterMatch", { enumerable: true, get: function () { return spanFilters_1.isFilterMatch; } });
 		var logs_1 = requireLogs();
 		Object.defineProperty(exports$1, "Logs", { enumerable: true, get: function () { return logs_1.Logs; } });
 		const pluginLoader_1 = requirePluginLoader();
@@ -12983,12 +12593,35 @@ function requireDist () {
 		Object.defineProperty(exports$1, "isNode", { enumerable: true, get: function () { return isNode_1.isNode; } });
 		const safe_stringify_1 = requireSafeStringify();
 		Object.defineProperty(exports$1, "safeStringify", { enumerable: true, get: function () { return safe_stringify_1.safeStringify; } });
+		Object.defineProperty(exports$1, "safeStringifySettings", { enumerable: true, get: function () { return safe_stringify_1.safeStringifySettings; } });
 		const otelUtils_1 = requireOtelUtils();
 		Object.defineProperty(exports$1, "getOTELData", { enumerable: true, get: function () { return otelUtils_1.getOTELData; } });
 		Object.defineProperty(exports$1, "flattenOtelAtributes", { enumerable: true, get: function () { return otelUtils_1.flattenOtelAtributes; } });
 		Object.defineProperty(exports$1, "extractFilteringContextFromArgs", { enumerable: true, get: function () { return otelUtils_1.extractFilteringContextFromArgs; } });
 		Object.defineProperty(exports$1, "deep_value", { enumerable: true, get: function () { return otelUtils_1.deep_value; } });
 		Object.defineProperty(exports$1, "withTimeout", { enumerable: true, get: function () { return otelUtils_1.withTimeout; } });
+		Object.defineProperty(exports$1, "isError", { enumerable: true, get: function () { return otelUtils_1.isError; } });
+		var exportHeaders_1 = requireExportHeaders();
+		Object.defineProperty(exports$1, "createExportHeaders", { enumerable: true, get: function () { return exportHeaders_1.createExportHeaders; } });
+		Object.defineProperty(exports$1, "applySsoAuthHeaders", { enumerable: true, get: function () { return exportHeaders_1.applySsoAuthHeaders; } });
+		var attributeSettings_1 = requireAttributeSettings();
+		Object.defineProperty(exports$1, "applyAttributeSettings", { enumerable: true, get: function () { return attributeSettings_1.applyAttributeSettings; } });
+		Object.defineProperty(exports$1, "applyTopLevelAttributeSettings", { enumerable: true, get: function () { return attributeSettings_1.applyTopLevelAttributeSettings; } });
+		Object.defineProperty(exports$1, "maskAttributeValue", { enumerable: true, get: function () { return attributeSettings_1.maskAttributeValue; } });
+		Object.defineProperty(exports$1, "generateMaskSecret", { enumerable: true, get: function () { return attributeSettings_1.generateMaskSecret; } });
+		Object.defineProperty(exports$1, "resolveMaskSecret", { enumerable: true, get: function () { return attributeSettings_1.resolveMaskSecret; } });
+		Object.defineProperty(exports$1, "processMaskSecret", { enumerable: true, get: function () { return attributeSettings_1.processMaskSecret; } });
+		Object.defineProperty(exports$1, "hmacSha256Hex", { enumerable: true, get: function () { return attributeSettings_1.hmacSha256Hex; } });
+		Object.defineProperty(exports$1, "defaultMaskLength", { enumerable: true, get: function () { return attributeSettings_1.defaultMaskLength; } });
+		Object.defineProperty(exports$1, "reportMaskedValue", { enumerable: true, get: function () { return attributeSettings_1.reportMaskedValue; } });
+		Object.defineProperty(exports$1, "clearReportedMaskedValues", { enumerable: true, get: function () { return attributeSettings_1.clearReportedMaskedValues; } });
+		Object.defineProperty(exports$1, "maxReportedMaskedValues", { enumerable: true, get: function () { return attributeSettings_1.maxReportedMaskedValues; } });
+		Object.defineProperty(exports$1, "maskCacheSize", { enumerable: true, get: function () { return attributeSettings_1.maskCacheSize; } });
+		Object.defineProperty(exports$1, "clearMaskCache", { enumerable: true, get: function () { return attributeSettings_1.clearMaskCache; } });
+		Object.defineProperty(exports$1, "maxCachedMasks", { enumerable: true, get: function () { return attributeSettings_1.maxCachedMasks; } });
+		Object.defineProperty(exports$1, "inheritAttributeSettings", { enumerable: true, get: function () { return attributeSettings_1.inheritAttributeSettings; } });
+		Object.defineProperty(exports$1, "ownAttributeSettings", { enumerable: true, get: function () { return attributeSettings_1.ownAttributeSettings; } });
+		Object.defineProperty(exports$1, "reduceModalityHash", { enumerable: true, get: function () { return attributeSettings_1.reduceModalityHash; } });
 		if (typeof Promise !== "undefined") {
 		    Promise.allSettled = Promise.allSettled || ((promises) => Promise.all(promises.map((p) => p
 		        .then((value) => ({
@@ -13022,40 +12655,61 @@ function requireDist () {
 }
 
 var distExports = requireDist();
+var index = /*@__PURE__*/getDefaultExportFromCjs(distExports);
 
-function setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext) {
-    let applicationName = settings.applicationName ?? "unknown-app";
-    if (glue42gd) {
-        applicationName = settings.applicationName ?? glue42gd?.appName ?? applicationName;
-    }
-    if (nodeStartingContext) {
-        applicationName = settings.applicationName ?? nodeStartingContext.applicationConfig.name ?? applicationName;
-    }
+var index$1 = /*#__PURE__*/_mergeNamespaces$1({
+    __proto__: null,
+    default: index
+}, [distExports]);
+
+function getDesktopInsightsAttributes(glue42gd, nodeStartingContext, instance) {
+    return {
+        applicationName: nodeStartingContext?.applicationConfig?.name ?? glue42gd?.appName,
+        tracingAppInstanceId: nodeStartingContext?.instanceId ?? glue42gd?.appInstanceId ?? instance?.instance ?? "",
+        windowId: glue42gd?.windowId,
+        user: glue42gd?.user,
+        sid: glue42gd?.sid,
+        osUser: (Utils.isNode() && process?.env?.USERNAME) ?? glue42gd?.env?.windowsUserName,
+        machine: (Utils.isNode() && process?.env?.COMPUTERNAME) ?? glue42gd?.env?.machineName,
+        env: nodeStartingContext?.env ?? glue42gd?.env?.env,
+        region: nodeStartingContext?.region ?? glue42gd?.env?.region,
+        nodeVersion: (Utils.isNode() && process.version) ?? "unknown"
+    };
+}
+function getBrowserInsightsAttributes(instance, settings) {
+    return {
+        applicationName: instance?.applicationName,
+        tracingAppInstanceId: instance?.instance,
+        windowId: instance?.windowId,
+        user: settings.userId
+    };
+}
+function setInsightsAttributes(settings, ext, attributes) {
+    const applicationName = settings.applicationName ?? attributes.applicationName ?? "unknown-app";
     settings.applicationName = applicationName;
-    if (settings.traces?.closeTrace) {
-        glue42gd?.addCloseHandler(() => distExports.Traces.withSpan("interopio.api.application.close", () => { }));
-    }
-    const sid = glue42gd?.sid;
-    const user = glue42gd?.user;
-    const osUser = (Utils.isNode() && process?.env?.USERNAME) ?? glue42gd?.env?.windowsUserName;
-    const machine = (Utils.isNode() && process?.env?.COMPUTERNAME) ?? glue42gd?.env?.machineName;
-    const env = nodeStartingContext?.env ?? glue42gd?.env?.env;
-    const region = nodeStartingContext?.region ?? glue42gd?.env?.region;
-    const appInstanceId = nodeStartingContext?.instanceId ?? glue42gd?.appInstanceId ?? "";
-    const windowId = glue42gd?.windowId;
+    const frameInfo = getFrameInfo();
+    const windowName = frameInfo?.windowName ?? "unknown";
+    const stack = Utils.isNode() ? "node" : typeof window !== "undefined" ? "web" : "unknown";
     const extraInsightsContext = {
-        interopioCoreVersion: version,
-        interopioLibVersion: ext.version || version,
+        interopioCoreVersion: version$1,
+        interopioLibVersion: ext.version || version$1,
         host: "io.api",
         tracingAppName: applicationName,
-        tracingAppInstanceId: appInstanceId,
-        user,
-        osUser,
-        machine,
-        env,
-        region,
-        windowId,
-        sid
+        tracingAppInstanceId: attributes.tracingAppInstanceId,
+        user: attributes.user,
+        osUser: attributes.osUser,
+        machine: attributes.machine,
+        env: attributes.env,
+        region: attributes.region,
+        windowId: attributes.windowId,
+        sid: attributes.sid,
+        windowName,
+        isIframe: frameInfo?.isIframe,
+        frameDepth: frameInfo?.frameDepth,
+        framePath: frameInfo?.framePath,
+        frameUrl: frameInfo?.frameUrl,
+        stack,
+        nodeVersion: attributes.nodeVersion
     };
     let providedAdditionalResourceAttributesFunc = settings.additionalResourceAttributes;
     if (typeof providedAdditionalResourceAttributesFunc !== "function") {
@@ -13067,109 +12721,60 @@ function setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext) {
         ...providedAdditionalResourceAttributesFunc(),
     });
 }
+function setCloseTrace(settings, glue42gd) {
+    if (settings.traces?.closeTrace) {
+        glue42gd?.addCloseHandler(() => {
+            distExports.Traces.withSpan("interopio.api.application.close", () => { });
+        });
+    }
+}
 function setDefaultTraceFilters(settings) {
     if (!settings.traces) {
         return;
     }
-    settings.traces.defaultFilters ??= [];
-    settings.traces.defaultFilters.push({
+    const defaultFilters = (settings.traces.defaultFilters ??= []);
+    const present = new Set(defaultFilters.map((filter) => JSON.stringify(filter)));
+    const add = (filter) => {
+        const key = JSON.stringify(filter);
+        if (!present.has(key)) {
+            present.add(key);
+            defaultFilters.push(filter);
+        }
+    };
+    const allowRequestRoot = typeof settings.traces.instrumentRequests !== "object" ||
+        settings.traces.instrumentRequests.canBeRoot !== false;
+    add({
         "source": "interopio.api.instrumentation.fetch",
-        "canBeRoot": false
+        "canBeRoot": allowRequestRoot
     });
-    settings.traces.defaultFilters.push({
+    add({
         "source": "interopio.api.instrumentation.xhr",
+        "canBeRoot": allowRequestRoot
+    });
+    add({
+        "source": "interopio.api.instrumentation.webSocket.lifetime",
+        "canBeRoot": true,
+        "linkToParent": true
+    });
+    add({
+        "source": "interopio.api.instrumentation.resource",
         "canBeRoot": false
     });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.prefs",
-        "canBeRoot": false
+    add({
+        "source": "interopio.api.instrumentation",
+        "canBeRoot": true
     });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.layouts",
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.windows",
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "stream": "#^t42[.].*"
-        },
-        "canBeRoot": false,
-        "enabled": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "stream": "apps.event"
-        },
-        "canBeRoot": false,
-        "enabled": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "name": "#^t42[.].*"
-        },
-        "canBeRoot": false,
-        "enabled": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "name": "apps.event"
-        },
-        "canBeRoot": false,
-        "enabled": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "method": "apps.command"
-        },
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.interop",
-        "context": {
-            "method": "#^t42[.].*"
-        },
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
+    add({
         "source": "interopio.api.contexts",
         "context": {
             "context": "___insights_pi_storage___"
         },
         "enabled": false
     });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.contexts",
-        "context": {
-            "context": "#^t42[.].*"
-        },
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.contexts",
-        "context": {
-            "context": "#^__.*"
-        },
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.appManager",
-        "canBeRoot": false
-    });
-    settings.traces.defaultFilters.push({
-        "source": "interopio.api.notifications",
-        "canBeRoot": false
-    });
 }
 
 function prepareConfig (configuration, ext, glue42gd) {
+    const isBrowser = !glue42gd && !!configuration.gateway?.webPlatform;
     let nodeStartingContext;
     if (Utils.isNode()) {
         const startingContextString = process.env._GD_STARTING_CONTEXT_;
@@ -13191,13 +12796,14 @@ function prepareConfig (configuration, ext, glue42gd) {
         const sharedWorker = gwConfig?.sharedWorker;
         const inproc = gwConfig?.inproc;
         const webPlatform = gwConfig?.webPlatform ?? undefined;
+        const messagePort = gwConfig?.messagePort || undefined;
         if (glue42gd) {
             ws = glue42gd.gwURL;
         }
         if (Utils.isNode() && nodeStartingContext && nodeStartingContext.gwURL) {
             ws = nodeStartingContext.gwURL;
         }
-        if (!ws && !sharedWorker && !inproc) {
+        if (!ws && !sharedWorker && !inproc && !messagePort) {
             ws = defaultWs;
         }
         let instanceId;
@@ -13234,8 +12840,10 @@ function prepareConfig (configuration, ext, glue42gd) {
             instanceId = window?.glue42electron.instanceId;
         }
         else ;
-        const replaySpecs = configuration.gateway?.replaySpecs ?? [];
-        replaySpecs.push(ContextMessageReplaySpec);
+        const replaySpecs = [
+            ...(configuration.gateway?.replaySpecs ?? []),
+            ContextMessageReplaySpec
+        ];
         let identity = {
             application: uniqueAppName,
             applicationName: appName,
@@ -13244,10 +12852,14 @@ function prepareConfig (configuration, ext, glue42gd) {
             process: pid,
             region,
             environment,
-            api: ext.version || version
+            api: ext.version || version$1
         };
         if (configuration.identity) {
             identity = Object.assign(identity, configuration.identity);
+        }
+        const leftToGateway = !!configuration.identity && "instance" in configuration.identity;
+        if (identity.instance === undefined && !leftToGateway && !inproc && !sharedWorker && !webPlatform) {
+            identity.instance = nanoid$1(10);
         }
         return {
             identity,
@@ -13256,6 +12868,7 @@ function prepareConfig (configuration, ext, glue42gd) {
             sharedWorker,
             webPlatform,
             inproc,
+            messagePort,
             protocolVersion,
             reconnectAttempts,
             replaySpecs,
@@ -13289,7 +12902,7 @@ function prepareConfig (configuration, ext, glue42gd) {
         if (typeof window !== "undefined" && typeof window.glue42electron !== "undefined") {
             return window.glue42electron.application;
         }
-        const uid = nanoid(10);
+        const uid = nanoid$1(10);
         if (Utils.isNode()) {
             if (nodeStartingContext) {
                 return nodeStartingContext.applicationConfig.name;
@@ -13301,51 +12914,79 @@ function prepareConfig (configuration, ext, glue42gd) {
         }
         return uid;
     }
-    async function getInsights(iodesktop, interop, logger) {
+    async function getInsights(interop, insightsHandshakeData, logger) {
         const configProp = configuration.insights;
-        if (typeof configProp !== "object" && typeof configProp !== "boolean" && typeof configProp !== "undefined") {
-            throw new Error("insights/otel property should be boolean, object or unspecified");
+        if (typeof configProp !== "object" && typeof configProp !== "boolean" && configProp !== undefined) {
+            throw new Error("insights property should be boolean, object or unspecified");
         }
         if (configProp === false) {
             return { enabled: false };
         }
+        const platformSettings = isBrowser
+            ? getBrowserPlatformInsights(insightsHandshakeData)
+            : await getDesktopPlatformInsights(configProp, interop, logger);
+        let settings;
+        if (configProp === true || configProp === undefined) {
+            settings = platformSettings ?? { enabled: false };
+        }
+        else {
+            settings = deepMerge(platformSettings || {}, configProp, {
+                isMergeableObject: x => isPlainObject$1(x) || Array.isArray(x),
+                arrayMerge: (t, s) => [...s, ...t]
+            });
+        }
+        const startingPropagationInfo = isBrowser ? insightsHandshakeData?.propagationInfo : nodeStartingContext?.propagationInfo;
+        if (startingPropagationInfo && settings?.traces?.enabled) {
+            settings.traces.rootPropagationInfo ??= startingPropagationInfo;
+        }
+        const attributes = isBrowser
+            ? getBrowserInsightsAttributes(interop?.instance, settings)
+            : getDesktopInsightsAttributes(glue42gd, nodeStartingContext, interop?.instance);
+        setInsightsAttributes(settings, ext, attributes);
+        setCloseTrace(settings, glue42gd);
+        if (settings.traces?.enabled) {
+            setDefaultTraceFilters(settings);
+        }
+        return settings;
+    }
+    async function getDesktopPlatformInsights(configProp, interop, logger) {
         let gdConfig;
-        if (iodesktop) {
-            gdConfig = iodesktop.insights;
+        if (glue42gd) {
+            gdConfig = glue42gd.insights;
         }
         else if (Utils.isNode() && (configuration?.insights !== false &&
             configuration?.insights?.enabled !== false &&
             configuration?.insights?.requestSettings !== false)) {
-            gdConfig = (await interop?.invoke("T42.Otel.GetConfig", undefined, nodeStartingContext ? { environment: nodeStartingContext.env, region: nodeStartingContext.region } : undefined, { waitTimeoutMs: 0 })
+            gdConfig = (await interop?.invoke("T42.Otel.GetConfig", { appName: nodeStartingContext?.applicationConfig?.name }, nodeStartingContext ? { environment: nodeStartingContext.env, region: nodeStartingContext.region } : undefined, { waitTimeoutMs: 0 })
                 .then(result => result.returned)
                 .catch(err => logger?.warn("Unable to retrieve base io.Insights settings: " +
                 (err?.message ?? err))));
         }
         if (gdConfig &&
-            (iodesktop ||
+            (glue42gd ||
                 nodeStartingContext ||
                 (Utils.isNode() && (typeof configProp === "boolean" || !configProp?.platformInstance)))) {
-            gdConfig = {
-                ...gdConfig,
-                metrics: {
-                    ...gdConfig?.metrics,
-                    enabled: !!gdConfig?.metrics?.enabled,
-                    platformMetricsEnabled: false
-                }
-            };
+            gdConfig = disablePlatformMetrics(gdConfig);
         }
-        let settings;
-        if (configProp === true || typeof configProp === "undefined") {
-            settings = gdConfig ?? { enabled: false };
+        return gdConfig;
+    }
+    function getBrowserPlatformInsights(insightsHandshakeData) {
+        const isPlatformInternal = !!configuration.gateway?.webPlatform?.port;
+        const platformSettings = insightsHandshakeData?.settings;
+        if (isPlatformInternal || !platformSettings) {
+            return;
         }
-        else {
-            settings = deepMerge(gdConfig || {}, configProp, { isMergeableObject: isPlainObject$1 });
-        }
-        setInsightsAttributes(settings, ext, glue42gd, nodeStartingContext);
-        if (settings.traces?.enabled) {
-            setDefaultTraceFilters(settings);
-        }
-        return settings;
+        return disablePlatformMetrics(platformSettings);
+    }
+    function disablePlatformMetrics(platformSettings) {
+        return {
+            ...platformSettings,
+            metrics: {
+                ...platformSettings.metrics,
+                enabled: !!platformSettings.metrics?.enabled,
+                platformMetricsEnabled: false
+            }
+        };
     }
     function getAuth() {
         if (typeof configuration.auth === "string") {
@@ -13405,7 +13046,7 @@ function prepareConfig (configuration, ext, glue42gd) {
         connection,
         metrics: configuration.metrics ?? true,
         contexts: getContexts(),
-        version: ext.version || version,
+        version: ext.version || version$1,
         libs: ext.libs ?? [],
         customLogger: configuration.customLogger,
         getInsights
@@ -15379,14 +15020,6 @@ function setValueToPath(obj, value, path) {
     }
     obj[pathArr[i]] = value;
 }
-function isSubset(superObj, subObj) {
-    return Object.keys(subObj).every((ele) => {
-        if (typeof subObj[ele] === "object") {
-            return isSubset(superObj?.[ele] || {}, subObj[ele] || {});
-        }
-        return subObj[ele] === superObj?.[ele];
-    });
-}
 function deletePath(obj, path) {
     const pathArr = path.split(".");
     let i;
@@ -15398,6 +15031,104 @@ function deletePath(obj, path) {
     }
     delete obj[pathArr[i]];
 }
+
+function payloadKeyNames(data) {
+    return data && typeof data === "object" ?
+        Object.keys(data).filter((key) => key !== distExports.OTEL_PI_KEY) :
+        [];
+}
+function payloadKeys(data) {
+    return { keys: payloadKeyNames(data).length };
+}
+function payloadJson(data) {
+    try {
+        return JSON.stringify(data);
+    }
+    catch {
+        return undefined;
+    }
+}
+function payloadSize(data) {
+    return { keys: payloadKeyNames(data).length, bytes: payloadJson(data)?.length ?? 0 };
+}
+function deltaKeyNames(delta) {
+    if (!delta || typeof delta !== "object") {
+        return [];
+    }
+    const parts = delta;
+    const keys = new Set();
+    for (const part of [parts.added, parts.updated, parts.reset]) {
+        payloadKeyNames(part).forEach((key) => keys.add(key));
+    }
+    if (Array.isArray(parts.removed)) {
+        parts.removed.forEach((key) => typeof key === "string" && keys.add(key));
+    }
+    if (Array.isArray(parts.commands)) {
+        parts.commands.forEach((command) => {
+            const path = command?.path;
+            if (typeof path === "string" && path) {
+                keys.add(path.split(".")[0]);
+            }
+        });
+    }
+    keys.delete(distExports.OTEL_PI_KEY);
+    return Array.from(keys);
+}
+function snapshotChanges(known, snapshot) {
+    const changes = { added: {}, updated: {}, removed: [] };
+    try {
+        const before = asJson(known);
+        const after = asJson(snapshot);
+        const from = (before.ok && before.value && typeof before.value === "object" ? before.value : {});
+        const to = (after.ok && after.value && typeof after.value === "object" ? after.value : {});
+        for (const key of Object.keys(to)) {
+            if (key === distExports.OTEL_PI_KEY) {
+                continue;
+            }
+            if (!has(from, key)) {
+                changes.added[key] = to[key];
+            }
+            else if (!sameJson(from[key], to[key])) {
+                changes.updated[key] = to[key];
+            }
+        }
+        for (const key of Object.keys(from)) {
+            if (key !== distExports.OTEL_PI_KEY && !has(to, key)) {
+                changes.removed.push(key);
+            }
+        }
+    }
+    catch {
+        return { added: {}, updated: {}, removed: [] };
+    }
+    return changes;
+}
+const has = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
+const asJson = (value) => {
+    try {
+        const json = JSON.stringify(value);
+        return { ok: true, value: json === undefined ? undefined : JSON.parse(json) };
+    }
+    catch {
+        return { ok: false };
+    }
+};
+const sameJson = (left, right) => {
+    if (left === right) {
+        return true;
+    }
+    if (typeof left !== "object" || typeof right !== "object" || left === null || right === null) {
+        return false;
+    }
+    if (Array.isArray(left) !== Array.isArray(right)) {
+        return false;
+    }
+    const leftKeys = Object.keys(left);
+    if (leftKeys.length !== Object.keys(right).length) {
+        return false;
+    }
+    return leftKeys.every((key) => has(right, key) && sameJson(left[key], right[key]));
+};
 
 class GW3Bridge {
     ERROR_URI_FAILURE = "global.errors.failure";
@@ -15418,6 +15149,7 @@ class GW3Bridge {
     _contextIdToName = {};
     _protocolVersion = undefined;
     _contextsTempCache = {};
+    _resets = 0;
     _contextsSubscriptionsCache = [];
     _systemContextsSubKey;
     get protocolVersion() {
@@ -15454,7 +15186,7 @@ class GW3Bridge {
                 return this._connection.setLibReAnnounced({ name: "contexts" });
             }
             this.reInitiateState()
-                .then(() => this._connection.setLibReAnnounced({ name: "contexts" }))
+                .then((completed) => completed && this._connection.setLibReAnnounced({ name: "contexts" }))
                 .catch((err) => {
                 this._logger.warn(`Error while re-announcing contexts: ${JSON.stringify(err)}`);
             });
@@ -15499,36 +15231,50 @@ class GW3Bridge {
             return this._creationPromises[name];
         }
         const ts = distExports.Traces.currentTracingState;
-        ts.addData("INFO", { context: name });
-        ts.addData("DIAGNOSTIC", { data });
+        ts.addData("INFO", {
+            context: name,
+            dataKeyCount: payloadKeys(data).keys
+        });
+        ts.addData("DEBUG", () => ({
+            dataKeys: payloadKeyNames(data),
+            dataBytes: payloadSize(data).bytes
+        }));
+        ts.addData("DIAGNOSTIC", () => ({
+            data: payloadJson(data)
+        }));
         data = deepClone(data);
         ts.injectPropagationInfo(data);
-        this._creationPromises[name] =
-            this._gw3Session
-                .send({
-                type: GW_MESSAGE_CREATE_CONTEXT,
-                domain: "global",
-                name,
-                data,
-                lifetime: "retained",
-            })
-                .then((createContextMsg) => {
-                this._contextNameToId[name] = createContextMsg.context_id;
-                this._contextIdToName[createContextMsg.context_id] = name;
-                const contextData = this._contextNameToData[name] || new GW3ContextData(createContextMsg.context_id, name, true, undefined);
-                contextData.isAnnounced = true;
-                contextData.name = name;
-                contextData.contextId = createContextMsg.context_id;
-                contextData.context = createContextMsg.data || deepClone(data);
-                contextData.hasReceivedSnapshot = true;
-                this._contextNameToData[name] = contextData;
+        const creation = this._gw3Session
+            .send({
+            type: GW_MESSAGE_CREATE_CONTEXT,
+            domain: "global",
+            name,
+            data,
+            lifetime: "retained",
+        })
+            .then((createContextMsg) => {
+            this._contextNameToId[name] = createContextMsg.context_id;
+            this._contextIdToName[createContextMsg.context_id] = name;
+            const contextData = this._contextNameToData[name] || new GW3ContextData(createContextMsg.context_id, name, true, undefined);
+            contextData.isAnnounced = true;
+            contextData.name = name;
+            contextData.contextId = createContextMsg.context_id;
+            contextData.context = createContextMsg.data || deepClone(data);
+            contextData.hasReceivedSnapshot = true;
+            this._contextNameToData[name] = contextData;
+            delete this._creationPromises[name];
+            contextData.sentExplicitSubscription = true;
+            contextData.createdByUs = createContextMsg.type !== GW_MESSAGE_SUBSCRIBED_CONTEXT;
+            this.subscribe(name, () => { });
+            return createContextMsg.context_id;
+        });
+        this._creationPromises[name] = creation;
+        creation.catch(() => {
+            if (this._creationPromises[name] === creation) {
                 delete this._creationPromises[name];
-                contextData.sentExplicitSubscription = true;
-                contextData.createdByUs = true;
-                this.subscribe(name, () => { });
-                return createContextMsg.context_id;
-            });
-        return this._creationPromises[name];
+            }
+        });
+        return creation;
     }
     all() {
         return Object.keys(this._contextNameToData)
@@ -15544,10 +15290,13 @@ class GW3Bridge {
             distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
-        ts.addData("DIAGNOSTIC", { data: contextData });
-        ts.addData("DEBUG", { delta });
         if (!contextData || !contextData.isAnnounced) {
             await this.createContext(name, delta);
+            distExports.Traces.currentTracingState = ts;
+            const created = this._contextNameToData[name];
+            if (created && !created.createdByUs) {
+                return this.update(name, delta);
+            }
             return;
         }
         const currentContext = await this.get(contextData.name);
@@ -15556,6 +15305,16 @@ class GW3Bridge {
         const calculatedDelta = this.setPathSupported ?
             this.calculateContextDeltaV2(currentContext, delta) :
             this.calculateContextDeltaV1(currentContext, delta);
+        ts.addData("INFO", () => ({
+            deltaKeyCount: deltaKeyNames(calculatedDelta).length
+        }));
+        ts.addData("DEBUG", () => ({
+            deltaKeys: deltaKeyNames(calculatedDelta),
+            deltaBytes: payloadSize(calculatedDelta).bytes
+        }));
+        ts.addData("DIAGNOSTIC", () => ({
+            delta: payloadJson(calculatedDelta)
+        }));
         if (!Object.keys(calculatedDelta.added).length
             && !Object.keys(calculatedDelta.updated).length
             && !calculatedDelta.removed.length
@@ -15597,11 +15356,26 @@ class GW3Bridge {
             distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
-        ts.addData("DIAGNOSTIC", { data });
-        ts.injectPropagationInfo(data);
+        ts.addData("INFO", () => ({
+            dataKeyCount: payloadKeys(data).keys
+        }));
+        ts.addData("DEBUG", () => ({
+            dataKeys: payloadKeyNames(data),
+            dataBytes: payloadSize(data).bytes
+        }));
+        ts.addData("DIAGNOSTIC", () => ({
+            data: payloadJson(data)
+        }));
         if (!contextData || !contextData.isAnnounced) {
-            return this.createContext(name, data);
+            await this.createContext(name, data);
+            distExports.Traces.currentTracingState = ts;
+            const created = this._contextNameToData[name];
+            if (created && !created.createdByUs) {
+                return this.set(name, data);
+            }
+            return;
         }
+        ts.injectPropagationInfo(data);
         const gwResponse = await this._gw3Session
             .send({
             type: GW_MESSAGE_UPDATE_CONTEXT,
@@ -15647,8 +15421,17 @@ class GW3Bridge {
             distExports.Traces.currentTracingState = ts;
         }
         const contextData = this._contextNameToData[name];
-        ts.addData("DIAGNOSTIC", { data: contextData });
-        ts.addData("DEBUG", { pathValues });
+        ts.addData("INFO", {
+            pathCount: pathValues.length
+        });
+        ts.addData("DEBUG", () => ({
+            paths: pathValues.map(x => x.path),
+            pathValueBytes: payloadSize(pathValues).bytes,
+        }));
+        ts.addData("DIAGNOSTIC", () => ({
+            pathValues: payloadJson(pathValues)
+        }));
+        const callerPathValues = pathValues.slice();
         const injectionCarrier = { [distExports.OTEL_PI_KEY]: undefined };
         ts.injectPropagationInfo(injectionCarrier);
         if (injectionCarrier[distExports.OTEL_PI_KEY]) {
@@ -15659,7 +15442,13 @@ class GW3Bridge {
             for (const pathValue of pathValues) {
                 setValueToPath(obj, pathValue.value, pathValue.path);
             }
-            return this.createContext(name, obj);
+            await this.createContext(name, obj);
+            distExports.Traces.currentTracingState = ts;
+            const created = this._contextNameToData[name];
+            if (created && !created.createdByUs) {
+                return this.setPaths(name, callerPathValues);
+            }
+            return;
         }
         const commands = [];
         for (const pathValue of pathValues) {
@@ -15795,13 +15584,10 @@ class GW3Bridge {
         const ts = distExports.Traces.currentTracingState;
         ts.addData("INFO", { context: name, contextExists });
         const wrappedCallback = async (...args) => {
-            return distExports.withSpan("interopio.api.contexts.bridge.subscribe.callback", { context: name }, args?.[5], (cbts) => {
+            const pi = args?.[5];
+            return distExports.withSpan("interopio.api.contexts.bridge.subscribe.callback", { context: name }, pi, { disableNesting: !pi }, () => {
                 distExports.Traces.removePropagationInfo(args?.[0]);
                 distExports.Traces.removePropagationInfo(args?.[1]);
-                cbts.addData("INFO", { context: name });
-                cbts.addData("DEBUG", { delta: args?.[1] });
-                cbts.addData("DEBUG", { removed: args?.[2] });
-                cbts.addData("DIAGNOSTIC", { data: args?.[0] });
                 return callback(args?.[0], args?.[1], args?.[2], args?.[3], args?.[4]);
             });
         };
@@ -15809,7 +15595,11 @@ class GW3Bridge {
     }
     unsubscribe(subscriptionKey, keepInSubscriptionsCache) {
         if (!keepInSubscriptionsCache) {
+            const name = this._contextsSubscriptionsCache.find(x => x.subKey === subscriptionKey)?.contextName;
             this._contextsSubscriptionsCache = this._contextsSubscriptionsCache.filter(x => x.subKey !== subscriptionKey);
+            if (name !== undefined && this._onlyReAnnounceSubscribedContexts && !this._contextsSubscriptionsCache.some(x => x.contextName === name)) {
+                delete this._contextsTempCache[name];
+            }
         }
         for (const name of Object.keys(this._contextNameToData)) {
             const contextData = this._contextNameToData[name];
@@ -15979,10 +15769,18 @@ class GW3Bridge {
         if (justSeen ||
             !deepEqual(contextData.context, oldContext) ||
             updatedMessageType === GW_MESSAGE_SUBSCRIBED_CONTEXT) {
-            this.invokeUpdateCallbacks(contextData, contextUpdatedMsg.delta ?? contextUpdatedMsg.data, { updaterId: contextUpdatedMsg.updater_id });
+            this.invokeUpdateCallbacks(contextData, contextUpdatedMsg.delta, { updaterId: contextUpdatedMsg.updater_id }, contextUpdatedMsg.delta ? undefined : () => snapshotChanges(oldContext, contextData.context));
         }
     }
-    invokeUpdateCallbacks(contextData, delta, extraData) {
+    invokeUpdateCallbacks(contextData, delta, extraData, changesOfSnapshot) {
+        let snapshot;
+        const changed = () => {
+            if (changesOfSnapshot && !snapshot) {
+                snapshot = changesOfSnapshot();
+            }
+            return snapshot;
+        };
+        const hasDelta = !!delta;
         delta = delta || { added: {}, updated: {}, reset: {}, removed: [] };
         if (delta.commands) {
             delta.added = delta.updated = delta.reset = {};
@@ -16002,23 +15800,44 @@ class GW3Bridge {
         const pi = distExports.Traces.extractPropagationInfo(delta, true) ||
             distExports.Traces.extractPropagationInfo(delta?.added, true) ||
             distExports.Traces.extractPropagationInfo(delta?.updated, true) ||
-            distExports.Traces.extractPropagationInfo(delta?.reset, true);
-        for (const updateCallbackIndex in contextData.updateCallbacks) {
-            if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
-                try {
-                    const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
-                    const deltaArg = deepClone({
-                        ...delta.added,
-                        ...delta.updated,
-                        ...delta.reset
-                    });
-                    updateCallback(deepClone(contextData.context), deltaArg, delta.removed, parseInt(updateCallbackIndex, 10), extraData, pi);
-                }
-                catch (err) {
-                    this._logger.debug("callback error: " + JSON.stringify(err));
+            distExports.Traces.extractPropagationInfo(delta?.reset, true) ||
+            (changesOfSnapshot ? distExports.Traces.extractPropagationInfo(contextData.context, true) : null);
+        const updated = distExports.Traces.withSpan("interopio.api.contexts.bridge.updated", { context: contextData.name }, pi, (ts) => {
+            const described = () => changed() ?? delta;
+            ts?.addData("INFO", () => ({
+                dataKeyCount: payloadKeys(contextData.context).keys,
+                ...(hasDelta ? { deltaKeyCount: deltaKeyNames(delta).length } : {}),
+            }));
+            ts?.addData("DEBUG", () => ({
+                ...(hasDelta ? {} : { deltaKeyCount: deltaKeyNames(described()).length }),
+                deltaKeys: deltaKeyNames(described()),
+                deltaBytes: payloadSize(described()).bytes,
+                dataKeys: payloadKeyNames(contextData.context),
+                dataBytes: payloadSize(contextData.context).bytes,
+                removed: described().removed
+            }));
+            ts?.addData("DIAGNOSTIC", () => ({
+                data: payloadJson(contextData.context),
+                delta: payloadJson(described())
+            }));
+            for (const updateCallbackIndex in contextData.updateCallbacks) {
+                if (contextData.updateCallbacks.hasOwnProperty(updateCallbackIndex)) {
+                    try {
+                        const updateCallback = contextData.updateCallbacks[updateCallbackIndex];
+                        const deltaArg = deepClone({
+                            ...delta.added,
+                            ...delta.updated,
+                            ...delta.reset
+                        });
+                        updateCallback(deepClone(contextData.context), deltaArg, delta.removed, parseInt(updateCallbackIndex, 10), extraData, pi);
+                    }
+                    catch (err) {
+                        this._logger.debug("callback error: " + JSON.stringify(err));
+                    }
                 }
             }
-        }
+        });
+        void Promise.resolve(updated).catch(() => undefined);
     }
     subscribeToContextDestroyedMessages() {
         const destroyedMessageTypes = [
@@ -16052,11 +15871,17 @@ class GW3Bridge {
         }
         delete this._contextIdToName[contextId];
         delete this._contextNameToId[name];
+        delete this._contextsTempCache[name];
         const contextData = this._contextNameToData[name];
         delete this._contextNameToData[name];
         if (!contextData || !contextData.isAnnounced) {
             this._logger.error(`Received 'destroyed' for unknown context: ${contextId}`);
             return;
+        }
+        if (destroyedMessageType !== GW_MESSAGE_ACTIVITY_DESTROYED && contextData.hasCallbacks()) {
+            const placeholder = new GW3ContextData(undefined, name, false, undefined);
+            placeholder.updateCallbacks = contextData.updateCallbacks;
+            this._contextNameToData[name] = placeholder;
         }
     }
     async sendSubscribe(contextData) {
@@ -16140,6 +15965,7 @@ class GW3Bridge {
         this._contextNameToId = {};
         this._contextIdToName = {};
         delete this._protocolVersion;
+        this._resets++;
         this._contextsTempCache = Object.keys(this._contextNameToData).reduce((cacheSoFar, ctxName) => {
             const contextData = this._contextNameToData[ctxName];
             const addToCache = !this._onlyReAnnounceSubscribedContexts || contextData.hasReceivedSnapshot;
@@ -16147,10 +15973,11 @@ class GW3Bridge {
                 cacheSoFar[ctxName] = this._contextNameToData[ctxName].context;
             }
             return cacheSoFar;
-        }, {});
+        }, { ...this._contextsTempCache });
         this._contextNameToData = {};
     }
     async reInitiateState() {
+        const resets = this._resets;
         this.subscribeToContextCreatedMessages();
         this.subscribeToContextUpdatedMessages();
         this.subscribeToContextDestroyedMessages();
@@ -16176,17 +16003,32 @@ class GW3Bridge {
         });
         await Promise.all(this._contextsSubscriptionsCache.map((subscription) => this.subscribe(subscription.contextName, subscription.callback, subscription.subKey)));
         await this.flushQueue();
-        for (const ctxName in this._contextsTempCache) {
-            if (typeof this._contextsTempCache[ctxName] !== "object" || Object.keys(this._contextsTempCache[ctxName]).length === 0) {
+        const cache = this._contextsTempCache;
+        for (const ctxName in cache) {
+            await this.flushQueue();
+            if (resets !== this._resets) {
+                return false;
+            }
+            if (typeof cache[ctxName] !== "object" || Object.keys(cache[ctxName]).length === 0) {
+                delete cache[ctxName];
                 continue;
             }
-            const lastKnownData = this._contextsTempCache[ctxName];
+            const lastKnownData = cache[ctxName];
             this._logger.info(`Re-announcing known context: ${ctxName}`);
-            await this.flushQueue();
-            await this.update(ctxName, lastKnownData);
+            try {
+                await this.update(ctxName, lastKnownData);
+                delete cache[ctxName];
+            }
+            catch (error) {
+                this._logger.warn(`Failed to re-announce context ${ctxName}: ${JSON.stringify(error)}`);
+            }
+        }
+        if (resets !== this._resets) {
+            return false;
         }
         this._contextsTempCache = {};
         this._logger.info("Contexts are re-announced");
+        return true;
     }
     flushQueue() {
         return new Promise((resolve) => setTimeout(() => resolve(), 0));
@@ -16346,6 +16188,101 @@ function rejectAfter(ms = 0, promise, error) {
     return new Promise((resolve, reject) => {
         timeout = setTimeout(() => reject(error), ms);
     });
+}
+
+function isSubset(superObj, subObj) {
+    return Object.keys(subObj).every((ele) => {
+        if (typeof subObj[ele] === "object") {
+            return isSubset(superObj?.[ele] || {}, subObj[ele] || {});
+        }
+        return subObj[ele] === superObj?.[ele];
+    });
+}
+function containsProps(filter, repoMethod) {
+    const filterProps = Object.keys(filter)
+        .filter((prop) => {
+        return filter[prop] !== undefined
+            && filter[prop] !== null
+            && typeof filter[prop] !== "function"
+            && prop !== "object_types"
+            && prop !== "display_name"
+            && prop !== "id"
+            && prop !== "gatewayId"
+            && prop !== "identifier"
+            && prop[0] !== "_";
+    });
+    return filterProps.every((prop) => {
+        let isMatch;
+        const filterValue = filter[prop];
+        const repoMethodValue = repoMethod[prop];
+        switch (prop) {
+            case "objectTypes":
+                isMatch = (filterValue || []).every((filterValueEl) => {
+                    return (repoMethodValue || []).includes(filterValueEl);
+                });
+                break;
+            case "flags":
+                isMatch = isSubset(repoMethodValue || {}, filterValue || {});
+                break;
+            default:
+                isMatch = String(filterValue).toLowerCase() === String(repoMethodValue).toLowerCase();
+        }
+        return isMatch;
+    });
+}
+
+const INVENTED_PID_TAG = 0xBAD * 2 ** 36;
+const inventPid = () => INVENTED_PID_TAG + Math.floor(Math.random() * 2 ** 32);
+const isInventedPid = (pid) => typeof pid === "number" && pid > 0xFFFFFFFF;
+class InstanceWrapper {
+    wrapped = {};
+    constructor(API, instance, connection) {
+        this.wrapped.getMethods = function () {
+            return API.methodsForInstance(this);
+        };
+        this.wrapped.getStreams = function () {
+            return API.methodsForInstance(this).filter((m) => m.supportsStreaming);
+        };
+        if (instance) {
+            this.refreshWrappedObject(instance);
+        }
+        if (connection) {
+            connection.loggedIn(() => {
+                this.refresh(connection);
+            });
+            this.refresh(connection);
+        }
+    }
+    unwrap() {
+        return this.wrapped;
+    }
+    refresh(connection) {
+        if (!connection) {
+            return;
+        }
+        const resolvedIdentity = connection?.resolvedIdentity;
+        const instance = Object.assign({}, resolvedIdentity ?? {}, { peerId: connection?.peerId });
+        this.refreshWrappedObject(instance);
+    }
+    refreshWrappedObject(resolvedIdentity) {
+        Object.keys(resolvedIdentity).forEach((key) => {
+            this.wrapped[key] = resolvedIdentity[key];
+        });
+        this.wrapped.user = resolvedIdentity.user;
+        this.wrapped.instance = resolvedIdentity.instance;
+        this.wrapped.application = resolvedIdentity.application ?? nanoid$1(10);
+        this.wrapped.applicationName = resolvedIdentity.applicationName;
+        this.wrapped.pid = resolvedIdentity.pid ?? resolvedIdentity.process
+            ?? (isInventedPid(this.wrapped.pid) ? this.wrapped.pid : inventPid());
+        this.wrapped.machine = resolvedIdentity.machine;
+        this.wrapped.environment = resolvedIdentity.environment;
+        this.wrapped.region = resolvedIdentity.region;
+        this.wrapped.windowId = resolvedIdentity.windowId;
+        this.wrapped.isLocal = resolvedIdentity.isLocal ?? true;
+        this.wrapped.api = resolvedIdentity.api;
+        this.wrapped.service = resolvedIdentity.service;
+        this.wrapped.peerId = resolvedIdentity.peerId;
+    }
 }
 
 /**
@@ -17178,6 +17115,9 @@ var InvokeStatus;
     InvokeStatus[InvokeStatus["Success"] = 0] = "Success";
     InvokeStatus[InvokeStatus["Error"] = 1] = "Error";
 })(InvokeStatus || (InvokeStatus = {}));
+const DISCOVERY_CANCELLED_BY_SHUTDOWN = "interop-client-shutting-down";
+const ERR_MSG_SHUTTING_DOWN = "The application is shutting down - the invocation was not dispatched.";
+const elapsedNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 class Client {
     protocol;
     repo;
@@ -17189,13 +17129,17 @@ class Client {
         this.instance = instance;
         this.configuration = configuration;
     }
-    subscribe(method, options, successCallback, errorCallback, existingSub) {
+    subscribe(method, options, successCallback, errorCallback, existingSub, restoration) {
         const ts = distExports.Traces.currentTracingState;
         ts.addData("INFO", { stream: Utils.getMethodName(method) });
         ts.addData("INFO", { options });
         const callProtocolSubscribe = (targetServers, stream, successProxy, errorProxy) => {
+            if (this.isShutDown || (restoration && !restoration.isCurrent())) {
+                errorProxy({ method: stream, called_with: options.arguments, message: this.isShutDown ? "Subscription cancelled by shutdown." : "Subscription restoration was cancelled." });
+                return;
+            }
             options.methodResponseTimeout = options.methodResponseTimeout ?? options.waitTimeoutMs;
-            this.protocol.client.subscribe(stream, options, targetServers, successProxy, errorProxy, existingSub);
+            this.protocol.client.subscribe(stream, options, targetServers, successProxy, errorProxy, existingSub, restoration);
         };
         const promise = new Promise((resolve, reject) => {
             const successProxy = (sub) => {
@@ -17243,25 +17187,30 @@ class Client {
                 }
             }
             const delayStep = 500;
-            let delayTillNow = 0;
-            let currentServers = this.getServerMethodsByFilterAndTarget(methodDef, target);
+            const startedAt = elapsedNow();
+            const findServers = () => this.filterByTarget(target, this.getServers(methodDef)
+                .filter(({ server }) => !restoration?.pendingServers.has(server.id)));
+            let currentServers = findServers();
             if (currentServers.length > 0) {
                 callProtocolSubscribe(currentServers, currentServers[0].methods[0], successProxy, errorProxy);
             }
             else {
                 const retry = () => {
-                    if (!target || !(options.waitTimeoutMs)) {
+                    if (this.isShutDown || (restoration && !restoration.isCurrent())) {
+                        errorProxy({ method: methodDef, called_with: options.arguments, message: this.isShutDown ? "Subscription cancelled by shutdown." : "Subscription restoration was cancelled." });
                         return;
                     }
-                    delayTillNow += delayStep;
-                    currentServers = this.getServerMethodsByFilterAndTarget(methodDef, target);
+                    const waited = elapsedNow() - startedAt;
+                    const waitTimeoutMs = options.waitTimeoutMs ?? 10000;
+                    currentServers = findServers();
                     if (currentServers.length > 0) {
                         const streamInfo = currentServers[0].methods[0];
                         callProtocolSubscribe(currentServers, streamInfo, successProxy, errorProxy);
                     }
-                    else if (delayTillNow >= options.waitTimeoutMs) {
+                    else if (waited >= waitTimeoutMs) {
                         const def = typeof method === "string" ? { name: method } : method;
                         callProtocolSubscribe(currentServers, def, successProxy, errorProxy);
+                        this.warnIfLate(methodDef.name, waited, waitTimeoutMs);
                     }
                     else {
                         setTimeout(retry, delayStep);
@@ -17308,6 +17257,11 @@ class Client {
     }
     serverMethodAdded(callback) {
         return this.repo.onServerMethodAdded((server, method) => {
+            callback({ server, method });
+        });
+    }
+    serverMethodUpdated(callback) {
+        return this.repo.onServerMethodUpdated((server, method) => {
             callback({ server, method });
         });
     }
@@ -17377,7 +17331,12 @@ class Client {
                     serversMethodMap = await this.tryToAwaitForMethods(methodDefinition, target, additionalOptions);
                 }
                 catch (err) {
-                    const message = `Can not find a method matching ${JSON.stringify(methodFilter)} with server filter ${JSON.stringify(target)}`;
+                    const message = err === DISCOVERY_CANCELLED_BY_SHUTDOWN
+                        ? ERR_MSG_SHUTTING_DOWN
+                        : `Can not find a method matching ${JSON.stringify(methodFilter)} with server filter ${JSON.stringify(target)}`;
+                    if (err !== DISCOVERY_CANCELLED_BY_SHUTDOWN) {
+                        ts.addData("INFO", { "error.type": "MethodNotFound", waitedMs: additionalOptions.waitTimeoutMs });
+                    }
                     return Promise.reject(this.generateInvalidInputInvocationResult(message, methodDefinition, argumentObj));
                 }
             }
@@ -17395,23 +17354,43 @@ class Client {
         return promisify(getInvokePromise(), success, error);
     }
     async getServerInvokePromise(method, server, argumentObj, additionalOptionsCopy, timeout) {
-        const invId = nanoid(10);
+        const invId = nanoid$1(10);
         const ts = distExports.Traces.currentTracingState;
         if (argumentObj) {
             argumentObj = deepClone(argumentObj);
             ts.injectPropagationInfo(argumentObj);
         }
-        ts.addData("INFO", { "server": server?.id, instance: server?.instance });
-        ts.addData("INFO", { "invocationId": invId });
+        ts.addData("INFO", {
+            "invocationId": invId,
+            "server": server?.id,
+            instance: server?.instance
+        });
         const invokePromise = this.protocol.client.invoke(invId, method, argumentObj, server, additionalOptionsCopy);
-        const returnValue = await Promise.race([
-            invokePromise,
-            rejectAfter(timeout, invokePromise, {
-                invocationId: invId,
-                message: `Invocation timeout (${timeout} ms) reached for method name: ${method?.name}, target instance: ${JSON.stringify(server.instance)}, options: ${JSON.stringify(additionalOptionsCopy)}`,
-                status: InvokeStatus.Error,
-            })
-        ]);
+        const timedOut = {
+            invocationId: invId,
+            message: `Invocation timeout (${timeout} ms) reached for method name: ${method?.name}, target instance: ${JSON.stringify(server.instance)}, options: ${JSON.stringify(additionalOptionsCopy)}`,
+            status: InvokeStatus.Error,
+        };
+        let returnValue;
+        try {
+            returnValue = await Promise.race([
+                invokePromise,
+                rejectAfter(timeout, invokePromise, timedOut)
+            ]);
+            if (returnValue.status === InvokeStatus.Error) {
+                ts.addData("INFO", { "error.type": "InvocationError" });
+                ts.status = { code: 2 };
+            }
+        }
+        catch (err) {
+            if (err === timedOut) {
+                ts.addData("INFO", { "error.type": "InvocationTimeout", timeoutMs: timeout });
+            }
+            else {
+                ts.addData("INFO", { "error.type": "Unknown" });
+            }
+            throw err;
+        }
         ts.addData("DIAGNOSTIC", { returnValue });
         return returnValue;
     }
@@ -17424,7 +17403,7 @@ class Client {
             flags: methodDefinition.flags?.metadata ?? {}
         };
         const invokeResultMessage = {
-            invocationId: nanoid(10),
+            invocationId: nanoid$1(10),
             status: InvokeStatus.Error,
             message
         };
@@ -17475,28 +17454,65 @@ class Client {
         };
         return result;
     }
+    shutdownListeners = [];
+    isShutDown = false;
+    dispose() {
+        if (this.isShutDown) {
+            return;
+        }
+        this.isShutDown = true;
+        this.shutdownListeners.splice(0).forEach((release) => release());
+    }
+    onShutdown(release) {
+        this.shutdownListeners.push(release);
+        return () => {
+            this.shutdownListeners = this.shutdownListeners.filter((listener) => listener !== release);
+        };
+    }
+    warnIfLate(name, waited, limit) {
+        if (waited > limit + 1000) {
+            this.configuration.logger?.warn(`gave up waiting for a server of ${name} after ${Math.round(waited)} ms against a ${limit} ms limit - the wait's timers ran late`);
+        }
+    }
     tryToAwaitForMethods(methodDefinition, target, additionalOptions) {
         return new Promise((resolve, reject) => {
             if (additionalOptions.waitTimeoutMs === 0) {
                 reject();
                 return;
             }
+            if (this.isShutDown) {
+                reject(DISCOVERY_CANCELLED_BY_SHUTDOWN);
+                return;
+            }
             const delayStep = 500;
-            let delayTillNow = 0;
-            const retry = () => {
-                delayTillNow += delayStep;
-                const serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
-                if (serversMethodMap.length > 0) {
-                    clearInterval(interval);
-                    resolve(serversMethodMap);
-                }
-                else if (delayTillNow >= (additionalOptions.waitTimeoutMs || 10000)) {
-                    clearInterval(interval);
-                    reject();
+            const limit = additionalOptions.waitTimeoutMs || 10000;
+            const startedAt = elapsedNow();
+            let interval;
+            let unregister;
+            let settled = false;
+            const finish = (settle) => {
+                if (settled) {
                     return;
                 }
+                settled = true;
+                clearInterval(interval);
+                unregister?.();
+                settle();
             };
-            const interval = setInterval(retry, delayStep);
+            const retry = () => {
+                const waited = elapsedNow() - startedAt;
+                const serversMethodMap = this.getServerMethodsByFilterAndTarget(methodDefinition, target);
+                if (serversMethodMap.length > 0) {
+                    finish(() => resolve(serversMethodMap));
+                }
+                else if (waited >= limit) {
+                    finish(() => reject());
+                    this.warnIfLate(methodDefinition.name, waited, limit);
+                }
+            };
+            interval = setInterval(retry, delayStep);
+            unregister = this.onShutdown(() => finish(() => reject(DISCOVERY_CANCELLED_BY_SHUTDOWN)));
+            this.configuration.logger?.debug(`waiting up to ${limit} ms for a server of ${methodDefinition.name}`);
         });
     }
     filterByTarget(target, serverMethodMap) {
@@ -17541,42 +17557,14 @@ class Client {
             instanceFilter = { ...instanceFilter };
             delete instanceFilter.peerId;
         }
-        return this.containsProps(instanceFilter, instanceDefinition);
+        if (instanceFilter?.instance && isInventedPid(instanceFilter.pid)) {
+            instanceFilter = { ...instanceFilter };
+            delete instanceFilter.pid;
+        }
+        return containsProps(instanceFilter, instanceDefinition);
     }
     methodMatch(methodFilter, methodDefinition) {
-        return this.containsProps(methodFilter, methodDefinition);
-    }
-    containsProps(filter, repoMethod) {
-        const filterProps = Object.keys(filter)
-            .filter((prop) => {
-            return filter[prop] !== undefined
-                && filter[prop] !== null
-                && typeof filter[prop] !== "function"
-                && prop !== "object_types"
-                && prop !== "display_name"
-                && prop !== "id"
-                && prop !== "gatewayId"
-                && prop !== "identifier"
-                && prop[0] !== "_";
-        });
-        return filterProps.every((prop) => {
-            let isMatch;
-            const filterValue = filter[prop];
-            const repoMethodValue = repoMethod[prop];
-            switch (prop) {
-                case "objectTypes":
-                    isMatch = (filterValue || []).every((filterValueEl) => {
-                        return (repoMethodValue || []).includes(filterValueEl);
-                    });
-                    break;
-                case "flags":
-                    isMatch = isSubset(repoMethodValue || {}, filterValue || {});
-                    break;
-                default:
-                    isMatch = String(filterValue).toLowerCase() === String(repoMethodValue).toLowerCase();
-            }
-            return isMatch;
-        });
+        return containsProps(methodFilter, methodDefinition);
     }
     getMethods(methodFilter) {
         if (methodFilter === undefined) {
@@ -17844,6 +17832,9 @@ class Server {
     streaming;
     invocations = 0;
     currentlyUnregistering = {};
+    currentlyUpdating = {};
+    pendingUnregisters = {};
+    unregisterInFlight = {};
     constructor(protocol, serverRepository) {
         this.protocol = protocol;
         this.serverRepository = serverRepository;
@@ -17936,6 +17927,66 @@ class Server {
         wrappedCallbackFunction.userCallback = callback;
         return this.registerCore(methodDefinition, wrappedCallbackFunction);
     }
+    async updateMethod(name, definition) {
+        if (!name || typeof name !== "string") {
+            return Promise.reject("Method name is required and must be a non-empty string.");
+        }
+        if (!definition || typeof definition !== "object" || Array.isArray(definition)) {
+            return Promise.reject(`Method definition update for "${name}" must be an object.`);
+        }
+        if ("name" in definition || "supportsStreaming" in definition || "accepts" in definition || "returns" in definition) {
+            return Promise.reject(`The "name", "supportsStreaming", "accepts", and "returns" properties of method "${name}" cannot be updated.`);
+        }
+        const previousUpdate = this.currentlyUpdating[name] ?? Promise.resolve();
+        const update = previousUpdate
+            .catch(() => undefined)
+            .then(() => this.updateMethodCore(name, { ...definition }));
+        this.currentlyUpdating[name] = update;
+        try {
+            await update;
+        }
+        finally {
+            if (this.currentlyUpdating[name] === update) {
+                delete this.currentlyUpdating[name];
+            }
+        }
+    }
+    async updateMethodCore(name, definition) {
+        await this.currentlyUnregistering[name];
+        if (this.pendingUnregisters[name]) {
+            return Promise.reject(`Method with a name "${name}" is currently being unregistered and cannot be updated!`);
+        }
+        const repoMethod = this.serverRepository.getList().find((method) => method.definition.name === name);
+        if (!repoMethod) {
+            return Promise.reject(`Method with a name "${name}" does not exist or is not registered by your application!`);
+        }
+        if (repoMethod.definition.supportsStreaming) {
+            return Promise.reject(`"${name}" is a stream and streams cannot be updated. Only methods registered with “glue.interop.register()” or “glue.interop.registerAsync()” can be updated.`);
+        }
+        const suppliedUpdates = {};
+        Object.keys(definition).forEach((key) => {
+            const value = definition[key];
+            if (typeof value !== "undefined") {
+                suppliedUpdates[key] = value;
+            }
+        });
+        const currentDefinition = repoMethod.definition;
+        repoMethod.definition = {
+            ...currentDefinition,
+            ...suppliedUpdates,
+            name: currentDefinition.name,
+            supportsStreaming: currentDefinition.supportsStreaming,
+            accepts: currentDefinition.accepts,
+            returns: currentDefinition.returns,
+        };
+        try {
+            await this.protocol.server.register(repoMethod);
+        }
+        catch (error) {
+            repoMethod.definition = currentDefinition;
+            throw error;
+        }
+    }
     registerAsync(methodDefinition, callback) {
         if (!methodDefinition) {
             return Promise.reject("Method definition is required. Please, provide either a unique string for a method name or a “methodDefinition” object with a required “name” property.");
@@ -17997,6 +18048,9 @@ class Server {
         if (methodDefinition.name === undefined) {
             return Promise.reject("Method name is required. Cannot find a method if the method name is undefined!");
         }
+        while (this.currentlyUpdating[methodDefinition.name]) {
+            await this.currentlyUpdating[methodDefinition.name].catch(() => undefined);
+        }
         const methodToBeRemoved = this.serverRepository.getList().find((serverMethod) => {
             return serverMethod.definition.name === methodDefinition.name
                 && (serverMethod.definition.supportsStreaming || false) === forStream;
@@ -18007,6 +18061,11 @@ class Server {
         await this.removeMethodsOrStreams([methodToBeRemoved]);
     }
     async unregisterWithPredicate(filterPredicate, forStream) {
+        let pendingUpdates = Object.values(this.currentlyUpdating);
+        while (pendingUpdates.length > 0) {
+            await Promise.all(pendingUpdates.map((update) => update.catch(() => undefined)));
+            pendingUpdates = Object.values(this.currentlyUpdating);
+        }
         const methodsOrStreamsToRemove = this.serverRepository.getList()
             .filter((sm) => filterPredicate(sm.definition))
             .filter((serverMethod) => (serverMethod.definition.supportsStreaming || false) === forStream);
@@ -18018,22 +18077,71 @@ class Server {
     removeMethodsOrStreams(methodsToRemove) {
         const methodUnregPromises = [];
         methodsToRemove.forEach((method) => {
+            const inFlight = this.unregisterInFlight[method.repoId];
+            if (inFlight) {
+                methodUnregPromises.push(inFlight);
+                return;
+            }
+            method.unregistering = true;
+            const methodName = method.definition.name;
+            this.pendingUnregisters[methodName] = (this.pendingUnregisters[methodName] ?? 0) + 1;
+            const releasePending = () => {
+                const remaining = (this.pendingUnregisters[methodName] ?? 1) - 1;
+                if (remaining > 0) {
+                    this.pendingUnregisters[methodName] = remaining;
+                }
+                else {
+                    delete this.pendingUnregisters[methodName];
+                }
+            };
             const promise = this.protocol.server.unregister(method)
+                .catch((error) => {
+                if (error?.reason_uri !== "agm.errors.unregistration.failure") {
+                    method.unregistering = false;
+                    this.reAnnounceIfSkipped(method);
+                    throw error;
+                }
+            })
                 .then(() => {
                 if (method.repoId) {
                     this.serverRepository.remove(method.repoId);
                 }
+            })
+                .then(releasePending, (error) => {
+                releasePending();
+                throw error;
             });
+            this.unregisterInFlight[method.repoId] = promise;
+            const settled = () => {
+                if (this.unregisterInFlight[method.repoId] === promise) {
+                    delete this.unregisterInFlight[method.repoId];
+                }
+            };
+            promise.then(settled, settled);
             methodUnregPromises.push(promise);
-            this.addAsCurrentlyUnregistering(method.definition.name, promise);
+            this.addAsCurrentlyUnregistering(methodName, promise);
         });
         return Promise.all(methodUnregPromises);
     }
-    async addAsCurrentlyUnregistering(methodName, promise) {
+    reAnnounceIfSkipped(method) {
+        if (!method.replaySkipped) {
+            return;
+        }
+        method.replaySkipped = false;
+        const reAnnounced = method.definition.supportsStreaming
+            ? this.protocol.server.createStream(method)
+            : this.protocol.server.register(method);
+        reAnnounced.catch(() => { });
+    }
+    addAsCurrentlyUnregistering(methodName, promise) {
         const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
-        this.currentlyUnregistering[methodName] = Promise.race([promise, timeout]).then(() => {
-            delete this.currentlyUnregistering[methodName];
+        const settled = Promise.race([promise, timeout]).then(() => undefined, () => undefined);
+        const entry = settled.then(() => {
+            if (this.currentlyUnregistering[methodName] === entry) {
+                delete this.currentlyUnregistering[methodName];
+            }
         });
+        this.currentlyUnregistering[methodName] = entry;
     }
     async registerCore(method, theFunction) {
         let methodDefinition;
@@ -18070,7 +18178,7 @@ class Server {
     }
     onMethodInvoked(methodToExecute, invocationId, invocationArgs) {
         const propagationInfo = distExports.Traces.extractPropagationInfo(invocationArgs.args, true);
-        distExports.withSpan("interopio.api.interop.register.callback", { method: methodToExecute?.definition?.name }, propagationInfo, (ts) => {
+        distExports.withSpan("interopio.api.interop.register.callback", { method: methodToExecute?.definition?.name }, propagationInfo, { disableNesting: !propagationInfo }, (ts) => {
             ts.addData("INFO", { method: methodToExecute?.definition?.name });
             ts.addData("INFO", { invocationId });
             ts.addData("INFO", { invoker: invocationArgs?.instance });
@@ -18120,61 +18228,14 @@ __decorate([
     distExports.withSpan("interopio.api.interop.register", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
 ], Server.prototype, "register", null);
 __decorate([
+    distExports.withSpan("interopio.api.interop.method.update", { argMapping: (name) => ({ method: name }) })
+], Server.prototype, "updateMethod", null);
+__decorate([
     distExports.withSpan("interopio.api.interop.register.async", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
 ], Server.prototype, "registerAsync", null);
 __decorate([
     distExports.withSpan("interopio.api.interop.unregister", { argMapping: (methodDefinition) => ({ method: Utils.getMethodName(methodDefinition) }) })
 ], Server.prototype, "unregister", null);
-
-class InstanceWrapper {
-    wrapped = {};
-    constructor(API, instance, connection) {
-        this.wrapped.getMethods = function () {
-            return API.methodsForInstance(this);
-        };
-        this.wrapped.getStreams = function () {
-            return API.methodsForInstance(this).filter((m) => m.supportsStreaming);
-        };
-        if (instance) {
-            this.refreshWrappedObject(instance);
-        }
-        if (connection) {
-            connection.loggedIn(() => {
-                this.refresh(connection);
-            });
-            this.refresh(connection);
-        }
-    }
-    unwrap() {
-        return this.wrapped;
-    }
-    refresh(connection) {
-        if (!connection) {
-            return;
-        }
-        const resolvedIdentity = connection?.resolvedIdentity;
-        const instance = Object.assign({}, resolvedIdentity ?? {}, { peerId: connection?.peerId });
-        this.refreshWrappedObject(instance);
-    }
-    refreshWrappedObject(resolvedIdentity) {
-        Object.keys(resolvedIdentity).forEach((key) => {
-            this.wrapped[key] = resolvedIdentity[key];
-        });
-        this.wrapped.user = resolvedIdentity.user;
-        this.wrapped.instance = resolvedIdentity.instance;
-        this.wrapped.application = resolvedIdentity.application ?? nanoid(10);
-        this.wrapped.applicationName = resolvedIdentity.applicationName;
-        this.wrapped.pid = resolvedIdentity.pid ?? resolvedIdentity.process ?? Math.floor(Math.random() * 10000000000);
-        this.wrapped.machine = resolvedIdentity.machine;
-        this.wrapped.environment = resolvedIdentity.environment;
-        this.wrapped.region = resolvedIdentity.region;
-        this.wrapped.windowId = resolvedIdentity.windowId;
-        this.wrapped.isLocal = resolvedIdentity.isLocal ?? true;
-        this.wrapped.api = resolvedIdentity.api;
-        this.wrapped.service = resolvedIdentity.service;
-        this.wrapped.peerId = resolvedIdentity.peerId;
-    }
-}
 
 const hideMethodSystemFlags = (method) => {
     return {
@@ -18207,6 +18268,13 @@ class ClientRepository {
         if (current) {
             return current.id;
         }
+        if (info === this.API.instance) {
+            delete this.servers[this.myServer.id];
+            this.myServer.id = serverId;
+            this.servers[serverId] = this.myServer;
+            this.callbacks.execute("onServerAdded", this.myServer.instance);
+            return serverId;
+        }
         const wrapper = new InstanceWrapper(this.API, info);
         const serverEntry = {
             id: serverId,
@@ -18238,10 +18306,8 @@ class ClientRepository {
         if (!server) {
             throw new Error("server does not exists");
         }
-        if (server.methods[method.id]) {
-            return;
-        }
-        const identifier = this.createMethodIdentifier(method);
+        const existingMethod = server.methods[method.id];
+        const identifier = existingMethod?.identifier ?? this.createMethodIdentifier(method);
         const methodDefinition = {
             identifier,
             gatewayId: method.id,
@@ -18250,8 +18316,8 @@ class ClientRepository {
             description: method.description,
             version: method.version,
             objectTypes: method.object_types || [],
-            accepts: method.input_signature,
-            returns: method.result_signature,
+            accepts: existingMethod ? existingMethod.accepts : method.input_signature,
+            returns: existingMethod ? existingMethod.returns : method.result_signature,
             supportsStreaming: typeof method.flags !== "undefined" ? method.flags.streaming : false,
             flags: method.flags ?? {},
             getServers: () => {
@@ -18260,6 +18326,12 @@ class ClientRepository {
         };
         methodDefinition.object_types = methodDefinition.objectTypes;
         methodDefinition.display_name = methodDefinition.displayName;
+        if (existingMethod) {
+            server.methods[method.id] = methodDefinition;
+            const clientMethodDefinition = hideMethodSystemFlags(methodDefinition);
+            this.callbacks.execute("onServerMethodUpdated", server.instance, clientMethodDefinition);
+            return methodDefinition;
+        }
         server.methods[method.id] = methodDefinition;
         const clientMethodDefinition = hideMethodSystemFlags(methodDefinition);
         if (!this.methodsCount[identifier]) {
@@ -18318,6 +18390,9 @@ class ClientRepository {
             unsubCalled = true;
             unsubscribeFunc();
         };
+    }
+    onServerMethodUpdated(callback) {
+        return this.callbacks.add("onServerMethodUpdated", callback);
     }
     onMethodRemoved(callback) {
         const unsubscribeFunc = this.callbacks.add("onMethodRemoved", callback);
@@ -18442,6 +18517,18 @@ class ServerStreaming {
     ERR_URI_SUBSCRIPTION_FAILED = "com.tick42.agm.errors.subscription.failure";
     callbacks = CallbackRegistryFactory();
     nextStreamId = 0;
+    pendingRequests = new Map();
+    firstRequest;
+    lastRequest;
+    requestSweep;
+    requestFinalizer = new FinalizationRegistry((entry) => {
+        if (this.pendingRequests.get(entry.id) === entry) {
+            this.retireRequest(entry.id);
+        }
+    });
+    removeServerListener;
+    removeLeftListener;
+    disposed = false;
     constructor(session, repository, serverRepository, logger) {
         this.session = session;
         this.repository = repository;
@@ -18453,8 +18540,38 @@ class ServerStreaming {
         session.on("remove-interest", (msg) => {
             this.handleRemoveInterest(msg);
         });
+        this.removeServerListener = repository.onServerRemoved((server) => {
+            for (const [id, entry] of this.pendingRequests) {
+                const request = entry.reference.deref();
+                if (!request || request.callerId === server.peerId) {
+                    this.retireRequest(id);
+                }
+            }
+        });
+        this.removeLeftListener = session.onLeft(() => this.clearRequests());
+    }
+    dispose() {
+        this.disposed = true;
+        this.clearRequests();
+        this.removeServerListener();
+        this.removeLeftListener();
+    }
+    retireMethod(method) {
+        for (const [id, entry] of this.pendingRequests) {
+            const request = entry.reference.deref();
+            if (!request || request.methodId === method.repoId) {
+                this.retireRequest(id);
+            }
+        }
+        if (method.protocolState.subscriptionsMap) {
+            method.protocolState.subscriptionsMap = {};
+        }
     }
     acceptRequestOnBranch(requestContext, streamingMethod, branch) {
+        if (!requestContext.requestToken || this.pendingRequests.get(requestContext.msg.subscription_id)?.reference.deref() !== requestContext.requestToken) {
+            this.logger.debug(`ignoring the acceptance of subscription ${requestContext.msg.subscription_id} to ${streamingMethod.definition.name} - the request was retired or already answered`);
+            return;
+        }
         if (typeof branch !== "string") {
             branch = "";
         }
@@ -18464,8 +18581,14 @@ class ServerStreaming {
         if (!Array.isArray(streamingMethod.protocolState.branchKeyToStreamIdMap)) {
             throw new TypeError("The streaming method is missing its branches.");
         }
+        if (requestContext.subscriptions && requestContext.subscriptions !== streamingMethod.protocolState.subscriptionsMap) {
+            this.retireRequest(requestContext.msg.subscription_id);
+            this.logger.warn(`ignoring the acceptance of subscription ${requestContext.msg.subscription_id} to ${streamingMethod.definition.name} - it was requested before a reconnect`);
+            return;
+        }
         const streamId = this.getStreamId(streamingMethod, branch);
         const key = requestContext.msg.subscription_id;
+        this.retireRequest(key);
         const subscription = {
             id: key,
             arguments: requestContext.arguments,
@@ -18485,6 +18608,11 @@ class ServerStreaming {
         this.callbacks.execute(SUBSCRIPTION_ADDED, subscription, streamingMethod);
     }
     rejectRequest(requestContext, streamingMethod, reason) {
+        if (!requestContext.requestToken || this.pendingRequests.get(requestContext.msg.subscription_id)?.reference.deref() !== requestContext.requestToken) {
+            this.logger.debug(`ignoring the rejection of subscription ${requestContext.msg.subscription_id} to ${streamingMethod.definition.name} - the request was retired or already answered`);
+            return;
+        }
+        this.retireRequest(requestContext.msg.subscription_id);
         if (typeof reason !== "string") {
             reason = "";
         }
@@ -18640,6 +18768,7 @@ class ServerStreaming {
         this.onSubscriptionLifetimeEvent(SUBSCRIPTION_REMOVED, callback);
     }
     handleRemoveInterest(msg) {
+        this.retireRequest(msg.subscription_id);
         const streamingMethod = this.serverRepository.getById(msg.method_id);
         if (typeof msg.subscription_id !== "string" ||
             typeof streamingMethod !== "object") {
@@ -18662,6 +18791,9 @@ class ServerStreaming {
         return this.nextStreamId++ + "";
     }
     handleAddInterest(msg) {
+        if (this.disposed) {
+            return;
+        }
         const caller = this.repository.getServerById(msg.caller_id);
         const instance = caller?.instance ?? {};
         const requestContext = {
@@ -18680,7 +18812,72 @@ class ServerStreaming {
             this.sendSubscriptionFailed("A subscription with id " + msg.subscription_id + " already exists.", msg.subscription_id);
             return;
         }
+        requestContext.subscriptions = streamingMethod.protocolState.subscriptionsMap;
+        const requestToken = { callerId: msg.caller_id, methodId: msg.method_id };
+        requestContext.requestToken = requestToken;
+        this.pruneCollectedRequests();
+        this.trackRequest(msg.subscription_id, requestToken);
         this.callbacks.execute(SUBSCRIPTION_REQUEST, requestContext, streamingMethod);
+    }
+    trackRequest(id, token) {
+        this.retireRequest(id);
+        const entry = { id, reference: new WeakRef(token), previous: this.lastRequest };
+        if (this.lastRequest) {
+            this.lastRequest.next = entry;
+        }
+        else {
+            this.firstRequest = entry;
+        }
+        this.lastRequest = entry;
+        this.requestSweep ??= entry;
+        this.pendingRequests.set(id, entry);
+        this.requestFinalizer.register(token, entry, entry);
+    }
+    retireRequest(id) {
+        const entry = this.pendingRequests.get(id);
+        if (!entry) {
+            return;
+        }
+        this.requestFinalizer.unregister(entry);
+        this.pendingRequests.delete(id);
+        if (entry.previous) {
+            entry.previous.next = entry.next;
+        }
+        else {
+            this.firstRequest = entry.next;
+        }
+        if (entry.next) {
+            entry.next.previous = entry.previous;
+        }
+        else {
+            this.lastRequest = entry.previous;
+        }
+        if (this.requestSweep === entry) {
+            this.requestSweep = entry.next ?? this.firstRequest;
+        }
+        entry.previous = undefined;
+        entry.next = undefined;
+    }
+    clearRequests() {
+        for (const id of this.pendingRequests.keys()) {
+            this.retireRequest(id);
+        }
+    }
+    pruneCollectedRequests() {
+        for (let scanned = 0; scanned < 16; scanned++) {
+            const entry = this.requestSweep;
+            if (!entry) {
+                return;
+            }
+            const next = entry.next;
+            this.requestSweep = next ?? this.firstRequest;
+            if (!entry.reference.deref()) {
+                this.retireRequest(entry.id);
+            }
+            if (!next) {
+                return;
+            }
+        }
     }
     sendSubscriptionFailed(reason, subscriptionId) {
         const errorMessage = {
@@ -18733,6 +18930,9 @@ class ServerProtocol {
         repoMethod.protocolState.branchKeyToStreamIdMap = [];
         return this.register(repoMethod, true);
     }
+    dispose() {
+        this.streaming.dispose();
+    }
     register(repoMethod, isStreaming) {
         const methodDef = repoMethod.definition;
         const flags = Object.assign({}, { metadata: methodDef.flags ?? {} }, { streaming: isStreaming || false });
@@ -18753,6 +18953,7 @@ class ServerProtocol {
         };
         return this.session.send(registerMsg, { methodId: repoMethod.repoId })
             .then(() => {
+            repoMethod.announced = true;
             this.logger.debug("registered method " + repoMethod.definition.name + " with id " + repoMethod.repoId);
         })
             .catch((msg) => {
@@ -18794,7 +18995,17 @@ class ServerProtocol {
             type: "unregister",
             methods: [method.repoId],
         };
-        await this.session.send(msg);
+        try {
+            await this.session.send(msg);
+        }
+        catch (error) {
+            if (typeof error === "object" && error !== null && "reason_uri" in error
+                && error.reason_uri === "agm.errors.unregistration.failure") {
+                this.streaming.retireMethod(method);
+            }
+            throw error;
+        }
+        this.streaming.retireMethod(method);
     }
     getBranchList(method) {
         return this.streaming.getBranchList(method);
@@ -18850,6 +19061,16 @@ class ServerProtocol {
 class UserSubscription {
     repository;
     subscriptionData;
+    explicitlyClosed = false;
+    closureNotified = false;
+    closeListeners = new Set();
+    onClose(callback) {
+        this.closeListeners.add(callback);
+        return () => { this.closeListeners.delete(callback); };
+    }
+    get isClosed() {
+        return this.explicitlyClosed;
+    }
     get requestArguments() {
         return this.subscriptionData.params.arguments || {};
     }
@@ -18881,8 +19102,19 @@ class UserSubscription {
         this.subscriptionData.handlers.onData.push(dataCallback);
         if (this.subscriptionData.handlers.onData.length === 1 && this.subscriptionData.queued.data.length > 0) {
             this.subscriptionData.queued.data.forEach((dataItem) => {
-                dataCallback(dataItem);
+                try {
+                    dataCallback(dataItem);
+                }
+                catch (error) {
+                    try {
+                        this.repository.logger.error(`Subscription onData handler failed during queued replay: ${safeErrorStack(error)}`, error);
+                    }
+                    catch {
+                        console.log("Subscription onData handler failed during queued replay", error);
+                    }
+                }
             });
+            this.subscriptionData.queued.data.length = 0;
         }
     }
     onClosed(closedCallback) {
@@ -18900,10 +19132,26 @@ class UserSubscription {
         this.subscriptionData.handlers.onConnected.push(callback);
     }
     close() {
+        if (this.isClosed) {
+            return;
+        }
+        this.explicitlyClosed = true;
+        this.closeListeners.forEach((callback) => callback());
+        this.closeListeners.clear();
         this.subscriptionData.close();
     }
     setNewSubscription(newSub) {
         this.subscriptionData = newSub;
+    }
+    markAccepted() {
+        this.closureNotified = false;
+    }
+    markClosed() {
+        if (this.closureNotified) {
+            return false;
+        }
+        this.closureNotified = true;
+        return true;
     }
 }
 
@@ -18915,7 +19163,7 @@ class TimedCache {
         this.config = config;
     }
     add(element) {
-        const id = nanoid(10);
+        const id = nanoid$1(10);
         this.cache.push({ id, element });
         const timeoutId = setTimeout(() => {
             const elementIdx = this.cache.findIndex((entry) => entry.id === id);
@@ -18925,6 +19173,9 @@ class TimedCache {
             this.cache.splice(elementIdx, 1);
         }, this.config.ELEMENT_TTL_MS);
         this.timeoutIds.push(timeoutId);
+    }
+    remove(element) {
+        this.cache = this.cache.filter((entry) => entry.element !== element);
     }
     flush() {
         const elements = this.cache.map((entry) => entry.element);
@@ -18937,6 +19188,19 @@ class TimedCache {
 
 const STATUS_AWAITING_ACCEPT = "awaitingAccept";
 const STATUS_SUBSCRIBED = "subscribed";
+const STATUS_CLOSED = "closed";
+const STATUS_ABANDONED = "abandoned";
+const TARGET_REMOVED = "Subscription target removed.";
+const isRetryableError = (error) => error.reason_uri === TRANSPORT_SEND_FAILURE
+    || error.err === TARGET_REMOVED
+    || (!!error.reason_uri?.endsWith("agm.errors.invocation.failure") && !!error.reason?.startsWith("Unable to find method with id "))
+    || !!error.reason?.startsWith(`Unable to find peer ${error._tag?.serverId} `)
+    || error.reason === `Unable to find peer ${error._tag?.serverId}`;
+const releaseCallbacks = (sub) => {
+    sub.success = () => { };
+    sub.error = () => { };
+    sub.terminalError = undefined;
+};
 const ERR_MSG_SUB_FAILED = "Subscription failed.";
 const ERR_MSG_SUB_REJECTED = "Subscription rejected.";
 const ON_CLOSE_MSG_SERVER_INIT = "ServerInitiated";
@@ -18947,8 +19211,13 @@ class ClientStreaming {
     logger;
     subscriptionsList = {};
     timedCache = new TimedCache({ ELEMENT_TTL_MS: 10000 });
+    notifyingClosedFor;
+    closedFromHandler = false;
     subscriptionIdToLocalKeyMap = {};
     nextSubLocalKey = 0;
+    sessionGeneration = 0;
+    pendingRequests = new Map();
+    removeMethodListener;
     constructor(session, repository, logger) {
         this.session = session;
         this.repository = repository;
@@ -18956,19 +19225,52 @@ class ClientStreaming {
         session.on("subscribed", this.handleSubscribed);
         session.on("event", this.handleEventData);
         session.on("subscription-cancelled", this.handleSubscriptionCancelled);
+        this.removeMethodListener = repository.onServerMethodRemoved((server, method) => {
+            this.cancelPending((pending) => pending.serverId === server.peerId && pending.methodId === method.gatewayId);
+        });
+        session.onLeft(() => {
+            this.sessionGeneration++;
+            this.cancelPending(() => true);
+        });
     }
-    subscribe(streamingMethod, params, targetServers, success, error, existingSub) {
+    dispose() {
+        this.sessionGeneration++;
+        this.removeMethodListener();
+        Object.values(this.subscriptionsList).forEach((sub) => {
+            clearTimeout(sub.timeoutId);
+            if (sub.status === STATUS_AWAITING_ACCEPT) {
+                sub.error({ method: sub.method, called_with: sub.params.arguments, message: "Subscription cancelled by shutdown." });
+                releaseCallbacks(sub);
+            }
+        });
+        this.cancelPending(() => true);
+        this.subscriptionsList = {};
+        this.subscriptionIdToLocalKeyMap = {};
+        this.timedCache.flush();
+    }
+    cancelPending(matches) {
+        for (const [requestId, pending] of this.pendingRequests) {
+            if (!matches(pending)) {
+                continue;
+            }
+            pending.release();
+            this.session.cancelRequest(requestId, TARGET_REMOVED);
+        }
+    }
+    subscribe(streamingMethod, params, targetServers, success, error, existingSub, restoration) {
         distExports.Traces.removePropagationInfo(params.arguments);
         if (targetServers.length === 0) {
             error({
                 method: streamingMethod,
                 called_with: params.arguments,
                 message: ERR_MSG_SUB_FAILED + " No available servers matched the target params.",
+                retryable: true,
+                unmatched: true,
             });
             return;
         }
         const subLocalKey = this.getNextSubscriptionLocalKey();
-        const pendingSub = this.registerSubscription(subLocalKey, streamingMethod, params, success, error, params.methodResponseTimeout || 10000, existingSub);
+        const pendingSub = this.registerSubscription(subLocalKey, streamingMethod, params, restoration ? (sub) => { restoration.onAccepted(); success(sub); } : success, error, params.methodResponseTimeout || 10000, existingSub);
         if (typeof pendingSub !== "object") {
             error({
                 method: streamingMethod,
@@ -18977,30 +19279,79 @@ class ClientStreaming {
             });
             return;
         }
+        const generation = this.sessionGeneration;
+        const sent = new Set();
         targetServers.forEach((target) => {
+            if (generation !== this.sessionGeneration || (restoration && !restoration.isCurrent())) {
+                return;
+            }
             const serverId = target.server.id;
+            if (sent.has(serverId)) {
+                return;
+            }
+            sent.add(serverId);
             const method = target.methods.find((m) => m.name === streamingMethod.name);
             if (!method) {
                 this.logger.error(`can not find method ${streamingMethod.name} for target ${target.server.id}`);
                 return;
             }
-            pendingSub.trackedServers.push({
+            const trackedServer = {
                 serverId,
                 subscriptionId: undefined,
-            });
+            };
+            pendingSub.trackedServers.push(trackedServer);
             const msg = {
                 type: "subscribe",
                 server_id: serverId,
                 method_id: method.gatewayId,
                 arguments_kv: params.arguments,
+                request_id: nanoid$1(10),
             };
+            const requestId = msg.request_id;
+            restoration?.pendingServers.add(serverId);
+            const pending = {
+                serverId, methodId: method.gatewayId, sub: pendingSub,
+                release: () => {
+                    if (this.pendingRequests.get(requestId) !== pending) {
+                        return;
+                    }
+                    this.pendingRequests.delete(requestId);
+                    restoration?.pendingServers.delete(serverId);
+                }
+            };
+            this.pendingRequests.set(requestId, pending);
             this.session.send(msg, { serverId, subLocalKey })
-                .then((m) => this.handleSubscribed(m))
-                .catch((err) => this.handleErrorSubscribing(err));
+                .then(() => pending.release())
+                .catch((err) => {
+                pending.release();
+                if (pendingSub.status === STATUS_ABANDONED && !isRetryableError(err)) {
+                    restoration?.onRejected({ method: streamingMethod, called_with: params.arguments, message: ERR_MSG_SUB_REJECTED + " " + (err.reason || err.err || "No reason given.") });
+                }
+                this.handleErrorSubscribing(err, restoration);
+            });
         });
+    }
+    closeUnrestored(subscription, reason, notify = true) {
+        const handle = subscription.subscription;
+        const current = (handle ? Object.values(this.subscriptionsList).find((sub) => sub.subscription === handle) : undefined) ?? subscription;
+        clearTimeout(current.timeoutId);
+        if (current.status === STATUS_AWAITING_ACCEPT) {
+            current.error({ method: current.method, called_with: current.params.arguments, message: reason });
+            releaseCallbacks(current);
+        }
+        this.cancelPending((pending) => handle ? pending.sub?.subscription === handle : pending.sub === subscription);
+        if (notify) {
+            this.callOnClosedHandlers(current, reason);
+        }
+        else {
+            current.status = STATUS_CLOSED;
+            current.subscription?.setNewSubscription(current);
+            delete this.subscriptionsList[current.localKey];
+        }
     }
     drainSubscriptions() {
         const existing = Object.values(this.subscriptionsList);
+        existing.forEach((sub) => clearTimeout(sub.timeoutId));
         this.subscriptionsList = {};
         this.subscriptionIdToLocalKeyMap = {};
         return existing;
@@ -19032,7 +19383,10 @@ class ClientStreaming {
                 closers: [],
             },
             timeoutId: undefined,
-            close: () => this.closeSubscription(subLocalKey),
+            close: () => {
+                this.timedCache.remove(subsInfo);
+                this.closeSubscription(subLocalKey, subsInfo);
+            },
             subscription: existingSub?.subscription
         };
         if (!existingSub) {
@@ -19047,23 +19401,31 @@ class ClientStreaming {
             }
         }
         this.subscriptionsList[subLocalKey] = subsInfo;
+        existingSub?.subscription?.setNewSubscription(subsInfo);
         subsInfo.timeoutId = setTimeout(() => {
             if (this.subscriptionsList[subLocalKey] === undefined) {
                 return;
             }
             const pendingSub = this.subscriptionsList[subLocalKey];
             if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
-                error({
+                pendingSub.status = STATUS_ABANDONED;
+                pendingSub.error(pendingSub.terminalError ?? {
                     method,
                     called_with: params.arguments,
                     message: ERR_MSG_SUB_FAILED + " Subscription attempt timed out after " + timeout + " ms.",
+                    retryable: true,
                 });
+                releaseCallbacks(pendingSub);
+                if (!pendingSub.subscription) {
+                    this.cancelPending((pending) => pending.sub === pendingSub);
+                }
                 delete this.subscriptionsList[subLocalKey];
             }
             else if (pendingSub.status === STATUS_SUBSCRIBED && pendingSub.trackedServers.length > 0) {
                 pendingSub.trackedServers = pendingSub.trackedServers.filter((server) => {
                     return (typeof server.subscriptionId !== "undefined");
                 });
+                this.cancelPending((pending) => pending.sub === pendingSub);
                 delete pendingSub.timeoutId;
                 if (pendingSub.trackedServers.length <= 0) {
                     this.callOnClosedHandlers(pendingSub);
@@ -19073,12 +19435,36 @@ class ClientStreaming {
         }, timeout);
         return subsInfo;
     }
-    handleErrorSubscribing = (errorResponse) => {
+    getSubscriptionError(errorResponse, pendingSub) {
+        let reason;
+        if (typeof errorResponse.reason === "string" && errorResponse.reason !== "") {
+            reason = ' Publisher said "' + errorResponse.reason + '".';
+        }
+        else if (typeof errorResponse.err === "string" && errorResponse.err !== "") {
+            reason = ' Request failed: "' + errorResponse.err + '".';
+        }
+        else {
+            reason = " No reason given.";
+        }
+        const callArgs = typeof pendingSub.params.arguments === "object" ? safeStringify$1(pendingSub.params.arguments) : "{}";
+        return {
+            message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
+            called_with: distExports.Traces.removePropagationInfo(pendingSub.params.arguments),
+            method: pendingSub.method,
+            retryable: isRetryableError(errorResponse),
+        };
+    }
+    handleErrorSubscribing = (errorResponse, restoration) => {
         const tag = errorResponse._tag;
         const subLocalKey = tag.subLocalKey;
         const pendingSub = this.subscriptionsList[subLocalKey];
         if (typeof pendingSub !== "object") {
             return;
+        }
+        const error = pendingSub.status === STATUS_AWAITING_ACCEPT ? this.getSubscriptionError(errorResponse, pendingSub) : undefined;
+        if (error && !error.retryable) {
+            pendingSub.terminalError ??= error;
+            restoration?.onTerminalError(pendingSub.terminalError);
         }
         pendingSub.trackedServers = pendingSub.trackedServers.filter((server) => {
             return server.serverId !== tag.serverId;
@@ -19086,17 +19472,8 @@ class ClientStreaming {
         if (pendingSub.trackedServers.length <= 0) {
             clearTimeout(pendingSub.timeoutId);
             if (pendingSub.status === STATUS_AWAITING_ACCEPT) {
-                const reason = (typeof errorResponse.reason === "string" && errorResponse.reason !== "") ?
-                    ' Publisher said "' + errorResponse.reason + '".' :
-                    " No reason given.";
-                const callArgs = typeof pendingSub.params.arguments === "object" ?
-                    JSON.stringify(pendingSub.params.arguments) :
-                    "{}";
-                pendingSub.error({
-                    message: ERR_MSG_SUB_REJECTED + reason + " Called with:" + callArgs,
-                    called_with: distExports.Traces.removePropagationInfo(pendingSub.params.arguments),
-                    method: pendingSub.method,
-                });
+                pendingSub.error(pendingSub.terminalError ?? error);
+                releaseCallbacks(pendingSub);
             }
             else if (pendingSub.status === STATUS_SUBSCRIBED) {
                 this.callOnClosedHandlers(pendingSub);
@@ -19105,17 +19482,19 @@ class ClientStreaming {
         }
     };
     handleSubscribed = (msg) => {
-        const subLocalKey = msg._tag.subLocalKey;
-        const pendingSub = this.subscriptionsList[subLocalKey];
-        if (typeof pendingSub !== "object") {
+        const requestId = msg.request_id;
+        if (requestId) {
+            this.pendingRequests.get(requestId)?.release();
+        }
+        if (this.subscriptionIdToLocalKeyMap[msg.subscription_id] !== undefined) {
             return;
         }
-        const serverId = msg._tag.serverId;
-        const acceptingServer = pendingSub.trackedServers
-            .filter((server) => {
-            return server.serverId === serverId;
-        })[0];
-        if (typeof acceptingServer !== "object") {
+        const subLocalKey = msg._tag?.subLocalKey;
+        const pendingSub = subLocalKey === undefined ? undefined : this.subscriptionsList[subLocalKey];
+        const acceptingServer = pendingSub?.trackedServers.find((server) => server.serverId === msg._tag?.serverId);
+        if (!pendingSub || (pendingSub.status !== STATUS_AWAITING_ACCEPT && pendingSub.status !== STATUS_SUBSCRIBED)
+            || !acceptingServer || acceptingServer.subscriptionId !== undefined) {
+            this.unsubscribe(msg.subscription_id);
             return;
         }
         acceptingServer.subscriptionId = msg.subscription_id;
@@ -19127,6 +19506,9 @@ class ClientStreaming {
             let sub = pendingSub.subscription;
             if (sub) {
                 sub.setNewSubscription(pendingSub);
+                const handle = sub;
+                this.cancelPending((pending) => pending.sub !== pendingSub && pending.sub?.subscription === handle);
+                sub.markAccepted();
                 pendingSub.success(sub);
                 reconnect = true;
             }
@@ -19135,6 +19517,7 @@ class ClientStreaming {
                 pendingSub.subscription = sub;
                 pendingSub.success(sub);
             }
+            releaseCallbacks(pendingSub);
             for (const handler of pendingSub.handlers.onConnected) {
                 try {
                     handler(sub.serverInstance, reconnect);
@@ -19179,7 +19562,7 @@ class ClientStreaming {
         distExports.withSpan("interopio.api.interop.stream.onData", {
             method: methodName,
             stream: methodName
-        }, pi, () => {
+        }, pi, { disableNesting: !pi }, () => {
             const ts = distExports.Traces.currentTracingState;
             ts.addData("INFO", { method: methodName });
             ts.addData("INFO", { stream: methodName });
@@ -19188,7 +19571,17 @@ class ClientStreaming {
             if (onDataHandlers.length > 0) {
                 onDataHandlers.forEach((callback) => {
                     if (typeof callback === "function") {
-                        callback(deepClone(rsd));
+                        try {
+                            callback(deepClone(rsd));
+                        }
+                        catch (error) {
+                            try {
+                                this.logger.error(`Subscription onData handler failed during live dispatch: ${safeErrorStack(error)}`, error);
+                            }
+                            catch {
+                                console.log("Subscription onData handler failed during live dispatch", error);
+                            }
+                        }
                     }
                 });
             }
@@ -19220,17 +19613,38 @@ class ClientStreaming {
             return;
         }
         if (subscription.trackedServers.length <= 0) {
-            this.timedCache.add(subscription);
             clearTimeout(subscription.timeoutId);
-            this.callOnClosedHandlers(subscription);
             delete this.subscriptionsList[subLocalKey];
+            this.notifyingClosedFor = subLocalKey;
+            this.closedFromHandler = false;
+            try {
+                this.callOnClosedHandlers(subscription);
+            }
+            finally {
+                this.notifyingClosedFor = undefined;
+            }
+            if (this.closedFromHandler) {
+                this.closedFromHandler = false;
+                delete this.subscriptionIdToLocalKeyMap[msg.subscription_id];
+                return;
+            }
+            this.timedCache.add(subscription);
         }
         delete this.subscriptionIdToLocalKeyMap[msg.subscription_id];
     };
     callOnClosedHandlers(subscription, reason) {
+        if (subscription.status === STATUS_CLOSED) {
+            return;
+        }
+        subscription.status = STATUS_CLOSED;
+        subscription.subscription?.setNewSubscription(subscription);
+        delete this.subscriptionsList[subscription.localKey];
+        if (subscription.subscription && !subscription.subscription.markClosed()) {
+            return;
+        }
         const closersCount = subscription.queued.closers.length;
         const closingServerId = (closersCount > 0) ? subscription.queued.closers[closersCount - 1] : null;
-        let closingServer;
+        let closingServer = {};
         if (closingServerId !== undefined && typeof closingServerId === "string") {
             closingServer = this.repository.getServerById(closingServerId)?.instance ?? {};
         }
@@ -19238,17 +19652,40 @@ class ClientStreaming {
             if (typeof callback !== "function") {
                 return;
             }
-            callback({
-                message: reason || ON_CLOSE_MSG_SERVER_INIT,
-                requestArguments: subscription.params.arguments || {},
-                server: closingServer,
-                stream: subscription.method,
-            });
+            try {
+                callback({
+                    message: reason || ON_CLOSE_MSG_SERVER_INIT,
+                    requestArguments: subscription.params.arguments || {},
+                    server: closingServer,
+                    stream: subscription.method,
+                });
+            }
+            catch (error) {
+                try {
+                    this.logger.error(`Subscription onClosed handler failed: ${safeErrorStack(error)}`, error);
+                }
+                catch {
+                    console.log("Subscription onClosed handler failed", error);
+                }
+            }
         });
     }
-    closeSubscription(subLocalKey) {
+    closeSubscription(subLocalKey, drained) {
         const subscription = this.subscriptionsList[subLocalKey];
+        const closing = subscription ?? drained;
+        const handle = closing?.subscription;
+        this.cancelPending((pending) => handle ? pending.sub?.subscription === handle : pending.sub === closing);
         if (typeof subscription !== "object") {
+            if (this.notifyingClosedFor === subLocalKey) {
+                this.closedFromHandler = true;
+            }
+            else if (drained) {
+                if (drained.status === STATUS_AWAITING_ACCEPT) {
+                    drained.error({ method: drained.method, called_with: drained.params.arguments, message: "Subscription cancelled by client." });
+                    releaseCallbacks(drained);
+                }
+                this.callOnClosedHandlers(drained, ON_CLOSE_MSG_CLIENT_INIT);
+            }
             return;
         }
         subscription.trackedServers.forEach((server) => {
@@ -19256,22 +19693,35 @@ class ClientStreaming {
                 return;
             }
             subscription.queued.closers.push(server.serverId);
-            this.session.sendFireAndForget({
-                type: "unsubscribe",
-                subscription_id: server.subscriptionId,
-                reason_uri: "",
-                reason: ON_CLOSE_MSG_CLIENT_INIT,
-            }).catch((err) => {
-                this.logger.warn(`Error sending unsubscribe for subscription id ${server.subscriptionId}: ${JSON.stringify(err)}`);
-            });
-            delete this.subscriptionIdToLocalKeyMap[server.subscriptionId];
+            this.unsubscribe(server.subscriptionId);
         });
         subscription.trackedServers = [];
+        if (subscription.status === STATUS_AWAITING_ACCEPT) {
+            subscription.error({
+                method: subscription.method,
+                called_with: subscription.params.arguments,
+                message: "Subscription closed by client."
+            });
+            releaseCallbacks(subscription);
+        }
+        clearTimeout(subscription.timeoutId);
         this.callOnClosedHandlers(subscription, ON_CLOSE_MSG_CLIENT_INIT);
         delete this.subscriptionsList[subLocalKey];
     }
+    unsubscribe(subscriptionId) {
+        this.session.sendFireAndForget({
+            type: "unsubscribe",
+            subscription_id: subscriptionId,
+            reason_uri: "",
+            reason: ON_CLOSE_MSG_CLIENT_INIT,
+        }).catch((err) => {
+            this.logger.warn(`Error sending unsubscribe for subscription id ${subscriptionId}: ${JSON.stringify(err)}`);
+        });
+        delete this.subscriptionIdToLocalKeyMap[subscriptionId];
+    }
 }
 
+const ERR_MSG_INVOCATION_FAILED = "Invocation failed.";
 class ClientProtocol {
     session;
     repository;
@@ -19287,8 +19737,11 @@ class ClientProtocol {
         session.on("methods-removed", (msg) => this.handleMethodsRemovedMessage(msg));
         this.streaming = new ClientStreaming(session, repository, logger);
     }
-    subscribe(stream, options, targetServers, success, error, existingSub) {
-        this.streaming.subscribe(stream, options, targetServers, success, error, existingSub);
+    subscribe(stream, options, targetServers, success, error, existingSub, restoration) {
+        this.streaming.subscribe(stream, options, targetServers, success, error, existingSub, restoration);
+    }
+    dispose() {
+        this.streaming.dispose();
     }
     invoke(id, method, args, target) {
         const serverId = target.id;
@@ -19305,6 +19758,9 @@ class ClientProtocol {
     }
     drainSubscriptions() {
         return this.streaming.drainSubscriptions();
+    }
+    closeUnrestored(subscription, reason, notify) {
+        this.streaming.closeUnrestored(subscription, reason, notify);
     }
     drainSubscriptionsCache() {
         return this.streaming.drainSubscriptionsCache();
@@ -19363,15 +19819,18 @@ class ClientProtocol {
     }
     handleInvocationError(msg) {
         this.logger.debug(`handle invocation error ${JSON.stringify(msg)}`);
-        if ("_tag" in msg) {
-            const invocationId = msg._tag.invocationId;
-            const serverId = msg._tag.serverId;
+        const candidate = msg;
+        const isGatewayError = candidate.type === "error";
+        const reported = candidate.reason ?? candidate.err ?? candidate.message;
+        const message = typeof reported === "string" && reported.length > 0 ? reported : ERR_MSG_INVOCATION_FAILED;
+        const tag = msg._tag;
+        if (tag) {
+            const invocationId = tag.invocationId;
+            const serverId = tag.serverId;
             const server = this.repository.getServerById(serverId);
-            const message = msg.reason;
-            const context = msg.context;
             return {
                 invocationId,
-                result: context,
+                result: isGatewayError ? candidate.context : undefined,
                 instance: server?.instance,
                 status: InvokeStatus.Error,
                 message
@@ -19380,7 +19839,7 @@ class ClientProtocol {
         else {
             return {
                 invocationId: "",
-                message: msg.message,
+                message,
                 status: InvokeStatus.Error,
                 error: msg
             };
@@ -19397,43 +19856,168 @@ function gW3ProtocolFactory (instance, connection, clientRepository, serverRepos
     const session = connection.domain("agm", ["subscribed"]);
     const server = new ServerProtocol(session, clientRepository, serverRepository, logger.subLogger("server"));
     const client = new ClientProtocol(session, clientRepository, logger.subLogger("client"));
-    async function handleReconnect() {
+    const restorations = new Map();
+    let generation = 0;
+    let joined = false;
+    let disposed = false;
+    const removeMethodListener = clientRepository.onServerMethodAdded((_server, method) => {
+        for (const [key, restoration] of restorations) {
+            if (restoration.timer === undefined || restoration.sub.method.name !== method.name) {
+                continue;
+            }
+            clearTimeout(restoration.timer);
+            restoration.timer = undefined;
+            void restore(key, restoration);
+        }
+    });
+    function forget(key, restoration) {
+        if (restorations.get(key) !== restoration) {
+            return;
+        }
+        clearTimeout(restoration.timer);
+        restoration.removeCloseListener?.();
+        restorations.delete(key);
+    }
+    function offeredElsewhere(sub, restoration) {
+        if (restoration.pendingServers.size > 0) {
+            return false;
+        }
+        return clientRepository.getServers().some((server) => Object.values(server.methods).some((method) => method.name === sub.method.name));
+    }
+    function closeRestoration(key, restoration, error) {
+        forget(key, restoration);
+        const sub = restoration.sub;
+        const reason = `re-subscribing to ${sub.method.name} after a reconnect failed: ${safeErrorStack(error)}`;
+        logger.warn(reason);
+        client.closeUnrestored(sub, reason, restoration.notifyFailure);
+    }
+    async function restore(key, restoration) {
+        const sub = restoration.sub;
+        if (disposed || sub.subscription?.isClosed) {
+            forget(key, restoration);
+            return;
+        }
+        if (restoration.terminalError) {
+            closeRestoration(key, restoration, restoration.terminalError);
+            return;
+        }
+        const replayGeneration = generation;
+        const attempt = Symbol();
+        restoration.attempt = attempt;
+        const isCurrent = () => !disposed && joined && generation === replayGeneration
+            && restorations.get(key) === restoration && restoration.attempt === attempt
+            && !sub.subscription?.isClosed;
+        const reject = (error) => {
+            if (disposed || !joined || generation !== replayGeneration || restorations.get(key) !== restoration) {
+                return;
+            }
+            closeRestoration(key, restoration, error);
+        };
+        try {
+            await interop.client.subscribe(sub.method, { ...sub.params }, undefined, undefined, sub, {
+                isCurrent, pendingServers: restoration.pendingServers, onRejected: reject,
+                onTerminalError: (error) => { if (isCurrent()) {
+                    restoration.terminalError ??= error;
+                } },
+                onAccepted: () => { if (isCurrent()) {
+                    restoration.terminalError = undefined;
+                } }
+            });
+            if (isCurrent()) {
+                forget(key, restoration);
+            }
+        }
+        catch (error) {
+            if (!isCurrent()) {
+                return;
+            }
+            const reason = `re-subscribing to ${sub.method.name} after a reconnect failed: ${safeErrorStack(error)}`;
+            const unmatchable = error?.unmatched === true && offeredElsewhere(sub, restoration);
+            if (error?.retryable && !unmatchable) {
+                const delay = Math.min(30000, 1000 * 2 ** Math.min(restoration.failures++, 5) * (0.5 + Math.random()));
+                logger.info(`${reason}; retrying in ${Math.round(delay)} ms`);
+                restoration.timer = setTimeout(() => {
+                    restoration.timer = undefined;
+                    if (isCurrent()) {
+                        void restore(key, restoration);
+                    }
+                }, delay);
+            }
+            else {
+                reject(error);
+            }
+        }
+    }
+    function dispose() {
+        disposed = true;
+        generation++;
+        removeMethodListener();
+        for (const [key, restoration] of restorations) {
+            forget(key, restoration);
+        }
+        client.dispose();
+        server.dispose();
+    }
+    async function handleReconnect(onRegistrationsReAnnounced) {
         logger.info("reconnected - will replay registered methods and subscriptions");
-        client.drainSubscriptionsCache().forEach((sub) => {
-            const methodInfo = sub.method;
-            const params = Object.assign({}, sub.params);
-            logger.info(`trying to soft-re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
-            interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`soft-subscribing to method ${methodInfo.name} DONE`)).catch((error) => logger.warn(`subscribing to method ${methodInfo.name} failed: ${JSON.stringify(error)}}`));
-        });
         const reconnectionPromises = [];
-        const existingSubscriptions = client.drainSubscriptions();
-        for (const sub of existingSubscriptions) {
-            const methodInfo = sub.method;
-            const params = Object.assign({}, sub.params);
-            logger.info(`trying to re-subscribe to method ${methodInfo.name}, with params: ${JSON.stringify(params)}`);
-            reconnectionPromises.push(interop.client.subscribe(methodInfo, params, undefined, undefined, sub).then(() => logger.info(`subscribing to method ${methodInfo.name} DONE`)));
+        const registrationPromises = [];
+        const remember = (sub, notifyFailure) => {
+            const key = sub.subscription;
+            if (!key) {
+                client.closeUnrestored(sub, "Subscription interrupted before its first acceptance.", false);
+                return;
+            }
+            if (!key.isClosed) {
+                const restoration = restorations.get(key);
+                if (restoration) {
+                    restoration.sub = sub;
+                    if (sub.status === "subscribed") {
+                        restoration.notifyFailure = true;
+                    }
+                }
+                else {
+                    const pending = { sub, notifyFailure, pendingServers: new Set(), failures: 0 };
+                    restorations.set(key, pending);
+                    pending.removeCloseListener = sub.subscription?.onClose(() => forget(key, pending));
+                }
+            }
+        };
+        client.drainSubscriptionsCache().forEach((sub) => remember(sub, false));
+        client.drainSubscriptions().forEach((sub) => remember(sub, true));
+        for (const [key, restoration] of restorations) {
+            clearTimeout(restoration.timer);
+            restoration.timer = undefined;
+            const replay = restore(key, restoration);
+            if (restoration.notifyFailure) {
+                reconnectionPromises.push(replay);
+            }
+            else {
+                void replay.catch((error) => logger.warn(`Error restoring cached subscription: ${safeErrorStack(error)}`));
+            }
         }
-        const registeredMethods = serverRepository.getList();
-        serverRepository.reset();
-        for (const method of registeredMethods) {
+        const toReAnnounce = serverRepository.getList().filter((method) => {
+            if (method.announced && method.unregistering) {
+                method.replaySkipped = true;
+                return false;
+            }
+            return method.announced;
+        });
+        for (const method of toReAnnounce) {
             const def = method.definition;
-            if (method.stream) {
-                reconnectionPromises.push(interop.server.createStream(def, method.streamCallbacks, undefined, undefined, method.stream)
-                    .then(() => logger.info(`subscribing to method ${def.name} DONE`))
-                    .catch(() => logger.warn(`subscribing to method ${def.name} FAILED`)));
+            if (def.supportsStreaming) {
+                registrationPromises.push(server.createStream(method)
+                    .then(() => logger.info(`re-announcing stream ${def.name} DONE`))
+                    .catch(() => logger.warn(`re-announcing stream ${def.name} FAILED`)));
             }
-            else if (method?.theFunction?.userCallback) {
-                reconnectionPromises.push(interop.register(def, method.theFunction.userCallback)
-                    .then(() => logger.info(`registering method ${def.name} DONE`))
-                    .catch(() => logger.warn(`registering method ${def.name} FAILED`)));
-            }
-            else if (method?.theFunction?.userCallbackAsync) {
-                reconnectionPromises.push(interop.registerAsync(def, method.theFunction.userCallbackAsync)
-                    .then(() => logger.info(`registering method ${def.name} DONE`))
-                    .catch(() => logger.warn(`registering method ${def.name} FAILED`)));
+            else {
+                registrationPromises.push(server.register(method)
+                    .then(() => logger.info(`re-announcing method ${def.name} DONE`))
+                    .catch(() => logger.warn(`re-announcing method ${def.name} FAILED`)));
             }
         }
-        await Promise.all(reconnectionPromises);
+        void Promise.all(registrationPromises).then(onRegistrationsReAnnounced);
+        await Promise.all([...reconnectionPromises, ...registrationPromises]);
         logger.info("Interop is re-announced");
     }
     function handleInitialJoin() {
@@ -19441,20 +20025,40 @@ function gW3ProtocolFactory (instance, connection, clientRepository, serverRepos
             resolveReadyPromise({
                 client,
                 server,
+                dispose,
             });
             resolveReadyPromise = undefined;
         }
     }
     session.onJoined((reconnect) => {
+        if (disposed) {
+            return;
+        }
+        joined = true;
         clientRepository.addServer(instance, connection.peerId);
         if (reconnect) {
-            handleReconnect().then(() => connection.setLibReAnnounced({ name: "interop" })).catch((error) => logger.warn(`Error while re-announcing interop: ${JSON.stringify(error)}`));
+            const joinedGeneration = generation;
+            handleReconnect(() => {
+                if (generation === joinedGeneration) {
+                    connection.setInteropRegistrationsReAnnounced();
+                }
+            }).then(() => {
+                if (generation === joinedGeneration) {
+                    connection.setLibReAnnounced({ name: "interop" });
+                }
+            }).catch((error) => logger.warn(`Error while re-announcing interop: ${safeErrorStack(error)}`));
         }
         else {
             handleInitialJoin();
         }
     });
     session.onLeft(() => {
+        joined = false;
+        generation++;
+        restorations.forEach((restoration) => {
+            clearTimeout(restoration.timer);
+            restoration.timer = undefined;
+        });
         clientRepository.reset();
     });
     session.join();
@@ -19505,6 +20109,10 @@ class Interop {
     ready() {
         return this.readyPromise;
     }
+    dispose() {
+        this.protocol?.dispose?.();
+        this.client?.dispose();
+    }
     serverRemoved(callback) {
         return this.client.serverRemoved(callback);
     }
@@ -19516,6 +20124,9 @@ class Interop {
     }
     serverMethodAdded(callback) {
         return this.client.serverMethodAdded(callback);
+    }
+    serverMethodUpdated(callback) {
+        return this.client.serverMethodUpdated(callback);
     }
     methodRemoved(callback) {
         return this.client.methodRemoved(callback);
@@ -19547,6 +20158,9 @@ class Interop {
     register(methodDefinition, callback) {
         return this.server.register(methodDefinition, callback);
     }
+    updateMethod(name, definition) {
+        return this.server.updateMethod(name, definition);
+    }
     invoke(methodFilter, argumentObj, target, additionalOptions, success, error) {
         return this.client.invoke(methodFilter, argumentObj, target, additionalOptions, success, error);
     }
@@ -19565,6 +20179,25 @@ class Interop {
 const successMessages = ["subscribed", "success"];
 const RECONNECT_STABILIZATION_MS = 500;
 const MAX_PENDING_PUBLISHES = 10000;
+function identityTarget(target) {
+    if (!target || typeof target !== "object") {
+        return target;
+    }
+    const identity = Object.fromEntries(Object.entries(target)
+        .filter(([, value]) => value !== undefined && value !== null && typeof value !== "function"));
+    if (identity.instance) {
+        delete identity.peerId;
+        delete identity.isLocal;
+        if (isInventedPid(identity.pid)) {
+            delete identity.pid;
+        }
+    }
+    if (identity.pid !== undefined) {
+        identity.process ??= identity.pid;
+        delete identity.pid;
+    }
+    return identity;
+}
 class MessageBus {
     connection;
     logger;
@@ -19629,7 +20262,7 @@ class MessageBus {
         ts.addData("INFO", { routingKey, target });
         data = deepClone(data);
         ts.injectPropagationInfo(data);
-        this.pendingPublishes.push({ topic, data, options: options ? deepClone(options) : undefined });
+        this.pendingPublishes.push({ topic, data, options: options ? { routingKey, target: identityTarget(target) } : undefined });
         if (this.pendingPublishes.length > MAX_PENDING_PUBLISHES) {
             const dropped = this.pendingPublishes.length - MAX_PENDING_PUBLISHES;
             this.pendingPublishes.splice(0, dropped);
@@ -19699,6 +20332,7 @@ class MessageBus {
     subscribeCore(topic, callback, options) {
         return new Promise((resolve, reject) => {
             const { routingKey, target } = options || {};
+            const source = identityTarget(target);
             const ts = distExports.Traces.currentTracingState;
             ts.addData("INFO", { topic });
             ts.addData("INFO", { routingKey, target });
@@ -19707,17 +20341,17 @@ class MessageBus {
                 topic,
                 peer_id: this.connection.peerId,
                 routing_key: routingKey,
-                source: target
+                source
             });
             this.session.send(args)
                 .then((response) => {
                 const { subscription_id } = response;
                 ts.addData("INFO", { subscription_id });
                 const entry = {
-                    subscription_id, topic, routingKey, source: target,
+                    subscription_id, topic, routingKey, source,
                     callback: function (...tracedCallbackArgs) {
                         const propagationInfo = distExports.Traces.extractPropagationInfo(tracedCallbackArgs?.[0], true);
-                        distExports.withSpan("interopio.api.bus.subscribe.callback", { topic }, propagationInfo, (cbts) => {
+                        distExports.withSpan("interopio.api.bus.subscribe.callback", { topic }, propagationInfo, { disableNesting: !propagationInfo }, (cbts) => {
                             cbts.addData("INFO", { topic, subscription_id: entry.subscription_id });
                             cbts.addData("DIAGNOSTIC", { data: tracedCallbackArgs?.[0] });
                             callback.apply(this, tracedCallbackArgs);
@@ -19840,27 +20474,34 @@ function isPrimitiveOrFunction(obj) {
     return false;
 }
 
+function initInsightsPlugin(namespace) {
+    const pluginExports = typeof namespace?.init === "function" ? namespace : namespace?.default;
+    if (typeof pluginExports?.init !== "function") {
+        throw new TypeError("The io.Insights plugin module does not export an init function");
+    }
+    pluginExports.init();
+}
 async function loadInsightsPlugins(logger, settings) {
     try {
-        (await import('@interopio/insights-base')).init();
+        initInsightsPlugin(await import('@interopio/insights-base'));
     }
-    catch {
-        logger.warn("@interopio/insights-base plugin failed to load, insights will be disabled");
+    catch (error) {
+        logger.warn(`@interopio/insights-base plugin failed to load, insights will be disabled: ${safeErrorStack(error)}`);
     }
     if (settings.metrics?.enabled) {
         try {
-            (await import('@interopio/insights-metrics')).init();
+            initInsightsPlugin(await import('@interopio/insights-metrics'));
         }
-        catch {
-            logger.warn("@interopio/insights-metrics plugin failed to load, insights metrics functionality will be disabled");
+        catch (error) {
+            logger.warn(`@interopio/insights-metrics plugin failed to load, insights metrics functionality will be disabled: ${safeErrorStack(error)}`);
         }
     }
     if (settings.traces?.enabled) {
         try {
-            (await import('@interopio/insights-traces')).init();
+            initInsightsPlugin(await import('@interopio/insights-traces'));
         }
-        catch {
-            logger.warn("@interopio/insights-traces plugin failed to load, insights traces functionality will be disabled");
+        catch (error) {
+            logger.warn(`@interopio/insights-traces plugin failed to load, insights traces functionality will be disabled: ${safeErrorStack(error)}`);
         }
     }
 }
@@ -19922,7 +20563,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
         });
     }
     function setupConnection() {
-        const initTimer = timer("connection");
+        const initTimer = timer("connection", true);
         _connection = new Connection(internalConfig.connection, _logger.subLogger("connection"));
         let authPromise = Promise.resolve(internalConfig.auth);
         if (internalConfig.connection && !internalConfig.auth) {
@@ -19970,7 +20611,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
     }
     function setupLogger() {
         const initTimer = timer("logger");
-        _logger = new Logger(`${internalConfig.connection.identity?.application}`, undefined, internalConfig.customLogger);
+        _logger = new Logger(`${internalConfig.connection.identity?.application}`, undefined, internalConfig.customLogger, () => _interop);
         _logger.consoleLevel(internalConfig.logger.console);
         _logger.publishLevel(internalConfig.logger.publish);
         if (_logger.canPublish("debug")) {
@@ -19992,7 +20633,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             canUpdateMetric,
             system: "Glue42",
             service: identity?.service ?? iodesktop?.applicationName ?? internalConfig.application,
-            instance: identity?.instance ?? identity?.windowId ?? nanoid(10),
+            instance: identity?.instance ?? identity?.windowId ?? nanoid$1(10),
             disableAutoAppSystem,
             pagePerformanceMetrics: typeof config !== "boolean" ? config?.pagePerformanceMetrics : undefined
         });
@@ -20045,7 +20686,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
     }
     async function setupInsights(interop) {
         const initTimer = timer("insights");
-        const settings = await internalConfig.getInsights(iodesktop, interop, _logger);
+        const settings = await internalConfig.getInsights(interop, _connection.insightsHandshakeData, _logger);
         internalConfig.insights = settings;
         try {
             const builder = new distExports.Builder();
@@ -20055,15 +20696,38 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             }
             builder.withSettings(settings);
             builder.withLogger(new distExports.Log4jsWrapper(insightsLogger));
+            builder.withInterop(interop);
             builder.withMetrics();
             const INSIGHTS_PI_STORAGE = "___insights_pi_storage___";
+            const tracesLogger = insightsLogger.subLogger("traces");
+            tracesLogger.publishLevel("trace");
+            tracesLogger.consoleLevel("off");
             builder.withTraces()
-                .withTraceLogger(new distExports.Log4jsWrapper(insightsLogger.subLogger("traces")))
+                .withTraceLogger(new distExports.Log4jsWrapper(tracesLogger))
                 .withPropagationInfoStorage((source, pi) => _contexts?.update(INSIGHTS_PI_STORAGE, { [source.replace(/[.]/g, "_!_")]: { pi } }), (source) => _contexts?.get(INSIGHTS_PI_STORAGE)?.then(x => x[source.replace(/[.]/g, "_!_")]?.pi) ?? Promise.resolve(null));
             const container = builder.build();
             await container.start();
             registerLib("insights", container, initTimer);
-            distExports.Traces.withSpan("interopio.api.startup", () => glueReadyPromiseWrapper.promise);
+            const gpi = settings.traces?.defaults?.getPropagationInfo;
+            let initFinished = false;
+            glueReadyPromiseWrapper.promise.then(() => initFinished = true, () => initFinished = true);
+            distExports.Traces.withSpan("interopio.api.startup", {}, gpi?.("interopio.api.startup", {}) ?? null, (ts) => {
+                if (settings.traces) {
+                    const pi = ts.getPropagationInfo();
+                    settings.traces.defaults = settings.traces.defaults ?? {};
+                    settings.traces.defaults.getPropagationInfo = (source, fc) => {
+                        if (!initFinished &&
+                            source.startsWith("interopio.") &&
+                            !source.startsWith("interopio.api.instrumentation") &&
+                            !source.startsWith("interopio.api.clickstream") &&
+                            pi) {
+                            return pi;
+                        }
+                        return gpi?.(source, fc) ?? null;
+                    };
+                }
+                return glueReadyPromiseWrapper.promise;
+            }).catch(() => { });
             _insights = container;
             return Promise.resolve();
         }
@@ -20114,7 +20778,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             _interop.invoke("T42.ACS.Feedback", feedbackInfo, "best");
         };
         const info = {
-            coreVersion: version,
+            coreVersion: version$1,
             version: internalConfig.version
         };
         glueInitTimer.stop();
@@ -20133,6 +20797,7 @@ const IOConnectCoreFactory = (userConfig, ext) => {
             userConfig,
             done: () => {
                 _logger?.info("done called by user...");
+                _interop?.dispose();
                 return _connection.logout();
             }
         };
@@ -20237,8 +20902,4308 @@ const IOConnectCoreFactory = (userConfig, ext) => {
 if (typeof window !== "undefined") {
     window.IOConnectCore = IOConnectCoreFactory;
 }
-IOConnectCoreFactory.version = version;
+IOConnectCoreFactory.version = version$1;
+IOConnectCoreFactory.setDefaultTraceFilters = setDefaultTraceFilters;
+IOConnectCoreFactory.MessagePortFrames = MessagePortFrames;
 IOConnectCoreFactory.default = IOConnectCoreFactory;
+
+const commonOperations = {
+    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
+    getWorkspaceWindowFrameBounds: { name: "getWorkspaceWindowFrameBounds", resultDecoder: workspaceFrameBoundsResultDecoder, dataDecoder: simpleItemIdDecoder }
+};
+
+const PromiseWrap = (callback, timeoutMilliseconds, timeoutMessage) => {
+    return new Promise((resolve, reject) => {
+        let promiseActive = true;
+        const timeout = setTimeout(() => {
+            if (!promiseActive) {
+                return;
+            }
+            promiseActive = false;
+            const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
+            reject(message);
+        }, timeoutMilliseconds);
+        callback()
+            .then((result) => {
+            if (!promiseActive) {
+                return;
+            }
+            promiseActive = false;
+            clearTimeout(timeout);
+            resolve(result);
+        })
+            .catch((error) => {
+            if (!promiseActive) {
+                return;
+            }
+            promiseActive = false;
+            clearTimeout(timeout);
+            reject(error);
+        });
+    });
+};
+const PromisePlus = (executor, timeoutMilliseconds, timeoutMessage) => {
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+            const message = timeoutMessage || `Promise timeout hit: ${timeoutMilliseconds}`;
+            reject(message);
+        }, timeoutMilliseconds);
+        const providedPromise = new Promise(executor);
+        providedPromise
+            .then((result) => {
+            clearTimeout(timeout);
+            resolve(result);
+        })
+            .catch((error) => {
+            clearTimeout(timeout);
+            reject(error);
+        });
+    });
+};
+
+class WindowsController {
+    supportedOperationsNames = [];
+    focusEventHandler;
+    registry = CallbackRegistryFactory$1();
+    platformRegistration;
+    ioc;
+    bridge;
+    publicWindowId;
+    allWindowProjections = [];
+    me;
+    logger;
+    isWorkspaceFrame;
+    instanceId;
+    channelsController;
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("windows.controller.web");
+        this.logger.trace("starting the web windows controller");
+        this.publicWindowId = ioc.publicWindowId;
+        this.addWindowOperationExecutors();
+        this.ioc = ioc;
+        this.bridge = ioc.bridge;
+        this.instanceId = coreGlue.interop.instance.instance;
+        this.channelsController = ioc.channelsController;
+        this.logger.trace(`set the public window id: ${this.publicWindowId}, set the bridge operations and ioc, registering with the platform now`);
+        this.platformRegistration = this.registerWithPlatform();
+        await this.platformRegistration;
+        await this.initializeFocusTracking();
+        this.logger.trace("registration with the platform successful, attaching the windows property to glue and returning");
+        const api = this.toApi();
+        coreGlue.windows = api;
+    }
+    handlePlatformShutdown() {
+        this.registry.clear();
+        this.allWindowProjections = [];
+        if (!this.focusEventHandler) {
+            return;
+        }
+        document.removeEventListener("visibilityChange", this.focusEventHandler);
+        window.removeEventListener("focus", this.focusEventHandler);
+        window.removeEventListener("blur", this.focusEventHandler);
+    }
+    async handleBridgeMessage(args) {
+        await this.platformRegistration;
+        const operationName = runDecoderWithIOError(windowOperationTypesDecoder, args.operation);
+        const operation = operations$a[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    async open(name, url, options) {
+        const ts = index$1.Traces.currentTracingState;
+        ts.addData("INFO", { windowName: name, url });
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        runDecoderWithIOError(urlDecoder, url);
+        const settings = runDecoderWithIOError(windowOpenSettingsDecoder, options);
+        const windowSuccess = await this.bridge.send("windows", operations$a.openWindow, { name, url, options: settings });
+        return this.waitForWindowAdded(windowSuccess.windowId);
+    }
+    list() {
+        return this.allWindowProjections.map((projection) => projection.api);
+    }
+    findById(id) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
+        return this.allWindowProjections.find((projection) => projection.id === id)?.api;
+    }
+    toApi() {
+        return {
+            open: this.open.bind(this),
+            my: this.my.bind(this),
+            list: this.list.bind(this),
+            findById: this.findById.bind(this),
+            onWindowAdded: this.onWindowAdded.bind(this),
+            onWindowRemoved: this.onWindowRemoved.bind(this),
+            onWindowGotFocus: this.onWindowGotFocus.bind(this),
+            onWindowLostFocus: this.onWindowLostFocus.bind(this)
+        };
+    }
+    addWindowOperationExecutors() {
+        operations$a.focusChange.execute = this.handleFocusChangeEvent.bind(this);
+        operations$a.windowAdded.execute = this.handleWindowAdded.bind(this);
+        operations$a.windowRemoved.execute = this.handleWindowRemoved.bind(this);
+        operations$a.getBounds.execute = this.handleGetBounds.bind(this);
+        operations$a.getFrameBounds.execute = this.handleGetBounds.bind(this);
+        operations$a.getTitle.execute = this.handleGetTitle.bind(this);
+        operations$a.getUrl.execute = this.handleGetUrl.bind(this);
+        operations$a.moveResize.execute = this.handleMoveResize.bind(this);
+        operations$a.setTitle.execute = this.handleSetTitle.bind(this);
+        operations$a.getChannel.execute = this.handleGetChannel.bind(this);
+        operations$a.notifyChannelsChanged.execute = this.handleChannelsChanged.bind(this);
+        operations$a.setZoomFactor.execute = this.handleSetZoomFactor.bind(this);
+        operations$a.zoomFactorChange.execute = this.handleZoomFactorChanged.bind(this);
+        operations$a.refresh.execute = this.handleRefresh.bind(this);
+        operations$a.windowsClosing.execute = this.handleWindowsClosing.bind(this);
+        operations$a.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$a);
+    }
+    my() {
+        return Object.assign({}, this.me);
+    }
+    onWindowAdded(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to window added, because the provided callback is not a function!");
+        }
+        return this.registry.add("window-added", callback);
+    }
+    onWindowRemoved(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to window removed, because the provided callback is not a function!");
+        }
+        return this.registry.add("window-removed", callback);
+    }
+    onWindowGotFocus(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onWindowGotFocus, because the provided callback is not a function!");
+        }
+        return this.registry.add("window-got-focus", callback);
+    }
+    onWindowLostFocus(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onWindowLostFocus, because the provided callback is not a function!");
+        }
+        return this.registry.add("window-lost-focus", callback);
+    }
+    async sayHello() {
+        const helloSuccess = await this.bridge.send("windows", operations$a.windowHello, { windowId: this.publicWindowId });
+        return helloSuccess;
+    }
+    async registerWithPlatform() {
+        const { windows, isWorkspaceFrame } = await this.sayHello();
+        this.isWorkspaceFrame = isWorkspaceFrame;
+        this.logger.trace("the platform responded to the hello message");
+        if (!this.isWorkspaceFrame && this.publicWindowId) {
+            this.logger.trace("i am not treated as a workspace frame, setting my window");
+            const myWindow = windows.find((w) => w.windowId === this.publicWindowId);
+            if (!myWindow) {
+                const windowsInfo = windows.map(w => `${w.windowId}:${w.name}`).join(", ");
+                return ioError.raiseError(`Cannot initialize the window library, because I received no information about me -> id: ${this.publicWindowId} name: ${window.name} from the platform: known windows: ${windowsInfo}`);
+            }
+            const myProjection = await this.ioc.buildWebWindow(this.publicWindowId, myWindow.name, this.logger);
+            this.me = myProjection.api;
+            this.allWindowProjections.push(myProjection);
+        }
+        const currentWindows = await Promise.all(windows
+            .filter((w) => w.windowId !== this.publicWindowId)
+            .map((w) => this.ioc.buildWebWindow(w.windowId, w.name, this.logger)));
+        this.logger.trace("all windows projections are completed, building the list collection");
+        this.allWindowProjections.push(...currentWindows);
+    }
+    async handleFocusChangeEvent(focusData) {
+        const foundProjection = this.allWindowProjections.find((projection) => projection.id === focusData.windowId);
+        if (!foundProjection) {
+            return;
+        }
+        foundProjection.model.processSelfFocusEvent(focusData.hasFocus);
+        const keyToExecute = focusData.hasFocus ? "window-got-focus" : "window-lost-focus";
+        this.registry.execute(keyToExecute, foundProjection.api);
+    }
+    async handleWindowAdded(data) {
+        if (this.allWindowProjections.some((projection) => projection.id === data.windowId)) {
+            return;
+        }
+        const webWindowProjection = await this.ioc.buildWebWindow(data.windowId, data.name, this.logger);
+        this.allWindowProjections.push(webWindowProjection);
+        this.registry.execute("window-added", webWindowProjection.api);
+    }
+    async handleWindowRemoved(data) {
+        const removed = this.allWindowProjections.find((w) => w.id === data.windowId);
+        if (!removed) {
+            return;
+        }
+        this.allWindowProjections = this.allWindowProjections.filter((w) => w.id !== data.windowId);
+        removed.model.clean();
+        this.registry.execute("window-removed", removed.api);
+    }
+    async handleGetBounds() {
+        if (!this.me && !this.isWorkspaceFrame) {
+            return ioError.raiseError("This window cannot report it's bounds, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.isWorkspaceFrame ? "noop" : this.me.id,
+            bounds: {
+                top: window.screenTop,
+                left: window.screenLeft,
+                width: window.innerWidth,
+                height: window.innerHeight
+            }
+        };
+    }
+    async handleGetTitle() {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot report it's title, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.me.id,
+            title: document.title
+        };
+    }
+    async handleGetUrl() {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot report it's url, because it is not a Glue Window, most likely because it is an iframe");
+        }
+        return {
+            windowId: this.me.id,
+            url: window.location.href
+        };
+    }
+    async handleMoveResize(config) {
+        const targetTop = typeof config.top === "number" ? config.top :
+            config.relative ? 0 : window.screenTop;
+        const targetLeft = typeof config.left === "number" ? config.left :
+            config.relative ? 0 : window.screenLeft;
+        const targetHeight = typeof config.height === "number" ? config.height :
+            config.relative ? 0 : window.innerHeight;
+        const targetWidth = typeof config.width === "number" ? config.width :
+            config.relative ? 0 : window.innerWidth;
+        const moveMethod = config.relative ? window.moveBy : window.moveTo;
+        const resizeMethod = config.relative ? window.resizeBy : window.resizeTo;
+        moveMethod(targetLeft, targetTop);
+        resizeMethod(targetWidth, targetHeight);
+    }
+    async handleSetTitle(config) {
+        document.title = config.title;
+    }
+    async initializeFocusTracking() {
+        if (this.isWorkspaceFrame) {
+            this.logger.trace("Ignoring the focus tracking, because this client is a workspace frame");
+            return;
+        }
+        try {
+            await this.bridge.send("windows", commonOperations.operationCheck, { operation: "focusChange" });
+        }
+        catch (error) {
+            this.logger.warn("The platform of this client is outdated and does not support focus tracking, disabling focus events for this client.");
+            return;
+        }
+        const hasFocus = document.hasFocus();
+        await this.transmitFocusChange(true);
+        if (!hasFocus) {
+            await this.transmitFocusChange(false);
+        }
+        this.defineEventListeners();
+    }
+    processFocusEvent() {
+        const hasFocus = document.hasFocus();
+        this.transmitFocusChange(hasFocus);
+    }
+    waitForWindowAdded(windowId) {
+        const foundWindow = this.allWindowProjections.find((projection) => projection.id === windowId);
+        if (foundWindow) {
+            return Promise.resolve(foundWindow.api);
+        }
+        return PromisePlus((resolve) => {
+            const unsubscribe = this.onWindowAdded((addedWindow) => {
+                if (addedWindow.id === windowId) {
+                    unsubscribe();
+                    resolve(addedWindow);
+                }
+            });
+        }, 30000, `Timed out waiting for ${windowId} to be announced`);
+    }
+    async transmitFocusChange(hasFocus) {
+        const eventData = {
+            windowId: this.me?.id || `iframe-${this.instanceId}`,
+            hasFocus
+        };
+        if (this.me) {
+            this.me.isFocused = hasFocus;
+        }
+        await this.bridge.send("windows", operations$a.focusChange, eventData);
+    }
+    defineEventListeners() {
+        this.focusEventHandler = this.processFocusEvent.bind(this);
+        document.addEventListener("visibilityChange", this.focusEventHandler);
+        window.addEventListener("focus", this.focusEventHandler);
+        window.addEventListener("blur", this.focusEventHandler);
+    }
+    async handleGetChannel() {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot report its channel, because it is not a ioConnect Window, most likely because it is an iframe");
+        }
+        const channel = this.channelsController.my();
+        return {
+            ...(channel ? { channel } : {}),
+        };
+    }
+    async handleRefresh() {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot refresh, because it is not an ioConnect Window, most likely because it is an iframe");
+        }
+        setTimeout(() => {
+            window.location.reload();
+        }, 0);
+    }
+    async handleChannelsChanged(data) {
+        const windowProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
+        windowProjection?.model.processChannelsChangedEvent(data.channelNames);
+    }
+    async handleSetZoomFactor(config) {
+        if (!this.me) {
+            return ioError.raiseError("This window cannot change its zoom factor, because it is not an ioConnect Window, most likely because it is an iframe");
+        }
+        document.body.style.zoom = `${ZOOM_FACTORS[config.factorIndex]}%`;
+    }
+    async handleZoomFactorChanged(data) {
+        const foundProjection = this.allWindowProjections.find((projection) => projection.id === data.windowId);
+        if (!foundProjection) {
+            return;
+        }
+        foundProjection.model.processSelfZoomFactorChangedEvent(data.factorIndex);
+    }
+    async handleWindowsClosing(data) {
+        const foundProjections = this.allWindowProjections.filter((projection) => data.windowIds.includes(projection.id));
+        const results = await Promise.all(foundProjections.map(async (projection) => {
+            const { isClosePrevented } = await projection.model.processClosingEvent();
+            return { windowId: projection.id, isClosePrevented };
+        }));
+        return { results };
+    }
+}
+__decorate$1([
+    index$1.withSpan("interopio.api.windows.open")
+], WindowsController.prototype, "open", null);
+
+const GlueWebPlatformControlName = "T42.Web.Platform.Control";
+const GlueWebPlatformStreamName = "T42.Web.Platform.Stream";
+const GlueClientControlName = "T42.Web.Client.Control";
+const GlueCorePlusThemesStream = "T42.Core.Plus.Themes.Stream";
+
+class GlueBridge {
+    coreGlue;
+    communicationId;
+    platformMethodTimeoutMs = 10000;
+    controllers;
+    sub;
+    running;
+    constructor(coreGlue, communicationId) {
+        this.coreGlue = coreGlue;
+        this.communicationId = communicationId;
+    }
+    get contextLib() {
+        return this.coreGlue.contexts;
+    }
+    get interopInstance() {
+        return this.coreGlue.interop.instance.instance;
+    }
+    async stop() {
+        this.running = false;
+        this.sub.close();
+        await this.coreGlue.interop.unregister(GlueClientControlName);
+    }
+    async start(controllers) {
+        this.running = true;
+        this.controllers = controllers;
+        await Promise.all([
+            this.checkWaitMethod(GlueWebPlatformControlName),
+            this.checkWaitMethod(GlueWebPlatformStreamName)
+        ]);
+        const systemId = this.communicationId;
+        const [sub] = await Promise.all([
+            this.coreGlue.interop.subscribe(GlueWebPlatformStreamName, systemId ? { target: { instance: this.communicationId } } : undefined),
+            this.coreGlue.interop.registerAsync(GlueClientControlName, (args, _, success, error) => this.passMessageController(args, success, error))
+        ]);
+        this.sub = sub;
+        this.sub.onData((pkg) => this.passMessageController(pkg.data));
+    }
+    getInteropInstance(windowId) {
+        const result = this.coreGlue.interop.servers().find((s) => s.windowId && s.windowId === windowId);
+        return {
+            application: result?.application,
+            applicationName: result?.applicationName,
+            peerId: result?.peerId,
+            instance: result?.instance,
+            windowId: result?.windowId
+        };
+    }
+    async send(domain, operation, operationData, options, webOptions) {
+        const ts = index$1.Traces.currentTracingState;
+        if (operation.dataDecoder) {
+            try {
+                operation.dataDecoder.runWithException(operationData);
+            }
+            catch (error) {
+                return ioError.raiseError(`Unexpected Web->Platform outgoing validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
+            }
+        }
+        const operationSupported = webOptions?.includeOperationCheck ?
+            (await this.checkOperationSupported(domain, operation)).isSupported :
+            true;
+        if (!operationSupported) {
+            return ioError.raiseError(`Cannot complete operation: ${operation.name} for domain: ${domain} because this client is connected to a platform which does not support it`);
+        }
+        try {
+            index$1.Traces.currentTracingState = ts;
+            const operationResult = await this.transmitMessage(domain, operation, operationData, options);
+            if (operation.resultDecoder) {
+                operation.resultDecoder.runWithException(operationResult);
+            }
+            return operationResult;
+        }
+        catch (error) {
+            if (error?.kind) {
+                return ioError.raiseError(`Unexpected Web<-Platform incoming validation error: ${error.message}, for operation: ${operation.name} and input: ${JSON.stringify(error.input)}`);
+            }
+            return ioError.raiseError(error);
+        }
+    }
+    async createThemesSubscription() {
+        const streamExists = this.coreGlue.interop.methods().some((method) => method.name === GlueCorePlusThemesStream);
+        if (!streamExists) {
+            return ioError.raiseError("Cannot subscribe to theme changes, because the underlying interop stream does not exist. Most likely this is the case when this client is not connected to Core Plus.");
+        }
+        return this.coreGlue.interop.subscribe(GlueCorePlusThemesStream, this.communicationId ? { target: { instance: this.communicationId } } : undefined);
+    }
+    async checkOperationSupported(domain, operation) {
+        try {
+            const result = await this.send(domain, commonOperations.operationCheck, { operation: operation.name });
+            return result;
+        }
+        catch (error) {
+            return { isSupported: false };
+        }
+    }
+    checkWaitMethod(name) {
+        return PromisePlus((resolve) => {
+            const hasMethod = this.coreGlue.interop.methods().some((method) => {
+                const nameMatch = method.name === name;
+                const serverMatch = this.communicationId ?
+                    method.getServers().some((server) => server.instance === this.communicationId) :
+                    true;
+                return nameMatch && serverMatch;
+            });
+            if (hasMethod) {
+                return resolve();
+            }
+            const unSub = this.coreGlue.interop.serverMethodAdded((data) => {
+                const method = data.method;
+                const server = data.server;
+                const serverMatch = this.communicationId ?
+                    server.instance === this.communicationId :
+                    true;
+                if (method.name === name && serverMatch) {
+                    unSub();
+                    resolve();
+                }
+            });
+        }, this.platformMethodTimeoutMs, `Cannot initiate Glue Web, because a system method's discovery timed out: ${name}`);
+    }
+    passMessageController(args, success, error) {
+        const decodeResult = libDomainDecoder.run(args.domain);
+        if (!decodeResult.ok) {
+            if (error) {
+                error(`Cannot execute this client control, because of domain validation error: ${JSON.stringify(decodeResult.error)}`);
+            }
+            return;
+        }
+        const domain = decodeResult.result;
+        if (success) {
+            index$1.Traces.currentTracingState.addData("INFO", { domain, operation: args.operation });
+        }
+        this.controllers[domain]
+            .handleBridgeMessage(args)
+            .then((resolutionData) => {
+            if (success) {
+                success(resolutionData);
+            }
+        })
+            .catch((err) => {
+            if (error) {
+                error(err);
+            }
+            console.warn(err);
+        });
+    }
+    async transmitMessage(domain, operation, data, options) {
+        const messageData = { domain, data, operation: operation.name };
+        let invocationResult;
+        const baseErrorMessage = `Internal Platform Communication Error. Attempted operation: ${JSON.stringify(operation.name)} with data: ${JSON.stringify(data)}. `;
+        const systemId = this.communicationId;
+        try {
+            if (!this.running) {
+                throw new Error("Cannot send a control message, because the platform shut down");
+            }
+            invocationResult = await this.coreGlue.interop.invoke(GlueWebPlatformControlName, messageData, systemId ? { instance: this.communicationId } : undefined, options);
+            if (!invocationResult) {
+                throw new Error("Received unsupported result from the platform - empty result");
+            }
+            if (!Array.isArray(invocationResult.all_return_values) || invocationResult.all_return_values.length === 0) {
+                throw new Error("Received unsupported result from the platform - empty values collection");
+            }
+        }
+        catch (error) {
+            if (error && error.all_errors && error.all_errors.length) {
+                const invocationErrorMessage = error.all_errors[0].message;
+                throw new Error(`${baseErrorMessage} -> Inner message: ${invocationErrorMessage}`);
+            }
+            throw new Error(`${baseErrorMessage} -> Inner message: ${error.message}`);
+        }
+        return invocationResult.all_return_values[0].returned;
+    }
+}
+
+const operations$9 = {
+    appHello: { name: "appHello", dataDecoder: windowHelloDecoder, resultDecoder: appHelloSuccessDecoder },
+    appDirectoryStateChange: { name: "appDirectoryStateChange", dataDecoder: appDirectoryStateChangeDecoder },
+    instanceStarted: { name: "instanceStarted", dataDecoder: instanceDataDecoder },
+    instanceStopped: { name: "instanceStopped", dataDecoder: instanceDataDecoder },
+    applicationStart: { name: "applicationStart", dataDecoder: applicationStartConfigDecoder, resultDecoder: instanceDataDecoder },
+    instanceStop: { name: "instanceStop", dataDecoder: basicInstanceDataDecoder },
+    import: { name: "import" },
+    remove: { name: "remove", dataDecoder: appRemoveConfigDecoder },
+    export: { name: "export", resultDecoder: appsExportOperationDecoder },
+    clear: { name: "clear" },
+    operationCheck: { name: "operationCheck" }
+};
+
+class AppManagerController {
+    me;
+    supportedOperationsNames = [];
+    baseApplicationsTimeoutMS = 60000;
+    appImportTimeoutMS = 20;
+    registry = CallbackRegistryFactory$1();
+    ioc;
+    bridge;
+    publicWindowId;
+    applications = [];
+    instances = [];
+    platformRegistration;
+    logger;
+    channelsController;
+    interop;
+    initialChannelId;
+    handlePlatformShutdown() {
+        this.registry.clear();
+        this.applications = [];
+        this.instances = [];
+        delete this.me;
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("appManger.controller.web");
+        this.logger.trace("starting the web appManager controller");
+        this.publicWindowId = ioc.publicWindowId;
+        this.addOperationsExecutors();
+        this.ioc = ioc;
+        this.bridge = ioc.bridge;
+        this.channelsController = ioc.channelsController;
+        this.interop = coreGlue.interop;
+        this.platformRegistration = this.registerWithPlatform();
+        await this.platformRegistration;
+        this.logger.trace("registration with the platform successful, attaching the appManager property to glue and returning");
+        const api = this.toApi();
+        coreGlue.appManager = api;
+    }
+    async postStart() {
+        if (!this.initialChannelId) {
+            return;
+        }
+        await this.channelsController.handleAppManagerInitialChannelId(this.initialChannelId);
+    }
+    async handleBridgeMessage(args) {
+        await this.platformRegistration;
+        const operationName = runDecoderWithIOError(appManagerOperationTypesDecoder, args.operation);
+        const operation = operations$9[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    onInstanceStarted(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onInstanceStarted requires a single argument of type function");
+        }
+        return this.registry.add("instance-started", callback, this.instances);
+    }
+    onInstanceStopped(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onInstanceStopped requires a single argument of type function");
+        }
+        return this.registry.add("instance-stopped", callback);
+    }
+    async startApplication(appName, context, options) {
+        const ts = index$1.Traces.currentTracingState;
+        const channels = await this.channelsController.all();
+        if (options?.channelId && !channels.includes(options.channelId)) {
+            return ioError.raiseError(`The channel with name "${options.channelId}" doesn't exist!`);
+        }
+        const startOptions = {
+            name: appName,
+            waitForAGMReady: options?.waitForAGMReady ?? true,
+            context,
+            top: options?.top,
+            left: options?.left,
+            width: options?.width,
+            height: options?.height,
+            relativeTo: options?.relativeTo,
+            relativeDirection: options?.relativeDirection,
+            id: options?.reuseId,
+            forceChromeTab: options?.forceTab,
+            layoutComponentId: options?.layoutComponentId,
+            channelId: options?.channelId,
+            startReason: {
+                originApp: {
+                    name: this.me?.application.name,
+                    interopInstance: this.interop.instance.instance
+                }
+            }
+        };
+        if (options?.originIntentRequest) {
+            startOptions.startReason.intentRequest = options.originIntentRequest;
+        }
+        index$1.Traces.currentTracingState = ts;
+        const openResult = await this.bridge.send("appManager", operations$9.applicationStart, startOptions);
+        const app = this.applications.find((a) => a.name === openResult.applicationName);
+        return this.ioc.buildInstance(openResult, app);
+    }
+    getApplication(name) {
+        const verifiedName = runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        return this.applications.find((app) => app.name === verifiedName);
+    }
+    getApplications() {
+        return this.applications.slice();
+    }
+    getInstances() {
+        return this.instances.slice();
+    }
+    onAppAdded(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onAppAdded requires a single argument of type function");
+        }
+        return this.registry.add("application-added", callback, this.applications);
+    }
+    onAppRemoved(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onAppRemoved requires a single argument of type function");
+        }
+        return this.registry.add("application-removed", callback);
+    }
+    toApi() {
+        const api = {
+            myInstance: this.me,
+            inMemory: {
+                import: this.importApps.bind(this),
+                remove: this.remove.bind(this),
+                export: this.exportApps.bind(this),
+                clear: this.clear.bind(this)
+            },
+            application: this.getApplication.bind(this),
+            applications: this.getApplications.bind(this),
+            instances: this.getInstances.bind(this),
+            onAppAdded: this.onAppAdded.bind(this),
+            onAppChanged: this.onAppChanged.bind(this),
+            onAppRemoved: this.onAppRemoved.bind(this),
+            onInstanceStarted: this.onInstanceStarted.bind(this),
+            onInstanceStopped: this.onInstanceStopped.bind(this)
+        };
+        return api;
+    }
+    addOperationsExecutors() {
+        operations$9.appDirectoryStateChange.execute = this.handleAppDirectoryStateChange.bind(this);
+        operations$9.instanceStarted.execute = this.handleInstanceStartedMessage.bind(this);
+        operations$9.instanceStopped.execute = this.handleInstanceStoppedMessage.bind(this);
+        operations$9.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$9);
+    }
+    async handleAppDirectoryStateChange(data) {
+        data.appsAdded.forEach(this.handleApplicationAddedMessage.bind(this));
+        data.appsChanged.forEach(this.handleApplicationChangedMessage.bind(this));
+        data.appsRemoved.forEach(this.handleApplicationRemovedMessage.bind(this));
+    }
+    onAppChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onAppChanged requires a single argument of type function");
+        }
+        return this.registry.add("application-changed", callback);
+    }
+    async handleApplicationAddedMessage(appData) {
+        if (this.applications.some((app) => app.name === appData.name)) {
+            return;
+        }
+        const normalizedApplicationData = this.normalizeApplicationData(appData);
+        const app = await this.ioc.buildApplication(normalizedApplicationData, []);
+        const instances = this.instances.filter((instance) => instance.application.name === app.name);
+        app.instances.push(...instances);
+        this.applications.push(app);
+        this.registry.execute("application-added", app);
+    }
+    async handleApplicationRemovedMessage(appData) {
+        const appIndex = this.applications.findIndex((app) => app.name === appData.name);
+        if (appIndex < 0) {
+            return;
+        }
+        const app = this.applications[appIndex];
+        this.applications.splice(appIndex, 1);
+        this.registry.execute("application-removed", app);
+    }
+    async handleApplicationChangedMessage(appData) {
+        const app = this.applications.find((app) => app.name === appData.name);
+        if (!app) {
+            return this.handleApplicationAddedMessage(appData);
+        }
+        const normalizedApplicationData = this.normalizeApplicationData(appData);
+        app.title = normalizedApplicationData.title;
+        app.version = normalizedApplicationData.version;
+        app.icon = normalizedApplicationData.icon;
+        app.caption = normalizedApplicationData.caption;
+        app.userProperties = normalizedApplicationData.userProperties;
+        this.registry.execute("application-changed", app);
+    }
+    async handleInstanceStartedMessage(instanceData) {
+        if (this.instances.some((instance) => instance.id === instanceData.id)) {
+            return;
+        }
+        const application = this.applications.find((app) => app.name === instanceData.applicationName);
+        if (!application) {
+            return ioError.raiseError(`Cannot add instance: ${instanceData.id}, because there is no application definition associated with it`);
+        }
+        const instance = this.ioc.buildInstance(instanceData, application);
+        this.instances.push(instance);
+        application.instances.push(instance);
+        this.registry.execute("instance-started", instance);
+    }
+    async handleInstanceStoppedMessage(instanceData) {
+        const instance = this.instances.find((i) => i.id === instanceData.id);
+        if (instance) {
+            const instIdx = this.instances.findIndex((inst) => inst.id === instanceData.id);
+            this.instances.splice(instIdx, 1);
+        }
+        const application = this.applications.find((app) => app.instances.some((inst) => inst.id === instanceData.id));
+        if (application) {
+            const instIdxApps = application.instances.findIndex((inst) => inst.id === instanceData.id);
+            application.instances.splice(instIdxApps, 1);
+        }
+        if (!instance) {
+            return;
+        }
+        this.registry.execute("instance-stopped", instance);
+    }
+    async importApps(definitions, mode = "replace") {
+        runDecoderWithIOError(importModeDecoder, mode);
+        if (!Array.isArray(definitions)) {
+            return ioError.raiseError("Import must be called with an array of definitions");
+        }
+        if (definitions.length > 10000) {
+            return ioError.raiseError("Cannot import more than 10000 app definitions in Glue42 Core.");
+        }
+        const parseResult = definitions.reduce((soFar, definition) => {
+            const { isValid, isFdc3, error } = this.isValidDefinition(definition);
+            if (isValid) {
+                soFar.valid.push(isFdc3 ? definition : this.withLegacyWorkspacesSandbox(definition));
+            }
+            else {
+                soFar.invalid.push({ app: definition?.name, error: error ?? `Provided definition is invalid ${JSON.stringify(definition)}` });
+            }
+            return soFar;
+        }, { valid: [], invalid: [] });
+        const responseTimeout = this.baseApplicationsTimeoutMS + this.appImportTimeoutMS * parseResult.valid.length;
+        await this.bridge.send("appManager", operations$9.import, { definitions: parseResult.valid, mode }, { methodResponseTimeoutMs: responseTimeout });
+        return {
+            imported: parseResult.valid.map((valid) => valid.name),
+            errors: parseResult.invalid
+        };
+    }
+    isValidDefinition(definition) {
+        const isFdc3V2Definition = definition?.appId && definition?.details;
+        if (isFdc3V2Definition) {
+            const decodeResult = decoders.fdc3.v2DefinitionDecoder.run(definition);
+            return { isValid: decodeResult.ok, isFdc3: true, error: decodeResult.ok ? undefined : `Received invalid FDC3 v2 definition. Error: ${JSON.stringify(decodeResult.error)}` };
+        }
+        const isFdc3V1Definition = definition?.appId && definition?.manifest;
+        if (isFdc3V1Definition) {
+            const decodeResult = decoders.fdc3.v1DefinitionDecoder.run(definition);
+            return { isValid: decodeResult.ok, isFdc3: true, error: decodeResult.ok ? undefined : `Received invalid FDC3 v1 definition. Error: ${JSON.stringify(decodeResult.error)}` };
+        }
+        const decodeResult = applicationDefinitionDecoder.run(definition);
+        return { isValid: decodeResult.ok, isFdc3: false, error: decodeResult.ok ? undefined : `Received invalid definition. Error: ${JSON.stringify(decodeResult.error)}` };
+    }
+    async remove(name) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        await this.bridge.send("appManager", operations$9.remove, { name }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+    }
+    async clear() {
+        await this.bridge.send("appManager", operations$9.clear, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+    }
+    async exportApps() {
+        const response = await this.bridge.send("appManager", operations$9.export, undefined, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+        return response.definitions.map((definition) => this.normalizeDefinition(definition));
+    }
+    async registerWithPlatform() {
+        const result = await this.bridge.send("appManager", operations$9.appHello, { windowId: this.publicWindowId }, { methodResponseTimeoutMs: this.baseApplicationsTimeoutMS });
+        this.logger.trace("the platform responded to the hello message with a full list of apps");
+        this.applications = await Promise.all(result.apps.map((app) => {
+            const normalizedApplicationData = this.normalizeApplicationData(app);
+            return this.ioc.buildApplication(normalizedApplicationData, app.instances);
+        }));
+        this.instances = this.applications.reduce((instancesSoFar, app) => {
+            instancesSoFar.push(...app.instances);
+            return instancesSoFar;
+        }, []);
+        this.me = this.findMyInstance();
+        this.logger.trace(`all applications were parsed and saved. I am ${this.me ? "NOT a" : "a"} valid instance`);
+        this.initialChannelId = result.initialChannelId;
+    }
+    findMyInstance() {
+        for (const app of this.applications) {
+            const foundInstance = app.instances.find((instance) => instance.id === this.publicWindowId);
+            if (foundInstance) {
+                return foundInstance;
+            }
+        }
+        return undefined;
+    }
+    normalizeApplicationData(app) {
+        const details = app.userProperties?.details;
+        const isDetailsObject = typeof details === "object" && details !== null && !Array.isArray(details);
+        if (!isDetailsObject) {
+            return app;
+        }
+        return {
+            ...app,
+            userProperties: {
+                ...app.userProperties,
+                details: this.normalizeDetails(details)
+            }
+        };
+    }
+    normalizeDefinition(definition) {
+        return {
+            ...definition,
+            details: this.normalizeDetails(definition.details)
+        };
+    }
+    normalizeDetails(details) {
+        const { iframeSandbox, workspacesSandbox, ...restDetails } = details;
+        const normalizedIFrameSandbox = iframeSandbox ?? workspacesSandbox;
+        return {
+            ...restDetails,
+            ...(normalizedIFrameSandbox ? { iframeSandbox: normalizedIFrameSandbox } : {})
+        };
+    }
+    withLegacyWorkspacesSandbox(definition) {
+        const details = definition.details;
+        return {
+            ...definition,
+            details: {
+                ...details,
+                ...(details.iframeSandbox ? { workspacesSandbox: details.iframeSandbox } : {})
+            }
+        };
+    }
+}
+
+class InstanceModel {
+    data;
+    bridge;
+    application;
+    me;
+    myCtxKey;
+    constructor(data, bridge, application) {
+        this.data = data;
+        this.bridge = bridge;
+        this.application = application;
+        this.myCtxKey = `___instance___${this.data.id}`;
+    }
+    toApi() {
+        const agm = this.bridge.getInteropInstance(this.data.id);
+        const api = {
+            id: this.data.id,
+            agm,
+            application: this.application,
+            stop: this.stop.bind(this),
+            getContext: this.getContext.bind(this)
+        };
+        this.me = Object.freeze(api);
+        return this.me;
+    }
+    async getContext() {
+        return this.bridge.contextLib.get(this.myCtxKey);
+    }
+    async stop() {
+        await this.bridge.send("appManager", operations$9.instanceStop, { id: this.data.id });
+    }
+}
+
+class ApplicationModel {
+    data;
+    instances;
+    controller;
+    me;
+    constructor(data, instances, controller) {
+        this.data = data;
+        this.instances = instances;
+        this.controller = controller;
+    }
+    toApi() {
+        const api = {
+            name: this.data.name,
+            title: this.data.title,
+            version: this.data.version,
+            icon: this.data.icon,
+            caption: this.data.caption,
+            userProperties: this.data.userProperties,
+            instances: this.instances,
+            start: this.start.bind(this),
+            getConfiguration: this.getConfiguration.bind(this),
+            onInstanceStarted: this.onInstanceStarted.bind(this),
+            onInstanceStopped: this.onInstanceStopped.bind(this)
+        };
+        this.me = api;
+        return this.me;
+    }
+    onInstanceStarted(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onInstanceStarted requires a single argument of type function");
+        }
+        return this.controller.onInstanceStarted((instance) => {
+            if (instance.application.name === this.data.name) {
+                callback(instance);
+            }
+        });
+    }
+    onInstanceStopped(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onInstanceStopped requires a single argument of type function");
+        }
+        return this.controller.onInstanceStopped((instance) => {
+            if (instance.application.name === this.data.name) {
+                callback(instance);
+            }
+        });
+    }
+    async start(context, options) {
+        const ts = index$1.Traces.currentTracingState;
+        ts.addData("DEBUG", { options });
+        ts.addData("DIAGNOSTIC", { context });
+        const verifiedContext = runDecoderWithIOError(startApplicationContextDecoder, context);
+        const verifiedOptions = runDecoderWithIOError(startApplicationOptionsDecoder, options);
+        return this.controller.startApplication(this.data.name, verifiedContext, verifiedOptions);
+    }
+    async getConfiguration() {
+        const { details, intents, hidden, ...customProperties } = this.data.userProperties;
+        const definition = {
+            name: this.data.name,
+            type: this.data.type,
+            details,
+            customProperties
+        };
+        const optionalProperties = {
+            title: this.data.title,
+            version: this.data.version,
+            icon: this.data.icon,
+            caption: this.data.caption,
+            intents,
+            hidden,
+            fdc3: this.data.fdc3
+        };
+        for (const [key, value] of Object.entries(optionalProperties)) {
+            if (value !== undefined) {
+                definition[key] = value;
+            }
+        }
+        return definition;
+    }
+}
+__decorate$1([
+    index$1.withSpan("interopio.api.appManager.application.start", { thisMapping: { "data.name": "appName" } })
+], ApplicationModel.prototype, "start", null);
+
+const operations$8 = {
+    layoutAdded: { name: "layoutAdded", dataDecoder: glueLayoutDecoder },
+    layoutChanged: { name: "layoutChanged", dataDecoder: glueLayoutDecoder },
+    layoutRemoved: { name: "layoutRemoved", dataDecoder: glueLayoutDecoder },
+    layoutRestored: { name: "layoutRestored", dataDecoder: glueLayoutDecoder },
+    defaultLayoutChanged: { name: "defaultLayoutChanged", dataDecoder: defaultGlobalChangedDecoder },
+    layoutRenamed: { name: "layoutRenamed", dataDecoder: renamedLayoutNotificationDecoder },
+    get: { name: "get", dataDecoder: simpleLayoutConfigDecoder, resultDecoder: optionalSimpleLayoutResult },
+    getAll: { name: "getAll", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsSummariesResultDecoder },
+    getLayoutContents: { name: "getLayoutContents", dataDecoder: getContentsOptionsDecoder, resultDecoder: layoutContentsResultDecoder },
+    export: { name: "export", dataDecoder: getAllLayoutsConfigDecoder, resultDecoder: allLayoutsFullConfigDecoder },
+    import: { name: "import", dataDecoder: layoutsImportConfigDecoder },
+    remove: { name: "remove", dataDecoder: simpleLayoutConfigDecoder },
+    rename: { name: "rename", dataDecoder: renameLayoutConfigDecoder, resultDecoder: layoutResultDecoder },
+    save: { name: "save", dataDecoder: saveLayoutConfigDecoder, resultDecoder: simpleLayoutResultDecoder },
+    restore: { name: "restore", dataDecoder: restoreLayoutConfigDecoder },
+    clientSaveRequest: { name: "clientSaveRequest", dataDecoder: platformSaveRequestConfigDecoder, resultDecoder: saveRequestClientResponseDecoder },
+    getGlobalPermissionState: { name: "getGlobalPermissionState", resultDecoder: permissionStateResultDecoder },
+    requestGlobalPermission: { name: "requestGlobalPermission", resultDecoder: simpleAvailabilityResultDecoder },
+    checkGlobalActivated: { name: "checkGlobalActivated", resultDecoder: simpleAvailabilityResultDecoder },
+    getDefaultGlobal: { name: "getDefaultGlobal", resultDecoder: optionalSimpleLayoutResult },
+    setDefaultGlobal: { name: "setDefaultGlobal", dataDecoder: setDefaultGlobalConfigDecoder },
+    clearDefaultGlobal: { name: "clearDefaultGlobal" },
+    getCurrent: { name: "getCurrent", resultDecoder: optionalSimpleLayoutResult },
+    updateMetadata: { name: "updateMetadata", dataDecoder: updateLayoutMetadataConfigDecoder },
+    operationCheck: { name: "operationCheck" }
+};
+
+class LayoutsController {
+    supportedOperationsNames = [];
+    defaultLayoutRestoreTimeoutMS = 120000;
+    registry = CallbackRegistryFactory$1();
+    bridge;
+    logger;
+    windowsController;
+    saveRequestSubscription;
+    handlePlatformShutdown() {
+        this.registry.clear();
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("layouts.controller.web");
+        this.logger.trace("starting the web layouts controller");
+        this.bridge = ioc.bridge;
+        this.windowsController = ioc.windowsController;
+        this.addOperationsExecutors();
+        const api = this.toApi();
+        this.logger.trace("no need for platform registration, attaching the layouts property to glue and returning");
+        coreGlue.layouts = api;
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(layoutsOperationTypesDecoder, args.operation);
+        const operation = operations$8[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    toApi() {
+        const api = {
+            get: this.get.bind(this),
+            getAll: this.getAll.bind(this),
+            getLayoutContents: this.getLayoutContents.bind(this),
+            getCurrentLayout: this.getCurrentLayout.bind(this),
+            export: this.exportLayouts.bind(this),
+            import: this.importLayouts.bind(this),
+            save: this.save.bind(this),
+            restore: this.restore.bind(this),
+            remove: this.remove.bind(this),
+            onAdded: this.onAdded.bind(this),
+            onChanged: this.onChanged.bind(this),
+            onRemoved: this.onRemoved.bind(this),
+            onDefaultGlobalChanged: this.onDefaultGlobalChanged.bind(this),
+            onSaveRequested: this.subscribeOnSaveRequested.bind(this),
+            getMultiScreenPermissionState: this.getGlobalPermissionState.bind(this),
+            requestMultiScreenPermission: this.requestGlobalPermission.bind(this),
+            getGlobalTypeState: this.checkGlobalActivated.bind(this),
+            getDefaultGlobal: this.getDefaultGlobal.bind(this),
+            setDefaultGlobal: this.setDefaultGlobal.bind(this),
+            clearDefaultGlobal: this.clearDefaultGlobal.bind(this),
+            rename: this.rename.bind(this),
+            onRenamed: this.onRenamed.bind(this),
+            onRestored: this.onRestored.bind(this),
+            updateMetadata: this.updateMetadata.bind(this)
+        };
+        return Object.freeze(api);
+    }
+    addOperationsExecutors() {
+        operations$8.layoutAdded.execute = this.handleOnAdded.bind(this);
+        operations$8.layoutChanged.execute = this.handleOnChanged.bind(this);
+        operations$8.layoutRemoved.execute = this.handleOnRemoved.bind(this);
+        operations$8.layoutRenamed.execute = this.handleOnRenamed.bind(this);
+        operations$8.layoutRestored.execute = this.handleOnRestored.bind(this);
+        operations$8.defaultLayoutChanged.execute = this.handleOnDefaultChanged.bind(this);
+        operations$8.clientSaveRequest.execute = this.handleSaveRequest.bind(this);
+        operations$8.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$8);
+    }
+    async get(name, type) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        runDecoderWithIOError(layoutTypeDecoder, type);
+        const result = await this.bridge.send("layouts", operations$8.get, { name, type });
+        return result.layout;
+    }
+    async getCurrentLayout() {
+        const result = await this.bridge.send("layouts", operations$8.getCurrent, undefined);
+        return result.layout;
+    }
+    async getAll(type) {
+        runDecoderWithIOError(layoutTypeDecoder, type);
+        const result = await this.bridge.send("layouts", operations$8.getAll, { type });
+        return result.summaries;
+    }
+    async getLayoutContents(options) {
+        runDecoderWithIOError(getContentsOptionsDecoder, options);
+        const { name, type } = options;
+        if (type !== "Workspace" && type !== "Global") {
+            return ioError.raiseError(`getLayoutContents is only supported for Workspace and Global layouts, but got type "${type}"`);
+        }
+        const result = await this.bridge.send("layouts", operations$8.getLayoutContents, { name, type }, undefined, { includeOperationCheck: true });
+        return result.contents;
+    }
+    async exportLayouts(type) {
+        runDecoderWithIOError(layoutTypeDecoder, type);
+        const result = await this.bridge.send("layouts", operations$8.export, { type });
+        return result.layouts;
+    }
+    async importLayouts(layouts, mode = "replace") {
+        runDecoderWithIOError(importModeDecoder, mode);
+        if (!Array.isArray(layouts)) {
+            return ioError.raiseError("Import must be called with an array of layouts");
+        }
+        if (layouts.length > 1000) {
+            return ioError.raiseError("Cannot import more than 1000 layouts at once in Glue42 Core.");
+        }
+        const parseResult = layouts.reduce((soFar, layout) => {
+            const decodeResult = glueLayoutDecoder.run(layout);
+            if (decodeResult.ok) {
+                soFar.valid.push(layout);
+            }
+            else {
+                this.logger.warn(`A layout with name: ${layout.name} was not imported, because of error: ${JSON.stringify(decodeResult.error)}`);
+            }
+            return soFar;
+        }, { valid: [] });
+        const layoutsToImport = layouts.filter((layout) => parseResult.valid.some((validLayout) => validLayout.name === layout.name));
+        await this.bridge.send("layouts", operations$8.import, { layouts: layoutsToImport, mode });
+    }
+    async save(layout) {
+        runDecoderWithIOError(newLayoutOptionsDecoder, layout);
+        const saveResult = await this.bridge.send("layouts", operations$8.save, { layout });
+        return saveResult.layout;
+    }
+    async restore(options) {
+        const ts = index$1.Traces.currentTracingState;
+        ts.addData("DEBUG", { options });
+        runDecoderWithIOError(restoreOptionsDecoder, options);
+        const restoreOptions = {
+            ...options,
+            allowPrevent: options.allowPrevent ?? true,
+            showDialog: options.showDialog ?? true
+        };
+        const canShowCloseDialog = (restoreOptions.closeRunningInstances !== false || restoreOptions.closeMe === true) && restoreOptions.allowPrevent && restoreOptions.showDialog;
+        const invocationTimeout = canShowCloseDialog ? MAX_SET_TIMEOUT_DELAY : restoreOptions.timeout ? restoreOptions.timeout * 2 : this.defaultLayoutRestoreTimeoutMS;
+        await this.bridge.send("layouts", operations$8.restore, { layout: restoreOptions }, { methodResponseTimeoutMs: invocationTimeout });
+    }
+    async remove(type, name) {
+        runDecoderWithIOError(layoutTypeDecoder, type);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        await this.bridge.send("layouts", operations$8.remove, { type, name });
+    }
+    async handleSaveRequest(config) {
+        const response = {};
+        if (this.saveRequestSubscription) {
+            try {
+                const onSaveRequestResponse = this.saveRequestSubscription(config);
+                response.windowContext = onSaveRequestResponse?.windowContext;
+            }
+            catch (error) {
+                this.logger.warn(`An error was thrown by the onSaveRequested callback, ignoring the callback: ${JSON.stringify(error)}`);
+            }
+        }
+        return response;
+    }
+    async getGlobalPermissionState() {
+        const requestResult = await this.bridge.send("layouts", operations$8.getGlobalPermissionState, undefined);
+        return requestResult;
+    }
+    async requestGlobalPermission() {
+        const currentState = (await this.getGlobalPermissionState()).state;
+        if (currentState === "denied") {
+            return { permissionGranted: false };
+        }
+        if (currentState === "granted") {
+            return { permissionGranted: true };
+        }
+        const myWindow = this.windowsController.my();
+        const globalNamespace = window.glue42core || window.iobrowser;
+        const amIWorkspaceFrame = globalNamespace.isPlatformFrame;
+        if (myWindow.name !== "Platform" && !amIWorkspaceFrame) {
+            return ioError.raiseError("Cannot request permission for multi-window placement from any app other than the Platform.");
+        }
+        const requestResult = await this.bridge.send("layouts", operations$8.requestGlobalPermission, undefined, { methodResponseTimeoutMs: 180000 });
+        return { permissionGranted: requestResult.isAvailable };
+    }
+    async checkGlobalActivated() {
+        const requestResult = await this.bridge.send("layouts", operations$8.checkGlobalActivated, undefined);
+        return { activated: requestResult.isAvailable };
+    }
+    async getDefaultGlobal() {
+        const requestResult = await this.bridge.send("layouts", operations$8.getDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+        return requestResult.layout;
+    }
+    async setDefaultGlobal(name) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        await this.bridge.send("layouts", operations$8.setDefaultGlobal, { name }, undefined, { includeOperationCheck: true });
+    }
+    async clearDefaultGlobal() {
+        await this.bridge.send("layouts", operations$8.clearDefaultGlobal, undefined, undefined, { includeOperationCheck: true });
+    }
+    async rename(layout, newName) {
+        runDecoderWithIOError(glueLayoutDecoder, layout);
+        runDecoderWithIOError(nonEmptyStringDecoder$2, newName);
+        const result = await this.bridge.send("layouts", operations$8.rename, { layout, newName }, undefined, { includeOperationCheck: true });
+        return result;
+    }
+    async updateMetadata(layout) {
+        runDecoderWithIOError(glueLayoutDecoder, layout);
+        await this.bridge.send("layouts", operations$8.updateMetadata, { layout }, undefined, { includeOperationCheck: true });
+    }
+    onAdded(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onAdded, because the provided callback is not a function!");
+        }
+        this.exportLayouts("Global").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+        this.exportLayouts("Workspace").then((layouts) => layouts.forEach((layout) => callback(layout))).catch(() => { });
+        return this.registry.add(operations$8.layoutAdded.name, callback);
+    }
+    onChanged(callback) {
+        return this.registry.add(operations$8.layoutChanged.name, callback);
+    }
+    onDefaultGlobalChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onDefaultGlobalChanged, because the provided callback is not a function!");
+        }
+        this.getDefaultGlobal().then((layout) => callback(layout ? { name: layout.name } : undefined)).catch(() => { });
+        return this.registry.add(operations$8.defaultLayoutChanged.name, callback);
+    }
+    onRemoved(callback) {
+        return this.registry.add(operations$8.layoutRemoved.name, callback);
+    }
+    onRenamed(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onRenamed, because the provided callback is not a function!");
+        }
+        return this.registry.add(operations$8.layoutRenamed.name, callback);
+    }
+    onRestored(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onRestored, because the provided callback is not a function!");
+        }
+        return this.registry.add(operations$8.layoutRestored.name, callback);
+    }
+    subscribeOnSaveRequested(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onSaveRequested, because the provided argument is not a valid callback function.");
+        }
+        if (this.saveRequestSubscription) {
+            return ioError.raiseError("Cannot subscribe to onSaveRequested, because this client has already subscribed and only one subscription is supported. Consider unsubscribing from the initial one.");
+        }
+        this.saveRequestSubscription = callback;
+        return () => {
+            delete this.saveRequestSubscription;
+        };
+    }
+    async handleOnAdded(layout) {
+        this.registry.execute(operations$8.layoutAdded.name, layout);
+    }
+    async handleOnChanged(layout) {
+        this.registry.execute(operations$8.layoutChanged.name, layout);
+    }
+    async handleOnDefaultChanged(layout) {
+        this.registry.execute(operations$8.defaultLayoutChanged.name, layout);
+    }
+    async handleOnRemoved(layout) {
+        this.registry.execute(operations$8.layoutRemoved.name, layout);
+    }
+    async handleOnRestored(layout) {
+        this.registry.execute(operations$8.layoutRestored.name, layout);
+    }
+    async handleOnRenamed(renamedData) {
+        const { prevName, ...layout } = renamedData;
+        this.registry.execute(operations$8.layoutRenamed.name, layout, { name: prevName });
+    }
+}
+__decorate$1([
+    index$1.withSpan("interopio.api.layouts.restore", { argMapping: { "0.name": "layoutName" } })
+], LayoutsController.prototype, "restore", null);
+
+const operations$7 = {
+    raiseNotification: { name: "raiseNotification", dataDecoder: raiseNotificationDecoder, resultDecoder: raiseNotificationResultDecoder },
+    requestPermission: { name: "requestPermission", resultDecoder: permissionRequestResultDecoder },
+    notificationShow: { name: "notificationShow", dataDecoder: notificationEventPayloadDecoder },
+    notificationClick: { name: "notificationClick", dataDecoder: notificationEventPayloadDecoder },
+    getPermission: { name: "getPermission", resultDecoder: permissionQueryResultDecoder },
+    list: { name: "list", resultDecoder: allNotificationsDataDecoder },
+    notificationRaised: { name: "notificationRaised", dataDecoder: simpleNotificationDataDecoder },
+    notificationClosed: { name: "notificationClosed", dataDecoder: simpleNotificationSelectDecoder },
+    click: { name: "click", dataDecoder: notificationClickConfigDecoder },
+    clear: { name: "clear" },
+    clearAll: { name: "clearAll" },
+    clearOld: { name: "clearOld" },
+    configure: { name: "configure", dataDecoder: notificationsConfigurationProtocolDecoder, resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    getConfiguration: { name: "getConfiguration", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    getActiveCount: { name: "getActiveCount", resultDecoder: activeNotificationsCountChangeDecoder },
+    configurationChanged: { name: "configurationChanged", resultDecoder: strictNotificationsConfigurationProtocolDecoder },
+    setState: { name: "setState", dataDecoder: notificationSetStateRequestDecoder },
+    activeCountChange: { name: "activeCountChange", resultDecoder: activeNotificationsCountChangeDecoder },
+    stateChange: { name: "stateChange", resultDecoder: notificationSetStateRequestDecoder },
+    operationCheck: { name: "operationCheck" }
+};
+
+let urlAlphabet =
+  'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+
+let nanoid = (size = 21) => {
+  let id = '';
+  let i = size | 0;
+  while (i-- > 0) {
+    id += urlAlphabet[(Math.random() * 64) | 0];
+  }
+  return id
+};
+
+class NotificationsController {
+    supportedOperationsNames = [];
+    registry = CallbackRegistryFactory$1();
+    logger;
+    bridge;
+    notificationsSettings;
+    notifications = {};
+    coreGlue;
+    buildNotificationFunc;
+    notificationsConfiguration;
+    notificationsActiveCount = 0;
+    handlePlatformShutdown() {
+        this.notifications = {};
+        this.registry.clear();
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("notifications.controller.web");
+        this.logger.trace("starting the web notifications controller");
+        this.bridge = ioc.bridge;
+        this.coreGlue = coreGlue;
+        this.notificationsSettings = ioc.config.notifications;
+        this.buildNotificationFunc = ioc.buildNotification;
+        this.notificationsConfiguration = await this.getConfiguration();
+        this.notificationsActiveCount = await this.getActiveCount();
+        const api = this.toApi();
+        this.addOperationExecutors();
+        coreGlue.notifications = api;
+        this.logger.trace("notifications are ready");
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(notificationsOperationTypesDecoder, args.operation);
+        const operation = operations$7[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    toApi() {
+        const api = {
+            raise: this.raise.bind(this),
+            requestPermission: this.requestPermission.bind(this),
+            getPermission: this.getPermission.bind(this),
+            list: this.list.bind(this),
+            onRaised: this.onRaised.bind(this),
+            onClosed: this.onClosed.bind(this),
+            click: this.click.bind(this),
+            clear: this.clear.bind(this),
+            clearAll: this.clearAll.bind(this),
+            clearOld: this.clearOld.bind(this),
+            configure: this.configure.bind(this),
+            getConfiguration: this.getConfiguration.bind(this),
+            getFilter: this.getFilter.bind(this),
+            setFilter: this.setFilter.bind(this),
+            setState: this.setState.bind(this),
+            onConfigurationChanged: this.onConfigurationChanged.bind(this),
+            onActiveCountChanged: this.onActiveCountChanged.bind(this),
+            onCounterChanged: this.onActiveCountChanged.bind(this),
+            onStateChanged: this.onStateChanged.bind(this)
+        };
+        return Object.freeze(api);
+    }
+    async getPermission() {
+        const queryResult = await this.bridge.send("notifications", operations$7.getPermission, undefined);
+        return queryResult.permission;
+    }
+    async requestPermission() {
+        const permissionResult = await this.bridge.send("notifications", operations$7.requestPermission, undefined);
+        return permissionResult.permissionGranted;
+    }
+    async raise(options) {
+        const settings = runDecoderWithIOError(glue42NotificationOptionsDecoder, options);
+        settings.showToast = typeof settings.showToast === "boolean" ? settings.showToast : true;
+        settings.showInPanel = typeof settings.showInPanel === "boolean" ? settings.showInPanel : true;
+        const permissionGranted = await this.requestPermission();
+        if (!permissionGranted) {
+            return ioError.raiseError("Cannot raise the notification, because the user has declined the permission request");
+        }
+        const id = nanoid(10);
+        const raiseResult = await this.bridge.send("notifications", operations$7.raiseNotification, { settings, id });
+        const notification = this.buildNotificationFunc(raiseResult.settings, id);
+        this.notifications[id] = notification;
+        return notification;
+    }
+    async list() {
+        const bridgeResponse = await this.bridge.send("notifications", operations$7.list, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.notifications;
+    }
+    onRaised(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onRaised expects a callback of type function");
+        }
+        return this.registry.add("notification-raised", callback);
+    }
+    onClosed(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onClosed expects a callback of type function");
+        }
+        return this.registry.add("notification-closed", callback);
+    }
+    async click(id, action, clickOptions) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
+        if (action !== undefined) {
+            runDecoderWithIOError(nonEmptyStringDecoder$2, action);
+        }
+        const verifiedClickOptions = runDecoderWithIOError(optionalNotificationClickOptionsDecoder, clickOptions);
+        const clickOptionsWithDefaults = { close: true, ...verifiedClickOptions };
+        await this.bridge.send("notifications", operations$7.click, { id, action, clickOptions: clickOptionsWithDefaults }, undefined, { includeOperationCheck: true });
+    }
+    async clear(id) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
+        await this.bridge.send("notifications", operations$7.clear, { id }, undefined, { includeOperationCheck: true });
+    }
+    async clearAll() {
+        await this.bridge.send("notifications", operations$7.clearAll, undefined, undefined, { includeOperationCheck: true });
+    }
+    async clearOld() {
+        await this.bridge.send("notifications", operations$7.clearOld, undefined, undefined, { includeOperationCheck: true });
+    }
+    async configure(config) {
+        const verifiedConfig = runDecoderWithIOError(notificationsConfigurationDecoder, config);
+        const response = await this.bridge.send("notifications", operations$7.configure, { configuration: verifiedConfig }, undefined, { includeOperationCheck: true });
+        return response.configuration;
+    }
+    async getConfiguration() {
+        const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+        return response.configuration;
+    }
+    async getActiveCount() {
+        try {
+            const response = await this.bridge.send("notifications", operations$7.getActiveCount, undefined, undefined, { includeOperationCheck: true });
+            return response.count;
+        }
+        catch (error) {
+            console.warn("Failed to get accurate active notifications count", error);
+            return 0;
+        }
+    }
+    async getFilter() {
+        const response = await this.bridge.send("notifications", operations$7.getConfiguration, undefined, undefined, { includeOperationCheck: true });
+        return response.configuration.sourceFilter;
+    }
+    async setFilter(filter) {
+        const verifiedFilter = runDecoderWithIOError(notificationFilterDecoder, filter);
+        await this.bridge.send("notifications", operations$7.configure, { configuration: { sourceFilter: verifiedFilter } }, undefined, { includeOperationCheck: true });
+        return verifiedFilter;
+    }
+    async setState(id, state) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, id);
+        runDecoderWithIOError(notificationStateDecoder, state);
+        await this.bridge.send("notifications", operations$7.setState, { id, state }, undefined, { includeOperationCheck: true });
+    }
+    onConfigurationChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to configuration changed, because the provided callback is not a function!");
+        }
+        setTimeout(() => callback(this.notificationsConfiguration), 0);
+        return this.registry.add("notifications-config-changed", callback);
+    }
+    onActiveCountChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onActiveCountChanged changed, because the provided callback is not a function!");
+        }
+        setTimeout(() => callback({ count: this.notificationsActiveCount }), 0);
+        return this.registry.add("notifications-active-count-changed", callback);
+    }
+    onStateChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to onStateChanged changed, because the provided callback is not a function!");
+        }
+        return this.registry.add("notification-state-changed", callback);
+    }
+    addOperationExecutors() {
+        operations$7.notificationShow.execute = this.handleNotificationShow.bind(this);
+        operations$7.notificationClick.execute = this.handleNotificationClick.bind(this);
+        operations$7.notificationRaised.execute = this.handleNotificationRaised.bind(this);
+        operations$7.notificationClosed.execute = this.handleNotificationClosed.bind(this);
+        operations$7.configurationChanged.execute = this.handleConfigurationChanged.bind(this);
+        operations$7.activeCountChange.execute = this.handleActiveCountChanged.bind(this);
+        operations$7.stateChange.execute = this.handleNotificationStateChanged.bind(this);
+        operations$7.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$7);
+    }
+    async handleConfigurationChanged(data) {
+        this.notificationsConfiguration = data.configuration;
+        this.registry.execute("notifications-config-changed", data.configuration);
+    }
+    async handleActiveCountChanged(data) {
+        this.notificationsActiveCount = data.count;
+        this.registry.execute("notifications-active-count-changed", data);
+    }
+    async handleNotificationStateChanged(data) {
+        this.registry.execute("notification-state-changed", { id: data.id }, data.state);
+    }
+    async handleNotificationShow(data) {
+        if (!data.id) {
+            return;
+        }
+        const notification = this.notifications[data.id];
+        if (notification && notification.onshow) {
+            notification.onshow();
+        }
+    }
+    async handleNotificationClick(data) {
+        if (!data.action && this.notificationsSettings?.defaultClick) {
+            this.notificationsSettings.defaultClick(this.coreGlue, data.definition);
+        }
+        if (data.action && this.notificationsSettings?.actionClicks?.some((actionDef) => actionDef.action === data.action)) {
+            const foundHandler = this.notificationsSettings?.actionClicks?.find((actionDef) => actionDef.action === data.action);
+            foundHandler.handler(this.coreGlue, data.definition);
+        }
+        if (!data.id) {
+            return;
+        }
+        const notification = this.notifications[data.id];
+        if (notification && notification.onclick) {
+            notification.onclick();
+            delete this.notifications[data.id];
+        }
+    }
+    async handleNotificationRaised(data) {
+        this.registry.execute("notification-raised", data.notification);
+    }
+    async handleNotificationClosed(data) {
+        this.registry.execute("notification-closed", data);
+    }
+}
+
+const operations$6 = {
+    getIntents: { name: "getIntents", resultDecoder: wrappedIntentsDecoder },
+    findIntent: { name: "findIntent", dataDecoder: wrappedIntentFilterDecoder, resultDecoder: wrappedIntentsDecoder },
+    raise: { name: "raise", dataDecoder: raiseIntentRequestDecoder, resultDecoder: intentResultDecoder },
+    filterHandlers: { name: "filterHandlers", dataDecoder: filterHandlersWithResolverConfigDecoder, resultDecoder: filterHandlersResultDecoder },
+    getIntentsByHandler: { name: "getIntentsByHandler", dataDecoder: intentHandlerDecoder, resultDecoder: getIntentsResultDecoder }
+};
+
+const GLUE42_FDC3_INTENTS_METHOD_PREFIX = "Tick42.FDC3.Intents.";
+const INTENTS_RESOLVER_APP_NAME = "intentsResolver";
+const DEFAULT_RESOLVER_RESPONSE_TIMEOUT = 60 * 1000;
+const ADDITIONAL_BRIDGE_OPERATION_TIMEOUT = 30 * 1000;
+const DEFAULT_PICK_HANDLER_BY_TIMEOUT = 90 * 1000;
+
+class IntentsController {
+    bridge;
+    logger;
+    interop;
+    appManagerController;
+    windowsController;
+    myIntents = new Set();
+    prefsController;
+    uiController;
+    useIntentsResolverUI = true;
+    intentsResolverAppName;
+    intentResolverResponseTimeout = DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
+    unregisterIntentPromises = [];
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("intents.controller.web");
+        this.logger.trace("starting the web intents controller");
+        this.bridge = ioc.bridge;
+        this.interop = coreGlue.interop;
+        this.appManagerController = ioc.appManagerController;
+        this.windowsController = ioc.windowsController;
+        this.prefsController = ioc.prefsController;
+        this.uiController = ioc.uiController;
+        this.checkIfIntentsResolverIsEnabled(ioc.config);
+        const api = this.toApi();
+        this.logger.trace("no need for platform registration, attaching the intents property to glue and returning");
+        coreGlue.intents = api;
+    }
+    handlePlatformShutdown() {
+        this.myIntents = new Set();
+        this.unregisterIntentPromises = [];
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(intentsOperationTypesDecoder, args.operation);
+        const operation = operations$6[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    toApi() {
+        const api = {
+            raise: this.raise.bind(this),
+            all: this.all.bind(this),
+            register: this.register.bind(this),
+            find: this.find.bind(this),
+            filterHandlers: this.filterHandlers.bind(this),
+            getIntents: this.getIntentsByHandler.bind(this),
+            clearSavedHandlers: this.clearSavedHandlers.bind(this),
+            onHandlerAdded: this.onHandlerAdded.bind(this),
+            onHandlerRemoved: this.onHandlerRemoved.bind(this)
+        };
+        return api;
+    }
+    async raise(request) {
+        const validatedIntentRequest = runDecoderWithIOError(raiseRequestDecoder, request);
+        const intentRequest = typeof validatedIntentRequest === "string"
+            ? { intent: validatedIntentRequest }
+            : validatedIntentRequest;
+        await Promise.all(this.unregisterIntentPromises);
+        if (intentRequest.clearSavedHandler) {
+            this.logger.trace(`User removes saved handler for intent ${intentRequest.intent}`);
+            await this.removeRememberedHandler(intentRequest.intent);
+        }
+        const resultFromRememberedHandler = await this.checkHandleRaiseWithRememberedHandler(intentRequest);
+        if (resultFromRememberedHandler) {
+            return resultFromRememberedHandler;
+        }
+        const requestWithResolverInfo = {
+            intentRequest,
+            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
+            embeddedResolverConfig: this.getEmbeddedResolverConfig()
+        };
+        const methodResponseTimeoutMs = intentRequest.waitUserResponseIndefinitely
+            ? MAX_SET_TIMEOUT_DELAY
+            : (intentRequest.timeout || this.intentResolverResponseTimeout) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+        this.logger.trace(`Sending raise request to the platform: ${JSON.stringify(request)} and method response timeout of ${methodResponseTimeoutMs}ms`);
+        const response = await this.bridge.send("intents", operations$6.raise, requestWithResolverInfo, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs });
+        this.logger.trace(`Raise operation completed with response: ${JSON.stringify(response)}`);
+        return response;
+    }
+    getLegacyResolverConfigByRequest(filter) {
+        if (filter.handlerFilter) {
+            return {
+                enabled: typeof filter.handlerFilter?.openResolver === "boolean" ? filter.handlerFilter?.openResolver : this.useIntentsResolverUI,
+                appName: this.intentsResolverAppName,
+                waitResponseTimeout: filter.handlerFilter?.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT
+            };
+        }
+        const waitResponseTimeout = filter.intentRequest?.waitUserResponseIndefinitely ? MAX_SET_TIMEOUT_DELAY : this.intentResolverResponseTimeout;
+        return {
+            enabled: this.useIntentsResolverUI,
+            appName: this.intentsResolverAppName,
+            waitResponseTimeout
+        };
+    }
+    getEmbeddedResolverConfig() {
+        return {
+            enabled: this.uiController.isIntentResolverEnabled(),
+            initialCaller: { instanceId: this.interop.instance.instance }
+        };
+    }
+    async all() {
+        await Promise.all(this.unregisterIntentPromises);
+        const result = await this.bridge.send("intents", operations$6.getIntents, undefined);
+        return result.intents;
+    }
+    async register(intent, handler) {
+        runDecoderWithIOError(registerIntentListenerDecoder, intent);
+        if (typeof handler !== "function") {
+            return ioError.raiseError("Cannot add intent listener, because the provided handler is not a function!");
+        }
+        await Promise.all(this.unregisterIntentPromises);
+        const intentName = typeof intent === "string" ? intent : intent.intent;
+        const methodName = this.buildInteropMethodName(intentName);
+        const alreadyRegistered = this.myIntents.has(intentName);
+        if (alreadyRegistered) {
+            return ioError.raiseError(`Intent listener for intent ${intentName} already registered!`);
+        }
+        this.myIntents.add(intentName);
+        let intentFlag = {};
+        if (typeof intent === "object") {
+            const { intent: removed, ...rest } = intent;
+            intentFlag = rest;
+        }
+        try {
+            await this.interop.register({ name: methodName, flags: { intent: intentFlag } }, (args) => {
+                if (this.myIntents.has(intentName)) {
+                    const { _initialCallerId, _metadata, ...rest } = args;
+                    const caller = this.interop.servers().find((server) => server.instance === _initialCallerId);
+                    return handler(rest, caller, _metadata);
+                }
+            });
+        }
+        catch (err) {
+            this.myIntents.delete(intentName);
+            return ioError.raiseError(`Registration of a method with name ${methodName} failed with reason: ${JSON.stringify(err)}`);
+        }
+        return {
+            unsubscribe: () => this.unsubscribeIntent(intentName)
+        };
+    }
+    async find(intentFilter) {
+        let data = undefined;
+        if (typeof intentFilter !== "undefined") {
+            const intentFilterObj = runDecoderWithIOError(findFilterDecoder, intentFilter);
+            if (typeof intentFilterObj === "string") {
+                data = {
+                    filter: {
+                        name: intentFilterObj
+                    }
+                };
+            }
+            else if (typeof intentFilterObj === "object") {
+                data = {
+                    filter: intentFilterObj
+                };
+            }
+        }
+        await Promise.all(this.unregisterIntentPromises);
+        const result = await this.bridge.send("intents", operations$6.findIntent, data);
+        return result.intents;
+    }
+    onHandlerAdded(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe for 'onHandlerAdded' event - callback is not a function!");
+        }
+        const unOnAppAdded = this.subscribeForAppEvent("onAppAdded", callback);
+        const unOnServerMethodAdded = this.subscribeForServerMethodEvent("serverMethodAdded", callback);
+        return () => {
+            unOnAppAdded();
+            unOnServerMethodAdded();
+        };
+    }
+    onHandlerRemoved(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe for 'onHandlerRemoved' event - callback is not a function!");
+        }
+        const unOnAppRemoved = this.subscribeForAppEvent("onAppRemoved", callback);
+        const unOnServerMethodRemoved = this.subscribeForServerMethodEvent("serverMethodRemoved", callback);
+        return () => {
+            unOnAppRemoved();
+            unOnServerMethodRemoved();
+        };
+    }
+    subscribeForAppEvent(method, callback) {
+        return this.appManagerController[method]((app) => {
+            const appIntents = app.userProperties.intents;
+            if (!appIntents?.length) {
+                return;
+            }
+            appIntents.forEach((intent) => {
+                const handler = this.buildIntentHandlerFromApp(app, intent);
+                callback(handler, intent.name);
+            });
+        });
+    }
+    subscribeForServerMethodEvent(eventMethod, callback) {
+        return this.interop[eventMethod](async ({ server, method }) => {
+            if (!method.name.startsWith(GLUE42_FDC3_INTENTS_METHOD_PREFIX) || !method.flags?.intent) {
+                return;
+            }
+            const intentName = method.name.replace(GLUE42_FDC3_INTENTS_METHOD_PREFIX, "");
+            const handler = await this.buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName);
+            callback(handler, intentName);
+        });
+    }
+    buildIntentHandlerFromApp(app, intent) {
+        const handler = {
+            applicationName: app.name,
+            type: "app",
+            applicationDescription: app.caption,
+            applicationIcon: app.icon,
+            applicationTitle: app.title,
+            contextTypes: intent.contexts,
+            displayName: intent.displayName,
+            resultType: intent.resultType,
+            customConfig: intent.customConfig
+        };
+        return handler;
+    }
+    async buildIntentHandlerFromServerMethod(eventMethod, server, method, intentName) {
+        const info = method.flags.intent;
+        const app = this.appManagerController.getApplication(server.application || server.applicationName);
+        let title;
+        if (eventMethod === "serverMethodAdded" && server.windowId) {
+            title = await (this.windowsController.findById(server.windowId))?.getTitle();
+        }
+        const appIntent = app?.userProperties?.intents?.find((intent) => intent.name === intentName);
+        const handler = {
+            applicationName: server.application || server.applicationName || "",
+            instanceId: server.windowId || server.instance,
+            type: "instance",
+            applicationIcon: info?.icon || app?.icon,
+            applicationTitle: app?.title,
+            applicationDescription: info?.description || app?.caption,
+            contextTypes: info?.contextTypes || appIntent?.contexts,
+            instanceTitle: title,
+            displayName: info?.displayName || appIntent?.displayName,
+            resultType: info?.resultType || appIntent?.resultType,
+            customConfig: info?.customConfig
+        };
+        return handler;
+    }
+    async clearSavedHandlers() {
+        this.logger.trace("Removing all saved handlers from prefs storage for current app");
+        await this.prefsController.update({ intents: undefined });
+    }
+    checkIfIntentsResolverIsEnabled(options) {
+        this.useIntentsResolverUI = typeof options.intents?.enableIntentsResolverUI === "boolean"
+            ? options.intents.enableIntentsResolverUI
+            : true;
+        this.intentsResolverAppName = options.intents?.intentsResolverAppName ?? INTENTS_RESOLVER_APP_NAME;
+        this.intentResolverResponseTimeout = options.intents?.methodResponseTimeoutMs ?? DEFAULT_RESOLVER_RESPONSE_TIMEOUT;
+    }
+    clearUnregistrationPromise(promiseToRemove) {
+        this.unregisterIntentPromises = this.unregisterIntentPromises.filter(promise => promise !== promiseToRemove);
+    }
+    buildInteropMethodName(intentName) {
+        return `${GLUE42_FDC3_INTENTS_METHOD_PREFIX}${intentName}`;
+    }
+    unsubscribeIntent(intentName) {
+        this.myIntents.delete(intentName);
+        const methodName = this.buildInteropMethodName(intentName);
+        const unregisterPromise = this.interop.unregister(methodName);
+        this.unregisterIntentPromises.push(unregisterPromise);
+        unregisterPromise
+            .then(() => {
+            this.clearUnregistrationPromise(unregisterPromise);
+        })
+            .catch((err) => {
+            this.logger.error(`Unregistration of a method with name ${methodName} failed with reason: ${err}`);
+            this.clearUnregistrationPromise(unregisterPromise);
+        });
+    }
+    async filterHandlers(handlerFilter) {
+        runDecoderWithIOError(handlerFilterDecoder, handlerFilter);
+        this.checkIfAtLeastOneFilterIsPresent(handlerFilter);
+        const embeddedResolverConfig = this.getEmbeddedResolverConfig();
+        if (handlerFilter.openResolver && !this.useIntentsResolverUI && !embeddedResolverConfig.enabled) {
+            return ioError.raiseError("Cannot resolve 'filterHandlers' request using Intents Resolver UI because it's globally disabled");
+        }
+        const methodResponseTimeoutMs = (handlerFilter.timeout || DEFAULT_PICK_HANDLER_BY_TIMEOUT) + ADDITIONAL_BRIDGE_OPERATION_TIMEOUT;
+        const filterHandlersRequestWithResolverConfig = {
+            filterHandlersRequest: handlerFilter,
+            resolverConfig: this.getLegacyResolverConfigByRequest({ handlerFilter }),
+            embeddedResolverConfig
+        };
+        const result = await this.bridge.send("intents", operations$6.filterHandlers, filterHandlersRequestWithResolverConfig, { methodResponseTimeoutMs, waitTimeoutMs: methodResponseTimeoutMs }, { includeOperationCheck: true });
+        return result;
+    }
+    checkIfAtLeastOneFilterIsPresent(filter) {
+        const errorMsg = "Provide at least one filter criteria of the following: 'intent' | 'contextTypes' | 'resultType' | 'applicationNames'";
+        if (!Object.keys(filter).length) {
+            return ioError.raiseError(errorMsg);
+        }
+        const { intent, resultType, contextTypes, applicationNames, handlers } = filter;
+        const existingValidContextTypes = contextTypes?.length;
+        const existingValidApplicationNames = applicationNames?.length;
+        const existingValidHandlers = handlers?.length;
+        if (!intent && !resultType && !existingValidContextTypes && !existingValidApplicationNames && !existingValidHandlers) {
+            return ioError.raiseError(errorMsg);
+        }
+    }
+    async getIntentsByHandler(handler) {
+        runDecoderWithIOError(intentHandlerDecoder, handler);
+        const result = await this.bridge.send("intents", operations$6.getIntentsByHandler, handler, undefined, { includeOperationCheck: true });
+        return result;
+    }
+    async removeRememberedHandler(intentName) {
+        this.logger.trace(`Removing saved handler from prefs storage for intent ${intentName}`);
+        let prefs;
+        try {
+            prefs = await this.prefsController.get();
+        }
+        catch (error) {
+            this.logger.warn(`prefs.get() threw the following error: ${error}`);
+            return;
+        }
+        const intentPrefs = prefs.data?.intents;
+        if (!intentPrefs) {
+            this.logger.trace("No app prefs found for current app");
+            return;
+        }
+        delete intentPrefs[intentName];
+        const updatedPrefs = {
+            ...prefs.data,
+            intents: intentPrefs
+        };
+        try {
+            await this.prefsController.update(updatedPrefs);
+        }
+        catch (error) {
+            this.logger.warn(`prefs.update() threw the following error: ${error}`);
+            return;
+        }
+        this.logger.trace(`Handler saved choice for intent ${intentName} removed successfully`);
+    }
+    async checkForRememberedHandler(intentRequest) {
+        let prefs;
+        try {
+            prefs = await this.prefsController.get();
+        }
+        catch (error) {
+            this.logger.warn(`prefs.get() threw the following error: ${error}`);
+            return;
+        }
+        const prefsForIntent = prefs.data?.intents?.[intentRequest.intent];
+        return prefsForIntent?.handler;
+    }
+    async checkHandleRaiseWithRememberedHandler(intentRequest) {
+        if (intentRequest.target) {
+            return;
+        }
+        const rememberedHandler = await this.checkForRememberedHandler(intentRequest);
+        if (!rememberedHandler) {
+            return;
+        }
+        const operationData = {
+            intentRequest: {
+                ...intentRequest,
+                target: {
+                    app: rememberedHandler.applicationName,
+                    instance: rememberedHandler.instanceId
+                }
+            },
+            resolverConfig: this.getLegacyResolverConfigByRequest({ intentRequest }),
+            embeddedResolverConfig: this.getEmbeddedResolverConfig()
+        };
+        try {
+            const response = await this.bridge.send("intents", operations$6.raise, operationData);
+            return response;
+        }
+        catch (error) {
+            this.logger.trace(`Could not raise intent to remembered handler. Reason: ${error}. Removing it from Prefs store`);
+            await this.removeRememberedHandler(intentRequest.intent);
+        }
+    }
+}
+
+const operations$5 = {
+    appHello: { name: "appHello", dataDecoder: channelsAppHelloDataDecoder, resultDecoder: channelsAppHelloSuccessDecoder },
+    addChannel: { name: "addChannel", dataDecoder: channelContextDecoder },
+    removeChannel: { name: "removeChannel", dataDecoder: removeChannelDataDecoder },
+    getMyChannel: { name: "getMyChannel", resultDecoder: getMyChanelResultDecoder },
+    getWindowIdsOnChannel: { name: "getWindowIdsOnChannel", dataDecoder: getWindowIdsOnChannelDataDecoder, resultDecoder: getWindowIdsOnChannelResultDecoder },
+    getWindowIdsWithChannels: { name: "getWindowIdsWithChannels", dataDecoder: wrappedWindowWithChannelFilterDecoder, resultDecoder: getWindowIdsWithChannelsResultDecoder },
+    joinChannel: { name: "joinChannel", dataDecoder: joinChannelDataDecoder },
+    restrict: { name: "restrict", dataDecoder: restrictionConfigDataDecoder },
+    getRestrictions: { name: "getRestrictions", dataDecoder: getRestrictionsDataDecoder, resultDecoder: restrictionsDecoder },
+    restrictAll: { name: "restrictAll", dataDecoder: restrictAllDataDecoder },
+    notifyChannelsChanged: { name: "notifyChannelsChanged", dataDecoder: channelsChangedDataDecoder },
+    leaveChannel: { name: "leaveChannel", dataDecoder: leaveChannelDataDecoder },
+    requestChannelSelector: { name: "requestChannelSelector", dataDecoder: requestChannelSelectorConfigDecoder },
+    getMode: { name: "getMode", resultDecoder: getChannelsModeDecoder },
+    operationCheck: { name: "operationCheck" },
+};
+
+const DEFAULT_MODE = "single";
+const CHANNELS_PREFIX = "___channel___";
+const SUBS_KEY = "subs";
+const CHANGED_KEY = "changed";
+const CHANNELS_CHANGED = "channels_changed";
+const FDC3_CONTEXT_PREFIX = "fdc3_";
+const FDC3_METADATA_PREFIX = "fdc3Metadata_";
+const STORAGE_NAMESPACE = "io_connect_channels";
+const DEFAULT_STORAGE_MODE = "inMemory";
+
+class ChannelsController {
+    supportedOperationsNames = [];
+    registry = CallbackRegistryFactory$1();
+    logger;
+    contexts;
+    interop;
+    bridge;
+    windowsController;
+    _mode;
+    myWindowId;
+    storage;
+    handlePlatformShutdown() {
+        this.registry.clear();
+        this.storage.clear();
+    }
+    addOperationsExecutors() {
+        operations$5.getMyChannel.execute = this.handleGetMyChannel.bind(this);
+        operations$5.joinChannel.execute = this.handleJoinChannel.bind(this);
+        operations$5.leaveChannel.execute = this.handleLeaveChannel.bind(this);
+        operations$5.restrict.execute = this.handleRestrict.bind(this);
+        operations$5.getRestrictions.execute = ({ windowId }) => this.getRestrictions(windowId);
+        operations$5.restrictAll.execute = this.handleRestrictAll.bind(this);
+        operations$5.appHello.execute = () => Promise.resolve();
+        operations$5.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$5);
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("channels.controller.web");
+        this.logger.trace("starting the web channels controller");
+        this.contexts = coreGlue.contexts;
+        this.interop = coreGlue.interop;
+        this.addOperationsExecutors();
+        this.bridge = ioc.bridge;
+        this.windowsController = ioc.windowsController;
+        this.storage = ioc.channelsStorage;
+        this.logger.trace("no need for platform registration, attaching the channels property to glue and returning");
+        this.myWindowId = this.windowsController.my().id ?? this.interop.instance.instance;
+        await this.initialize();
+        const api = this.toApi();
+        coreGlue.channels = api;
+    }
+    async postStart(io, ioc) {
+        try {
+            await this.requestChannelSelector(io.appManager.myInstance);
+        }
+        catch (error) {
+            this.logger.warn(`Failed to display channel selector: ${extractErrorMsg(error)}`);
+        }
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(channelsOperationTypesDecoder, args.operation);
+        const operation = operations$5[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    async list() {
+        const channelNames = this.getAllChannelNames();
+        const channelContexts = await Promise.all(channelNames.map((channelName) => this.get(channelName)));
+        return channelContexts;
+    }
+    my() {
+        return this.current();
+    }
+    async handleGetMyChannel() {
+        const channel = this.my();
+        return channel ? { channel } : {};
+    }
+    async join(name, windowId) {
+        const channelNames = this.getAllChannelNames();
+        runDecoderWithIOError(channelNameDecoder(channelNames), name);
+        runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
+        const joinData = { channel: name, windowId: windowId ?? this.myWindowId };
+        await this.bridge.send("channels", operations$5.joinChannel, joinData, undefined, { includeOperationCheck: true });
+    }
+    handleJoinChannel({ channel }) {
+        if (this._mode === "single") {
+            return this.switchToChannel(channel);
+        }
+        return this.joinAdditionalChannel(channel);
+    }
+    onChanged(callback) {
+        return this.changed(callback);
+    }
+    async leave(config = {}) {
+        const decodedConfig = runDecoderWithIOError(leaveChannelsConfigDecoder, config);
+        const channelName = typeof decodedConfig === "string" ? undefined : decodedConfig.channel;
+        const windowId = typeof decodedConfig === "string" ? decodedConfig : decodedConfig.windowId;
+        if (channelName) {
+            const channelNames = this.getAllChannelNames();
+            runDecoderWithIOError(channelNameDecoder(channelNames), channelName);
+        }
+        const leaveData = { channelName, windowId: windowId ?? this.myWindowId };
+        await this.bridge.send("channels", operations$5.leaveChannel, leaveData, undefined, { includeOperationCheck: true });
+    }
+    async handleAppManagerInitialChannelId(channel) {
+        if (this.storage.mode === "inMemory") {
+            return;
+        }
+        if (this.storage.getSessionStorageData()) {
+            return;
+        }
+        return this.handleJoinChannel({ channel, windowId: this.myWindowId });
+    }
+    async handleLeaveChannel({ channelName }) {
+        const channelNamesToLeave = channelName ? [channelName] : this.storage.channels;
+        channelNamesToLeave.forEach((name) => this.storage.invokeUnsubscribes(name));
+        this.storage.channels = this.storage.channels.filter((channelName) => !channelNamesToLeave.includes(channelName));
+        this.executeChangedEvents();
+        await this.notifyChannelsChanged();
+    }
+    toApi() {
+        const api = {
+            mode: this._mode,
+            subscribe: this.subscribe.bind(this),
+            subscribeFor: this.subscribeFor.bind(this),
+            publish: this.publish.bind(this),
+            all: this.all.bind(this),
+            list: this.list.bind(this),
+            get: this.get.bind(this),
+            getMyChannels: this.getMyChannels.bind(this),
+            myChannels: this.myChannels.bind(this),
+            onChannelsChanged: this.onChannelsChanged.bind(this),
+            join: this.join.bind(this),
+            leave: this.leave.bind(this),
+            current: this.current.bind(this),
+            my: this.my.bind(this),
+            changed: this.changed.bind(this),
+            onChanged: this.onChanged.bind(this),
+            add: this.add.bind(this),
+            remove: this.remove.bind(this),
+            getMy: this.getMy.bind(this),
+            getWindowsOnChannel: this.getWindowsOnChannel.bind(this),
+            getWindowsWithChannels: this.getWindowsWithChannels.bind(this),
+            restrict: this.restrict.bind(this),
+            getRestrictions: this.getRestrictions.bind(this),
+            restrictAll: this.restrictAll.bind(this),
+            clearChannelData: this.clearChannelData.bind(this),
+            setPath: this.setPath.bind(this),
+            setPaths: this.setPaths.bind(this)
+        };
+        return Object.freeze(api);
+    }
+    createContextName(channelName) {
+        return `${CHANNELS_PREFIX}${channelName}`;
+    }
+    getAllChannelNames() {
+        const contextNames = this.contexts.all();
+        const channelContextNames = contextNames.filter((contextName) => contextName.startsWith(CHANNELS_PREFIX));
+        const channelNames = channelContextNames.map((channelContextName) => channelContextName.replace(CHANNELS_PREFIX, ""));
+        return channelNames;
+    }
+    async joinAdditionalChannel(name) {
+        if (this.storage.channels.includes(name)) {
+            return;
+        }
+        this.storage.channels = [...this.storage.channels, name];
+        const contextName = this.createContextName(name);
+        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
+        });
+        this.storage.addUnsubscribe(name, unsub);
+        this.executeChangedEvents(name);
+        await this.notifyChannelsChanged();
+    }
+    async switchToChannel(name) {
+        const currentChannel = this.storage.channels[0];
+        if (name === currentChannel) {
+            return;
+        }
+        this.storage.invokeUnsubscribes(currentChannel);
+        this.storage.channels = [name];
+        const contextName = this.createContextName(name);
+        const unsub = await this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
+        });
+        this.storage.addUnsubscribe(name, unsub);
+        this.executeChangedEvents(name);
+        await this.notifyChannelsChanged();
+    }
+    executeChangedEvents(name) {
+        this.registry.execute(CHANGED_KEY, name);
+        this.registry.execute(CHANNELS_CHANGED, this.storage.channels);
+    }
+    async notifyChannelsChanged() {
+        const windowId = this.windowsController.my().id;
+        if (!windowId) {
+            return;
+        }
+        try {
+            await this.bridge.send("channels", operations$5.notifyChannelsChanged, { channelNames: this.storage.channels, windowId }, undefined, { includeOperationCheck: true });
+        }
+        catch (error) {
+            this.logger.warn(`Failed to notify channel changed: ${extractErrorMsg(error)}`);
+        }
+    }
+    async updateData(name, data) {
+        const contextName = this.createContextName(name);
+        const fdc3Type = this.getFDC3Type(data);
+        if (this.contexts.setPathSupported) {
+            const pathValues = Object.keys(data).map((key) => {
+                return {
+                    path: `data.${key}`,
+                    value: data[key]
+                };
+            });
+            if (fdc3Type) {
+                pathValues.push({ path: latestFDC3Type, value: fdc3Type });
+            }
+            await this.contexts.setPaths(contextName, pathValues);
+        }
+        else {
+            if (fdc3Type) {
+                data[latestFDC3Type] = fdc3Type;
+            }
+            await this.contexts.update(contextName, { data });
+        }
+    }
+    getFDC3Type(data) {
+        const fdc3PropsArr = Object.keys(data).filter((key) => key.startsWith(FDC3_CONTEXT_PREFIX));
+        if (fdc3PropsArr.length === 0) {
+            return;
+        }
+        if (fdc3PropsArr.length > 1) {
+            return ioError.raiseError("FDC3 does not support updating of multiple context keys");
+        }
+        return fdc3PropsArr[0].slice(FDC3_CONTEXT_PREFIX.length);
+    }
+    subscribe(callback, options) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to channels, because the provided callback is not a function!");
+        }
+        if (options) {
+            runDecoderWithIOError(fdc3OptionsDecoder, options);
+        }
+        const currentChannel = this.current();
+        const wrappedCallback = options?.contextType
+            ? this.getWrappedSubscribeCallbackWithFdc3Type(callback, options.contextType)
+            : this.getWrappedSubscribeCallback(callback);
+        if (currentChannel) {
+            this.replaySubscribe(wrappedCallback, currentChannel);
+        }
+        return this.registry.add(SUBS_KEY, wrappedCallback);
+    }
+    async subscribeFor(name, callback, options) {
+        const channelNames = this.getAllChannelNames();
+        runDecoderWithIOError(channelNameDecoder(channelNames), name);
+        if (typeof callback !== "function") {
+            return ioError.raiseError(`Cannot subscribe to channel ${name}, because the provided callback is not a function!`);
+        }
+        if (options) {
+            runDecoderWithIOError(fdc3OptionsDecoder, options);
+        }
+        const contextName = this.createContextName(name);
+        const wrappedCallback = options?.contextType
+            ? this.getWrappedSubscribeCallbackWithFdc3Type(callback, options.contextType)
+            : this.getWrappedSubscribeCallback(callback);
+        return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            wrappedCallback(context.data, context, delta, extraData?.updaterId);
+        });
+    }
+    async publish(data, options) {
+        if (typeof data !== "object") {
+            return ioError.raiseError("Cannot publish to channel, because the provided data is not an object!");
+        }
+        runDecoderWithIOError(publishOptionsDecoder, options);
+        if (typeof options === "object") {
+            return this.publishWithOptions(data, options);
+        }
+        if (typeof options === "string") {
+            const channelNames = this.getAllChannelNames();
+            runDecoderWithIOError(channelNameDecoder(channelNames), options);
+        }
+        if (!options && this.storage.channels.length > 1) {
+            return this.publishOnMultipleChannels(data);
+        }
+        const channelName = typeof options === "string" ? options : this.storage.channels[0];
+        if (!channelName) {
+            return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
+        }
+        const canPublish = this.isAllowedByRestrictions(channelName, "write");
+        if (!canPublish) {
+            return ioError.raiseError(`Cannot publish on channel ${channelName} due to restrictions`);
+        }
+        return this.updateData(channelName, data);
+    }
+    async all() {
+        const channelNames = this.getAllChannelNames();
+        return channelNames;
+    }
+    async get(name, options) {
+        const channelNames = this.getAllChannelNames();
+        runDecoderWithIOError(channelNameDecoder(channelNames), name);
+        if (options) {
+            runDecoderWithIOError(fdc3OptionsDecoder, options);
+        }
+        const contextName = this.createContextName(name);
+        const channelContext = await this.contexts.get(contextName);
+        if (options?.contextType) {
+            return this.getContextForFdc3Type(channelContext, options.contextType);
+        }
+        if (channelContext.latest_fdc3_type) {
+            return this.getContextWithFdc3Data(channelContext);
+        }
+        return channelContext;
+    }
+    async getMyChannels(options) {
+        return Promise.all(this.storage.channels.map((channelName) => this.get(channelName, options)));
+    }
+    myChannels() {
+        return this.storage.channels;
+    }
+    getContextForFdc3Type(channelContext, searchedType) {
+        const { contextKey, metadataKey } = this.getFdc3StorageKeys(searchedType);
+        if (!channelContext.data[contextKey]) {
+            return {
+                name: channelContext.name,
+                meta: channelContext.meta,
+                data: {}
+            };
+        }
+        const fdc3Context = { type: searchedType, ...channelContext.data[contextKey] };
+        const data = this.toPublicFdc3Data(fdc3Context, channelContext.data[metadataKey]);
+        return {
+            name: channelContext.name,
+            meta: channelContext.meta,
+            data
+        };
+    }
+    getContextWithFdc3Data(channelContext) {
+        const { latest_fdc3_type, ...rest } = channelContext;
+        if (!latest_fdc3_type) {
+            return channelContext;
+        }
+        const parsedType = this.decodeFdc3Type(latest_fdc3_type);
+        const { contextKey, metadataKey } = this.getFdc3StorageKeysFromEncodedType(latest_fdc3_type);
+        const fdc3Context = { type: parsedType, ...rest.data[contextKey] };
+        const fdc3Metadata = rest.data[metadataKey];
+        const fdc3Data = this.toPublicFdc3Data(fdc3Context, fdc3Metadata);
+        const publicChannelData = this.removeFdc3StorageData(rest.data);
+        const context = {
+            name: channelContext.name,
+            meta: channelContext.meta,
+            data: { ...publicChannelData, ...fdc3Data }
+        };
+        return context;
+    }
+    current() {
+        return this.storage.channels[0];
+    }
+    changed(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to channel changed, because the provided callback is not a function!");
+        }
+        const currentChannel = this.current();
+        const replayArguments = currentChannel ? [currentChannel] : undefined;
+        return this.registry.add(CHANGED_KEY, callback, replayArguments);
+    }
+    async add(info) {
+        const channelContext = runDecoderWithIOError(channelContextDecoder, info);
+        const channelWithSuchNameExists = this.getAllChannelNames().includes(channelContext.name);
+        if (channelWithSuchNameExists) {
+            return ioError.raiseError("There's an already existing channel with such name");
+        }
+        await this.bridge.send("channels", operations$5.addChannel, channelContext);
+        return channelContext;
+    }
+    async remove(name) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        const channelWithSuchNameExists = this.getAllChannelNames().includes(name);
+        if (!channelWithSuchNameExists) {
+            return ioError.raiseError("There's no channel with such name");
+        }
+        await this.bridge.send("channels", operations$5.removeChannel, { name }, undefined, { includeOperationCheck: true });
+    }
+    replaySubscribe = (callback, channelId) => {
+        this.get(channelId)
+            .then((channelContext) => {
+            if (!channelContext) {
+                return undefined;
+            }
+            const contextName = this.createContextName(channelContext.name);
+            return this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+                callback(context.data, context, delta, extraData?.updaterId);
+            });
+        })
+            .then((un) => un?.())
+            .catch(err => this.logger.trace(err));
+    };
+    async getMy(options) {
+        if (!this.storage.channels.length) {
+            return;
+        }
+        if (options) {
+            runDecoderWithIOError(fdc3OptionsDecoder, options);
+        }
+        return this.get(this.storage.channels[this.storage.channels.length - 1], options);
+    }
+    async getWindowsOnChannel(channel) {
+        const channelNames = this.getAllChannelNames();
+        runDecoderWithIOError(channelNameDecoder(channelNames), channel);
+        const { windowIds } = await this.bridge.send("channels", operations$5.getWindowIdsOnChannel, { channel }, undefined, { includeOperationCheck: true });
+        const result = windowIds.reduce((windows, windowId) => {
+            const window = this.windowsController.findById(windowId);
+            return window ? [...windows, window] : windows;
+        }, []);
+        return result;
+    }
+    async getWindowsWithChannels(filter) {
+        const operationData = filter !== undefined
+            ? { filter: runDecoderWithIOError(windowWithChannelFilterDecoder, filter) }
+            : {};
+        const { windowIdsWithChannels } = await this.bridge.send("channels", operations$5.getWindowIdsWithChannels, operationData, undefined, { includeOperationCheck: true });
+        const result = windowIdsWithChannels.reduce((windowsWithChannels, { application, channel, windowId }) => {
+            const window = this.windowsController.findById(windowId);
+            return window ? [...windowsWithChannels, { application, channel, window }] : windowsWithChannels;
+        }, []);
+        return result;
+    }
+    async clearChannelData(name) {
+        const paths = [
+            { path: "data", value: {} },
+            { path: "latest_fdc3_type", value: null },
+        ];
+        await this.handleSetPaths("clearChannelData", paths, name);
+    }
+    async restrict(config) {
+        runDecoderWithIOError(channelRestrictionsDecoder, config);
+        const channelNames = this.getAllChannelNames();
+        runDecoderWithIOError(channelNameDecoder(channelNames), config.name);
+        const configData = {
+            config: {
+                ...config,
+                windowId: config.windowId ?? this.myWindowId
+            }
+        };
+        await this.bridge.send("channels", operations$5.restrict, configData, undefined, { includeOperationCheck: true });
+    }
+    async handleRestrict({ config }) {
+        const currentChannel = await this.getMy();
+        if (!currentChannel) {
+            return this.updateRestriction(config);
+        }
+        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
+        this.updateRestriction(config);
+        const isForCurrentChannel = config.name === currentChannel.name;
+        if (!isForCurrentChannel || prevReadAllowed || !config.read) {
+            return;
+        }
+        this.replaySubscribeCallback(config.name);
+    }
+    updateRestriction(config) {
+        const exists = this.storage.restrictions.some((r) => r.name === config.name);
+        this.storage.restrictions = exists
+            ? this.storage.restrictions.map((restriction) => restriction.name === config.name ? config : restriction)
+            : this.storage.restrictions.concat(config);
+    }
+    updateAllRestrictions(config) {
+        const allChannelNames = this.getAllChannelNames();
+        this.storage.restrictions = allChannelNames.map((name) => ({ name, ...config }));
+    }
+    async getRestrictions(windowId) {
+        runDecoderWithIOError(optionalNonEmptyStringDecoder, windowId);
+        const forAnotherClient = windowId && windowId !== this.interop.instance.instance;
+        if (windowId && forAnotherClient) {
+            return this.bridge.send("channels", operations$5.getRestrictions, { windowId }, undefined, { includeOperationCheck: true });
+        }
+        return { channels: this.storage.restrictions };
+    }
+    async restrictAll(restrictions) {
+        runDecoderWithIOError(restrictionsConfigDecoder, restrictions);
+        const configData = {
+            restrictions: {
+                ...restrictions,
+                windowId: restrictions.windowId ?? this.myWindowId
+            }
+        };
+        await this.bridge.send("channels", operations$5.restrictAll, configData, undefined, { includeOperationCheck: true });
+    }
+    async handleRestrictAll({ restrictions }) {
+        const currentChannel = await this.getMy();
+        if (!currentChannel) {
+            this.updateAllRestrictions(restrictions);
+            return;
+        }
+        const prevReadAllowed = this.isAllowedByRestrictions(currentChannel.name, "read");
+        this.updateAllRestrictions(restrictions);
+        if (prevReadAllowed || !restrictions.read) {
+            return;
+        }
+        this.replaySubscribeCallback(currentChannel.name);
+    }
+    async setPath(path, name) {
+        const validatedPath = runDecoderWithIOError(pathValueDecoder, path);
+        const paths = [{ path: `data.${validatedPath.path}`, value: validatedPath.value }];
+        await this.handleSetPaths("setPath", paths, name);
+    }
+    async setPaths(paths, name) {
+        const validatedPaths = runDecoderWithIOError(pathsValueDecoder, paths);
+        const dataPaths = validatedPaths.map(({ path, value }) => ({ path: `data.${path}`, value }));
+        await this.handleSetPaths("setPaths", dataPaths, name);
+    }
+    async handleSetPaths(operation, paths, name) {
+        const channelNamesToUpdate = name ? [name] : this.storage.channels;
+        if (!channelNamesToUpdate.length) {
+            return ioError.raiseError(`Cannot complete ${operation} operation, because channel is not specified. Either join one or pass a channel name as second argument!`);
+        }
+        this.validateChannelNames(channelNamesToUpdate);
+        const { allowed, forbidden } = this.groupChannelsByPermission("write", channelNamesToUpdate);
+        if (channelNamesToUpdate.length === forbidden.length) {
+            return ioError.raiseError(`Cannot complete ${operation} operation due to write restrictions to the following channels: ${channelNamesToUpdate.join(", ")}`);
+        }
+        if (forbidden.length) {
+            this.logger.warn(`Cannot set paths on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} due to write restrictions`);
+        }
+        await Promise.all(allowed.map((channelName) => {
+            const contextName = this.createContextName(channelName);
+            return this.contexts.setPaths(contextName, paths);
+        }));
+    }
+    validateChannelNames(names) {
+        const allChannelNames = this.getAllChannelNames();
+        names.forEach((name) => runDecoderWithIOError(channelNameDecoder(allChannelNames), name));
+    }
+    groupChannelsByPermission(action, channelNames) {
+        return channelNames.reduce((byFar, channelName) => {
+            const isAllowed = this.isAllowedByRestrictions(channelName, action);
+            if (isAllowed) {
+                byFar.allowed.push(channelName);
+            }
+            else {
+                byFar.forbidden.push(channelName);
+            }
+            return byFar;
+        }, { allowed: [], forbidden: [] });
+    }
+    isAllowedByRestrictions(channelName, action) {
+        const restriction = this.storage.restrictions.find((restriction) => restriction.name === channelName);
+        return restriction ? restriction[action] : true;
+    }
+    replaySubscribeCallback(channelName) {
+        const contextName = this.createContextName(channelName);
+        this.contexts.subscribe(contextName, (context, delta, _, __, extraData) => {
+            this.registry.execute(SUBS_KEY, context.data, context, delta, extraData?.updaterId);
+        }).then((unsub) => {
+            if (unsub && typeof unsub === "function") {
+                unsub();
+            }
+        }).catch(err => this.logger.error(err));
+    }
+    async publishWithOptions(data, options) {
+        if (options.name) {
+            const channelNames = this.getAllChannelNames();
+            runDecoderWithIOError(channelNameDecoder(channelNames), options.name);
+        }
+        const publishOnMultipleChannels = options.name ? false : this.storage.channels.length > 1;
+        if (publishOnMultipleChannels) {
+            return this.publishOnMultipleChannels(data, options);
+        }
+        const channelName = options.name || this.storage.channels[0];
+        if (!channelName) {
+            return ioError.raiseError("Cannot publish to channel, because not joined to a channel!");
+        }
+        const canPublish = this.isAllowedByRestrictions(channelName, "write");
+        if (!canPublish) {
+            return ioError.raiseError(`Cannot publish on channel ${channelName} due to restrictions`);
+        }
+        const fdc3Options = this.getFdc3OptionsFromPublishOptions(options);
+        if (!fdc3Options?.enabled) {
+            return this.updateData(channelName, data);
+        }
+        return this.publishFdc3Data(channelName, data, fdc3Options);
+    }
+    async publishOnMultipleChannels(data, options) {
+        const { allowed, forbidden } = this.groupChannelsByPermission("write", this.storage.channels);
+        if (this.storage.channels.length === forbidden.length) {
+            return ioError.raiseError(`Cannot complete 'publish' operation due to write restrictions to all joined channels: ${this.storage.channels.join(", ")}`);
+        }
+        if (forbidden.length) {
+            this.logger.warn(`Data on channel${forbidden.length > 1 ? "s" : ""}: ${forbidden.join(", ")} won't be published due to write restrictions`);
+        }
+        const fdc3Options = this.getFdc3OptionsFromPublishOptions(options);
+        if (fdc3Options?.enabled) {
+            await Promise.all(allowed.map((channelName) => this.publishFdc3Data(channelName, data, fdc3Options)));
+            return;
+        }
+        await Promise.all(allowed.map((channelName) => this.updateData(channelName, data)));
+    }
+    getFdc3OptionsFromPublishOptions(options) {
+        if (!options?.fdc3) {
+            return { enabled: false };
+        }
+        if (typeof options.fdc3 === "boolean") {
+            return { enabled: options.fdc3 };
+        }
+        return options.fdc3;
+    }
+    async publishFdc3Data(channelName, data, fdc3Options) {
+        runDecoderWithIOError(fdc3ContextDecoder, data);
+        const { type, ...rest } = data;
+        const { contextKey, metadataKey } = this.getFdc3StorageKeys(type);
+        const fdc3DataToPublish = {
+            [contextKey]: rest,
+            [metadataKey]: fdc3Options.metadata ?? null
+        };
+        return this.updateData(channelName, fdc3DataToPublish);
+    }
+    getWrappedSubscribeCallback(callback) {
+        const wrappedCallback = (channelData, context, delta, updaterId) => {
+            const canRead = this.isAllowedByRestrictions(context.name, "read");
+            if (!canRead) {
+                return;
+            }
+            const { data, latest_fdc3_type } = context;
+            const publicChannelData = this.removeFdc3StorageData(channelData);
+            if (!latest_fdc3_type) {
+                callback(publicChannelData, context, updaterId);
+                return;
+            }
+            const { contextKey, metadataKey } = this.getFdc3StorageKeysFromEncodedType(latest_fdc3_type);
+            if (!this.shouldIncludeFdc3Data(delta, contextKey, metadataKey)) {
+                callback(publicChannelData, context, updaterId);
+                return;
+            }
+            const parsedType = this.decodeFdc3Type(latest_fdc3_type);
+            const fdc3Data = { type: parsedType, ...data[contextKey] };
+            const fdc3Metadata = data[metadataKey];
+            const callbackData = { ...publicChannelData, ...this.toPublicFdc3Data(fdc3Data, fdc3Metadata) };
+            callback(callbackData, context, updaterId);
+        };
+        return wrappedCallback;
+    }
+    encodeFdc3Type(type) {
+        return type.split(".").join("&");
+    }
+    decodeFdc3Type(encodedType) {
+        return encodedType.split("&").join(".");
+    }
+    getFdc3StorageKeys(type) {
+        return this.getFdc3StorageKeysFromEncodedType(this.encodeFdc3Type(type));
+    }
+    getFdc3StorageKeysFromEncodedType(encodedType) {
+        return {
+            contextKey: `${FDC3_CONTEXT_PREFIX}${encodedType}`,
+            metadataKey: `${FDC3_METADATA_PREFIX}${encodedType}`
+        };
+    }
+    toPublicFdc3Data(fdc3, fdc3Metadata) {
+        return fdc3Metadata === undefined ? { fdc3 } : { fdc3, fdc3Metadata };
+    }
+    shouldIncludeFdc3Data(delta, contextKey, metadataKey) {
+        return !delta?.data || contextKey in delta.data || metadataKey in delta.data;
+    }
+    removeFdc3StorageData(data) {
+        return Object.keys(data).reduce((publicData, key) => {
+            if (!key.startsWith(FDC3_CONTEXT_PREFIX) && !key.startsWith(FDC3_METADATA_PREFIX)) {
+                publicData[key] = data[key];
+            }
+            return publicData;
+        }, {});
+    }
+    getWrappedSubscribeCallbackWithFdc3Type(callback, fdc3Type) {
+        const didReplay = { replayed: false };
+        const wrappedCallback = (_, context, delta, updaterId) => {
+            const canRead = this.isAllowedByRestrictions(context.name, "read");
+            if (!canRead) {
+                return;
+            }
+            const { data, latest_fdc3_type } = context;
+            const { contextKey, metadataKey } = this.getFdc3StorageKeys(fdc3Type);
+            if (!data[contextKey] || !this.shouldIncludeFdc3Data(delta, contextKey, metadataKey)) {
+                return;
+            }
+            if (didReplay.replayed) {
+                if (!latest_fdc3_type) {
+                    return;
+                }
+                return this.parseDataAndInvokeSubscribeCallback({ latestFdc3TypeEncoded: latest_fdc3_type, searchedType: fdc3Type, callback, context, updaterId });
+            }
+            const fdc3Data = { type: fdc3Type, ...data[contextKey] };
+            const fdc3Metadata = data[metadataKey];
+            const callbackData = this.toPublicFdc3Data(fdc3Data, fdc3Metadata);
+            callback(callbackData, context, updaterId);
+            didReplay.replayed = true;
+        };
+        return wrappedCallback;
+    }
+    parseDataAndInvokeSubscribeCallback(args) {
+        const { latestFdc3TypeEncoded, searchedType, callback, context, updaterId } = args;
+        const latestPublishedType = this.decodeFdc3Type(latestFdc3TypeEncoded);
+        if (latestPublishedType !== searchedType) {
+            return;
+        }
+        const { contextKey, metadataKey } = this.getFdc3StorageKeysFromEncodedType(latestFdc3TypeEncoded);
+        const fdc3Data = { type: searchedType, ...context.data[contextKey] };
+        const fdc3Metadata = context.data[metadataKey];
+        const callbackData = this.toPublicFdc3Data(fdc3Data, fdc3Metadata);
+        callback(callbackData, context, updaterId);
+    }
+    async requestChannelSelector(myInstance) {
+        if (!myInstance) {
+            return;
+        }
+        const myApplicationData = myInstance.application;
+        const myAppDetails = myApplicationData.userProperties?.details;
+        if (!myAppDetails) {
+            return;
+        }
+        if (!myAppDetails?.channelSelector?.enabled) {
+            return;
+        }
+        const windowId = myInstance.id;
+        const requestChannelSelectorConfig = { windowId, channelsNames: this.storage.channels };
+        await this.bridge.send("channels", operations$5.requestChannelSelector, requestChannelSelectorConfig, undefined, { includeOperationCheck: true });
+    }
+    async getPlatformChannelsMode() {
+        try {
+            const result = await this.bridge.send("channels", operations$5.getMode, {}, undefined, { includeOperationCheck: true });
+            return result.mode;
+        }
+        catch (error) {
+            this.logger.warn(error?.message || JSON.stringify(error));
+            return DEFAULT_MODE;
+        }
+    }
+    onChannelsChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to channels changed, because the provided callback is not a function");
+        }
+        const currentChannels = this.myChannels();
+        const replayArguments = currentChannels.length ? [[currentChannels]] : undefined;
+        return this.registry.add(CHANNELS_CHANGED, callback, replayArguments);
+    }
+    async initialize() {
+        const isAppHelloSupported = await this.checkIfAppHelloSupported();
+        if (!isAppHelloSupported) {
+            return this.handleAppHelloFailure("Platform does not support 'appHello' operation and channel state persistence by windowId. Setting 'sessionStorage' mode for tracking channels and restrictions");
+        }
+        const { success, error } = await this.sendAppHello();
+        if (error || !success) {
+            return this.handleAppHelloFailure(error);
+        }
+        this.logger.trace(`Received 'appHelloSuccess' message. Setting initial channels state to: ${JSON.stringify(success)}`);
+        const { mode, channels, restrictions } = success;
+        this.storage.mode = "inMemory";
+        this._mode = mode;
+        this.storage.channels = channels;
+        this.storage.restrictions = restrictions;
+    }
+    async handleAppHelloFailure(errorMsg) {
+        this.logger.trace(errorMsg);
+        this.storage.mode = "sessionStorage";
+        this._mode = await this.getPlatformChannelsMode();
+    }
+    async sendAppHello() {
+        try {
+            const result = await this.bridge.send("channels", operations$5.appHello, { windowId: this.myWindowId }, undefined, { includeOperationCheck: true });
+            return { success: result, error: undefined };
+        }
+        catch (error) {
+            return { error: `Failed to get initial state from platform. Error: ${extractErrorMsg(error)}`, success: undefined };
+        }
+    }
+    async checkIfAppHelloSupported() {
+        try {
+            const { isSupported } = await this.bridge.send("channels", operations$5.operationCheck, { operation: operations$5.appHello.name }, undefined, { includeOperationCheck: true });
+            return isSupported;
+        }
+        catch (error) {
+            this.logger.trace(`Platform does not support 'appHello' operation and channel state persistence by windowId. Error: ${extractErrorMsg(error)}`);
+            return false;
+        }
+    }
+}
+
+const operations$4 = {
+    getEnvironment: { name: "getEnvironment", resultDecoder: anyDecoder },
+    getBase: { name: "getBase", resultDecoder: anyDecoder },
+    platformShutdown: { name: "platformShutdown" },
+    isFdc3DataWrappingSupported: { name: "isFdc3DataWrappingSupported" },
+    isChannelsMetadataSupported: { name: "isChannelsMetadataSupported" },
+    clientError: { name: "clientError", dataDecoder: clientErrorDataDecoder },
+    systemHello: { name: "systemHello", resultDecoder: systemHelloSuccessDecoder },
+    operationCheck: { name: "operationCheck" }
+};
+
+class SystemController {
+    supportedOperationsNames = [];
+    bridge;
+    ioc;
+    logger;
+    errorPort = errorChannel.port2;
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("system.controller.web");
+        this.logger.trace("starting the web system controller");
+        this.bridge = ioc.bridge;
+        this.ioc = ioc;
+        this.addOperationsExecutors();
+        let isClientErrorOperationSupported = false;
+        try {
+            const systemHelloSuccess = await this.bridge.send("system", operations$4.systemHello, undefined, undefined, { includeOperationCheck: true });
+            isClientErrorOperationSupported = systemHelloSuccess.isClientErrorOperationSupported;
+        }
+        catch {
+            this.logger.warn("The platform of this client is outdated and does not support some system operations.");
+        }
+        this.errorPort.onmessage = async (event) => {
+            if (!isClientErrorOperationSupported) {
+                return;
+            }
+            index$1.Traces.currentTracingState = null;
+            await this.bridge.send("system", operations$4.clientError, { message: event.data }, undefined, { includeOperationCheck: true });
+        };
+        await this.setEnvironment();
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(systemOperationTypesDecoder, args.operation);
+        const operation = operations$4[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    async processPlatformShutdown() {
+        Object.values(this.ioc.controllers).forEach((controller) => controller.handlePlatformShutdown ? controller.handlePlatformShutdown() : null);
+        this.ioc.preferredConnectionController.stop();
+        this.ioc.eventsDispatcher.stop();
+        await this.bridge.stop();
+    }
+    async setEnvironment() {
+        const environment = await this.bridge.send("system", operations$4.getEnvironment, undefined);
+        const base = await this.bridge.send("system", operations$4.getBase, undefined);
+        const globalNamespace = window.glue42core || window.iobrowser;
+        const globalNamespaceName = window.glue42core ? "glue42core" : "iobrowser";
+        const globalObj = Object.assign({}, globalNamespace, base, { environment });
+        window[globalNamespaceName] = globalObj;
+    }
+    addOperationsExecutors() {
+        operations$4.platformShutdown.execute = this.processPlatformShutdown.bind(this);
+        operations$4.isFdc3DataWrappingSupported.execute = this.handleIsFdc3DataWrappingSupported.bind(this);
+        operations$4.isChannelsMetadataSupported.execute = this.handleIsChannelsMetadataSupported.bind(this);
+        operations$4.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$4);
+    }
+    async handleIsFdc3DataWrappingSupported() {
+        return { isSupported: true };
+    }
+    async handleIsChannelsMetadataSupported() {
+        return { isSupported: true };
+    }
+}
+
+class Notification {
+    onclick = () => { };
+    onshow = () => { };
+    id;
+    title;
+    badge;
+    body;
+    data;
+    dir;
+    icon;
+    image;
+    lang;
+    renotify;
+    requireInteraction;
+    silent;
+    tag;
+    timestamp;
+    vibrate;
+    clickInterop;
+    actions;
+    focusPlatformOnDefaultClick;
+    severity;
+    showToast;
+    showInPanel;
+    state;
+    constructor(config, id) {
+        this.id = id;
+        this.badge = config.badge;
+        this.body = config.body;
+        this.data = config.data;
+        this.dir = config.dir;
+        this.icon = config.icon;
+        this.image = config.image;
+        this.lang = config.lang;
+        this.renotify = config.renotify;
+        this.requireInteraction = config.requireInteraction;
+        this.silent = config.silent;
+        this.tag = config.tag;
+        this.timestamp = config.timestamp;
+        this.vibrate = config.vibrate;
+        this.title = config.title;
+        this.clickInterop = config.clickInterop;
+        this.actions = config.actions;
+        this.focusPlatformOnDefaultClick = config.focusPlatformOnDefaultClick;
+        this.severity = config.severity;
+        this.showToast = config.showToast;
+        this.showInPanel = config.showInPanel;
+        this.state = config.state;
+    }
+}
+
+oneOf$1(constant$2("clientHello"));
+const extensionConfigDecoder = object$2({
+    widget: object$2({
+        inject: boolean$2()
+    })
+});
+
+const operations$3 = {
+    clientHello: { name: "clientHello", resultDecoder: extensionConfigDecoder }
+};
+
+class ExtController {
+    windowId;
+    logger;
+    bridge;
+    eventsDispatcher;
+    channelsController;
+    config;
+    channels = [];
+    unsubFuncs = [];
+    contentCommands = {
+        widgetVisualizationPermission: { name: "widgetVisualizationPermission", handle: this.handleWidgetVisualizationPermission.bind(this) },
+        changeChannel: { name: "changeChannel", handle: this.handleChangeChannel.bind(this) }
+    };
+    handlePlatformShutdown() {
+        this.unsubFuncs.forEach((unsub) => unsub());
+        this.channels = [];
+        this.unsubFuncs = [];
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("extension.controller.web");
+        this.windowId = ioc.publicWindowId;
+        this.logger.trace("starting the extension web controller");
+        this.bridge = ioc.bridge;
+        this.channelsController = ioc.channelsController;
+        this.eventsDispatcher = ioc.eventsDispatcher;
+        try {
+            await this.registerWithPlatform();
+        }
+        catch (error) {
+            return;
+        }
+        this.channels = await this.channelsController.list();
+        const unsubDispatcher = this.eventsDispatcher.onContentMessage(this.handleContentMessage.bind(this));
+        const unsubChannels = this.channelsController.onChanged((channel) => {
+            this.eventsDispatcher.sendContentMessage({ command: "channelChange", newChannel: channel });
+        });
+        this.unsubFuncs.push(unsubDispatcher);
+        this.unsubFuncs.push(unsubChannels);
+    }
+    async handleBridgeMessage(_) {
+    }
+    handleContentMessage(message) {
+        if (!message || typeof message.command !== "string") {
+            return;
+        }
+        const foundHandler = this.contentCommands[message.command];
+        if (!foundHandler) {
+            return;
+        }
+        foundHandler.handle(message);
+    }
+    async registerWithPlatform() {
+        this.logger.trace("registering with the platform");
+        this.config = await this.bridge.send("extension", operations$3.clientHello, { windowId: this.windowId });
+        this.logger.trace("the platform responded to the hello message with a valid extension config");
+    }
+    async handleWidgetVisualizationPermission() {
+        if (!this.config?.widget.inject) {
+            return this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: false });
+        }
+        const currentChannel = this.channels.find((channel) => channel.name === this.channelsController.my());
+        this.eventsDispatcher.sendContentMessage({ command: "permissionResponse", allowed: true, channels: this.channels, currentChannel });
+    }
+    async handleChangeChannel(message) {
+        if (message.name === "no-channel") {
+            await this.channelsController.leave();
+            return;
+        }
+        await this.channelsController.join(message.name);
+    }
+}
+
+class EventsDispatcher {
+    config;
+    glue;
+    registry = CallbackRegistryFactory$1();
+    glue42EventName = "Glue42";
+    _handleMessage;
+    _resolveWidgetReadyPromise;
+    _resolveModalsUIFactoryReadyPromise;
+    _resolveIntentResolverUIFactoryReadyPromise;
+    constructor(config) {
+        this.config = config;
+    }
+    events = {
+        notifyStarted: { name: "notifyStarted", handle: this.handleNotifyStarted.bind(this) },
+        contentInc: { name: "contentInc", handle: this.handleContentInc.bind(this) },
+        requestGlue: { name: "requestGlue", handle: this.handleRequestGlue.bind(this) },
+        widgetFactoryReady: { name: "widgetFactoryReady", handle: this.handleWidgetReady.bind(this) },
+        modalsUIFactoryReady: { name: "modalsUIFactoryReady", handle: this.handleModalsUIFactoryReady.bind(this) },
+        intentResolverUIFactoryReady: { name: "intentResolverUIFactoryReady", handle: this.handleIntentResolverUIFactoryReady.bind(this) },
+    };
+    stop() {
+        window.removeEventListener(this.glue42EventName, this._handleMessage);
+    }
+    start(glue) {
+        this.glue = glue;
+        this.wireCustomEventListener();
+        this.announceStarted();
+    }
+    sendContentMessage(message) {
+        this.send("contentOut", "glue42core", message);
+    }
+    onContentMessage(callback) {
+        return this.registry.add("content-inc", callback);
+    }
+    async widgetReady() {
+        const widgetReadyPromise = new Promise((resolve) => {
+            this._resolveWidgetReadyPromise = resolve;
+        });
+        this.requestWidgetReady();
+        return widgetReadyPromise;
+    }
+    async modalsUIFactoryReady() {
+        const modalsUIFactoryReadyPromise = new Promise((resolve) => {
+            this._resolveModalsUIFactoryReadyPromise = resolve;
+        });
+        this.requestModalsUIFactoryReady();
+        return modalsUIFactoryReadyPromise;
+    }
+    async intentResolverUIFactoryReady() {
+        const intentResolverUIFactoryReadyPromise = new Promise((resolve) => {
+            this._resolveIntentResolverUIFactoryReadyPromise = resolve;
+        });
+        this.requestIntentResolverUIFactoryReady();
+        return intentResolverUIFactoryReadyPromise;
+    }
+    wireCustomEventListener() {
+        this._handleMessage = this.handleMessage.bind(this);
+        window.addEventListener(this.glue42EventName, this._handleMessage);
+    }
+    handleMessage(event) {
+        const data = event.detail;
+        const namespace = data?.glue42 ?? data?.glue42core;
+        if (!namespace) {
+            return;
+        }
+        const glue42Event = namespace.event;
+        const foundHandler = this.events[glue42Event];
+        if (!foundHandler) {
+            return;
+        }
+        foundHandler.handle(namespace.message);
+    }
+    announceStarted() {
+        this.send("start", "glue42");
+    }
+    handleRequestGlue() {
+        if (!this.config.exposeAPI) {
+            this.send("requestGlueResponse", "glue42", { error: "Will not give access to the underlying Glue API, because it was explicitly denied upon initialization." });
+            return;
+        }
+        this.send("requestGlueResponse", "glue42", { glue: this.glue });
+    }
+    handleNotifyStarted() {
+        this.announceStarted();
+    }
+    handleContentInc(message) {
+        this.registry.execute("content-inc", message);
+    }
+    requestWidgetReady() {
+        this.send(REQUEST_WIDGET_READY, "glue42");
+    }
+    handleWidgetReady() {
+        this._resolveWidgetReadyPromise?.();
+    }
+    requestModalsUIFactoryReady() {
+        this.send(REQUEST_MODALS_UI_FACTORY_READY, "glue42");
+    }
+    handleModalsUIFactoryReady() {
+        this._resolveModalsUIFactoryReadyPromise?.();
+    }
+    requestIntentResolverUIFactoryReady() {
+        this.send(REQUEST_INTENT_RESOLVER_UI_FACTORY_READY, "glue42");
+    }
+    handleIntentResolverUIFactoryReady() {
+        this._resolveIntentResolverUIFactoryReadyPromise?.();
+    }
+    send(eventName, namespace, message) {
+        const payload = {};
+        payload[namespace] = { event: eventName, message };
+        const event = new CustomEvent(this.glue42EventName, { detail: payload });
+        window.dispatchEvent(event);
+    }
+}
+
+class PreferredConnectionController {
+    coreGlue;
+    transactionTimeout = 15000;
+    transactionLocks = {};
+    webPlatformTransport;
+    webPlatformMessagesUnsubscribe;
+    reconnectCounter = 0;
+    logger;
+    constructor(coreGlue) {
+        this.coreGlue = coreGlue;
+        this.logger = this.coreGlue.logger.subLogger("web.preferred.connection.controller");
+    }
+    stop() {
+        if (!this.webPlatformMessagesUnsubscribe) {
+            return;
+        }
+        this.webPlatformMessagesUnsubscribe();
+    }
+    async start(coreConfig) {
+        if (coreConfig.isPlatformInternal) {
+            this.logger.trace("This is an internal client to the platform, skipping all client preferred communication logic.");
+            return;
+        }
+        const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
+        if (!isConnectedToPlatform) {
+            return ioError.raiseError("Cannot initiate the Glue Web Bridge, because the initial connection was not handled by a Web Platform transport.");
+        }
+        if (!this.coreGlue.connection.transport.isPreferredActivated) {
+            this.logger.trace("The platform of this client was configured without a preferred connection, skipping the rest of the initialization.");
+            return;
+        }
+        this.webPlatformTransport = this.coreGlue.connection.transport;
+        this.webPlatformMessagesUnsubscribe = this.webPlatformTransport.onMessage(this.handleWebPlatformMessage.bind(this));
+        const transportState = await this.getCurrentPlatformTransportState();
+        await this.checkSwitchTransport(transportState);
+    }
+    handleWebPlatformMessage(msg) {
+        if (typeof msg === "string") {
+            return;
+        }
+        const isConnectedToPlatform = this.coreGlue.connection.transport.name() === webPlatformTransportName;
+        const type = msg.type;
+        const args = msg.args;
+        const transactionId = msg.transactionId;
+        if (type === Glue42CoreMessageTypes.transportSwitchRequest.name) {
+            return this.handleTransportSwitchRequest(args, transactionId);
+        }
+        if (type === Glue42CoreMessageTypes.platformUnload.name && !isConnectedToPlatform) {
+            return this.handlePlatformUnload();
+        }
+        if (type === Glue42CoreMessageTypes.getCurrentTransportResponse.name) {
+            return this.handleGetCurrentTransportResponse(args, transactionId);
+        }
+        if (type === Glue42CoreMessageTypes.checkPreferredLogic.name) {
+            return this.handleCheckPreferredLogic(transactionId);
+        }
+        if (type === Glue42CoreMessageTypes.checkPreferredConnection.name) {
+            return this.handleCheckPreferredConnection(args, transactionId);
+        }
+    }
+    async reEstablishPlatformPort() {
+        try {
+            await this.webPlatformTransport.connect();
+        }
+        catch (error) {
+            this.logger.trace(`Error when re-establishing port connection to the platform: ${JSON.stringify(error)}`);
+            --this.reconnectCounter;
+            if (this.reconnectCounter > 0) {
+                return this.reEstablishPlatformPort();
+            }
+            this.logger.warn("This client lost connection to the platform while connected to a preferred GW and was not able to re-connect to the platform.");
+        }
+        this.logger.trace("The connection to the platform was re-established, closing the connection to the web gateway.");
+        this.reconnectCounter = 0;
+        this.webPlatformTransport.close();
+        const transportState = await this.getCurrentPlatformTransportState();
+        await this.checkSwitchTransport(transportState);
+    }
+    async checkSwitchTransport(config) {
+        const myCurrentTransportName = this.coreGlue.connection.transport.name();
+        if (myCurrentTransportName === config.transportName) {
+            this.logger.trace("A check switch was requested, but the platform transport and my transport are identical, no switch is necessary");
+            return;
+        }
+        this.logger.trace(`A check switch was requested and a transport switch is necessary, because this client is now on ${myCurrentTransportName}, but it should reconnect to ${JSON.stringify(config)}`);
+        const result = await this.coreGlue.connection.switchTransport(config);
+        this.setConnected();
+        this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
+    }
+    async getCurrentPlatformTransportState() {
+        this.logger.trace("Requesting the current transport state of the platform.");
+        const transaction = this.setTransaction(Glue42CoreMessageTypes.getCurrentTransport.name);
+        this.sendPlatformMessage(Glue42CoreMessageTypes.getCurrentTransport.name, transaction.id);
+        const transportState = await transaction.lock;
+        this.logger.trace(`The platform responded with transport state: ${JSON.stringify(transportState)}`);
+        return transportState;
+    }
+    setTransaction(operation) {
+        const transaction = {};
+        const transactionId = nanoid(10);
+        const transactionLock = new Promise((resolve, reject) => {
+            let transactionLive = true;
+            transaction.lift = (args) => {
+                transactionLive = false;
+                delete this.transactionLocks[transactionId];
+                resolve(args);
+            };
+            transaction.fail = (reason) => {
+                transactionLive = false;
+                delete this.transactionLocks[transactionId];
+                reject(reason);
+            };
+            setTimeout(() => {
+                if (!transactionLive) {
+                    return;
+                }
+                transactionLive = false;
+                this.logger.warn(`Transaction for operation: ${operation} timed out.`);
+                delete this.transactionLocks[transactionId];
+                reject(`Transaction for operation: ${operation} timed out.`);
+            }, this.transactionTimeout);
+        });
+        transaction.lock = transactionLock;
+        transaction.id = transactionId;
+        this.transactionLocks[transactionId] = transaction;
+        return transaction;
+    }
+    sendPlatformMessage(type, transactionId, args) {
+        this.logger.trace(`Sending a platform message of type: ${type}, id: ${transactionId} and args: ${JSON.stringify(args)}`);
+        this.webPlatformTransport.sendObject({
+            glue42core: { type, args, transactionId }
+        });
+    }
+    handleTransportSwitchRequest(args, transactionId) {
+        this.logger.trace(`Received a transport switch request with id: ${transactionId} and data: ${JSON.stringify(args)}`);
+        this.coreGlue.connection.switchTransport(args.switchSettings)
+            .then((result) => {
+            this.logger.trace(`The transport switch was completed with result: ${JSON.stringify(result)}`);
+            this.setConnected();
+            this.sendPlatformMessage(Glue42CoreMessageTypes.transportSwitchResponse.name, transactionId, { success: result.success });
+        })
+            .catch((error) => {
+            this.logger.error(error);
+            this.sendPlatformMessage(Glue42CoreMessageTypes.transportSwitchResponse.name, transactionId, { success: false });
+        });
+    }
+    handlePlatformUnload() {
+        this.reconnectCounter = 5;
+        this.logger.trace("The platform was unloaded while I am connected to a preferred connection, re-establishing the port connection.");
+        this.reEstablishPlatformPort();
+    }
+    handleGetCurrentTransportResponse(args, transactionId) {
+        this.logger.trace(`Got a current transport response from the platform with id: ${transactionId} and data: ${JSON.stringify(args)}`);
+        const transportState = args.transportState;
+        const transaction = this.transactionLocks[transactionId];
+        transaction?.lift(transportState);
+    }
+    handleCheckPreferredLogic(transactionId) {
+        setTimeout(() => this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredLogicResponse.name, transactionId), 0);
+    }
+    handleCheckPreferredConnection(args, transactionId) {
+        const url = args.url;
+        this.logger.trace(`Testing the possible connection to: ${url}`);
+        this.checkPreferredConnection(url)
+            .then((result) => {
+            this.logger.trace(`The connection to ${url} is possible`);
+            this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredConnectionResponse.name, transactionId, result);
+        })
+            .catch((error) => {
+            this.logger.trace(`The connection to ${url} is not possible`);
+            this.sendPlatformMessage(Glue42CoreMessageTypes.checkPreferredConnectionResponse.name, transactionId, { error });
+        });
+    }
+    checkPreferredConnection(url) {
+        return new Promise((resolve) => {
+            const ws = new WebSocket(url);
+            ws.onerror = () => resolve({ live: false });
+            ws.onopen = () => {
+                ws.close();
+                resolve({ live: true });
+            };
+        });
+    }
+    setConnected() {
+        this.webPlatformTransport.manualSetReadyState();
+    }
+}
+
+const operations$2 = {
+    getCurrent: { name: "getCurrent", resultDecoder: simpleThemeResponseDecoder },
+    list: { name: "list", resultDecoder: allThemesResponseDecoder },
+    select: { name: "select", dataDecoder: selectThemeConfigDecoder }
+};
+
+class ThemesController {
+    logger;
+    bridge;
+    registry = CallbackRegistryFactory$1();
+    themesSubscription;
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("themes.controller.web");
+        this.logger.trace("starting the web themes controller");
+        this.bridge = ioc.bridge;
+        await this.setupSubscription();
+        this.logger.trace("themes subscription is ready");
+        const api = this.toApi();
+        coreGlue.themes = api;
+        this.logger.trace("themes are ready");
+    }
+    handlePlatformShutdown() {
+        this.registry.clear();
+        this.themesSubscription?.close();
+        delete this.themesSubscription;
+    }
+    async handleBridgeMessage() {
+    }
+    toApi() {
+        const api = {
+            getCurrent: this.getCurrent.bind(this),
+            list: this.list.bind(this),
+            select: this.select.bind(this),
+            onChanged: this.onChanged.bind(this)
+        };
+        return Object.freeze(api);
+    }
+    async getCurrent() {
+        const bridgeResponse = await this.bridge.send("themes", operations$2.getCurrent, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.theme;
+    }
+    async list() {
+        const bridgeResponse = await this.bridge.send("themes", operations$2.list, undefined, undefined, { includeOperationCheck: true });
+        return bridgeResponse.themes;
+    }
+    async select(name) {
+        runDecoderWithIOError(nonEmptyStringDecoder$2, name);
+        await this.bridge.send("themes", operations$2.select, { name }, undefined, { includeOperationCheck: true });
+    }
+    onChanged(callback) {
+        if (typeof callback !== "function") {
+            return ioError.raiseError("onChanged requires a callback of type function");
+        }
+        return this.registry.add("on-theme-change", callback);
+    }
+    async setupSubscription() {
+        this.themesSubscription = await this.bridge.createThemesSubscription();
+        this.themesSubscription.onData(this.handleStreamData.bind(this));
+        this.themesSubscription.onClosed(this.handleStreamClosure.bind(this));
+    }
+    handleStreamData(data) {
+        const eventData = data.data;
+        const validation = simpleThemeResponseDecoder.run(eventData);
+        if (!validation.ok) {
+            this.logger.warn(`Received invalid theme data on the theme event stream: ${JSON.stringify(validation.error)}`);
+            return;
+        }
+        const themeChanged = validation.result;
+        this.registry.execute("on-theme-change", themeChanged.theme);
+    }
+    handleStreamClosure() {
+        this.logger.warn("The Themes interop stream was closed, no theme changes notifications will be received");
+        this.registry.clear();
+        delete this.themesSubscription;
+    }
+}
+
+class ChannelsStorage {
+    sessionStorage = window.sessionStorage;
+    _mode = DEFAULT_STORAGE_MODE;
+    inMemoryChannels = [];
+    inMemoryRestrictions = [];
+    _unsubscribeDict = {};
+    clear() {
+        this._mode = DEFAULT_STORAGE_MODE;
+        this.inMemoryChannels = [];
+        this.inMemoryRestrictions = [];
+        this._unsubscribeDict = {};
+        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify([]));
+    }
+    get mode() {
+        return this._mode;
+    }
+    set mode(mode) {
+        this._mode = mode;
+    }
+    get channels() {
+        if (this.mode === "inMemory") {
+            return this.inMemoryChannels.slice();
+        }
+        return this.getSessionStorageData()?.channels ?? [];
+    }
+    set channels(channels) {
+        if (this.mode === "inMemory") {
+            this.inMemoryChannels = channels;
+        }
+        this.setSessionStorageChannels(channels);
+    }
+    get restrictions() {
+        if (this.mode === "inMemory") {
+            return this.inMemoryRestrictions.slice();
+        }
+        return this.getSessionStorageData()?.restrictions ?? [];
+    }
+    set restrictions(restrictions) {
+        if (this.mode === "inMemory") {
+            this.inMemoryRestrictions = restrictions;
+        }
+        this.setSessionStorageRestrictions(restrictions);
+    }
+    getSessionStorageData() {
+        return JSON.parse(this.sessionStorage.getItem(STORAGE_NAMESPACE) || "null");
+    }
+    addUnsubscribe(channel, unsubscribe) {
+        this._unsubscribeDict[channel] = unsubscribe;
+    }
+    invokeUnsubscribes(channel) {
+        if (channel) {
+            this._unsubscribeDict[channel]?.();
+            delete this._unsubscribeDict[channel];
+            return;
+        }
+        Object.values(this._unsubscribeDict).forEach((unsub) => unsub());
+        this._unsubscribeDict = {};
+    }
+    setSessionStorageChannels(channels) {
+        const data = this.getSessionStorageData();
+        if (data?.channels) {
+            data.channels = channels;
+            return this.setSessionStorageData(data);
+        }
+        const newData = { channels, restrictions: data?.restrictions ?? [] };
+        return this.setSessionStorageData(newData);
+    }
+    setSessionStorageRestrictions(restrictions) {
+        const data = this.getSessionStorageData();
+        if (data?.restrictions) {
+            data.restrictions = restrictions;
+            return this.setSessionStorageData(data);
+        }
+        const newData = { channels: data?.channels ?? [], restrictions };
+        return this.setSessionStorageData(newData);
+    }
+    setSessionStorageData(data) {
+        this.sessionStorage.setItem(STORAGE_NAMESPACE, JSON.stringify(data));
+    }
+}
+
+const operations$1 = {
+    clear: { name: "clear", dataDecoder: basePrefsConfigDecoder },
+    clearAll: { name: "clearAll" },
+    get: { name: "get", dataDecoder: basePrefsConfigDecoder, resultDecoder: getPrefsResultDecoder },
+    getAll: { name: "getAll", resultDecoder: getAllPrefsResultDecoder },
+    set: { name: "set", dataDecoder: changePrefsDataDecoder },
+    update: { name: "update", dataDecoder: changePrefsDataDecoder },
+    prefsChanged: { name: "prefsChanged", dataDecoder: getPrefsResultDecoder },
+    prefsHello: { name: "prefsHello", resultDecoder: prefsHelloSuccessDecoder },
+    operationCheck: { name: "operationCheck" },
+    registerSubscriber: { name: "registerSubscriber", dataDecoder: subscriberRegisterConfigDecoder },
+};
+
+class PrefsController {
+    supportedOperationsNames = [];
+    bridge;
+    config;
+    logger;
+    appManagerController;
+    platformAppName;
+    registry = CallbackRegistryFactory$1();
+    validNonExistentApps;
+    signaledSubscription = false;
+    interopId;
+    isAppValidationEnabled;
+    handlePlatformShutdown() {
+        this.registry.clear();
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("prefs.controller.web");
+        this.logger.trace("starting the web prefs controller");
+        this.addOperationsExecutors();
+        this.interopId = coreGlue.interop.instance.instance;
+        this.bridge = ioc.bridge;
+        this.config = ioc.config;
+        this.appManagerController = ioc.appManagerController;
+        try {
+            const prefsHelloSuccess = await this.bridge.send("prefs", operations$1.prefsHello, undefined, undefined, { includeOperationCheck: true });
+            this.platformAppName = prefsHelloSuccess.platform.app;
+            this.validNonExistentApps = prefsHelloSuccess.validNonExistentApps ?? [];
+            this.isAppValidationEnabled = prefsHelloSuccess.isAppValidationEnabled ?? true;
+        }
+        catch (error) {
+            this.logger.warn("The platform of this client is outdated and does not support Prefs API.");
+            return;
+        }
+        this.logger.trace("no need for platform registration, attaching the prefs property to glue and returning");
+        const api = this.toApi();
+        coreGlue.prefs = api;
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(prefsOperationTypesDecoder, args.operation);
+        const operation = operations$1[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    async get(app) {
+        const verifiedApp = app === undefined || app === null ? this.getMyAppName() : runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const { prefs } = await this.bridge.send("prefs", operations$1.get, { app: verifiedApp }, undefined, { includeOperationCheck: true });
+        return this.transformAppPreferences(prefs);
+    }
+    async update(data, options) {
+        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
+        const app = verifiedOptions?.app ?? this.getMyAppName();
+        await this.updateFor(app, data);
+    }
+    addOperationsExecutors() {
+        operations$1.prefsChanged.execute = this.handleOnChanged.bind(this);
+        operations$1.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations$1);
+    }
+    toApi() {
+        const api = {
+            clear: this.clear.bind(this),
+            clearAll: this.clearAll.bind(this),
+            clearFor: this.clearFor.bind(this),
+            get: this.get.bind(this),
+            getAll: this.getAll.bind(this),
+            set: this.set.bind(this),
+            setFor: this.setFor.bind(this),
+            subscribe: this.subscribe.bind(this),
+            subscribeFor: this.subscribeFor.bind(this),
+            update: this.update.bind(this),
+            updateFor: this.updateFor.bind(this),
+        };
+        return api;
+    }
+    async clear() {
+        const app = this.getMyAppName();
+        await this.clearFor(app);
+    }
+    async clearAll() {
+        await this.bridge.send("prefs", operations$1.clearAll, undefined, undefined, { includeOperationCheck: true });
+    }
+    async clearFor(app) {
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        await this.bridge.send("prefs", operations$1.clear, { app: verifiedApp }, undefined, { includeOperationCheck: true });
+    }
+    async getAll() {
+        const result = await this.bridge.send("prefs", operations$1.getAll, undefined, undefined, { includeOperationCheck: true });
+        return { all: result.all.map(this.transformAppPreferences) };
+    }
+    async set(data, options) {
+        const verifiedOptions = runDecoderWithIOError(optional$2(basePrefsConfigDecoder), options);
+        const app = verifiedOptions?.app ?? this.getMyAppName();
+        await this.setFor(app, data);
+    }
+    async setFor(app, data) {
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const verifiedData = runDecoderWithIOError(object$2(), data);
+        await this.bridge.send("prefs", operations$1.set, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
+    }
+    subscribe(callback) {
+        const app = this.getMyAppName();
+        return this.subscribeFor(app, callback);
+    }
+    subscribeFor(app, callback) {
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const applications = this.appManagerController.getApplications();
+        const isValidApp = this.isAppValidationEnabled
+            ? verifiedApp === this.platformAppName || applications.some((application) => application.name === verifiedApp) || this.validNonExistentApps.includes(verifiedApp)
+            : true;
+        if (!isValidApp) {
+            return ioError.raiseError(`The provided app name "${app}" is not valid.`);
+        }
+        if (typeof callback !== "function") {
+            return ioError.raiseError("Cannot subscribe to prefs, because the provided callback is not a function!");
+        }
+        if (!this.signaledSubscription) {
+            this.bridge.send("prefs", operations$1.registerSubscriber, { interopId: this.interopId, appName: verifiedApp }, undefined, { includeOperationCheck: true })
+                .catch((error) => {
+                this.logger.warn("Failed to register subscriber for prefs");
+                this.logger.error(error);
+            });
+            this.signaledSubscription = true;
+        }
+        const subscriptionKey = this.getSubscriptionKey(verifiedApp);
+        this.get(verifiedApp).then(callback);
+        return this.registry.add(subscriptionKey, callback);
+    }
+    async updateFor(app, data) {
+        const verifiedApp = runDecoderWithIOError(nonEmptyStringDecoder$2, app);
+        const verifiedData = runDecoderWithIOError(object$2(), data);
+        await this.bridge.send("prefs", operations$1.update, { app: verifiedApp, data: verifiedData }, undefined, { includeOperationCheck: true });
+    }
+    getMyAppName() {
+        const myAppName = this.config.isPlatformInternal ? this.platformAppName : this.appManagerController.me?.application.name;
+        if (!myAppName) {
+            return ioError.raiseError("App Preferences operations can not be executed for windows that do not have app!");
+        }
+        return myAppName;
+    }
+    getSubscriptionKey(app) {
+        return `prefs-changed-${app}`;
+    }
+    async handleOnChanged({ prefs }) {
+        const subscriptionKey = this.getSubscriptionKey(prefs.app);
+        this.registry.execute(subscriptionKey, this.transformAppPreferences(prefs));
+    }
+    transformAppPreferences({ lastUpdate, ...prefs }) {
+        return lastUpdate ? { ...prefs, lastUpdate: new Date(lastUpdate) } : prefs;
+    }
+}
+
+const operations = {
+    getResources: { name: "getResources", dataDecoder: getResourcesDataDecoder, resultDecoder: getResourcesResultDecoder },
+    operationCheck: { name: "operationCheck", dataDecoder: operationCheckConfigDecoder, resultDecoder: operationCheckResultDecoder },
+    showAlert: { name: "showAlert", dataDecoder: uiAlertRequestMessageDecoder },
+    showDialog: { name: "showDialog", dataDecoder: uiDialogRequestMessageDecoder },
+    closeDialog: { name: "closeDialog", dataDecoder: uiCloseDialogRequestMessageDecoder },
+    alertInteropAction: { name: "alertInteropAction", dataDecoder: alertInteropActionDataDecoder },
+    showResolver: { name: "showResolver", dataDecoder: uiResolverRequestMessageDecoder, resultDecoder: uiResolverResponseMessageDecoder },
+};
+
+const DEFAULT_ALERT_TTL = 5 * 1000;
+const MODALS_SHADOW_HOST_ID = "io-modals-shadow-host";
+const MODALS_ROOT_ELEMENT_ID = "io-modals-root";
+const WIDGET_SHADOW_HOST_ID = "io-widget-shadow-host";
+const WIDGET_ROOT_ELEMENT_ID = "io-widget-root";
+const INTENT_RESOLVER_SHADOW_HOST_ID = "io-intent-resolver-shadow-host";
+const INTENT_RESOLVER_ROOT_ELEMENT_ID = "io-intent-resolver-root";
+const SHADOW_ROOT_ELEMENT_CLASSNAME = "io-body io-variables";
+
+class UIController {
+    ioc;
+    supportedOperationsNames = [];
+    logger;
+    bridge;
+    config;
+    zIndexDictionary = {
+        [WIDGET_SHADOW_HOST_ID]: "100",
+        [MODALS_SHADOW_HOST_ID]: "101",
+        [INTENT_RESOLVER_SHADOW_HOST_ID]: "100"
+    };
+    widgetResources;
+    modalsResources;
+    intentResolverResources;
+    rootElements = [];
+    modalsUiApi;
+    activeDialog;
+    intentResolverUiApi;
+    isIntentResolverOpen = false;
+    constructor(ioc) {
+        this.ioc = ioc;
+    }
+    async start(coreGlue, ioc) {
+        this.logger = coreGlue.logger.subLogger("ui.controller.web");
+        this.logger.trace("starting the ui controller");
+        this.bridge = ioc.bridge;
+        this.config = ioc.config;
+        this.addOperationsExecutors();
+        const resources = await this.getResources();
+        if (!resources) {
+            this.logger.trace("No UI elements to display - platform is not initialized with any UI resources");
+            return;
+        }
+        this.logger.trace(`Received UI resources from platform: ${JSON.stringify(resources)}`);
+        this.setResources(resources);
+    }
+    async handleBridgeMessage(args) {
+        const operationName = runDecoderWithIOError(uiOperationTypesDecoder, args.operation);
+        const operation = operations[operationName];
+        if (!operation.execute) {
+            return;
+        }
+        let operationData = args.data;
+        if (operation.dataDecoder) {
+            operationData = runDecoderWithIOError(operation.dataDecoder, args.data);
+        }
+        return await operation.execute(operationData);
+    }
+    async showComponents(io) {
+        const initializeWidgetPromise = this.widgetResources ? this.initializeWidget(io, this.widgetResources) : Promise.resolve();
+        const initializeModalsPromise = this.modalsResources ? this.initializeModalsUi(io, this.modalsResources) : Promise.resolve();
+        const initializeIntentResolverPromise = this.intentResolverResources ? this.initializeIntentResolverUI(io, this.intentResolverResources) : Promise.resolve();
+        this.subscribeForThemeChanges(io);
+        await Promise.all([
+            this.config.widget.awaitFactory ? initializeWidgetPromise : Promise.resolve(),
+            this.config.modals.awaitFactory ? initializeModalsPromise : Promise.resolve(),
+            this.config.intentResolver.awaitFactory ? initializeIntentResolverPromise : Promise.resolve(),
+        ]);
+    }
+    isIntentResolverEnabled() {
+        return !!this.intentResolverResources && this.config.intentResolver.enable;
+    }
+    addOperationsExecutors() {
+        operations.operationCheck.execute = async (config) => handleOperationCheck(this.supportedOperationsNames, config.operation);
+        operations.showAlert.execute = this.handleShowAlert.bind(this);
+        operations.showDialog.execute = this.handleShowDialog.bind(this);
+        operations.closeDialog.execute = this.handleCloseDialog.bind(this);
+        operations.showResolver.execute = this.handleShowResolver.bind(this);
+        this.supportedOperationsNames = getSupportedOperationsNames(operations);
+    }
+    async handleShowAlert({ config }) {
+        if (!this.config.modals.alerts.enabled) {
+            return ioError.raiseError("Unable to perform showAlert operation because the client was initialized with 'modals: { alerts: { enabled: false } }' config.");
+        }
+        const modalsUiApi = this.modalsUiApi;
+        if (!modalsUiApi) {
+            return ioError.raiseError("Unable to perform showAlert operation because modalsUiApi is missing.");
+        }
+        const { promise: closePromise, resolve: resolveClosePromise } = wrapPromise();
+        const onClick = (config) => {
+            const decodedConfig = alertOnClickConfigDecoder.run(config);
+            if (!decodedConfig.ok) {
+                this.logger.error(`alert.onClick() was invoked with an invalid config. Error: ${JSON.stringify(decodedConfig.error)}.`);
+                return;
+            }
+            const { interopAction } = decodedConfig.result;
+            this.bridge.send("ui", operations.alertInteropAction, { interopAction }, undefined, { includeOperationCheck: true })
+                .catch((error) => this.logger.warn(extractErrorMsg(error)));
+        };
+        let result;
+        try {
+            this.logger.trace(`Open alert with config: ${JSON.stringify(config)}`);
+            result = modalsUiApi.alerts.open({ ...config, onClick, onClose: resolveClosePromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`modalsUiApi.alerts.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodeResult = openAlertResultDecoder.run(result);
+        if (!decodeResult.ok) {
+            return ioError.raiseError(`modalsUiApi.alerts.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
+        }
+        const timeoutId = setTimeout(() => {
+            resolveClosePromise();
+        }, getSafeTimeoutDelay(config.ttl ?? DEFAULT_ALERT_TTL));
+        closePromise.then(() => {
+            clearTimeout(timeoutId);
+            try {
+                modalsUiApi.alerts.close({ id: decodeResult.result.id });
+            }
+            catch (error) {
+                this.logger.warn(`Failed to close alert with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+            }
+        });
+    }
+    async handleShowDialog({ config, dialogId }) {
+        if (!this.config.modals.dialogs.enabled) {
+            return ioError.raiseError("Unable to perform showDialog operation because the client was initialized with 'modals: { dialogs: { enabled: false } }' config.");
+        }
+        const modalsUiApi = this.modalsUiApi;
+        if (!modalsUiApi) {
+            return ioError.raiseError("Unable to perform showDialog operation because modalsUiApi is missing.");
+        }
+        if (this.activeDialog) {
+            return ioError.raiseError("Cannot open a dialog because another one is already open.");
+        }
+        const { promise: completionPromise, resolve: resolveCompletionPromise } = wrapPromise();
+        let result;
+        try {
+            this.logger.trace(`Open dialog with config: ${JSON.stringify(config)}`);
+            result = modalsUiApi.dialogs.open({ ...config, onCompletion: resolveCompletionPromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`modalsUiApi.dialogs.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodeResult = openDialogResultDecoder.run(result);
+        if (!decodeResult.ok) {
+            return ioError.raiseError(`modalsUiApi.dialogs.open() returned an invalid result. Error: ${JSON.stringify(decodeResult.error)}.`);
+        }
+        this.activeDialog = { dialogId, complete: resolveCompletionPromise };
+        let timeoutId;
+        if (config.timer) {
+            timeoutId = setTimeout(() => {
+                resolveCompletionPromise({ response: { isExpired: true } });
+            }, getSafeTimeoutDelay(config.timer.duration));
+        }
+        const response = await completionPromise;
+        clearTimeout(timeoutId);
+        this.activeDialog = undefined;
+        try {
+            modalsUiApi.dialogs.close({ id: decodeResult.result.id });
+        }
+        catch (error) {
+            this.logger.warn(`Failed to close dialog with id ${decodeResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+        }
+        const decodeResponse = dialogOnCompletionConfigDecoder.run(response);
+        if (!decodeResponse.ok) {
+            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodeResponse.error)}.`);
+        }
+        return { result: decodeResponse.result.response };
+    }
+    async handleCloseDialog({ dialogId }) {
+        if (this.activeDialog?.dialogId !== dialogId) {
+            this.logger.trace(`No opened dialog with id ${dialogId}, nothing to close`);
+            return;
+        }
+        this.activeDialog.complete({ response: { isClosed: true } });
+    }
+    async handleShowResolver({ config }) {
+        this.logger.trace(`Received open intent resolver request with config: ${JSON.stringify(config)}`);
+        if (!this.config.intentResolver.enable) {
+            return ioError.raiseError("Unable to perform showResolver operation because the client was initialized with 'intentResolver: { enable: false }' config.");
+        }
+        const intentResolverApi = this.intentResolverUiApi;
+        if (!intentResolverApi) {
+            return ioError.raiseError("Unable to perform showResolver operation because intentResolverApi is missing.");
+        }
+        if (this.isIntentResolverOpen) {
+            return ioError.raiseError("Cannot open the intent resolver because another one is already open.");
+        }
+        const { promise: completionPromise, resolve: resolveIntentResolverPromise } = wrapPromise();
+        let result;
+        try {
+            this.logger.trace(`Open intent resolver with config: ${JSON.stringify(config)}`);
+            result = intentResolverApi.open({ ...config, onUserResponse: resolveIntentResolverPromise });
+        }
+        catch (error) {
+            return ioError.raiseError(`intentResolverUI.open() failed. Reason: ${extractErrorMsg(error)}.`);
+        }
+        const decodedOpenResult = openResolverResultDecoder.run(result);
+        if (!decodedOpenResult.ok) {
+            return ioError.raiseError(`intentResolverUI.open() returned an invalid result. Error: ${JSON.stringify(decodedOpenResult.error)}.`);
+        }
+        const timer = setTimeout(() => resolveIntentResolverPromise({ response: { isExpired: true } }), getSafeTimeoutDelay(config.timeout));
+        const response = await completionPromise;
+        clearTimeout(timer);
+        this.isIntentResolverOpen = false;
+        try {
+            intentResolverApi.close({ id: decodedOpenResult.result.id });
+        }
+        catch (error) {
+            this.logger.warn(`Failed to close intent resolver with id ${decodedOpenResult.result.id}. Reason: ${extractErrorMsg(error)}`);
+        }
+        const decodedResponse = onUserResponseResponseDecoder.run(response);
+        if (!decodedResponse.ok) {
+            return ioError.raiseError(`completionPromise was resolved with an invalid result. Error: ${JSON.stringify(decodedResponse.error)}.`);
+        }
+        return { result: decodedResponse.result.response };
+    }
+    async getResources() {
+        const data = {
+            origin: window.origin
+        };
+        try {
+            const result = await this.bridge.send("ui", operations.getResources, data, undefined, { includeOperationCheck: true });
+            return result.resources;
+        }
+        catch (error) {
+            this.logger.warn(error?.message || JSON.stringify(error));
+        }
+    }
+    appendModalsResources(resources) {
+        this.logger.trace("Appending modals resources");
+        return this.appendResources(MODALS_SHADOW_HOST_ID, MODALS_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendWidgetResources(resources) {
+        this.logger.trace("Appending widget resources");
+        return this.appendResources(WIDGET_SHADOW_HOST_ID, WIDGET_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendIntentResolverResources(resources) {
+        this.logger.trace("Appending intent resolver resources");
+        return this.appendResources(INTENT_RESOLVER_SHADOW_HOST_ID, INTENT_RESOLVER_ROOT_ELEMENT_ID, resources.sources);
+    }
+    appendResources(shadowHostId, rootElementId, sources) {
+        const { bundle, fonts = [], styles } = sources;
+        const shadowHost = document.createElement("div");
+        shadowHost.id = shadowHostId;
+        shadowHost.style.position = "fixed";
+        shadowHost.style.zIndex = this.zIndexDictionary[shadowHostId];
+        const shadowRoot = shadowHost.attachShadow({ mode: "open" });
+        const script = document.createElement("script");
+        script.src = bundle;
+        script.type = "module";
+        shadowRoot.appendChild(script);
+        const rootElement = document.createElement("div");
+        rootElement.id = rootElementId;
+        rootElement.className = SHADOW_ROOT_ELEMENT_CLASSNAME;
+        shadowRoot.appendChild(rootElement);
+        styles.forEach((style) => {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = style;
+            shadowRoot.appendChild(link);
+        });
+        fonts.forEach((font) => {
+            const link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = font;
+            document.head.insertBefore(link, document.head.firstChild);
+        });
+        document.body.appendChild(shadowHost);
+        return { rootElement };
+    }
+    async initializeWidget(io, resources) {
+        this.logger.trace("Initializing IOBrowserWidget.");
+        const { rootElement } = this.appendWidgetResources(resources);
+        this.rootElements.push(rootElement);
+        const config = {
+            ...deepmerge$1(resources.config, this.config.widget),
+            rootElement
+        };
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.widgetReady();
+            this.logger.trace(`IOBrowserWidget factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            await window.IOBrowserWidget(io, config);
+            this.logger.trace("IOBrowserWidget was initialized successfully.");
+        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserWidget to initialize.`);
+    }
+    async initializeModalsUi(io, resources) {
+        this.logger.trace("Initializing IOBrowserModalsUI.");
+        const { rootElement } = this.appendModalsResources(resources);
+        this.rootElements.push(rootElement);
+        const config = {
+            ...this.config.modals,
+            rootElement
+        };
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.modalsUIFactoryReady();
+            this.logger.trace(`IOBrowserModalsUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            this.modalsUiApi = await window.IOBrowserModalsUI(io, config);
+            this.logger.trace("IOBrowserModalsUI was initialized successfully.");
+        }, config.timeout, `Timeout of ${config.timeout}ms hit waiting for IOBrowserModalsUI to initialize.`);
+    }
+    async initializeIntentResolverUI(io, resources) {
+        this.logger.trace("Initializing IOBrowserIntentResolverUI.");
+        const { rootElement } = this.appendIntentResolverResources(resources);
+        this.rootElements.push(rootElement);
+        const config = {
+            ...this.config.intentResolver,
+            rootElement
+        };
+        const timeout = config.timeout;
+        return PromiseWrap(async () => {
+            await this.ioc.eventsDispatcher.intentResolverUIFactoryReady();
+            this.logger.trace(`IOBrowserIntentResolverUI factory is available. Invoking it with config: ${JSON.stringify(config)}`);
+            this.intentResolverUiApi = await window.IOBrowserIntentResolverUI(io, config);
+            this.logger.trace("IOBrowserIntentResolverUI initialized successfully.");
+        }, timeout, `Timeout of ${timeout}ms hit waiting for IOBrowserIntentResolverUI to initialize.`);
+    }
+    setResources(resources) {
+        this.setWidgetResources(resources.widget);
+        this.setModalsUiResources(resources.modals);
+        this.setIntentResolverResources(resources.intentResolver);
+    }
+    setWidgetResources(resources) {
+        const baseMsg = "Widget won't be displayed. Reason: ";
+        const decodedConfig = widgetConfigDecoder.run(this.config.widget);
+        if (!decodedConfig.ok) {
+            this.logger.warn(`${baseMsg} invalid widget config. Error: ${decodedConfig.error}`);
+            return;
+        }
+        if (!this.config.widget.enable) {
+            this.logger.trace(`${baseMsg} Client initialized with 'widget: { enable: false }' config`);
+            return;
+        }
+        if (!resources) {
+            this.logger.trace(`${baseMsg} Platform did not provide resources`);
+            return;
+        }
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving widget resources`);
+            return;
+        }
+        this.widgetResources = resources;
+    }
+    setModalsUiResources(resources) {
+        const baseMsg = "Modals won't be displayed. Reason: ";
+        const decodedConfig = modalsConfigDecoder.run(this.config.modals);
+        if (!decodedConfig.ok) {
+            this.logger.warn(`${baseMsg} invalid modals config. Error: ${decodedConfig.error}`);
+            return;
+        }
+        if (!this.config.modals.alerts.enabled && !this.config.modals.dialogs.enabled) {
+            this.logger.trace(`${baseMsg} Client initialized with 'modals: { alerts: { enabled: false }, dialogs: { enabled: false } }' config`);
+            return;
+        }
+        if (!resources) {
+            this.logger.trace(`${baseMsg} Platform did not provide resources`);
+            return;
+        }
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving modals resources`);
+            return;
+        }
+        this.modalsResources = resources;
+    }
+    setIntentResolverResources(resources) {
+        const baseMsg = "Intent Resolver UI won't be displayed. Reason: ";
+        const decodedConfig = intentResolverConfigDecoder.run(this.config.intentResolver);
+        if (!decodedConfig.ok) {
+            this.logger.warn(`${baseMsg} invalid intent resolver config. Error: ${JSON.stringify(decodedConfig.error)}`);
+            return;
+        }
+        if (!this.config.intentResolver.enable) {
+            this.logger.trace(`${baseMsg} Client initialized with 'intentResolver: { enable: false }' config`);
+            return;
+        }
+        if (!resources) {
+            this.logger.trace(`${baseMsg} Platform did not provide resources`);
+            return;
+        }
+        if (resources.blockedOrigin) {
+            this.logger.warn(`${baseMsg} Platform has blocked client's origin ('${window.location.toString()}') from retrieving intent resolver resources`);
+            return;
+        }
+        this.intentResolverResources = resources;
+    }
+    subscribeForThemeChanges(io) {
+        const themesApi = io.themes;
+        if (!themesApi) {
+            return;
+        }
+        const changeTheme = async (theme) => {
+            await Promise.all(this.rootElements.map((element) => this.applyThemeToElement(element, themesApi, theme)));
+        };
+        themesApi.onChanged(changeTheme);
+        themesApi.getCurrent().then(changeTheme);
+    }
+    async applyThemeToElement(element, themesApi, theme) {
+        if (element.classList.contains(theme.name)) {
+            return;
+        }
+        const allThemes = await themesApi.list();
+        element.classList.remove(...allThemes.map(({ name }) => name));
+        element.classList.add(theme.name);
+    }
+}
+
+class IoC {
+    _coreGlue;
+    _communicationId;
+    _publicWindowId;
+    _webConfig;
+    _windowsControllerInstance;
+    _appManagerControllerInstance;
+    _layoutsControllerInstance;
+    _notificationsControllerInstance;
+    _intentsControllerInstance;
+    _channelsControllerInstance;
+    _themesControllerInstance;
+    _extensionController;
+    _systemControllerInstance;
+    _bridgeInstance;
+    _eventsDispatcher;
+    _preferredConnectionController;
+    _channelsStorage;
+    _prefsControllerInstance;
+    _uiController;
+    controllers = {
+        windows: this.windowsController,
+        appManager: this.appManagerController,
+        layouts: this.layoutsController,
+        notifications: this.notificationsController,
+        intents: this.intentsController,
+        channels: this.channelsController,
+        system: this.systemController,
+        extension: this.extensionController,
+        themes: this.themesController,
+        prefs: this.prefsController,
+        ui: this.uiController
+    };
+    get communicationId() {
+        return this._communicationId;
+    }
+    get publicWindowId() {
+        return this._publicWindowId;
+    }
+    get windowsController() {
+        if (!this._windowsControllerInstance) {
+            this._windowsControllerInstance = new WindowsController();
+        }
+        return this._windowsControllerInstance;
+    }
+    get uiController() {
+        if (!this._uiController) {
+            this._uiController = new UIController(this);
+        }
+        return this._uiController;
+    }
+    get appManagerController() {
+        if (!this._appManagerControllerInstance) {
+            this._appManagerControllerInstance = new AppManagerController();
+        }
+        return this._appManagerControllerInstance;
+    }
+    get layoutsController() {
+        if (!this._layoutsControllerInstance) {
+            this._layoutsControllerInstance = new LayoutsController();
+        }
+        return this._layoutsControllerInstance;
+    }
+    get themesController() {
+        if (!this._themesControllerInstance) {
+            this._themesControllerInstance = new ThemesController();
+        }
+        return this._themesControllerInstance;
+    }
+    get notificationsController() {
+        if (!this._notificationsControllerInstance) {
+            this._notificationsControllerInstance = new NotificationsController();
+        }
+        return this._notificationsControllerInstance;
+    }
+    get intentsController() {
+        if (!this._intentsControllerInstance) {
+            this._intentsControllerInstance = new IntentsController();
+        }
+        return this._intentsControllerInstance;
+    }
+    get systemController() {
+        if (!this._systemControllerInstance) {
+            this._systemControllerInstance = new SystemController();
+        }
+        return this._systemControllerInstance;
+    }
+    get channelsController() {
+        if (!this._channelsControllerInstance) {
+            this._channelsControllerInstance = new ChannelsController();
+        }
+        return this._channelsControllerInstance;
+    }
+    get prefsController() {
+        if (!this._prefsControllerInstance) {
+            this._prefsControllerInstance = new PrefsController();
+        }
+        return this._prefsControllerInstance;
+    }
+    get extensionController() {
+        if (!this._extensionController) {
+            this._extensionController = new ExtController();
+        }
+        return this._extensionController;
+    }
+    get eventsDispatcher() {
+        if (!this._eventsDispatcher) {
+            this._eventsDispatcher = new EventsDispatcher(this.config);
+        }
+        return this._eventsDispatcher;
+    }
+    get bridge() {
+        if (!this._bridgeInstance) {
+            this._bridgeInstance = new GlueBridge(this._coreGlue, this.communicationId);
+        }
+        return this._bridgeInstance;
+    }
+    get preferredConnectionController() {
+        if (!this._preferredConnectionController) {
+            this._preferredConnectionController = new PreferredConnectionController(this._coreGlue);
+        }
+        return this._preferredConnectionController;
+    }
+    get channelsStorage() {
+        if (!this._channelsStorage) {
+            this._channelsStorage = new ChannelsStorage();
+        }
+        return this._channelsStorage;
+    }
+    get config() {
+        return this._webConfig;
+    }
+    defineGlue(coreGlue) {
+        this._coreGlue = coreGlue;
+        this._publicWindowId = coreGlue.connection.transport.publicWindowId;
+        const globalNamespace = window.glue42core || window.iobrowser;
+        this._communicationId = coreGlue.connection.transport.communicationId || globalNamespace.communicationId;
+    }
+    defineConfig(config) {
+        this._webConfig = config;
+    }
+    async buildWebWindow(id, name, logger) {
+        const model = new WebWindowModel(id, name, this.bridge, logger);
+        const api = await model.toApi();
+        return { id, model, api };
+    }
+    buildNotification(config, id) {
+        return new Notification(config, id);
+    }
+    async buildApplication(app, applicationInstances) {
+        const application = (new ApplicationModel(app, [], this.appManagerController)).toApi();
+        const instances = applicationInstances.map((instanceData) => this.buildInstance(instanceData, application));
+        application.instances.push(...instances);
+        return application;
+    }
+    buildInstance(instanceData, app) {
+        return (new InstanceModel(instanceData, this.bridge, app)).toApi();
+    }
+}
+
+var version = "5.0.0";
+
+const setupGlobalSystem = (io, bridge) => {
+    return {
+        getContainerInfo: async () => {
+            if (window === window.parent) {
+                return;
+            }
+            if (window.name.includes("#wsp")) {
+                return {
+                    workspaceFrame: {
+                        id: "N/A"
+                    }
+                };
+            }
+            return window.parent === window.top ?
+                { top: {} } :
+                { parent: {} };
+        },
+        getProfileData: async () => {
+            if (!bridge) {
+                throw new Error("Bridge is not available and cannot fetch the profile data");
+            }
+            const data = await bridge.send("system", { name: "getProfileData" }, undefined);
+            return data;
+        }
+    };
+};
+
+const createFactoryFunction = (coreFactoryFunction) => {
+    let cachedApiPromise;
+    const initAPI = async (config) => {
+        const ioc = new IoC();
+        const glue = await PromiseWrap(() => coreFactoryFunction(config, { version }), 30000, "Glue Web initialization timed out, because core didn't resolve");
+        const logger = glue.logger.subLogger("web.main.controller");
+        ioc.defineGlue(glue);
+        await ioc.preferredConnectionController.start(config);
+        await ioc.bridge.start(ioc.controllers);
+        ioc.defineConfig(config);
+        logger.trace("the bridge has been started, initializing all controllers");
+        await Promise.all(Object.values(ioc.controllers).map((controller) => controller.start(glue, ioc)));
+        logger.trace("all controllers reported started, starting all additional libraries");
+        try {
+            await Promise.all(config.libraries.map((lib) => lib(glue, config)));
+            logger.trace("all libraries were started");
+            ioc.eventsDispatcher.start(glue);
+            logger.trace("start event dispatched, glue is ready, returning it");
+            await ioc.uiController.showComponents(glue).catch((err) => logger.warn(err?.message ? err.message : JSON.stringify(err)));
+            await Promise.all(Object.values(ioc.controllers).map((controller) => controller.postStart ? controller.postStart(glue, ioc) : Promise.resolve()));
+            window.iobrowser.system = setupGlobalSystem(glue, ioc.bridge);
+            window.iobrowser = Object.freeze({ ...window.iobrowser });
+            return glue;
+        }
+        catch (error) {
+            return ioError.raiseError(error, true);
+        }
+    };
+    const factory = (userConfig) => {
+        if (window.glue42gd || window.iodesktop) {
+            return enterprise(userConfig);
+        }
+        const config = parseConfig(userConfig);
+        try {
+            checkSingleton();
+        }
+        catch (error) {
+            return typeof cachedApiPromise === "undefined" ? Promise.reject(new Error(error)) : cachedApiPromise;
+        }
+        const apiPromise = initAPI(config);
+        cachedApiPromise = userConfig?.memoizeAPI ? apiPromise : undefined;
+        return apiPromise;
+    };
+    return factory;
+};
 
 const iOConnectBrowserFactory = createFactoryFunction(IOConnectCoreFactory);
 if (typeof window !== "undefined") {
@@ -20255,7 +25220,7 @@ if (!legacyGlobal && !ioGlobal) {
 if (!window.iodesktop && !window.iobrowser.system) {
     window.iobrowser.system = setupGlobalSystem();
 }
-iOConnectBrowserFactory.version = version$1;
+iOConnectBrowserFactory.version = version;
 
 export { iOConnectBrowserFactory as default };
 //# sourceMappingURL=browser.es.js.map
